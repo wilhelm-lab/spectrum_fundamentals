@@ -50,3 +50,13 @@ AA_MASSES = {
 # initialize other masses
 PROTON_MASS = 1.007276467
 ELECTRON_MASS = 0.00054858
+
+TMT_MASS = 229.162932
+
+# masses of different atoms
+ATOM_MASSES = {
+    'H': 1.007825035,
+    'C': 12.0,
+    'O': 15.9949146,
+    'N': 14.003074,
+}
