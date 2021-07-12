@@ -8,7 +8,10 @@ package_data = \
 {'': ['*']}
 
 install_requires = \
-['numpy>=1.21.0,<2.0.0', 'pandas>=1.3.0,<2.0.0', 'statsmodels>=0.12.2,<0.13.0']
+['numpy>=1.21.0,<2.0.0',
+ 'pandas>=1.3.0,<2.0.0',
+ 'setuptools>=57.1.0,<58.0.0',
+ 'statsmodels>=0.12.2,<0.13.0']
 
 setup_kwargs = {
     'name': 'fundamentals',
