@@ -1,4 +1,4 @@
-ALPHABET = {
+AA_ALPHABET = {
     "A": 1,
     "C": 2,
     "D": 3,
@@ -19,8 +19,25 @@ ALPHABET = {
     "V": 18,
     "W": 19,
     "Y": 20,
-    "M(ox)": 21,
-    "K(tm)": 22,
+}
+ALPHABET_MODS = {
+    "M(U:35)": 21,
+    "C(U:4)": 2,  ## TODO check why this has the same value as C
+    "K(U:737)": 22,
+    "S(U:21)": 25,
+    "T(U:21)": 26,
+    "Y(U:21)": 27
+}
+ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS}
+
+MAXQUANT_VAR_MODS = {
+    "M(ox)": "M(U:35)",
+    "M(Oxidation (M))": "M(U:35)",
+    "K(tm)": "K(U:737)",
+    "S(ph)": "S(U:21)",
+    "T(ph)": "T(U:21)",
+    "Y(ph)": "Y(U:21)",
+    "C(??)": "C(U:4)", # TODO Carbamidomethyl ##
 }
 
 AA_MASSES = {
