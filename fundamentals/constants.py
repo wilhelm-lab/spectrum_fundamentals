@@ -1,3 +1,5 @@
+import numpy as np
+
 ALPHABET = {
     "A": 1,
     "C": 2,
@@ -60,3 +62,10 @@ ATOM_MASSES = {
     'O': 15.9949146,
     'N': 14.003074,
 }
+
+# peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+
+NUM_IONS = 29*2*3
+
+B_ION_MASK = np.tile([0,0,0,1,1,1], 29)
+Y_ION_MASK = np.tile([1,1,1,0,0,0], 29)
+
