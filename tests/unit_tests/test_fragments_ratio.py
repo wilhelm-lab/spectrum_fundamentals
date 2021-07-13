@@ -185,6 +185,8 @@ class TestCalc:
         fragmentsRatio = fr.FragmentsRatio(predicted_intensities, observed_intensities)
         fragmentsRatio.calc()
         
+        
+        # counting metrics
         np.testing.assert_equal(fragmentsRatio.metrics_val['count_predicted'][0], 4)
         np.testing.assert_equal(fragmentsRatio.metrics_val['count_predicted_b'][0], 2)
         np.testing.assert_equal(fragmentsRatio.metrics_val['count_predicted_y'][0], 2)
@@ -208,6 +210,32 @@ class TestCalc:
         np.testing.assert_equal(fragmentsRatio.metrics_val['count_not_observed_but_predicted'][0], 2)
         np.testing.assert_equal(fragmentsRatio.metrics_val['count_not_observed_but_predicted_b'][0], 1)
         np.testing.assert_equal(fragmentsRatio.metrics_val['count_not_observed_but_predicted_y'][0], 1)
+        
+        
+        # fractional count metrics
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted'][0], 4 / 8)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_b'][0], 2 / 3)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_y'][0], 2 / 5)
+        
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed'][0], 4 / 8)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_b'][0], 1 / 3)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_y'][0], 3 / 5)
+        
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_and_predicted'][0], 2 / 8)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_and_predicted_b'][0], 1 / 3)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_and_predicted_y'][0], 1 / 5)
+        
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_and_not_predicted'][0], 2 / 8)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_and_not_predicted_b'][0], 1 / 3)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_and_not_predicted_y'][0], 1 / 5)
+        
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_but_not_predicted'][0], 2 / 8)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_but_not_predicted_b'][0], 0 / 3)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_but_not_predicted_y'][0], 2 / 5)
+        
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_but_predicted'][0], 2 / 8)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_but_predicted_b'][0], 1 / 3)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_but_predicted_y'][0], 1 / 5)
         
         
 def get_padded_array(l, padding_value = 0):

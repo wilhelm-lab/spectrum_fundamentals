@@ -223,7 +223,12 @@ class FragmentsRatio(Metric):
         observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
         predicted_boolean = FragmentsRatio.make_boolean(self.pred_intensities, mask_observed_valid, cutoff = 0.05)
         observation_state = FragmentsRatio.get_observation_state(observed_boolean, predicted_boolean, mask_observed_valid)
+        valid_ions = np.sum(mask_observed_valid)
+        valid_ions_b = np.sum(np.multiply(mask_observed_valid, constants.B_ION_MASK))
+        valid_ions_y = np.sum(np.multiply(mask_observed_valid, constants.Y_ION_MASK))
         
+        
+        # counting metrics
         self.metrics_val['count_predicted'] = FragmentsRatio.count_ions(predicted_boolean)
         self.metrics_val['count_predicted_b'] = FragmentsRatio.count_ions_b(predicted_boolean)
         self.metrics_val['count_predicted_y'] = FragmentsRatio.count_ions_y(predicted_boolean)
@@ -247,4 +252,30 @@ class FragmentsRatio(Metric):
         self.metrics_val['count_not_observed_but_predicted'] = FragmentsRatio.count_not_observed_but_predicted(observation_state)
         self.metrics_val['count_not_observed_but_predicted_b'] = FragmentsRatio.count_not_observed_but_predicted_b(observation_state)
         self.metrics_val['count_not_observed_but_predicted_y'] = FragmentsRatio.count_not_observed_but_predicted_y(observation_state)
+        
+        
+        # fractional count metrics
+        self.metrics_val['fraction_predicted'] = self.metrics_val['count_predicted'] / valid_ions
+        self.metrics_val['fraction_predicted_b'] = self.metrics_val['count_predicted_b'] / valid_ions_b
+        self.metrics_val['fraction_predicted_y'] = self.metrics_val['count_predicted_y'] / valid_ions_y
+        
+        self.metrics_val['fraction_observed'] = self.metrics_val['count_observed'] / valid_ions
+        self.metrics_val['fraction_observed_b'] = self.metrics_val['count_observed_b'] / valid_ions_b
+        self.metrics_val['fraction_observed_y'] = self.metrics_val['count_observed_y'] / valid_ions_y
+        
+        self.metrics_val['fraction_observed_and_predicted'] = self.metrics_val['count_observed_and_predicted'] / valid_ions
+        self.metrics_val['fraction_observed_and_predicted_b'] = self.metrics_val['count_observed_and_predicted_b'] / valid_ions_b
+        self.metrics_val['fraction_observed_and_predicted_y'] = self.metrics_val['count_observed_and_predicted_y'] / valid_ions_y
+        
+        self.metrics_val['fraction_not_observed_and_not_predicted'] = self.metrics_val['count_not_observed_and_not_predicted'] / valid_ions
+        self.metrics_val['fraction_not_observed_and_not_predicted_b'] = self.metrics_val['count_not_observed_and_not_predicted_b'] / valid_ions_b
+        self.metrics_val['fraction_not_observed_and_not_predicted_y'] = self.metrics_val['count_not_observed_and_not_predicted_y'] / valid_ions_y
+        
+        self.metrics_val['fraction_observed_but_not_predicted'] = self.metrics_val['count_observed_but_not_predicted'] / valid_ions
+        self.metrics_val['fraction_observed_but_not_predicted_b'] = self.metrics_val['count_observed_but_not_predicted_b'] / valid_ions_b
+        self.metrics_val['fraction_observed_but_not_predicted_y'] = self.metrics_val['count_observed_but_not_predicted_y'] / valid_ions_y
+        
+        self.metrics_val['fraction_not_observed_but_predicted'] = self.metrics_val['count_not_observed_but_predicted'] / valid_ions
+        self.metrics_val['fraction_not_observed_but_predicted_b'] = self.metrics_val['count_not_observed_but_predicted_b'] / valid_ions_b
+        self.metrics_val['fraction_not_observed_but_predicted_y'] = self.metrics_val['count_not_observed_but_predicted_y'] / valid_ions_y
         
