@@ -21,6 +21,9 @@ ALPHABET = {
     "Y": 20,
     "M(ox)": 21,
     "K(tm)": 22,
+    "S(ph)": 25,
+    "T(ph)": 26,
+    "Y(ph)": 27,
 }
 
 AA_MASSES = {
@@ -47,11 +50,14 @@ AA_MASSES = {
     'V': 99.068414,
 }
 
+MOD_MASSES = {
+    'TMT_6': 229.162932,
+    'Phospho': 79.966331,
+}
+
 # initialize other masses
 PROTON_MASS = 1.007276467
 ELECTRON_MASS = 0.00054858
-
-TMT_MASS = 229.162932
 
 # masses of different atoms
 ATOM_MASSES = {
