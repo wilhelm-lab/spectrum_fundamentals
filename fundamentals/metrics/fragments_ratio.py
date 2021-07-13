@@ -22,46 +22,43 @@ class ObservationState(enum.Enum):
 class FragmentsRatio(Metric):
 
     @staticmethod
-    def count_predicted(predicted, cutoff):
+    def count_ions(boolean_array):
         """
         add value to metrics val
-        :param predicted: predicted intensities array, array of length 174
-        :param cutoff: minimum intensity value to be considered a peak, e.g. 0.05
-        :return: number of predicted peaks with intensity above cutoff
+        :param boolean_array: boolean array with True for observed/predicted peaks and False for missing observed/predicted peaks, array of length 174
+        :return: number of observed/predicted peaks
         """
-        return np.sum(predicted > cutoff)
+        return FragmentsRatio.count_with_ion_mask(boolean_array)
     
     @staticmethod
-    def count_predicted_b(predicted, cutoff):
+    def count_ions_b(boolean_array):
         """
         add value to metrics val
-        :param predicted: predicted intensities array, array of length 174
-        :param cutoff: minimum intensity value to be considered a peak, e.g. 0.05
-        :return: number of predicted b-ion peaks with intensity above cutoff
+        :param boolean_array: boolean array with True for observed/predicted peaks and False for missing observed/predicted peaks, array of length 174
+        :return: number of observed/predicted b-ions
         """
-        return FragmentsRatio.count_predicted_with_ion_mask(predicted, constants.B_ION_MASK, cutoff)
+        return FragmentsRatio.count_with_ion_mask(boolean_array, constants.B_ION_MASK)
     
     @staticmethod
-    def count_predicted_y(predicted, cutoff):
+    def count_ions_y(boolean_array):
         """
         add value to metrics val
-        :param predicted: predicted intensities array, array of length 174
-        :param cutoff: minimum intensity value to be considered a peak, e.g. 0.05
-        :return: number of predicted y-ion peaks with intensity above cutoff
+        :param boolean_array: boolean array with True for observed/predicted peaks and False for missing observed/predicted peaks, array of length 174
+        :return: number of observed/predicted y-ions
         """
-        return FragmentsRatio.count_predicted_with_ion_mask(predicted, constants.Y_ION_MASK, cutoff)
+        return FragmentsRatio.count_with_ion_mask(boolean_array, constants.Y_ION_MASK)
     
     @staticmethod
-    def count_predicted_with_ion_mask(predicted, ion_mask, cutoff):
+    def count_with_ion_mask(boolean_array, ion_mask = []):
         """
         add value to metrics val
-        :param predicted: predicted intensities array, array of length 174
+        :param intensities: intensities array, array of length 174
         :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, integer array of length 174
-        :param cutoff: minimum intensity value to be considered a peak, e.g. 0.05
-        :return: number of predicted b-ion peaks with intensity above cutoff
+        :return: number of observed/predicted peaks not masked by ion_mask
         """
-        predicted_b = np.multiply(predicted, ion_mask)
-        return np.sum(predicted_b > cutoff)
+        if len(ion_mask) > 0:
+            boolean_array = np.multiply(boolean_array, ion_mask)
+        return np.sum(boolean_array, axis = 1)
     
     @staticmethod
     def count_observed_and_predicted(observation_state):
@@ -169,29 +166,25 @@ class FragmentsRatio(Metric):
         :param i: integer, which observation state we want to count for
         :return:
         """
+        state_boolean = (observation_state == test_state)
         if len(ion_mask) > 0:
-            observation_state[ion_mask == 0] = ObservationState.INVALID_ION
-        return np.sum(observation_state == test_state)
-        
-    def pred_raw_(self):
-        pass
-
-    def calc(self):
-        pass
+            matrix_dimensions = (1, len(observation_state))
+            state_boolean[np.tile(ion_mask == 0, matrix_dimensions)] = False
+        return np.sum(state_boolean)
     
     @staticmethod
-    def get_mask_observed_invalid(observed_mz):
+    def get_mask_observed_valid(observed_mz):
         """
         Creates a mask out of an observed m/z array with True for invalid entries and False for valid entries in the observed intensities array
         :param observed: observed m/z, array of length 174
         :return: boolean array, array of length 174
         """
-        invalids = (observed_mz == -1)
-        invalids[np.isnan(observed_mz)] = True
-        return invalids
+        valids = (observed_mz > 0)
+        valids[np.isnan(observed_mz)] = False
+        return valids
     
     @staticmethod
-    def make_boolean(intensities, mask, cutoff = 0.0):
+    def make_boolean(intensities, mask, cutoff = constants.EPSILON):
         """
         Transform array of intensities into boolean array with True if > cutoff and False otherwise
         :param intensities: observed or predicted intensities, array of length 174
@@ -200,7 +193,7 @@ class FragmentsRatio(Metric):
         :return: boolean array, array of length 174
         """
         intensities_above_cutoff = (intensities > cutoff)
-        intensities_above_cutoff[mask] = False
+        intensities_above_cutoff[~mask] = False
         return intensities_above_cutoff
        
     @staticmethod 
@@ -217,7 +210,7 @@ class FragmentsRatio(Metric):
         :param predicted_boolean : boolean predicted intensities, boolean array of length 174
         :return: integer array, array of length 174
         """
-        observation_state = np.ones(constants.NUM_IONS, dtype = ObservationState)
+        observation_state = np.ones_like(observed_boolean, dtype = ObservationState)
         observation_state[observed_boolean & predicted_boolean] = ObservationState.OBS_AND_PRED
         observation_state[observed_boolean & ~predicted_boolean] = ObservationState.OBS_BUT_NOT_PRED
         observation_state[~observed_boolean & predicted_boolean] = ObservationState.NOT_OBS_BUT_PRED
@@ -225,4 +218,33 @@ class FragmentsRatio(Metric):
         observation_state[~mask] = ObservationState.INVALID_ION
         return observation_state
     
-    
+    def calc(self):
+        mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
+        observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
+        predicted_boolean = FragmentsRatio.make_boolean(self.pred_intensities, mask_observed_valid, cutoff = 0.05)
+        observation_state = FragmentsRatio.get_observation_state(observed_boolean, predicted_boolean, mask_observed_valid)
+        
+        self.metrics_val['count_predicted'] = FragmentsRatio.count_ions(predicted_boolean)
+        self.metrics_val['count_predicted_b'] = FragmentsRatio.count_ions_b(predicted_boolean)
+        self.metrics_val['count_predicted_y'] = FragmentsRatio.count_ions_y(predicted_boolean)
+        
+        self.metrics_val['count_observed'] = FragmentsRatio.count_ions(observed_boolean)
+        self.metrics_val['count_observed_b'] = FragmentsRatio.count_ions_b(observed_boolean)
+        self.metrics_val['count_observed_y'] = FragmentsRatio.count_ions_y(observed_boolean)
+        
+        self.metrics_val['count_observed_and_predicted'] = FragmentsRatio.count_observed_and_predicted(observation_state)
+        self.metrics_val['count_observed_and_predicted_b'] = FragmentsRatio.count_observed_and_predicted_b(observation_state)
+        self.metrics_val['count_observed_and_predicted_y'] = FragmentsRatio.count_observed_and_predicted_y(observation_state)
+        
+        self.metrics_val['count_not_observed_and_not_predicted'] = FragmentsRatio.count_not_observed_and_not_predicted(observation_state)
+        self.metrics_val['count_not_observed_and_not_predicted_b'] = FragmentsRatio.count_not_observed_and_not_predicted_b(observation_state)
+        self.metrics_val['count_not_observed_and_not_predicted_y'] = FragmentsRatio.count_not_observed_and_not_predicted_y(observation_state)
+        
+        self.metrics_val['count_observed_but_not_predicted'] = FragmentsRatio.count_observed_but_not_predicted(observation_state)
+        self.metrics_val['count_observed_but_not_predicted_b'] = FragmentsRatio.count_observed_but_not_predicted_b(observation_state)
+        self.metrics_val['count_observed_but_not_predicted_y'] = FragmentsRatio.count_observed_but_not_predicted_y(observation_state)
+        
+        self.metrics_val['count_not_observed_but_predicted'] = FragmentsRatio.count_not_observed_but_predicted(observation_state)
+        self.metrics_val['count_not_observed_but_predicted_b'] = FragmentsRatio.count_not_observed_but_predicted_b(observation_state)
+        self.metrics_val['count_not_observed_but_predicted_y'] = FragmentsRatio.count_not_observed_but_predicted_y(observation_state)
+        

@@ -63,6 +63,9 @@ ATOM_MASSES = {
     'N': 14.003074,
 }
 
+# small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
+EPSILON = np.nextafter(0, 1)
+
 # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+
 NUM_IONS = 29*2*3
 
