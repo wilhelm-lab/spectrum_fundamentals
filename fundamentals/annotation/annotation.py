@@ -157,8 +157,8 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                     min_mass = mass - 0.5
                     max_mass = mass + 0.5
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
-                                            'theoretical_mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
-        fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('theoretical_mass'))
+                                            'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
+        fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('mass'))
     return fragments_meta_data, tmt_n_term, peptide_sequence
 
 
@@ -223,6 +223,7 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = 'intensity'):
     :param sort_by: choose how to sort peaks e.g. intensity, mass_diff
     """
     matched_peaks_df = pd.DataFrame(matched_peaks)
+    print(matched_peaks_df.columns)
     if sort_by == 'mass_diff':
         matched_peaks_df['mass_diff'] = abs(matched_peaks_df['exp_mass'] - matched_peaks_df['theoretical_mass'])
         matched_peaks_df = matched_peaks_df.sort_values(by='mass_diff', ascending=True)
@@ -311,12 +312,12 @@ def parallel_annotate(spectrum):
     :param spectrum: spectrum to be annotated.
     :return: annotated spectrum with meta data.
     """
-    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum['MODIFIED_SEQUENCE'], spectrum['MASS_ANALYZER'],
-                                                                       spectrum['CHARGE'])
-    matched_peaks = match_peaks(fragments_meta_data, spectrum['intensity'], spectrum['mz'], tmt_n_term, unmod_sequence,
-                                spectrum['CHARGE'])
-    matched_peaks = handle_multiple_matches(matched_peaks)
-    intensities, mass, mass_theo = generate_annotation_matrix(matched_peaks, unmod_sequence, spectrum['CHARGE'])
-    spectrum['intensity_raw'] = intensities
-    spectrum['mass_exp'] = mass
-    return spectrum
+    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum[2], spectrum[8],
+                                                                       spectrum[3])
+    matched_peaks = match_peaks(fragments_meta_data, spectrum[-2], spectrum[-1], tmt_n_term, unmod_sequence,
+                                spectrum[3])
+    #matched_peaks = handle_multiple_matches(matched_peaks)
+    #intensities, mass, mass_theo = generate_annotation_matrix(matched_peaks, #unmod_sequence, spectrum[3])
+    #spectrum['intensity_raw'] = intensities
+    #spectrum['mass_exp'] = mass
+    return matched_peaks
