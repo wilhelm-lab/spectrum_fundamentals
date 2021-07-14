@@ -280,11 +280,7 @@ class FragmentsRatio(Metric):
         self.metrics_val['fraction_not_observed_but_predicted_y'] = self.metrics_val['count_not_observed_but_predicted_y'] / valid_ions_y
         
         
-        # fractional count metrics relative to predictions
-        self.metrics_val['fraction_predicted_observed'] = self.metrics_val['count_observed'] / self.metrics_val['count_predicted']
-        self.metrics_val['fraction_predicted_observed_b'] = self.metrics_val['count_observed_b'] / self.metrics_val['count_predicted_b']
-        self.metrics_val['fraction_predicted_observed_y'] = self.metrics_val['count_observed_y'] / self.metrics_val['count_predicted_y']
-        
+        # fractional count metrics relative to predictions        
         self.metrics_val['fraction_predicted_observed_and_predicted'] = self.metrics_val['count_observed_and_predicted'] / self.metrics_val['count_predicted']
         self.metrics_val['fraction_predicted_observed_and_predicted_b'] = self.metrics_val['count_observed_and_predicted_b'] / self.metrics_val['count_predicted_b']
         self.metrics_val['fraction_predicted_observed_and_predicted_y'] = self.metrics_val['count_observed_and_predicted_y'] / self.metrics_val['count_predicted_y']

@@ -238,11 +238,7 @@ class TestCalc:
         np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_but_predicted_y'][0], 1 / 5)
         
         
-        # fractional count metrics relative to predictions
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed'][0], 4 / 4)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_b'][0], 1 / 2)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_y'][0], 3 / 2)
-        
+        # fractional count metrics relative to predictions        
         np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_and_predicted'][0], 2 / 4)
         np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_and_predicted_b'][0], 1 / 2)
         np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_and_predicted_y'][0], 1 / 2)
