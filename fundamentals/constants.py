@@ -40,6 +40,7 @@ MAXQUANT_VAR_MODS = {
     "T(ph)": "T(U:21)",
     "Y(ph)": "Y(U:21)",
     "C(??)": "C(U:4)", # TODO Carbamidomethyl ##
+}
 
 AA_MASSES = {
     'A': 71.037114,
