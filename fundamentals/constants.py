@@ -2,7 +2,7 @@ import numpy as np
 
 AA_ALPHABET = {
     "A": 1,
-    "C": 2,
+    "C": 23,
     "D": 3,
     "E": 4,
     "F": 5,
@@ -40,7 +40,6 @@ MAXQUANT_VAR_MODS = {
     "T(ph)": "T(U:21)",
     "Y(ph)": "Y(U:21)",
     "C(??)": "C(U:4)", # TODO Carbamidomethyl ##
-}
 
 AA_MASSES = {
     'A': 71.037114,
@@ -66,11 +65,17 @@ AA_MASSES = {
     'V': 99.068414,
 }
 
+MOD_MASSES = {
+    'TMT_6': 229.162932,
+    'Phospho': 79.966331,
+    'Carbomedomethyl': 57.02146,
+}
+
 # initialize other masses
 PROTON_MASS = 1.007276467
 ELECTRON_MASS = 0.00054858
 
-TMT_MASS = 229.162932
+EPSILON = 1e-7
 
 # masses of different atoms
 ATOM_MASSES = {
@@ -90,3 +95,12 @@ NUM_IONS = (MAX_PEPTIDE_LEN - 1)*2*3
 B_ION_MASK = np.tile([0,0,0,1,1,1], MAX_PEPTIDE_LEN - 1)
 Y_ION_MASK = np.tile([1,1,1,0,0,0], MAX_PEPTIDE_LEN - 1)
 
+Meta_Data_Columns=['RAW_FILE',
+                   'SCAN_NUMBER',
+                   'MODIFIED_SEQUENCE',
+                   'CHARGE',
+                   'FRAGMENTATION',
+                   'MASS_ANALYZER',
+                   'MASS',
+                   'SCORE',
+                   'REVERSE']
