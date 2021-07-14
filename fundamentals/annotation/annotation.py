@@ -1,3 +1,5 @@
+from operator import itemgetter
+
 import pandas as pd
 from joblib import Parallel, delayed
 import numpy as np
@@ -156,12 +158,22 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                     max_mass = mass + 0.5
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
                                             'theoretical_mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
-        fragments_meta_data = sorted(fragments_meta_data, key=lambda d: d['theoretical_mass'])
+        fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('theoretical_mass'))
     return fragments_meta_data, tmt_n_term, peptide_sequence
 
 
 def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                 peaks_masses: np, tmt_n_term: int, unmod_sequence: str, charge: int):
+    """
+    Matching experimental peaks with theoretical fragment ions
+    :param fragments_meta_data: Fragments ions meta data eg. ion type, number, theo_mass...
+    :param peaks_intensity: Experimental peaks intensities.
+    :param peaks_masses: Experimental peaks masses.
+    :param tmt_n_term: Flag to check if there is tmt modification on n_terminus 1: no_tmt, 2:tmt
+    :param unmod_sequence: Unmodified peptide sequence.
+    :param charge: Precursor charge.
+    :return: List of matched/annotated peaks
+    """
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
     max_intensity = 1
@@ -188,13 +200,13 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                             tmt_n_term == 1):
                         row_list.append(
                             {'ion_type': fragment['ion_type'], 'no': fragment_no, 'charge': charge,
-                             'exp_mass': peak_mass, 'intensity': peak_intensity})
+                             'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity})
                         if peak_intensity > max_intensity:
                             max_intensity = float(peak_intensity)
                 else:
                     row_list.append(
                         {'ion_type': fragment['ion_type'], 'no': fragment_no, 'charge': charge,
-                         'exp_mass': peak_mass, 'intensity': peak_intensity})
+                         'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity})
                     if peak_intensity > max_intensity:
                         max_intensity = float(peak_intensity)
         for row in row_list:
@@ -203,7 +215,30 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
     return temp_list
 
 
+def handle_multiple_matches(matched_peaks: list, sort_by: str = 'intensity'):
+    """
+    Here we handle if multiple peaks were matched to the same fragment ion.
+    We will resolve this based on the sort_by parameter.
+    :param matched_peaks: all matched peaks we have for the spectrum.
+    :param sort_by: choose how to sort peaks e.g. intensity, mass_diff
+    """
+    matched_peaks_df = pd.DataFrame(matched_peaks)
+    if sort_by == 'mass_diff':
+        matched_peaks_df['mass_diff'] = abs(matched_peaks_df['exp_mass'] - matched_peaks_df['theoretical_mass'])
+        matched_peaks_df = matched_peaks_df.sort_values(by='mass_diff', ascending=True)
+    else:
+        matched_peaks_df = matched_peaks_df.sort_values(by='intensity', ascending=False)
+
+    matched_peaks_df = matched_peaks_df.drop_duplicates(subset=['ion_type', 'no'], keep="first")
+    return matched_peaks_df
+
+
 def annotate_spectra(un_annot_spectra: pd.DataFrame):
+    """
+    The base method for annotating spectra.
+    :param un_annot_spectra: dataframe of raw peaks and metadata.
+    :return: List of annotated spectra.
+    """
     spectra_rows = []
     raw_file_annotations = []
     for row in un_annot_spectra.values:
@@ -218,10 +253,17 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     flatten = [item for sublist in results for item in sublist]
     raw_file_annotations.append(flatten)
     flatten = [item for sublist in raw_file_annotations for item in sublist]
-    return raw_file_annotations
+    return flatten
 
 
 def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
+    """
+    Generate the annotation matrix in the prosit format from matched peaks.
+    :param matched_peaks: matched peaks needed to be converted.
+    :param unmod_seq: Un modified peptide sequence
+    :param charge: Precursor charge
+    :return: numpy array of intensities and  numpy array of masses
+    """
     intensity = np.full(174, -1.0)
     mass = np.full(174, -1.0)
 
@@ -238,16 +280,22 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
         available_peaks = [index for index in peaks_range]
 
     intensity[available_peaks] = 0.0
-
     mass[available_peaks] = 0.0
-    for peak in matched_peaks:
-        if peak['ion_type'] == 'y':
-            peak_pos = (peak['no'] - 1) * 6 + (peak['charge'] - 1)
-        else:
-            peak_pos = (peak['no'] - 1) * 6 + (peak['charge'] - 1) + 3
 
-        intensity[peak_pos] = peak['intensity']
-        mass[peak_pos] = peak['exp_mass']
+    ion_type = matched_peaks.columns.get_loc("ion_type")
+    no_col = matched_peaks.columns.get_loc("no")
+    charge_col = matched_peaks.columns.get_loc("charge")
+    intensity_col = matched_peaks.columns.get_loc("intensity")
+    exp_mass_col = matched_peaks.columns.get_loc("exp_mass")
+
+    for peak in matched_peaks.values:
+        if peak[ion_type] == 'y':
+            peak_pos = (peak[no_col] - 1) * 6 + (peak[charge_col] - 1)
+        else:
+            peak_pos = (peak[no_col] - 1) * 6 + (peak[charge_col] - 1) + 3
+
+        intensity[peak_pos] = peak[intensity_col]
+        mass[peak_pos] = peak[exp_mass_col]
 
     if len(unmod_seq) < 30:
         mask_peaks = range((len(unmod_seq) - 1) * 6, ((len(unmod_seq) - 1) * 6) + 6)
@@ -257,12 +305,18 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
     return intensity, mass
 
 
-def parallel_annotate(row):
-    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(row['MODIFIED_SEQUENCE'], row['MASS_ANALYZER'],
-                                                                       row['CHARGE'])
-    matched_peaks = match_peaks(fragments_meta_data, row['intensity'], row['mz'], tmt_n_term, unmod_sequence,
-                                row['CHARGE'])
-    intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence, row['CHARGE'])
-    row['intensity'] = intensities
-    row['mz'] = mass
-    return row
+def parallel_annotate(spectrum):
+    """
+    Parallelize the annotation pipeline, here it should annotate spectra in different threads.
+    :param spectrum: spectrum to be annotated.
+    :return: annotated spectrum with meta data.
+    """
+    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum['MODIFIED_SEQUENCE'], spectrum['MASS_ANALYZER'],
+                                                                       spectrum['CHARGE'])
+    matched_peaks = match_peaks(fragments_meta_data, spectrum['intensity'], spectrum['mz'], tmt_n_term, unmod_sequence,
+                                spectrum['CHARGE'])
+    matched_peaks = handle_multiple_matches(matched_peaks)
+    intensities, mass, mass_theo = generate_annotation_matrix(matched_peaks, unmod_sequence, spectrum['CHARGE'])
+    spectrum['intensity_raw'] = intensities
+    spectrum['mass_exp'] = mass
+    return spectrum
