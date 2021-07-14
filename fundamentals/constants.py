@@ -1,3 +1,5 @@
+import numpy as np
+
 AA_ALPHABET = {
     "A": 1,
     "C": 2,
@@ -77,3 +79,14 @@ ATOM_MASSES = {
     'O': 15.9949146,
     'N': 14.003074,
 }
+
+# small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
+EPSILON = np.nextafter(0, 1)
+
+# peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+
+MAX_PEPTIDE_LEN = 30
+NUM_IONS = (MAX_PEPTIDE_LEN - 1)*2*3
+
+B_ION_MASK = np.tile([0,0,0,1,1,1], MAX_PEPTIDE_LEN - 1)
+Y_ION_MASK = np.tile([1,1,1,0,0,0], MAX_PEPTIDE_LEN - 1)
+
