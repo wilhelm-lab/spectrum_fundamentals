@@ -58,7 +58,8 @@ class TestSpectralAngle:
         vector2 = get_padded_array([  z,   z, 3.0, 4.0])
         np.testing.assert_almost_equal(sim.SimilarityMetrics.spectral_angle(vector1, vector2), 0.31872668904)
 
-class TestSpectralAngleMultiRow:
+
+class TestSpectralAngleMultipleRows:
     
     def test_l2_norm(self):
         vector1 = get_padded_array([1.0, 2.0, 3.0, 4.0])
@@ -76,8 +77,8 @@ class TestSpectralAngleMultiRow:
         
         vector1 = get_padded_array([2.0, 1.0, 3.0, 4.0]) # 1 - 2*arccos(28/30)/pi
         vector2 = get_padded_array([  z,   z, 3.0, 4.0]) # 1 - 2*arccos(12/25)/pi
-        vector3 = get_padded_array([  z,   z,   z,   z])
-        vector4 = get_padded_array([0.0, 0.0, 0.0, 0.0])
+        vector3 = get_padded_array([  z,   z,   z,   z]) # 0.0
+        vector4 = get_padded_array([0.0, 0.0, 0.0, 0.0]) # 0.0
         matrix2 = np.concatenate((vector1, vector2, vector3, vector4), axis = 0)
         
         np.testing.assert_almost_equal(sim.SimilarityMetrics.spectral_angle(matrix1, matrix2), np.array([0.76622811354, 0.31872668904, 0.0, 0.0]))
