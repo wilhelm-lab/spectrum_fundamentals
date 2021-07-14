@@ -94,7 +94,7 @@ docs = ["sphinx", "nbconvert", "jupyter-client", "ipykernel", "matplotlib", "nbf
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "dec40b2b2ab2a0c52030827e0d03130fefc8d1c83e19e61737501007e1aa8148"
+content-hash = "aecfe31e2c20f66735655c11bea05da0253668ea77cd30694d0105ba6780809d"
 
 [metadata.files]
 numpy = [

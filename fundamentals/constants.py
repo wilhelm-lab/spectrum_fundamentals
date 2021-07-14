@@ -1,6 +1,6 @@
 import numpy as np
 
-ALPHABET = {
+AA_ALPHABET = {
     "A": 1,
     "C": 2,
     "D": 3,
@@ -21,8 +21,25 @@ ALPHABET = {
     "V": 18,
     "W": 19,
     "Y": 20,
-    "M(ox)": 21,
-    "K(tm)": 22,
+}
+ALPHABET_MODS = {
+    "M(U:35)": 21,
+    "C(U:4)": 2,  ## TODO check why this has the same value as C
+    "K(U:737)": 22,
+    "S(U:21)": 25,
+    "T(U:21)": 26,
+    "Y(U:21)": 27
+}
+ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS}
+
+MAXQUANT_VAR_MODS = {
+    "M(ox)": "M(U:35)",
+    "M(Oxidation (M))": "M(U:35)",
+    "K(tm)": "K(U:737)",
+    "S(ph)": "S(U:21)",
+    "T(ph)": "T(U:21)",
+    "Y(ph)": "Y(U:21)",
+    "C(??)": "C(U:4)", # TODO Carbamidomethyl ##
 }
 
 AA_MASSES = {
@@ -67,8 +84,9 @@ ATOM_MASSES = {
 EPSILON = np.nextafter(0, 1)
 
 # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+
-NUM_IONS = 29*2*3
+MAX_PEPTIDE_LEN = 30
+NUM_IONS = (MAX_PEPTIDE_LEN - 1)*2*3
 
-B_ION_MASK = np.tile([0,0,0,1,1,1], 29)
-Y_ION_MASK = np.tile([1,1,1,0,0,0], 29)
+B_ION_MASK = np.tile([0,0,0,1,1,1], MAX_PEPTIDE_LEN - 1)
+Y_ION_MASK = np.tile([1,1,1,0,0,0], MAX_PEPTIDE_LEN - 1)
 
