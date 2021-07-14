@@ -32,30 +32,43 @@ class TestPercolator:
     def test_get_target_decoy_label_decoy(self):
         reverse = True
         np.testing.assert_equal(perc.Percolator.get_target_decoy_label(reverse), 0)
-        
+    
+    def test_get_aligned_predicted_retention_times_linear(self):
+        predicted_rts = [1, 2, 3, 4]
+        observed_rts = [2, 2.5, 3, 3.5]
+        np.testing.assert_almost_equal(perc.Percolator.get_aligned_predicted_retention_times(predicted_rts, observed_rts), [2, 2.5, 3, 3.5])
+    
+    def test_get_aligned_predicted_retention_times_squared(self):
+        predicted_rts = [1, 2, 3, 4]
+        observed_rts = [1, 4, 9, 16]
+        np.testing.assert_almost_equal(perc.Percolator.get_aligned_predicted_retention_times(predicted_rts, observed_rts), [1, 4, 9, 16])
+    
+    
     def test_calc(self):
-        cols = ['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'CHARGE', 'MASS', 'CALCULATED_MASS', 'SCORE', 'REVERSE', 'FRAGMENTATION', 'MASS_ANALYZER']
+        cols = ['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'SEQUENCE', 'CHARGE', 'MASS', 'CALCULATED_MASS', 'SCORE', 'REVERSE', 'FRAGMENTATION', 'MASS_ANALYZER', 'RETENTION_TIME', 'PREDICTED_RETENTION_TIME']
         perc_input = pd.DataFrame(columns=cols)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,7978,AAIGEATRL,2,900.50345678,900.50288029264,60.43600000000001,False,HCD,FTMS'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,7978,AAIGEATRL,AAIGEATRL,2,900.50345678,900.50288029264,60.43600000000001,False,HCD,FTMS,0.5,0.5'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12304,AAVPRAAFL,2,914.53379,914.53379,94.006,True,HCD,FTMS'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12304,AAVPRAAFL,AAVPRAAFL,2,914.53379,914.53379,94.006,True,HCD,FTMS,1,1.5'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12398,AAYFGVYDTAK,2,1204.5764,1204.5764,79.97399999999999,False,HCD,FTMS'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12398,AAYFGVYDTAK,AAYFGVYDTAK,2,1204.5764,1204.5764,79.97399999999999,False,HCD,FTMS,1.5,2.5'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,11716,AAYYHPSYL,2,1083.5025,1083.5025,99.919,False,HCD,FTMS'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,11716,AAYYHPSYL,AAYYHPSYL,2,1083.5025,1083.5025,99.919,False,HCD,FTMS,2,3.5'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,2,987.49852,987.49852,99.802,False,HCD,FTMS'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,99.802,False,HCD,FTMS,2.5,4.5'.split(','),
                       index=cols), ignore_index=True)
         perc_input['SCAN_NUMBER'] = perc_input['SCAN_NUMBER'].astype(int)
         perc_input['CHARGE'] = perc_input['CHARGE'].astype(int)
         perc_input['MASS'] = perc_input['MASS'].astype(float)
         perc_input['CALCULATED_MASS'] = perc_input['CALCULATED_MASS'].astype(float)
         perc_input['REVERSE'] = perc_input['REVERSE'] == "True"
+        perc_input['RETENTION_TIME'] = perc_input['RETENTION_TIME'].astype(float)
+        perc_input['PREDICTED_RETENTION_TIME'] = perc_input['PREDICTED_RETENTION_TIME'].astype(float)
         
         predicted_intensities = [[]]
         observed_intensities = [[]]
@@ -85,6 +98,12 @@ class TestPercolator:
         np.testing.assert_equal(percolator.metrics_val['HCD'][0], 1)
         np.testing.assert_equal(percolator.metrics_val['CID'][0], 0)
         
+        np.testing.assert_almost_equal(percolator.metrics_val['RT'][0], 0.5)
+        np.testing.assert_almost_equal(percolator.metrics_val['pred_RT'][0], 0.5)
+        np.testing.assert_almost_equal(percolator.metrics_val['abs_rt_diff'][0], 0.0)
+        
         # check label of second PSM (decoy)
         np.testing.assert_equal(percolator.metrics_val['Label'][1], 0)
-
+        
+        # check lowess fit of second PSM
+        np.testing.assert_almost_equal(percolator.metrics_val['abs_rt_diff'][1], 0.0)
