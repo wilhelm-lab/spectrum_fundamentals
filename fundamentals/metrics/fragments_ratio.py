@@ -219,6 +219,9 @@ class FragmentsRatio(Metric):
         return observation_state
     
     def calc(self):
+        """
+        Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe
+        """
         mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
         observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
         predicted_boolean = FragmentsRatio.make_boolean(self.pred_intensities, mask_observed_valid, cutoff = 0.05)
