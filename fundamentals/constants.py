@@ -97,10 +97,10 @@ B_ION_MASK = np.tile([0,0,0,1,1,1], MAX_PEPTIDE_LEN - 1)
 Y_ION_MASK = np.tile([1,1,1,0,0,0], MAX_PEPTIDE_LEN - 1)
 
 META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
-                   'CHARGE',
+                   'PRECURSOR_CHARGE',
                    'FRAGMENTATION',
                    'MASS_ANALYZER',
-                   'MASS',
+                   'PRECURSOR_MASS_EXP',
                    'SCORE',
                    'REVERSE']
 SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
