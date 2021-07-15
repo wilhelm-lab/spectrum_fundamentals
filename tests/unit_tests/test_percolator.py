@@ -80,7 +80,7 @@ class TestLda:
 class TestRetentionTimeAlignment:
     
     def test_get_aligned_predicted_retention_times_linear(self):
-        observed_rts =  np.linspace(0, 10, 10)*2 
+        observed_rts =  np.linspace(0, 10, 10)*2
         predicted_rts = np.linspace(1, 11, 10)
         predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5]) # observed = 2*(predicted - 1)
         np.testing.assert_almost_equal(perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all), [1, 3, 5, 7], decimal = 3)
@@ -90,8 +90,20 @@ class TestRetentionTimeAlignment:
         predicted_rts = np.linspace(1, 11, 10)
         predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5]) # observed = (predicted - 1)^2
         np.testing.assert_almost_equal(perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all), [1, 3, 5, 7], decimal = 3)
-    
-    
+
+    def test_sample_balanced_over_bins(self):
+        observed_rts = np.linspace(0, 10, 10) * 2 + 0.001 * np.random.random(10)
+        predicted_rts = np.linspace(1, 11, 10)
+        retention_time_df = pd.DataFrame()
+        retention_time_df['RETENTION_TIME'] = observed_rts
+        retention_time_df['PREDICTED_RETENTION_TIME'] = predicted_rts
+        sampled_index = perc.Percolator.sample_balanced_over_bins(retention_time_df, sample_size=3)
+        np.testing.assert_equal(len(sampled_index), 3)
+        np.testing.assert_equal(len(set(sampled_index)), 3)
+
+
+
+
 class TestPercolator:
     def test_get_scannr(self):
         np.testing.assert_equal(perc.Percolator.get_scannr(('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02', 7978)), 171184297275363)
