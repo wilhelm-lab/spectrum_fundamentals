@@ -3,8 +3,11 @@ import hashlib
 import numpy as np
 import pandas as pd
 from statsmodels.nonparametric.smoothers_lowess import lowess
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 from .metric import Metric
+from . import fragments_ratio as fr
+from . import similarity as sim
 
 
 class Percolator(Metric):
@@ -24,22 +27,26 @@ class Percolator(Metric):
     PREDICTED_RETENTION_TIME: predicted retention time by Prosit
     """
     metadata: pd.DataFrame
+    target_decoy_labels: np.array
+    input_type: str
+    fdr_cutoff: float
     
     def __init__(self, metadata, pred_intensities, true_intensities):
         self.metadata = metadata
+        self.input_type = "Prosit"
+        self.fdr_cutoff = 0.01
         super().__init__(pred_intensities, true_intensities)
-    
+        
     @staticmethod    
-    def get_aligned_predicted_retention_times(predicted_retention_times, observed_retention_times, xvals = []):
+    def get_aligned_predicted_retention_times(observed_retention_times_fdr_filtered, predicted_retention_times_fdr_filtered, predicted_retention_times_all):
         """
         Use IRT value here
         """
-        if len(xvals) > 0:
-            aligned_rts = lowess(observed_retention_times, predicted_retention_times, xvals = xvals)
-        else:
-            aligned_rts = lowess(observed_retention_times, predicted_retention_times)
-        print(aligned_rts)
-        aligned_rts_observed, aligned_rts_predicted = zip(*aligned_rts)
+        # don't use the iterative reweighting (it > 1), this result in NaNs
+        aligned_rts_predicted = lowess(observed_retention_times_fdr_filtered, predicted_retention_times_fdr_filtered, xvals = predicted_retention_times_all, frac = 0.5, it = 0)
+        # TODO: filter out datapoints with large residuals
+        # TODO: use Akaike information criterion to choose a good value for frac
+        # TODO; test for NaNs and use interpolation to fill them up
         return aligned_rts_predicted
 
     @staticmethod
@@ -94,20 +101,11 @@ class Percolator(Metric):
         :return: target/decoy label for percolator, 1 = Target, 0 = Decoy
         """
         return 0 if reverse else 1
-
-    def calc(self):
+    
+    def add_common_features(self):
         """
-        Adds percolator metadata and feature columns to metrics_val based on PSM metadata
+        Add features used by both Andromeda and Prosit feature scoring sets
         """
-        # PSM metadata
-        self.metrics_val['SpecId'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'CHARGE']].apply(Percolator.get_specid, axis=1)
-        self.metrics_val['Label'] = self.metadata['REVERSE'].apply(Percolator.get_target_decoy_label)
-        self.metrics_val['ScanNr'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER']].apply(Percolator.get_scannr, axis = 1)
-        self.metrics_val['ExpMass'] = self.metadata['MASS']
-        self.metrics_val['Peptide'] = self.metadata['MODIFIED_SEQUENCE']
-        self.metrics_val['Protein'] = self.metadata['MODIFIED_SEQUENCE'] # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
-        
-        # PSM features
         self.metrics_val['missedCleavages'] = self.metadata['SEQUENCE'].apply(Percolator.count_missed_cleavages)
         self.metrics_val['KR'] = self.metadata['SEQUENCE'].apply(Percolator.count_arginines_and_lysines)
         self.metrics_val['sequence_length'] = self.metadata['SEQUENCE'].apply(lambda x : len(x))
@@ -124,10 +122,90 @@ class Percolator(Metric):
         self.metrics_val['UnknownFragmentationMethod'] = (~self.metadata['FRAGMENTATION'].isin(['HCD', 'CID'])).astype(int)
         self.metrics_val['HCD'] = (self.metadata['FRAGMENTATION'] == 'HCD').astype(int)
         self.metrics_val['CID'] = (self.metadata['FRAGMENTATION'] == 'CID').astype(int)
+    
+    def add_percolator_metadata_columns(self):
+        """
+        Add metadata columns needed by percolator, e.g. to identify a PSM
+        """
+        self.metrics_val['SpecId'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'CHARGE']].apply(Percolator.get_specid, axis=1)
+        self.metrics_val['Label'] = self.target_decoy_labels
+        self.metrics_val['ScanNr'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER']].apply(Percolator.get_scannr, axis = 1)
+        self.metrics_val['ExpMass'] = self.metadata['MASS']
+        self.metrics_val['Peptide'] = self.metadata['MODIFIED_SEQUENCE']
+        self.metrics_val['Protein'] = self.metadata['MODIFIED_SEQUENCE'] # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+    
+    def apply_lda_and_get_indices_below_fdr(self, initial_scoring_feature = 'spectral_angle', fdr_cutoff = 0.01):
+        """
+        Applies a linear discriminant analysis on the features calculated so far (before retention time alignment) to estimate false discovery rates (FDRs).
+        """
+        target_idxs_below_fdr = self.get_indices_below_fdr(initial_scoring_feature, fdr_cutoff = fdr_cutoff)
+        decoy_idxs = np.argwhere(self.target_decoy_labels == 0).flatten()
         
-        self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
-        self.metrics_val['pred_RT'] = self.metadata['PREDICTED_RETENTION_TIME']
-        aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(self.metadata['PREDICTED_RETENTION_TIME'], self.metadata['RETENTION_TIME'])
-        print(aligned_predicted_rts)
-        self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
+        lda_idxs = np.concatenate((target_idxs_below_fdr, decoy_idxs)).astype(int)
+        
+        X = self.metrics_val.iloc[lda_idxs, :].to_numpy()
+        y = self.target_decoy_labels[lda_idxs]
+        
+        lda = LinearDiscriminantAnalysis()
+        lda.fit(X, y)
+        
+        self.metrics_val['lda_scores'] = lda.decision_function(self.metrics_val.to_numpy())
+        
+        return self.get_indices_below_fdr('lda_scores', fdr_cutoff = fdr_cutoff)
+        
+    def get_indices_below_fdr(self, feature_name, fdr_cutoff = 0.01):
+        scores_df = self.metrics_val[[feature_name]]
+        scores_df['Label'] = self.target_decoy_labels
+        scores_df = scores_df.sort_values(feature_name, ascending = False)
+        
+        scores_df['fdr'] = Percolator.calculate_fdrs(scores_df['Label'])
+        
+        # filter for targets only
+        scores_df = scores_df[scores_df['Label'] == 1]
+        
+        accepted_indices = scores_df.index[scores_df['fdr'] < fdr_cutoff]
+        if len(accepted_indices) == 0:
+            return np.array([])
+        
+        return np.sort(scores_df.index[:accepted_indices.max()])
+    
+    @staticmethod
+    def calculate_fdrs(sorted_labels):
+        cumulative_decoy_count = np.cumsum(~(sorted_labels.astype(bool))) + 1
+        cumulative_target_count = np.cumsum(sorted_labels) + 1
+        return cumulative_decoy_count / cumulative_target_count
+    
+    def calc(self):
+        """
+        Adds percolator metadata and feature columns to metrics_val based on PSM metadata
+        """
+        self.add_common_features()
+        
+        self.target_decoy_labels = self.metadata['REVERSE'].apply(Percolator.get_target_decoy_label).to_numpy()
+        
+        # add Prosit or Andromeda features
+        if self.input_type == "Prosit":
+            fragmentsRatio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
+            fragmentsRatio.calc()
+            
+            similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities)
+            similarity.calc()
+            
+            self.metrics_val = pd.concat([self.metrics_val, fragmentsRatio.metrics_val, similarity.metrics_val], axis = 1)
+            
+            idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff = self.fdr_cutoff)
+            aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
+                    self.metadata['RETENTION_TIME'][idxs_below_lda_fdr],
+                    self.metadata['PREDICTED_RETENTION_TIME'][idxs_below_lda_fdr], 
+                    self.metadata['PREDICTED_RETENTION_TIME'])
+            print(aligned_predicted_rts)
+            self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
+            self.metrics_val['pred_RT'] = self.metadata['PREDICTED_RETENTION_TIME']
+            self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
+        else:
+            pass
+            #self.metrics_val['andromeda'] = None
+            #self.metrics_val['delta_score'] = None
+            
+        self.add_percolator_metadata_columns()
         
