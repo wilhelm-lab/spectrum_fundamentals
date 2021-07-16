@@ -62,26 +62,26 @@ def get_modifications(peptide_sequence):
     while '(' in peptide_sequence:
         if "(" in peptide_sequence:
             modification_index = peptide_sequence.index('(')
-            if peptide_sequence[modification_index:modification_index + 4] == '(U:737)':
+            if peptide_sequence[modification_index:modification_index + 7] == '(U:737)':
                 if modification_index - 1 in modification_deltas:
                     modification_deltas.update(
                         {modification_index - 1: modification_deltas[modification_index - 1] + constants.MOD_MASSES[
                             'TMT_6']})
                 else:
                     modification_deltas.update({modification_index - 1: constants.MOD_MASSES['TMT_6']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 4:]
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 7:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 4] == '(U:35)':
+            elif peptide_sequence[modification_index:modification_index + 6] == '(U:35)':
                 modification_deltas.update({modification_index - 1: constants.ATOM_MASSES['O']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 4:]
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 6:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 4] == '(U:21)':
+            elif peptide_sequence[modification_index:modification_index + 6] == '(U:21)':
                 modification_deltas.update({modification_index - 1: constants.MOD_MASSES['Phospho']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 4:]
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 6:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 4] == '(U:4)':
+            elif peptide_sequence[modification_index:modification_index + 5] == '(U:4)':
                 modification_deltas.update({modification_index - 1: constants.MOD_MASSES['Carbomedomethyl']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 4:]
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 5:]
                 count_mod -= 1
     return modification_deltas, tmt_n_term, peptide_sequence
 
@@ -157,8 +157,8 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                     min_mass = mass - 0.5
                     max_mass = mass + 0.5
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
-                                            'theoretical_mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
-        fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('theoretical_mass'))
+                                            'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
+        fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('mass'))
     return fragments_meta_data, tmt_n_term, peptide_sequence
 
 
@@ -190,10 +190,7 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
             if peak_mass > max_mass:
                 break
             if peak_mass < min_mass:
-                for row in row_list:
-                    row['intensity'] = float(row['intensity']) / max_intensity
-                    temp_list.append(row)
-                return temp_list
+                start_peak+=1
             if min_mass <= peak_mass <= max_mass:
                 if fragment['ion_type'] == 'b' and fragment_no == 1:
                     if (unmod_sequence[0] == 'R' or unmod_sequence[0] == 'H' or unmod_sequence[0] == 'K') and (
@@ -209,9 +206,10 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                          'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity})
                     if peak_intensity > max_intensity:
                         max_intensity = float(peak_intensity)
-        for row in row_list:
-            row['intensity'] = float(row['intensity']) / max_intensity
-            temp_list.append(row)
+                start_peak+=1
+    for row in row_list:
+        row['intensity'] = float(row['intensity']) / max_intensity
+        temp_list.append(row)
     return temp_list
 
 
@@ -239,21 +237,11 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     :param un_annot_spectra: dataframe of raw peaks and metadata.
     :return: List of annotated spectra.
     """
-    spectra_rows = []
     raw_file_annotations = []
     for row in un_annot_spectra.values:
-        spectra_rows.append(row)
-        if len(spectra_rows) % 2400 == 0:
-            results = Parallel(n_jobs=NUM_CORES)(delayed(parallel_annotate)(row) for row in spectra_rows)
-            flatten = [item for sublist in results for item in sublist]
-            raw_file_annotations.append(flatten)
-            spectra_rows = []
-
-    results = Parallel(n_jobs=NUM_CORES)(delayed(parallel_annotate)(row) for row in spectra_rows)
-    flatten = [item for sublist in results for item in sublist]
-    raw_file_annotations.append(flatten)
-    flatten = [item for sublist in raw_file_annotations for item in sublist]
-    return flatten
+            results = parallel_annotate(row)
+            raw_file_annotations.append(results)
+    return raw_file_annotations
 
 
 def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
@@ -311,12 +299,10 @@ def parallel_annotate(spectrum):
     :param spectrum: spectrum to be annotated.
     :return: annotated spectrum with meta data.
     """
-    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum['MODIFIED_SEQUENCE'], spectrum['MASS_ANALYZER'],
-                                                                       spectrum['CHARGE'])
-    matched_peaks = match_peaks(fragments_meta_data, spectrum['intensity'], spectrum['mz'], tmt_n_term, unmod_sequence,
-                                spectrum['CHARGE'])
+    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum[2], spectrum[8],
+                                                                       spectrum[3])
+    matched_peaks = match_peaks(fragments_meta_data, spectrum[-2], spectrum[-1], tmt_n_term, unmod_sequence,
+                                spectrum[3])
     matched_peaks = handle_multiple_matches(matched_peaks)
-    intensities, mass, mass_theo = generate_annotation_matrix(matched_peaks, unmod_sequence, spectrum['CHARGE'])
-    spectrum['intensity_raw'] = intensities
-    spectrum['mass_exp'] = mass
-    return spectrum
+    intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence, spectrum[3])
+    return intensities,mass

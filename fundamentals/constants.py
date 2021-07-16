@@ -33,13 +33,11 @@ ALPHABET_MODS = {
 ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS}
 
 MAXQUANT_VAR_MODS = {
-    "M(ox)": "M(U:35)",
-    "M(Oxidation (M))": "M(U:35)",
-    "K(tm)": "K(U:737)",
-    "S(ph)": "S(U:21)",
-    "T(ph)": "T(U:21)",
-    "Y(ph)": "Y(U:21)",
-    "C(??)": "C(U:4)", # TODO Carbamidomethyl ##
+    "(ox)": "(U:35)",
+    "(Oxidation (M))": "(U:35)",
+    "(tm)": "(U:737)",
+    "(ph)": "(U:21)",
+    "(??)": "(U:4)", # TODO Carbamidomethyl ##
 }
 
 AA_MASSES = {
@@ -96,12 +94,18 @@ NUM_IONS = (MAX_PEPTIDE_LEN - 1)*2*3
 B_ION_MASK = np.tile([0,0,0,1,1,1], MAX_PEPTIDE_LEN - 1)
 Y_ION_MASK = np.tile([1,1,1,0,0,0], MAX_PEPTIDE_LEN - 1)
 
-Meta_Data_Columns=['RAW_FILE',
-                   'SCAN_NUMBER',
-                   'MODIFIED_SEQUENCE',
+META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
                    'CHARGE',
                    'FRAGMENTATION',
                    'MASS_ANALYZER',
                    'MASS',
                    'SCORE',
                    'REVERSE']
+SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
+Meta_Data_Columns = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
+MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ']
+MZML_DATA_COLUMNS =  SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
+
+SPECTRONAUT_MODS = {
+    "M(U:35)" : "oM"
+}
