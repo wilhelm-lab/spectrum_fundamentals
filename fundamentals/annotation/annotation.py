@@ -241,7 +241,11 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     for row in un_annot_spectra.values:
             results = parallel_annotate(row)
             raw_file_annotations.append(results)
-    return raw_file_annotations
+    results_df= pd.DataFrame()
+    results_df = results_df.append(raw_file_annotations)
+    results_df.columns = ["INTENSITIES", "MZ"]
+
+    return results_df
 
 
 def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
