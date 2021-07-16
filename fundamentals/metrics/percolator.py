@@ -32,10 +32,10 @@ class Percolator(Metric):
     input_type: str
     fdr_cutoff: float
 
-    def __init__(self, metadata, pred_intensities, true_intensities):
+    def __init__(self, metadata, pred_intensities, true_intensities, input_type, fdr_cutoff=0.01):
         self.metadata = metadata
-        self.input_type = "Prosit"
-        self.fdr_cutoff = 0.01
+        self.input_type = input_type
+        self.fdr_cutoff = fdr_cutoff
         super().__init__(pred_intensities, true_intensities)
 
     @staticmethod
