@@ -53,34 +53,34 @@ def get_modifications(peptide_sequence):
     """
     modification_deltas = {}
     tmt_n_term = 1
-    if peptide_sequence[:4] == '(U:737)':
+    if peptide_sequence[:4] == '(U:737)':   # TMT_6
         tmt_n_term = 2
-        modification_deltas.update({0: constants.MOD_MASSES['TMT_6']})
+        modification_deltas.update({0: constants.MOD_MASSES['(U:737)']})
         peptide_sequence = peptide_sequence[4:]
 
     count_mod = peptide_sequence.count('(')
     while '(' in peptide_sequence:
         if "(" in peptide_sequence:
             modification_index = peptide_sequence.index('(')
-            if peptide_sequence[modification_index:modification_index + 7] == '(U:737)':
+            if peptide_sequence[modification_index:modification_index + 7] == '(U:737)':    # TMT_6
                 if modification_index - 1 in modification_deltas:
                     modification_deltas.update(
                         {modification_index - 1: modification_deltas[modification_index - 1] + constants.MOD_MASSES[
-                            'TMT_6']})
+                            '(U:737)']})
                 else:
-                    modification_deltas.update({modification_index - 1: constants.MOD_MASSES['TMT_6']})
+                    modification_deltas.update({modification_index - 1: constants.MOD_MASSES['(U:737)']})
                 peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 7:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 6] == '(U:35)':
-                modification_deltas.update({modification_index - 1: constants.ATOM_MASSES['O']})
+            elif peptide_sequence[modification_index:modification_index + 6] == '(U:35)':   # Oxidation
+                modification_deltas.update({modification_index - 1: constants.ATOM_MASSES['(U:35)']})
                 peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 6:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 6] == '(U:21)':
-                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['Phospho']})
+            elif peptide_sequence[modification_index:modification_index + 6] == '(U:21)':   # Phospho
+                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['(U:21)']})
                 peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 6:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 5] == '(U:4)':
-                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['Carbomedomethyl']})
+            elif peptide_sequence[modification_index:modification_index + 5] == '(U:4)':    # Carbomedomethyl
+                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['(U:4)']})
                 peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 5:]
                 count_mod -= 1
     return modification_deltas, tmt_n_term, peptide_sequence
