@@ -51,7 +51,8 @@ class Percolator(Metric):
 
         # sample a subset in each bin. Arbitrary target is 5000 datapoints spread over the bin counts
         points_per_bin = int(np.floor(sample_size / len(break_points)))
-        retention_time_df = retention_time_df.groupby('rt_bin_index').apply(lambda x: pd.DataFrame.sample(x, n=min(points_per_bin, len(x)), replace=False))
+        retention_time_df = retention_time_df.groupby('rt_bin_index').apply(
+            lambda x: pd.DataFrame.sample(x, n=min(points_per_bin, len(x)), replace=False))
         return retention_time_df.reset_index(level=0, drop=True).index
 
     @staticmethod
@@ -79,6 +80,30 @@ class Percolator(Metric):
         raw_file, scan_number = metadata_subset
         s = "{}{}".format(raw_file, scan_number).encode()
         return int(hashlib.sha224(s).hexdigest()[:12], 16)
+
+    @staticmethod
+    def get_delta_score(
+            scores_df: pd.DataFrame,
+            scoring_feature: str
+    ):
+        """
+        Calculates delta scores by sorting (from high to low) and grouping PSMs by scan number. Inside each group the delta scores are
+        calculated per PSM to the next best of that group. The lowest scoring PSM of each group receives a delta score of 0.
+        :param scores_df: must contain two columns: scoring_feature (eg. 'spectral_angle') and 'ScanNr'
+        :param scoring_feature: feature name to get the delta scores of
+        :return: numpy array of delta scores
+        """
+        # TODO: sort after grouping?
+        scores_df.sort_values(by=scoring_feature, ascending=True, inplace=True)
+        groups = scores_df.groupby(["ScanNr"])
+        t = groups.apply(lambda scores_df_: scores_df_[scoring_feature] - scores_df_[scoring_feature].shift(1))
+        # apply doesnt work for one group only
+        if len(groups) == 1:
+            raise NotImplementedError
+        scores_df['delta_' + scoring_feature] = pd.Series(t.reset_index(level=0, drop=True))
+        scores_df.fillna(0, inplace=True)
+        scores_df.sort_index(inplace=True)
+        return scores_df['delta_' + scoring_feature].to_numpy()
 
     @staticmethod
     def get_specid(metadata_subset):
@@ -216,7 +241,8 @@ class Percolator(Metric):
             self.metrics_val = pd.concat([self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1)
 
             idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
-            sampled_idxs = self.sample_balanced_over_bins(self.metadata[['RETENTION_TIME', 'PREDICTED_RETENTION_TIME']].iloc[idxs_below_lda_fdr, :])
+            sampled_idxs = Percolator.sample_balanced_over_bins(
+                self.metadata[['RETENTION_TIME', 'PREDICTED_RETENTION_TIME']].iloc[idxs_below_lda_fdr, :])
             aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
                 self.metadata['RETENTION_TIME'][sampled_idxs],
                 self.metadata['PREDICTED_RETENTION_TIME'][sampled_idxs],
@@ -227,8 +253,10 @@ class Percolator(Metric):
             self.metrics_val['pred_RT'] = self.metadata['PREDICTED_RETENTION_TIME']
             self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
         else:
-            pass
-            # self.metrics_val['andromeda'] = None
-            # self.metrics_val['delta_score'] = None
+            self.metrics_val['andromeda'] = self.metadata['SCORE']
 
         self.add_percolator_metadata_columns()
+        if self.input_type == 'Prosit':
+            self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr', 'spectral_angle']], 'spectral_angle')
+        else:
+            self.metrics_val['andromeda_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr', 'andromeda']], 'andromeda')

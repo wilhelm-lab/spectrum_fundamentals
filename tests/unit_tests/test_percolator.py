@@ -130,7 +130,13 @@ class TestPercolator:
     def test_get_target_decoy_label_decoy(self):
         reverse = True
         np.testing.assert_equal(perc.Percolator.get_target_decoy_label(reverse), 0)
-    
+
+    def test_get_delta_score(self):
+        df = pd.DataFrame()
+        df['spectral_angle'] = [100, 80, 40, 50, 300, 10]
+        df['ScanNr'] = [1, 1, 1, 2, 2, 2]
+        np.testing.assert_equal(perc.Percolator.get_delta_score(df, 'spectral_angle'), np.array([20, 40, 0, 40, 250, 0]))
+
     def test_calc(self):
         cols = ['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'SEQUENCE', 'CHARGE', 'MASS', 'CALCULATED_MASS', 'SCORE', 'REVERSE', 'FRAGMENTATION', 'MASS_ANALYZER', 'RETENTION_TIME', 'PREDICTED_RETENTION_TIME']
         perc_input = pd.DataFrame(columns=cols)
@@ -224,6 +230,8 @@ class TestPercolator:
         np.testing.assert_almost_equal(percolator.metrics_val['abs_rt_diff'][1], 0.0, decimal = 3)
         # TODO: figure out why this test fails
         #np.testing.assert_almost_equal(percolator.metrics_val['abs_rt_diff'][2], 0.0, decimal = 3)
+        np.testing.assert_equal(percolator.metrics_val['spectral_angle_delta_score'][0], 0.0)
+
 
 def get_padded_array(l, padding_value = 0):
     return np.array([np.pad(l, (0, constants.NUM_IONS - len(l)), 'constant', constant_values=padding_value)])
