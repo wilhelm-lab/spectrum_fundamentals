@@ -16,6 +16,7 @@ class SimilarityMetrics(Metric):
         """
         epsilon = 1e-7
         
+        # TODO: clean this up
         if False:
             observed_peaks = np.argwhere(observed_intensities > constants.EPSILON)
             predicted_peaks = np.argwhere(predicted_intensities > constants.EPSILON)
