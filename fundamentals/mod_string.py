@@ -1,5 +1,5 @@
-from typing import List, Dict, Optional, Union
-from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES
+from typing import List, Dict, Optional, Union, Tuple
+from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES, MOD_NAMES
 import numpy as np
 import re
 
@@ -100,3 +100,43 @@ def internal_to_mod_mass(
     regex = re.compile("(%s)" % "|".join(map(re.escape, MOD_MASSES.keys())))
     replacement_func = lambda match: f"[+{MOD_MASSES[match.string[match.start():match.end()]]}]"
     return [regex.sub(replacement_func, seq) for seq in sequences]
+
+def internal_to_mod_names(
+    sequences: List[str],
+) -> List[Tuple[str, str]]:
+    """
+    Function to translate an internal modstring to MSP format
+    :param sequences: List[str] of sequences
+    :return: List[Tuple[str, str] of mod summary and mod sequences.
+    """
+    match_list = []
+    pos = [0]
+    offset = [0]
+
+    def msp_string_mapper(seq: str):
+        """
+        Internal function to create the mod summary and mod_string from given sequence and match_list
+        :param seq: The sequence to modify.
+        :return Tuple with mod summary and mod_string
+        """
+        seq = regex.sub(replace_and_store, seq)
+        mod_string = f"{seq}//{'; '.join([f'{name}@{seq[pos]}{pos}' for name, pos in match_list])}"
+        mod = f"{len(match_list)}/{'/'.join([f'{pos},{seq[pos]},{name}' for name, pos in match_list])}"
+        pos[0] = 0
+        offset[0] = 0
+        match_list.clear()
+        return mod, mod_string
+
+    def replace_and_store(match: re.Match):
+        """
+        Internal function that removes matched internal mods and stores there position in the sequence.
+        :param match: an re.Match object found by re.sub
+        """
+        pos[0] = match.start() - 1 - offset[0]
+        offset[0] += match.end() - match.start()
+        match_list.append((MOD_NAMES[match.string[match.start():match.end()]], pos[0]))
+        return ""
+
+
+    regex = re.compile("(%s)" % "|".join(map(re.escape, MOD_NAMES.keys())))
+    return [msp_string_mapper(seq) for seq in sequences]
