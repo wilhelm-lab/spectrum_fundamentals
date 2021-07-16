@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Union
-from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS
+from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES
 import numpy as np
 import re
 
@@ -84,7 +84,19 @@ def internal_without_mods(
     :param sequences: List[str] of sequences
     :return: List[str] of modified sequences.
     """
-    regex = "\(U:.+?\)"
+    regex = "\(U:.+?\)|[.+?]"
     if remove_underscores:
         regex += '|_'
     return [re.sub(regex, "", seq) for seq in sequences]
+
+def internal_to_mod_mass(
+    sequences: List[str],
+) -> List[str]:
+    """
+    Function to exchange the internal mod identifiers with the masses of the specific modifiction.
+    :param sequences: List[str] of sequences
+    :return List[str] of modified sequences.
+    """
+    regex = re.compile("(%s)" % "|".join(map(re.escape, MOD_MASSES.keys())))
+    replacement_func = lambda match: f"[+{MOD_MASSES[match.string[match.start():match.end()]]}]"
+    return [regex.sub(replacement_func, seq) for seq in sequences]

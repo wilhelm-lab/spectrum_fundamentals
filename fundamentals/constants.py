@@ -65,9 +65,10 @@ AA_MASSES = {
 }
 
 MOD_MASSES = {
-    'TMT_6': 229.162932,
-    'Phospho': 79.966331,
-    'Carbomedomethyl': 57.02146,
+    '(U:737)': 229.162932,  # TMT_6
+    '(U:21)': 79.966331,  # Phospho
+    '(U:4)': 57.02146,   # Carbomedomethyl
+    '(U:35)': 15.9949146    # Oxidation
 }
 
 # initialize other masses
