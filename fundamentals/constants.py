@@ -37,7 +37,7 @@ MAXQUANT_VAR_MODS = {
     "(Oxidation (M))": "(U:35)",
     "(tm)": "(U:737)",
     "(ph)": "(U:21)",
-    "(??)": "(U:4)", # TODO Carbamidomethyl ##
+    "(??)": "(U:4)",  # TODO Carbamidomethyl ##
 }
 
 AA_MASSES = {
@@ -89,23 +89,23 @@ EPSILON = np.nextafter(0, 1)
 
 # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+
 MAX_PEPTIDE_LEN = 30
-NUM_IONS = (MAX_PEPTIDE_LEN - 1)*2*3
+NUM_IONS = (MAX_PEPTIDE_LEN - 1) * 2 * 3
 
-B_ION_MASK = np.tile([0,0,0,1,1,1], MAX_PEPTIDE_LEN - 1)
-Y_ION_MASK = np.tile([1,1,1,0,0,0], MAX_PEPTIDE_LEN - 1)
+B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], MAX_PEPTIDE_LEN - 1)
+Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], MAX_PEPTIDE_LEN - 1)
 
 META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
-                   'CHARGE',
-                   'FRAGMENTATION',
-                   'MASS_ANALYZER',
-                   'MASS',
-                   'SCORE',
-                   'REVERSE']
+                          'PRECURSOR_CHARGE',
+                          'FRAGMENTATION',
+                          'MASS_ANALYZER',
+                          'MASS',
+                          'SCORE',
+                          'REVERSE']
 SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
 Meta_Data_Columns = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
 MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ']
-MZML_DATA_COLUMNS =  SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
+MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
 
 SPECTRONAUT_MODS = {
-    "M(U:35)" : "oM"
+    "M(U:35)": "oM"
 }

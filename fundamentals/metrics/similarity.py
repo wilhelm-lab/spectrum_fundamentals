@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse
+import scipy.sparse.linalg
 
 from .metric import Metric
 from .. import constants

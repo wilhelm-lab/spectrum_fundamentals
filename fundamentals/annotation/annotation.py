@@ -9,7 +9,6 @@ from fundamentals import constants
 MIN_CHARGE = 1
 NUM_CORES = 5
 
-
 def maxquant_parser(p):
     if p[0] == "(":
         p = p[4] + p[:4] + p[5:]
@@ -238,8 +237,17 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     :return: List of annotated spectra.
     """
     raw_file_annotations = []
+    # modified_sequence_column = un_annot_spectra.columns.get_loc('MODIFIED_SEQUENCE')
+    # mass_analyzer_column = un_annot_spectra.columns.get_loc('MASS_ANALYZER')
+    # charge_column = un_annot_spectra.columns.get_loc('PRECURSOR_CHARGE')
+    # peaks_intensities_column = un_annot_spectra.columns.get_loc('INTENSITIES')
+    # peaks_mz_column = un_annot_spectra.columns.get_loc('MZ')
+    #
+    # index_columns = {'mod_sequence'}
+
+    index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-            results = parallel_annotate(row)
+            results = parallel_annotate(row, index_columns)
             raw_file_annotations.append(results)
     results_df= pd.DataFrame()
     results_df = results_df.append(raw_file_annotations)
@@ -286,6 +294,8 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
         else:
             peak_pos = (peak[no_col] - 1) * 6 + (peak[charge_col] - 1) + 3
 
+        if peak_pos >= 174:
+            break
         intensity[peak_pos] = peak[intensity_col]
         mass[peak_pos] = peak[exp_mass_col]
 
@@ -297,16 +307,20 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
     return intensity, mass
 
 
-def parallel_annotate(spectrum):
+def parallel_annotate(spectrum, index_columns):
     """
     Parallelize the annotation pipeline, here it should annotate spectra in different threads.
     :param spectrum: spectrum to be annotated.
     :return: annotated spectrum with meta data.
     """
-    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum[2], spectrum[8],
-                                                                       spectrum[3])
-    matched_peaks = match_peaks(fragments_meta_data, spectrum[-2], spectrum[-1], tmt_n_term, unmod_sequence,
-                                spectrum[3])
+    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum[index_columns['MODIFIED_SEQUENCE']], spectrum[index_columns['MASS_ANALYZER']],
+                                                                       spectrum[index_columns['PRECURSOR_CHARGE']])
+    matched_peaks = match_peaks(fragments_meta_data, spectrum[index_columns['INTENSITIES']], spectrum[index_columns['MZ']], tmt_n_term, unmod_sequence,
+                                spectrum[index_columns['PRECURSOR_CHARGE']])
+    if len(matched_peaks) == 0:
+        intensity = np.full(174, 0.0)
+        mass = np.full(174, 0.0)
+        return intensity, mass
     matched_peaks = handle_multiple_matches(matched_peaks)
-    intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence, spectrum[3])
+    intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence, spectrum[index_columns['PRECURSOR_CHARGE']])
     return intensities,mass

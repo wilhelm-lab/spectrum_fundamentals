@@ -259,7 +259,8 @@ class FragmentsRatio(Metric):
         
         
         # fractional count metrics
-        self.metrics_val['fraction_predicted'] = self.metrics_val['count_predicted'] / valid_ions
+        print(self.metrics_val['count_predicted'])
+        self.metrics_val['fraction_predicted'] = self.metrics_val['count_predicted'].values / valid_ions
         self.metrics_val['fraction_predicted_b'] = self.metrics_val['count_predicted_b'] / valid_ions_b
         self.metrics_val['fraction_predicted_y'] = self.metrics_val['count_predicted_y'] / valid_ions_y
         

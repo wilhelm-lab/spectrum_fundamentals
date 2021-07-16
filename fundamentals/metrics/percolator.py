@@ -11,6 +11,8 @@ from . import fragments_ratio as fr
 from . import similarity as sim
 
 
+
+
 class Percolator(Metric):
     """
     Expects the following metadata columns:
@@ -63,8 +65,8 @@ class Percolator(Metric):
         """
 
         # don't use the iterative reweighting (it > 1), this result in NaNs
-        aligned_rts_predicted = lowess(observed_retention_times_fdr_filtered, predicted_retention_times_fdr_filtered,
-                                       xvals=predicted_retention_times_all, frac=0.5, it=0)
+        aligned_rts_predicted = lowess(observed_retention_times_fdr_filtered.astype(np.float), predicted_retention_times_fdr_filtered.astype(np.float),
+                                       xvals=predicted_retention_times_all.astype(np.float), frac=0.5, it=0)
         # TODO: filter out datapoints with large residuals
         # TODO: use Akaike information criterion to choose a good value for frac
         # TODO; test for NaNs and use interpolation to fill them up
@@ -161,8 +163,8 @@ class Percolator(Metric):
         self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference_ppm, axis=1)
         self.metrics_val['absDeltaM_ppm'] = np.abs(self.metrics_val['deltaM_ppm'])
 
-        self.metrics_val['Charge2'] = (self.metadata['CHARGE'] == 2).astype(int)
-        self.metrics_val['Charge3'] = (self.metadata['CHARGE'] == 3).astype(int)
+        self.metrics_val['Charge2'] = (self.metadata['PRECURSOR_CHARGE'] == 2).astype(int)
+        self.metrics_val['Charge3'] = (self.metadata['PRECURSOR_CHARGE'] == 3).astype(int)
 
         self.metrics_val['UnknownFragmentationMethod'] = (~self.metadata['FRAGMENTATION'].isin(['HCD', 'CID'])).astype(int)
         self.metrics_val['HCD'] = (self.metadata['FRAGMENTATION'] == 'HCD').astype(int)
@@ -172,7 +174,7 @@ class Percolator(Metric):
         """
         Add metadata columns needed by percolator, e.g. to identify a PSM
         """
-        self.metrics_val['SpecId'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'CHARGE']].apply(Percolator.get_specid,
+        self.metrics_val['SpecId'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'PRECURSOR_CHARGE']].apply(Percolator.get_specid,
                                                                                                                      axis=1)
         self.metrics_val['Label'] = self.target_decoy_labels
         self.metrics_val['ScanNr'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER']].apply(Percolator.get_scannr, axis=1)
@@ -232,7 +234,7 @@ class Percolator(Metric):
 
         # add Prosit or Andromeda features
         if self.input_type == "Prosit":
-            fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
+            fragments_ratio = fr.FragmentsRatio(np.array(self.pred_intensities.todense()), np.array(self.true_intensities.todense()))
             fragments_ratio.calc()
 
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities)
@@ -242,15 +244,15 @@ class Percolator(Metric):
 
             idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
             sampled_idxs = Percolator.sample_balanced_over_bins(
-                self.metadata[['RETENTION_TIME', 'PREDICTED_RETENTION_TIME']].iloc[idxs_below_lda_fdr, :])
+                self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']].iloc[idxs_below_lda_fdr, :])
             aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
                 self.metadata['RETENTION_TIME'][sampled_idxs],
-                self.metadata['PREDICTED_RETENTION_TIME'][sampled_idxs],
-                self.metadata['PREDICTED_RETENTION_TIME'])
+                self.metadata['PREDICTED_IRT'][sampled_idxs],
+                self.metadata['PREDICTED_IRT'])
 
             print(aligned_predicted_rts)
             self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
-            self.metrics_val['pred_RT'] = self.metadata['PREDICTED_RETENTION_TIME']
+            self.metrics_val['pred_RT'] = self.metadata['PREDICTED_IRT']
             self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
         else:
             self.metrics_val['andromeda'] = self.metadata['SCORE']
