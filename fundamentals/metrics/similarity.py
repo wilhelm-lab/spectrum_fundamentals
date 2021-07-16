@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse
 
 from .metric import Metric
 from .. import constants
@@ -38,7 +39,7 @@ class SimilarityMetrics(Metric):
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
         
-        dot_product = np.sum(observed_normalized * predicted_normalized, axis = 1)
+        dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized)
         
         arccos = np.arccos(dot_product)
         return 1 - 2 * arccos / np.pi
@@ -51,7 +52,11 @@ class SimilarityMetrics(Metric):
         :return: vector with rowwise norms of the matrix
         """
         # = np.sqrt(np.sum(np.square(matrix), axis=0))
-        return np.linalg.norm(matrix, axis=1)
+        if scipy.sparse.issparse(matrix):
+          return scipy.sparse.linalg.norm(matrix, axis=1)
+        else:
+          return np.linalg.norm(matrix, axis=1)
+        
     
     @staticmethod
     def unit_normalization(matrix):
@@ -62,9 +67,20 @@ class SimilarityMetrics(Metric):
         """
         rowwise_norm = SimilarityMetrics.l2_norm(matrix)
         # prevent divide by zero
-        rowwise_norm[rowwise_norm == 0] = 1 
-        return matrix / rowwise_norm[:, np.newaxis]
+        rowwise_norm[rowwise_norm == 0] = 1
+        if scipy.sparse.issparse(matrix):
+            reciprocal_rowwise_norm_matrix = scipy.sparse.csr_matrix(1 / rowwise_norm[:, np.newaxis])
+            return scipy.sparse.csr_matrix.multiply(matrix, reciprocal_rowwise_norm_matrix)
+        else:
+            return matrix / rowwise_norm[:, np.newaxis]
     
+    @staticmethod
+    def rowwise_dot_product(observed_normalized, predicted_normalized):
+        if scipy.sparse.issparse(observed_normalized):
+            return np.array(np.sum(scipy.sparse.csr_matrix.multiply(observed_normalized, predicted_normalized), axis = 1)).flatten()
+        else:
+            return np.sum(np.multiply(observed_normalized, predicted_normalized), axis = 1)
+        
     def pearson(self):
         pass
 
@@ -72,6 +88,5 @@ class SimilarityMetrics(Metric):
         """
         Adds columns with spectral angle feature to metrics_val dataframe
         """
-        
         self.metrics_val['spectral_angle'] = SimilarityMetrics.spectral_angle(self.true_intensities, self.pred_intensities)
         
