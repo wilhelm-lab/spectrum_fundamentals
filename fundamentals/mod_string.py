@@ -121,7 +121,9 @@ def internal_to_mod_names(
         """
         seq = regex.sub(replace_and_store, seq)
         mod_string = f"{seq}//{'; '.join([f'{name}@{seq[pos]}{pos}' for name, pos in match_list])}"
-        mod = f"{len(match_list)}/{'/'.join([f'{pos},{seq[pos]},{name}' for name, pos in match_list])}"
+        mod = f"{len(match_list)}"
+        if len(match_list) > 0:
+            mod += f"/{'/'.join([f'{pos},{seq[pos]},{name}' for name, pos in match_list])}"
         pos[0] = 0
         offset[0] = 0
         match_list.clear()

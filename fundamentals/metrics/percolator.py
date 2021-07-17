@@ -11,8 +11,6 @@ from . import fragments_ratio as fr
 from . import similarity as sim
 
 
-
-
 class Percolator(Metric):
     """
     Expects the following metadata columns:
@@ -65,8 +63,8 @@ class Percolator(Metric):
         """
 
         # don't use the iterative reweighting (it > 1), this result in NaNs
-        aligned_rts_predicted = lowess(observed_retention_times_fdr_filtered.astype(np.float), predicted_retention_times_fdr_filtered.astype(np.float),
-                                       xvals=predicted_retention_times_all.astype(np.float), frac=0.5, it=0)
+        aligned_rts_predicted = lowess(observed_retention_times_fdr_filtered.astype(np.float64), predicted_retention_times_fdr_filtered.astype(np.float64),
+                                       xvals=predicted_retention_times_all.astype(np.float64), frac=0.5, it=0)
         # TODO: filter out datapoints with large residuals
         # TODO: use Akaike information criterion to choose a good value for frac
         # TODO; test for NaNs and use interpolation to fill them up
@@ -95,8 +93,8 @@ class Percolator(Metric):
         :param scoring_feature: feature name to get the delta scores of
         :return: numpy array of delta scores
         """
-        # TODO: sort after grouping?
-        scores_df.sort_values(by=scoring_feature, ascending=True, inplace=True)
+        # TODO: sort after grouping for better efficiency
+        scores_df = scores_df.sort_values(by=scoring_feature, ascending=True)
         groups = scores_df.groupby(["ScanNr"])
         t = groups.apply(lambda scores_df_: scores_df_[scoring_feature] - scores_df_[scoring_feature].shift(1))
         # apply doesnt work for one group only
@@ -203,7 +201,7 @@ class Percolator(Metric):
         return self.get_indices_below_fdr('lda_scores', fdr_cutoff=fdr_cutoff)
 
     def get_indices_below_fdr(self, feature_name, fdr_cutoff=0.01):
-        scores_df = self.metrics_val[[feature_name]]
+        scores_df = self.metrics_val[[feature_name]].copy()
         scores_df['Label'] = self.target_decoy_labels
         scores_df = scores_df.sort_values(feature_name, ascending=False)
 
@@ -234,7 +232,7 @@ class Percolator(Metric):
 
         # add Prosit or Andromeda features
         if self.input_type == "Prosit":
-            fragments_ratio = fr.FragmentsRatio(np.array(self.pred_intensities.todense()), np.array(self.true_intensities.todense()))
+            fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
             fragments_ratio.calc()
 
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities)

@@ -12,7 +12,7 @@ class TestFdrs:
         np.testing.assert_almost_equal(perc.Percolator.calculate_fdrs(sorted_labels), [0.5, 0.3333333, 0.66666667, 1.0])
     
     def test_get_indices_below_fdr_none(self):
-        percolator = perc.Percolator(pd.DataFrame(), None, None)
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [0, 0, 1, 0]
         '''
@@ -25,7 +25,7 @@ class TestFdrs:
         np.testing.assert_equal(percolator.get_indices_below_fdr('Score', fdr_cutoff = 0.4), np.array([]))
         
     def test_get_indices_below_fdr(self):
-        percolator = perc.Percolator(pd.DataFrame(), None, None)
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [0, 1, 1, 0]
         '''
@@ -38,7 +38,7 @@ class TestFdrs:
         np.testing.assert_equal(percolator.get_indices_below_fdr('Score', fdr_cutoff = 0.4), np.array([1, 2]))
     
     def test_get_indices_below_fdr_filter_decoy(self):
-        percolator = perc.Percolator(pd.DataFrame(), None, None)
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1, 4, 5, 6, 7]
         percolator.target_decoy_labels = [0, 1, 1, 0, 0, 1, 1, 1]
         '''
@@ -59,7 +59,7 @@ class TestLda:
         """
         Score_2 adds more discriminative power between targets and decoys
         """
-        percolator = perc.Percolator(pd.DataFrame(), None, None)
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
         percolator.metrics_val['Score'] =         [0.0, 3.0, 2.0, 1.0, 4.0, 5.0, 6.0, 7.0]
         percolator.metrics_val['Score_2'] =       [1.0, 1.5, 2.0, 1.5, 1.0, 1.5, 2.0, 1.5]
         percolator.target_decoy_labels = np.array([0,   1,   1,   0,   0,   1,   1,   1  ])
@@ -96,7 +96,7 @@ class TestRetentionTimeAlignment:
         predicted_rts = np.linspace(1, 11, 10)
         retention_time_df = pd.DataFrame()
         retention_time_df['RETENTION_TIME'] = observed_rts
-        retention_time_df['PREDICTED_RETENTION_TIME'] = predicted_rts
+        retention_time_df['PREDICTED_IRT'] = predicted_rts
         sampled_index = perc.Percolator.sample_balanced_over_bins(retention_time_df, sample_size=3)
         np.testing.assert_equal(len(sampled_index), 3)
         np.testing.assert_equal(len(set(sampled_index)), 3)
@@ -138,7 +138,7 @@ class TestPercolator:
         np.testing.assert_equal(perc.Percolator.get_delta_score(df, 'spectral_angle'), np.array([20, 40, 0, 40, 250, 0]))
 
     def test_calc(self):
-        cols = ['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'SEQUENCE', 'CHARGE', 'MASS', 'CALCULATED_MASS', 'SCORE', 'REVERSE', 'FRAGMENTATION', 'MASS_ANALYZER', 'RETENTION_TIME', 'PREDICTED_RETENTION_TIME']
+        cols = ['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'SEQUENCE', 'PRECURSOR_CHARGE', 'MASS', 'CALCULATED_MASS', 'SCORE', 'REVERSE', 'FRAGMENTATION', 'MASS_ANALYZER', 'RETENTION_TIME', 'PREDICTED_IRT']
         perc_input = pd.DataFrame(columns=cols)
         perc_input = perc_input.append(
             pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,7978,AAIGEATRL,AAIGEATRL,2,900.50345678,900.50288029264,60.43600000000001,False,HCD,FTMS,0.5,0.5'.split(','),
@@ -167,14 +167,14 @@ class TestPercolator:
         
                       
         perc_input['SCAN_NUMBER'] = perc_input['SCAN_NUMBER'].astype(int)
-        perc_input['CHARGE'] = perc_input['CHARGE'].astype(int)
+        perc_input['PRECURSOR_CHARGE'] = perc_input['PRECURSOR_CHARGE'].astype(int)
         perc_input['MASS'] = perc_input['MASS'].astype(float)
         perc_input['CALCULATED_MASS'] = perc_input['CALCULATED_MASS'].astype(float)
         perc_input['REVERSE'] = perc_input['REVERSE'] == "True"
         
         # we need to add noise to the retention times to prevent 0 residuals in the lowess regression
         perc_input['RETENTION_TIME'] = perc_input['RETENTION_TIME'].astype(float) + 1e-7*np.random.random(len(perc_input['RETENTION_TIME']))
-        perc_input['PREDICTED_RETENTION_TIME'] = perc_input['PREDICTED_RETENTION_TIME'].astype(float) + 1e-7*np.random.random(len(perc_input['RETENTION_TIME']))
+        perc_input['PREDICTED_IRT'] = perc_input['PREDICTED_IRT'].astype(float) + 1e-7*np.random.random(len(perc_input['RETENTION_TIME']))
         
         z = constants.EPSILON
         #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
