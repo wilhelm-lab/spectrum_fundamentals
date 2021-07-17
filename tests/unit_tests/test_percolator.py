@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import scipy.sparse
 import pandas as pd
 
 import fundamentals.metrics.percolator as perc
@@ -184,8 +185,8 @@ class TestPercolator:
         predicted_intensities_decoy = get_padded_array([  z, 3.0, 4.0,   z])
         observed_intensities_decoy = get_padded_array([  z,   z, 3.0, 4.0])
         
-        predicted_intensities = np.tile(predicted_intensities_target, (len(perc_input), 1))
-        observed_intensities = np.tile(observed_intensities_target, (len(perc_input), 1))
+        predicted_intensities = scipy.sparse.vstack(np.repeat(predicted_intensities_target, len(perc_input)))
+        observed_intensities = scipy.sparse.vstack(np.repeat(observed_intensities_target, len(perc_input)))
         
         predicted_intensities[1, :] = predicted_intensities_decoy
         predicted_intensities[2, :] = predicted_intensities_decoy
@@ -233,4 +234,4 @@ class TestPercolator:
 
 
 def get_padded_array(l, padding_value = 0):
-    return np.array([np.pad(l, (0, constants.NUM_IONS - len(l)), 'constant', constant_values=padding_value)])
+    return scipy.sparse.csr_matrix(np.array([np.pad(l, (0, constants.NUM_IONS - len(l)), 'constant', constant_values=padding_value)]))

@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import scipy.sparse
 
 import fundamentals.metrics.fragments_ratio as fr
 import fundamentals.constants as constants
@@ -7,29 +8,29 @@ import fundamentals.constants as constants
 class TestObservationState:
 
     def test_get_mask_observed_valid(self):
-        observed_mz = get_padded_array([10.2, constants.EPSILON, 0, np.nan])
-        np.testing.assert_equal(fr.FragmentsRatio.get_mask_observed_valid(observed_mz), get_padded_array([True, True, False, False]))
+        observed_mz = get_padded_array([10.2, constants.EPSILON, 0, 0.0])
+        assert_equal_sparse(fr.FragmentsRatio.get_mask_observed_valid(observed_mz), get_padded_array([True, True, False, False]))
     
     def test_make_boolean(self):
-        observed = get_padded_array([10.2, constants.EPSILON, 0, np.nan])
+        observed = get_padded_array([10.2, constants.EPSILON, 0, 0.0])
         mask = get_padded_array([True, True, False, False])
-        np.testing.assert_equal(fr.FragmentsRatio.make_boolean(observed, mask), get_padded_array([True, False, False, False]))
+        assert_equal_sparse(fr.FragmentsRatio.make_boolean(observed, mask), get_padded_array([True, False, False, False]))
     
     def test_make_boolean_cutoff_below(self):
-        predicted = get_padded_array([10.2, constants.EPSILON, 0, 0.02, np.nan])
+        predicted = get_padded_array([10.2, constants.EPSILON, 0, 0.02, 0.0])
         mask = get_padded_array([True, True, False, True, False])
-        np.testing.assert_equal(fr.FragmentsRatio.make_boolean(predicted, mask, cutoff = 0.05), get_padded_array([True, False, False, False, False]))
+        assert_equal_sparse(fr.FragmentsRatio.make_boolean(predicted, mask, cutoff = 0.05), get_padded_array([True, False, False, False, False]))
     
     def test_make_boolean_cutoff_above(self):
-        predicted = get_padded_array([10.2, constants.EPSILON, 0, 0.02, np.nan])
+        predicted = get_padded_array([10.2, constants.EPSILON, 0, 0.02, 0.0])
         mask = get_padded_array([True, True, False, True, False])
-        np.testing.assert_equal(fr.FragmentsRatio.make_boolean(predicted, mask, cutoff = 0.01), get_padded_array([True, False, False, True, False]))
+        assert_equal_sparse(fr.FragmentsRatio.make_boolean(predicted, mask, cutoff = 0.01), get_padded_array([True, False, False, True, False]))
         
     def test_get_observation_state(self):
         observed_boolean = get_padded_array([False, False, True, True])
         predicted_boolean = get_padded_array([False, True, False, True])
         mask = get_padded_array([True, True, True, True])
-        np.testing.assert_equal(fr.FragmentsRatio.get_observation_state(observed_boolean, predicted_boolean, mask), 
+        assert_equal_sparse(fr.FragmentsRatio.get_observation_state(observed_boolean, predicted_boolean, mask), 
                                 get_padded_array([fr.ObservationState.NOT_OBS_AND_NOT_PRED, 
                                                   fr.ObservationState.NOT_OBS_BUT_PRED, 
                                                   fr.ObservationState.OBS_BUT_NOT_PRED,
@@ -255,6 +256,9 @@ class TestCalc:
         np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_not_observed_but_predicted_b'][0], 1 / 2)
         np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_not_observed_but_predicted_y'][0], 1 / 2)
         
+
+def assert_equal_sparse(a, b):
+    assert (a != b).nnz == 0 # checks that there are 0 elements for which a != b
         
 def get_padded_array(l, padding_value = 0):
-    return np.array([np.pad(l, (0, constants.NUM_IONS - len(l)), 'constant', constant_values=padding_value)])
+    return scipy.sparse.csr_matrix(np.array([np.pad(l, (0, constants.NUM_IONS - len(l)), 'constant', constant_values=padding_value)]))

@@ -1,11 +1,12 @@
 import enum
 
 import numpy as np
+import scipy.sparse
 
 from .metric import Metric
 from .. import constants
 
-class ObservationState(enum.Enum):
+class ObservationState(enum.IntEnum):
     """
     - 4: not seen in either
     - 3: predicted but not in observed
@@ -56,9 +57,11 @@ class FragmentsRatio(Metric):
         :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, integer array of length 174
         :return: number of observed/predicted peaks not masked by ion_mask
         """
-        if len(ion_mask) > 0:
-            boolean_array = np.multiply(boolean_array, ion_mask)
-        return np.sum(boolean_array, axis = 1)
+        if len(ion_mask) == 0:
+            ion_mask = scipy.sparse.csr_matrix(np.ones((174, 1)))
+        else:
+            ion_mask = scipy.sparse.csr_matrix(ion_mask).T
+        return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
     
     @staticmethod
     def count_observed_and_predicted(observation_state):
@@ -164,14 +167,10 @@ class FragmentsRatio(Metric):
         """
         :param observation_state: integer observation_state, array of length 174
         :param i: integer, which observation state we want to count for
-        :return:
+        :return: number of observation states equal to test_state per row
         """
         state_boolean = (observation_state == test_state)
-        if len(ion_mask) > 0:
-            matrix_dimensions = (len(observation_state), 1)
-            row_mask = (ion_mask == 0)[np.newaxis, :]
-            state_boolean[np.tile(row_mask, matrix_dimensions)] = False
-        return np.sum(state_boolean)
+        return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask)
     
     @staticmethod
     def get_mask_observed_valid(observed_mz):
@@ -180,9 +179,7 @@ class FragmentsRatio(Metric):
         :param observed: observed m/z, array of length 174
         :return: boolean array, array of length 174
         """
-        valids = (observed_mz > 0)
-        valids[np.isnan(observed_mz)] = False
-        return valids
+        return observed_mz > 0
     
     @staticmethod
     def make_boolean(intensities, mask, cutoff = constants.EPSILON):
@@ -193,8 +190,7 @@ class FragmentsRatio(Metric):
         :param cutoff: minimum intensity value to be considered a peak, for observed intensities use the default cutoff of 0.0, for predicted intensities, set a cutoff, e.g. 0.05
         :return: boolean array, array of length 174
         """
-        intensities_above_cutoff = (intensities > cutoff)
-        intensities_above_cutoff[~mask] = False
+        intensities_above_cutoff = (intensities > cutoff).multiply(mask)
         return intensities_above_cutoff
        
     @staticmethod 
@@ -211,12 +207,15 @@ class FragmentsRatio(Metric):
         :param predicted_boolean : boolean predicted intensities, boolean array of length 174
         :return: integer array, array of length 174
         """
-        observation_state = np.ones_like(observed_boolean, dtype = ObservationState)
-        observation_state[observed_boolean & predicted_boolean] = ObservationState.OBS_AND_PRED
-        observation_state[observed_boolean & ~predicted_boolean] = ObservationState.OBS_BUT_NOT_PRED
-        observation_state[~observed_boolean & predicted_boolean] = ObservationState.NOT_OBS_BUT_PRED
-        observation_state[~observed_boolean & ~predicted_boolean] = ObservationState.NOT_OBS_AND_NOT_PRED
-        observation_state[~mask] = ObservationState.INVALID_ION
+        if scipy.sparse.issparse(observed_boolean):
+            observation_state = scipy.sparse.csr_matrix(observed_boolean.shape, dtype = int)
+            print(observation_state)
+        else:
+            observation_state = np.zeros_like(observed_boolean, dtype = int)
+        observation_state += observed_boolean.multiply(predicted_boolean) * int(ObservationState.OBS_AND_PRED)
+        observation_state += (observed_boolean > predicted_boolean) * int(ObservationState.OBS_BUT_NOT_PRED)
+        observation_state += (observed_boolean < predicted_boolean) * int(ObservationState.NOT_OBS_BUT_PRED)
+        observation_state += (mask > (observed_boolean + predicted_boolean)) * int(ObservationState.NOT_OBS_AND_NOT_PRED)
         return observation_state
     
     def calc(self):
@@ -227,9 +226,9 @@ class FragmentsRatio(Metric):
         observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
         predicted_boolean = FragmentsRatio.make_boolean(self.pred_intensities, mask_observed_valid, cutoff = 0.05)
         observation_state = FragmentsRatio.get_observation_state(observed_boolean, predicted_boolean, mask_observed_valid)
-        valid_ions = np.maximum(1, np.sum(mask_observed_valid))
-        valid_ions_b = np.maximum(1, np.sum(np.multiply(mask_observed_valid, constants.B_ION_MASK)))
-        valid_ions_y = np.maximum(1, np.sum(np.multiply(mask_observed_valid, constants.Y_ION_MASK)))
+        valid_ions = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid))
+        valid_ions_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.B_ION_MASK))
+        valid_ions_y = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.Y_ION_MASK))
         
         
         # counting metrics
@@ -259,7 +258,6 @@ class FragmentsRatio(Metric):
         
         
         # fractional count metrics
-        print(self.metrics_val['count_predicted'])
         self.metrics_val['fraction_predicted'] = self.metrics_val['count_predicted'].values / valid_ions
         self.metrics_val['fraction_predicted_b'] = self.metrics_val['count_predicted_b'] / valid_ions_b
         self.metrics_val['fraction_predicted_y'] = self.metrics_val['count_predicted_y'] / valid_ions_y
