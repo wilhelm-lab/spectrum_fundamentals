@@ -106,8 +106,10 @@ META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
                           'FRAGMENTATION',
                           'MASS_ANALYZER',
                           'MASS',
+                          'PRECURSOR_MASS_EXP',
                           'SCORE',
                           'REVERSE']
+
 SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
 Meta_Data_Columns = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
 MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ']
