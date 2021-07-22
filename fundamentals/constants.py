@@ -1,8 +1,12 @@
 import numpy as np
 
+#############
+# ALPHABETS #
+#############
+
 AA_ALPHABET = {
     "A": 1,
-    "C": 23,
+    "C": 24,
     "D": 3,
     "E": 4,
     "F": 5,
@@ -21,23 +25,56 @@ AA_ALPHABET = {
     "V": 18,
     "W": 19,
     "Y": 20,
+    "[]-":30, # unomodified n terminus
+    "-[]":31  # unomodified c terminus
 }
+
 ALPHABET_MODS = {
-    "M(U:35)": 21,
-    "C(U:4)": 2,  ## TODO check why this has the same value as C
-    "K(U:737)": 22,
-    "S(U:21)": 25,
-    "T(U:21)": 26,
-    "Y(U:21)": 27
+    "M[UNIMOD:35]": 21,
+    "C[UNIMOD:4]": 2,
+    "K[UNIMOD:737]": 22,
+    "S[UNIMOD:21]": 25,
+    "T[UNIMOD:21]": 26,
+    "Y[UNIMOD:21]": 27
 }
+
 ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS}
 
+######################
+# MaxQuant constants #
+######################
+
 MAXQUANT_VAR_MODS = {
-    "(ox)": "(U:35)",
-    "(Oxidation (M))": "(U:35)",
-    "(tm)": "(U:737)",
-    "(ph)": "(U:21)",
-    "(??)": "(U:4)",  # TODO Carbamidomethyl ##
+    "M(ox)": "M[UNIMOD:35]",
+    "M(Oxidation (M))": "M[UNIMOD:35]",
+    "K(tm)": "K[UNIMOD:737]",
+    "S(ph)": "S[UNIMOD:21]",
+    "T(ph)": "T[UNIMOD:21]",
+    "Y(ph)": "Y[UNIMOD:21]",
+    "C()": "C[UNIMOD:4]",  # TODO Investigate how MaxQuant encodes variable Carbamidomethyl
+}
+
+MAXQUANT_NC_TERM =  {
+    "^_": "[]-",
+    "_$": "-[]"
+}
+
+####################
+# MASS CALCULATION #
+####################
+
+# initialize other masses
+PARTICLE_MASSES = {
+    "PROTON": 1.007276467,
+    "ELECTRON": 0.00054858
+}
+
+# masses of different atoms
+ATOM_MASSES = {
+    'H': 1.007825035,
+    'C': 12.0,
+    'O': 15.9949146,
+    'N': 14.003074,
 }
 
 AA_MASSES = {
@@ -62,6 +99,8 @@ AA_MASSES = {
     'W': 186.079313,
     'Y': 163.063329,
     'V': 99.068414,
+    "[]-": ATOM_MASSES["H"],
+    "-[]": ATOM_MASSES["H"] + ATOM_MASSES["O"]
 }
 
 MOD_MASSES = {
@@ -70,6 +109,7 @@ MOD_MASSES = {
     '(U:4)': 57.02146,   # Carbamidomethyl
     '(U:35)': 15.9949146    # Oxidation
 }
+
 MOD_NAMES = {
     '(U:737)': 'TMT_6',
     '(U:21)': 'Phospho',
@@ -77,21 +117,8 @@ MOD_NAMES = {
     '(U:35)': 'Oxidation'
 }
 
-# initialize other masses
-PROTON_MASS = 1.007276467
-ELECTRON_MASS = 0.00054858
-
-EPSILON = 1e-7
-
-# masses of different atoms
-ATOM_MASSES = {
-    'H': 1.007825035,
-    'C': 12.0,
-    'O': 15.9949146,
-    'N': 14.003074,
-}
-
 # small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
+# EPSILON = 1e-7 # chec if it can be removed
 EPSILON = np.nextafter(0, 1)
 
 # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+

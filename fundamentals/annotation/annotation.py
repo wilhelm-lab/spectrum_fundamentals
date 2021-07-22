@@ -9,6 +9,7 @@ from fundamentals import constants
 MIN_CHARGE = 1
 NUM_CORES = 5
 
+#TODO Check if this function is used or can be deleted
 def maxquant_parser(p):
     if p[0] == "(":
         p = p[4] + p[:4] + p[5:]
@@ -24,7 +25,7 @@ def maxquant_parser(p):
             yield p[i]
             i += 1
 
-
+#TODO Check if this function is used or can be deleted
 def str_to_integer(sequences, parser=maxquant_parser):
     """
 
@@ -246,6 +247,7 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     # index_columns = {'mod_sequence'}
 
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
+    print(index_columns)
     for row in un_annot_spectra.values:
             results = parallel_annotate(row, index_columns)
             raw_file_annotations.append(results)
