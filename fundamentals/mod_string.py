@@ -2,6 +2,7 @@ from typing import List, Dict, Optional, Union, Tuple
 from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES, MOD_NAMES, MAXQUANT_NC_TERM
 import numpy as np
 import re
+import difflib
 
 
 def internal_to_spectronaut(sequences: List[str]) -> List[str]:
@@ -125,3 +126,35 @@ def internal_to_mod_names(
 
     regex = re.compile("(%s)" % "|".join(map(re.escape, MOD_NAMES.keys())))
     return [msp_string_mapper(seq) for seq in sequences]
+
+def parse_modstrings(sequences, alphabet, translate=False, filter=False):
+    """
+    :param sequences: List of strings
+    :param ALPHABET: dictionary where the keys correspond to all possible 'Elements' that can occur in the string
+    :param translate: boolean to determine if the Elements should be translated to the corresponding values of ALPHABET
+    :return: generator that yields a list of sequence 'Elements' or the translated sequence "Elements"
+    """
+    import re
+    from itertools import repeat
+
+    def split_modstring(sequence, r_pattern):
+        # Ugly and fast fix for reading modifications as is from maxquant we should reconisder how to fix it.
+        # sequence = sequence.replace('M(ox)','M(U:35)')
+        # sequence = sequence.replace('C','C(U:4)')
+        split_seq = r_pattern.findall(sequence)
+        if "".join(split_seq) == sequence:
+            if translate:
+                return [alphabet[aa] for aa in split_seq]
+            elif not translate:
+                return split_seq
+        elif filter:
+            return [0]
+        else:
+            not_parsable_elements = "".join([li[2] for li in difflib.ndiff(sequence, "".join(split_seq)) if li[0] == '-'])
+            raise ValueError(f"The element(s) [{not_parsable_elements}] "
+                             f"in the sequence [{sequence}] could not be parsed")
+
+    pattern = sorted(alphabet, key=len, reverse=True)
+    pattern = [re.escape(i) for i in pattern]
+    regex_pattern = re.compile("|".join(pattern))
+    return map(split_modstring, sequences, repeat(regex_pattern))
