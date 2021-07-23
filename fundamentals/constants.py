@@ -114,10 +114,10 @@ AA_MASSES = {
 }
 
 MOD_MASSES = {
-    '(U:737)': 229.162932,  # TMT_6
-    '(U:21)': 79.966331,  # Phospho
-    '(U:4)': 57.02146,   # Carbamidomethyl
-    '(U:35)': 15.9949146    # Oxidation
+    '[UNIMOD:737]': 229.162932,  # TMT_6
+    '[UNIMOD:21]': 79.966331,  # Phospho
+    '[UNIMOD:4]': 57.02146,   # Carbamidomethyl
+    '[UNIMOD:35]': 15.9949146    # Oxidation
 }
 
 #######################################

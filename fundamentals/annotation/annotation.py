@@ -1,14 +1,9 @@
-from operator import itemgetter
-
 import pandas as pd
 from joblib import Parallel, delayed
 import numpy as np
 
 from fundamentals import constants
 from fundamentals.fragments import initialize_peaks, get_modifications
-
-MIN_CHARGE = 1
-NUM_CORES = 5
 
 #TODO Check if this function is used or can be deleted
 def maxquant_parser(p):

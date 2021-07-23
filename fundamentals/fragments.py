@@ -1,6 +1,8 @@
+from operator import itemgetter
+
 import numpy as np
 
-from . import constants as C
+from . import constants as constants
 
 
 def get_modifications(peptide_sequence):
@@ -11,40 +13,40 @@ def get_modifications(peptide_sequence):
     """
     modification_deltas = {}
     tmt_n_term = 1
-    if peptide_sequence[:4] == '(U:737)':   # TMT_6
+    if peptide_sequence[:13] == '[UNIMOD:737]-':   # TMT_6
         tmt_n_term = 2
-        modification_deltas.update({0: constants.MOD_MASSES['(U:737)']})
-        peptide_sequence = peptide_sequence[4:]
+        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:737]']})
+        peptide_sequence = peptide_sequence[13:]
 
-    count_mod = peptide_sequence.count('(')
-    while '(' in peptide_sequence:
-        if "(" in peptide_sequence:
-            modification_index = peptide_sequence.index('(')
-            if peptide_sequence[modification_index:modification_index + 7] == '(U:737)':    # TMT_6
+    count_mod = peptide_sequence.count("[")
+    while "[" in peptide_sequence:
+        if "[" in peptide_sequence:
+            modification_index = peptide_sequence.index("[")
+            if peptide_sequence[modification_index:modification_index + 12] == '[UNIMOD:737]':    # TMT_6
                 if modification_index - 1 in modification_deltas:
                     modification_deltas.update(
                         {modification_index - 1: modification_deltas[modification_index - 1] + constants.MOD_MASSES[
-                            '(U:737)']})
+                            '[UNIMOD:737]']})
                 else:
-                    modification_deltas.update({modification_index - 1: constants.MOD_MASSES['(U:737)']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 7:]
+                    modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:737]']})
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 12:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 6] == '(U:35)':   # Oxidation
-                modification_deltas.update({modification_index - 1: constants.ATOM_MASSES['(U:35)']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 6:]
+            elif peptide_sequence[modification_index:modification_index + 11] == '[UNIMOD:35]':   # Oxidation
+                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:35]']})
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 11:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 6] == '(U:21)':   # Phospho
-                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['(U:21)']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 6:]
+            elif peptide_sequence[modification_index:modification_index + 11] == '[UNIMOD:21]':   # Phospho
+                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:21]']})
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 11:]
                 count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 5] == '(U:4)':    # Carbomedomethyl
-                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['(U:4)']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 5:]
+            elif peptide_sequence[modification_index:modification_index + 10] == '[UNIMOD:4]':    # Carbomedomethyl
+                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:4]']})
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 10:]
                 count_mod -= 1
     return modification_deltas, tmt_n_term, peptide_sequence
 
 
-def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
+def initialize_peaks(sequence: str, mass_analyzer: str, charge: int, MIN_CHARGE = 1):
     """
     Generate theoretical peaks for a modified peptide sequence.
     :param sequence: Modified peptide sequence.
@@ -131,13 +133,13 @@ def compute_ion_masses(seq_int, charge_onehot,tmt=''):
         print("[ERROR] One-hot-enconded Charge is not in valid range 1 to 6")
         return
 
-    if not len(seq_int) == C.SEQ_LEN:
+    if not len(seq_int) == constants.SEQ_LEN:
         print("[ERROR] Sequence length {} is not desired length of {}".format(
-            len(seq_int), C.SEQ_LEN))
+            len(seq_int), constants.SEQ_LEN))
         return
 
-    l = list(seq_int).index(0) if 0 in seq_int else C.SEQ_LEN
-    masses = np.ones((C.SEQ_LEN-1)*2*3, dtype=np.float32)*-1
+    l = list(seq_int).index(0) if 0 in seq_int else constants.SEQ_LEN
+    masses = np.ones((constants.SEQ_LEN-1)*2*3, dtype=np.float32)*-1
     mass_b = 0
     mass_y = 0
     j = 0  # iterate over masses
@@ -147,33 +149,33 @@ def compute_ion_masses(seq_int, charge_onehot,tmt=''):
         j = i*6  # index for masses array at position
 
         # MASS FOR Y IONS
-        # print("Addded", C.VEC_MZ[seq_int[l-1-i]])
-        mass_y += C.VEC_MZ[seq_int[l-1-i]]
+        # print("Addded", constants.VEC_MZ[seq_int[l-1-i]])
+        mass_y += constants.VEC_MZ[seq_int[l-1-i]]
 
         # Compute charge +1
-        masses[j] = (mass_y + 1*C.PARTICLE_MASSES["PROTON"] +
-                     C.AA_MASSES["-[]"] + C.ATOM_MASSES["H"])/1.0
+        masses[j] = (mass_y + 1*constants.PARTICLE_MASSES["PROTON"] +
+                     constants.AA_MASSES["-[]"] + constants.ATOM_MASSES["H"])/1.0
         # Compute charge +2
-        masses[j+1] = (mass_y + 2*C.PARTICLE_MASSES["PROTON"] + C.AA_MASSES["-[]"] +
-                       C.ATOM_MASSES["H"])/2.0 if charge >= 2 else -1.0
+        masses[j+1] = (mass_y + 2*constants.PARTICLE_MASSES["PROTON"] + constants.AA_MASSES["-[]"] +
+                       constants.ATOM_MASSES["H"])/2.0 if charge >= 2 else -1.0
         # Compute charge +3
-        masses[j+2] = (mass_y + 3*C.PARTICLE_MASSES["PROTON"] + C.AA_MASSES["-[]"] +
-                       C.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
+        masses[j+2] = (mass_y + 3*constants.PARTICLE_MASSES["PROTON"] + constants.AA_MASSES["-[]"] +
+                       constants.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
 
         # MASS FOR B IONS
         if(i ==0 and tmt=='tmt'):
-            mass_b += C.VEC_MZ[seq_int[i]]+229.162932
+            mass_b += constants.VEC_MZ[seq_int[i]]+229.162932
         else:
-            mass_b += C.VEC_MZ[seq_int[i]]
+            mass_b += constants.VEC_MZ[seq_int[i]]
 
         # Compute charge +1
-        masses[j+3] = (mass_b + 1*C.PARTICLE_MASSES["PROTON"] +
-                       C.AA_MASSES["[]-"] - C.ATOM_MASSES["H"])/1.0
+        masses[j+3] = (mass_b + 1*constants.PARTICLE_MASSES["PROTON"] +
+                       constants.AA_MASSES["[]-"] - constants.ATOM_MASSES["H"])/1.0
         # Compute charge +2
-        masses[j+4] = (mass_b + 2*C.PARTICLE_MASSES["PROTON"] + C.AA_MASSES["[]-"] -
-                       C.ATOM_MASSES["H"])/2.0 if charge >= 2 else -1.0
+        masses[j+4] = (mass_b + 2*constants.PARTICLE_MASSES["PROTON"] + constants.AA_MASSES["[]-"] -
+                       constants.ATOM_MASSES["H"])/2.0 if charge >= 2 else -1.0
         # Compute charge +3
-        masses[j+5] = (mass_b + 3*C.PARTICLE_MASSES["PROTON"] + C.AA_MASSES["[]-"] -
-                       C.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
+        masses[j+5] = (mass_b + 3*constants.PARTICLE_MASSES["PROTON"] + constants.AA_MASSES["[]-"] -
+                       constants.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
 
     return masses
