@@ -18,6 +18,11 @@ def get_modifications(peptide_sequence):
         modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:737]']})
         peptide_sequence = peptide_sequence[13:]
 
+    # Dumb hotfix for new terminal modification encoding []- and -[]
+    if peptide_sequence[:3] == '[]-':
+        peptide_sequence = peptide_sequence[3:]
+    if peptide_sequence[-3:] == '-[]':
+        peptide_sequence = peptide_sequence[:-3]
     count_mod = peptide_sequence.count("[")
     while "[" in peptide_sequence:
         if "[" in peptide_sequence:
@@ -56,6 +61,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int, MIN_CHARGE 
     """
     peptide_sequence = sequence
     modification_deltas, tmt_n_term, peptide_sequence = get_modifications(peptide_sequence)
+
     neutral_losses = []
     peptide_length = len(peptide_sequence)
 

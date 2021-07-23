@@ -60,17 +60,14 @@ def maxquant_to_internal(
     return [regex.sub(find_replacement, seq) for seq in sequences]
 
 def internal_without_mods(
-    sequences: List[str],
-    remove_underscores: Optional[bool] = False
+    sequences: List[str]
 ) -> List[str]:
     """
     Function to remove any mod identifiers and return the plain AA sequence.
     :param sequences: List[str] of sequences
     :return: List[str] of modified sequences.
     """
-    regex = "\(U:.+?\)|[.+?]"
-    if remove_underscores:
-        regex += '|_'
+    regex = "\[.*?\]|\-"
     return [re.sub(regex, "", seq) for seq in sequences]
 
 def internal_to_mod_mass(

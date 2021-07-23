@@ -122,7 +122,7 @@ class Percolator(Metric):
     def count_missed_cleavages(sequence):
         """
         Count number of missed cleavages assuming Trypsin/P proteolysis
-        :param sequence: 
+        :param sequence:
         """
         return sequence[:-1].count("K") + sequence[:-1].count("R")
 
@@ -151,6 +151,7 @@ class Percolator(Metric):
         """
         Add features used by both Andromeda and Prosit feature scoring sets
         """
+        print(self.metadata)
         self.metrics_val['missedCleavages'] = self.metadata['SEQUENCE'].apply(Percolator.count_missed_cleavages)
         self.metrics_val['KR'] = self.metadata['SEQUENCE'].apply(Percolator.count_arginines_and_lysines)
         self.metrics_val['sequence_length'] = self.metadata['SEQUENCE'].apply(lambda x: len(x))
