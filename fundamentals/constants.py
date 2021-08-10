@@ -35,8 +35,11 @@ AA_ALPHABET = {
     "V": 18,
     "W": 19,
     "Y": 20,
-    "[]-":30, # unomodified n terminus
-    "-[]":31  # unomodified c terminus
+}
+
+TERMINAL_ALPHABET = {
+    "[]-": 30,  # unomodified n terminus
+    "-[]": 31  # unomodified c terminus
 }
 
 ALPHABET_MODS = {
@@ -55,18 +58,16 @@ ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS}
 ######################
 
 MAXQUANT_VAR_MODS = {
-    "M(ox)": "M[UNIMOD:35]",
-    "M(Oxidation (M))": "M[UNIMOD:35]",
-    "K(tm)": "K[UNIMOD:737]",
-    "S(ph)": "S[UNIMOD:21]",
-    "T(ph)": "T[UNIMOD:21]",
-    "Y(ph)": "Y[UNIMOD:21]",
+    "(ox)": "[UNIMOD:35]",
+    "(Oxidation (M))": "[UNIMOD:35]",
+    "(tm)": "[UNIMOD:737]",
+    "(ph)": "[UNIMOD:21]",
     "C()": "C[UNIMOD:4]",  # TODO Investigate how MaxQuant encodes variable Carbamidomethyl
 }
 
-MAXQUANT_NC_TERM =  {
-    "^_": "[]-",
-    "_$": "-[]"
+MAXQUANT_NC_TERM = {
+    "^_": "",
+    "_$": ""
 }
 
 ####################
@@ -109,15 +110,13 @@ AA_MASSES = {
     'W': 186.079313,
     'Y': 163.063329,
     'V': 99.068414,
-    "[]-": ATOM_MASSES["H"],
-    "-[]": ATOM_MASSES["H"] + ATOM_MASSES["O"]
 }
 
 MOD_MASSES = {
     '[UNIMOD:737]': 229.162932,  # TMT_6
     '[UNIMOD:21]': 79.966331,  # Phospho
-    '[UNIMOD:4]': 57.02146,   # Carbamidomethyl
-    '[UNIMOD:35]': 15.9949146    # Oxidation
+    '[UNIMOD:4]': 57.02146,  # Carbamidomethyl
+    '[UNIMOD:35]': 15.9949146  # Oxidation
 }
 
 #######################################
@@ -128,7 +127,6 @@ MOD_MASSES = {
 VEC_MZ = np.zeros(max(ALPHABET.values()) + 1)
 for a, i in AA_ALPHABET.items():
     VEC_MZ[i] = AA_MASSES[a]
-
 
 # TODO Investigate where MOD_NAMES are used
 MOD_NAMES = {
