@@ -5,41 +5,6 @@ import numpy as np
 from fundamentals import constants
 from fundamentals.fragments import initialize_peaks, get_modifications
 
-#TODO Check if this function is used or can be deleted
-def maxquant_parser(p):
-    if p[0] == "(":
-        p = p[4] + p[:4] + p[5:]
-    n = len(p)
-    i = 0
-    while i < n:
-        if i < n - 3 and p[i + 1] == "(":
-            j = p[i + 2:].index(")")
-            offset = i + j + 3
-            yield p[i:offset]
-            i = offset
-        else:
-            yield p[i]
-            i += 1
-
-#TODO Check if this function is used or can be deleted
-def str_to_integer(sequences, parser=maxquant_parser):
-    """
-
-    :param sequences:
-    :param parser:
-    :return:
-    """
-    array = np.zeros([len(sequences), 30], dtype=int)
-    for i, sequence in enumerate(sequences):
-        for j, symbol in enumerate(parser(sequence)):
-            # if symbol == "(":
-            # print(i, j, sequence)
-            try:
-                array[i, j] = constants.ALPHABET[symbol]
-            except Exception:
-                print(sequence)
-    return array
-
 
 def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                 peaks_masses: np, tmt_n_term: int, unmod_sequence: str, charge: int):
@@ -69,7 +34,7 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
             if peak_mass > max_mass:
                 break
             if peak_mass < min_mass:
-                start_peak+=1
+                start_peak += 1
             if min_mass <= peak_mass <= max_mass:
                 if fragment['ion_type'] == 'b' and fragment_no == 1:
                     if (unmod_sequence[0] == 'R' or unmod_sequence[0] == 'H' or unmod_sequence[0] == 'K') and (
@@ -85,7 +50,7 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                          'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity})
                     if peak_intensity > max_intensity:
                         max_intensity = float(peak_intensity)
-                start_peak+=1
+                start_peak += 1
     for row in row_list:
         row['intensity'] = float(row['intensity']) / max_intensity
         temp_list.append(row)
@@ -127,9 +92,9 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
 
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-            results = parallel_annotate(row, index_columns)
-            raw_file_annotations.append(results)
-    results_df= pd.DataFrame()
+        results = parallel_annotate(row, index_columns)
+        raw_file_annotations.append(results)
+    results_df = pd.DataFrame()
     results_df = results_df.append(raw_file_annotations)
     results_df.columns = ["INTENSITIES", "MZ"]
 
@@ -193,14 +158,17 @@ def parallel_annotate(spectrum, index_columns):
     :param spectrum: spectrum to be annotated.
     :return: annotated spectrum with meta data.
     """
-    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum[index_columns['MODIFIED_SEQUENCE']], spectrum[index_columns['MASS_ANALYZER']],
+    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum[index_columns['MODIFIED_SEQUENCE']],
+                                                                       spectrum[index_columns['MASS_ANALYZER']],
                                                                        spectrum[index_columns['PRECURSOR_CHARGE']])
-    matched_peaks = match_peaks(fragments_meta_data, spectrum[index_columns['INTENSITIES']], spectrum[index_columns['MZ']], tmt_n_term, unmod_sequence,
+    matched_peaks = match_peaks(fragments_meta_data, spectrum[index_columns['INTENSITIES']],
+                                spectrum[index_columns['MZ']], tmt_n_term, unmod_sequence,
                                 spectrum[index_columns['PRECURSOR_CHARGE']])
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)
         return intensity, mass
     matched_peaks = handle_multiple_matches(matched_peaks)
-    intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence, spectrum[index_columns['PRECURSOR_CHARGE']])
-    return intensities,mass
+    intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence,
+                                                   spectrum[index_columns['PRECURSOR_CHARGE']])
+    return intensities, mass
