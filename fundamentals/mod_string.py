@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Union, Tuple
-from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES, MOD_NAMES, MAXQUANT_NC_TERM
+from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES, MAXQUANT_NC_TERM
 import numpy as np
 import re
 import difflib
@@ -14,9 +14,10 @@ def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     regex = re.compile("(%s)" % "|".join(map(re.escape, SPECTRONAUT_MODS.keys())))
     return [regex.sub(lambda mo: SPECTRONAUT_MODS[mo.string[mo.start():mo.end()]], seq) for seq in sequences]
 
+
 def maxquant_to_internal(
-    sequences: List[str],
-    fixed_mods: Optional[Dict[str, str]] = {'C': 'C[UNIMOD:4]'}
+        sequences: List[str],
+        fixed_mods: Optional[Dict[str, str]] = {'C': 'C[UNIMOD:4]'}
 ) -> List[str]:
     """
     Function to translate a MaxQuant modstring to the Prosit format
@@ -36,8 +37,8 @@ def maxquant_to_internal(
         :param key: The match to escape.
         :return match with escaped special characters.
         """
-        for k, v in {"(":"\(", ")":"\)"}.items():
-            key = key.replace(k,v)
+        for k, v in {"(": "\(", ")": "\)"}.items():
+            key = key.replace(k, v)
         return key
 
     regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
@@ -55,12 +56,13 @@ def maxquant_to_internal(
             else:
                 key = f"{key}$"
 
-        return  replacements[key]
+        return replacements[key]
 
     return [regex.sub(find_replacement, seq) for seq in sequences]
 
+
 def internal_without_mods(
-    sequences: List[str]
+        sequences: List[str]
 ) -> List[str]:
     """
     Function to remove any mod identifiers and return the plain AA sequence.
@@ -70,8 +72,9 @@ def internal_without_mods(
     regex = "\[.*?\]|\-"
     return [re.sub(regex, "", seq) for seq in sequences]
 
+
 def internal_to_mod_mass(
-    sequences: List[str],
+        sequences: List[str],
 ) -> List[str]:
     """
     Function to exchange the internal mod identifiers with the masses of the specific modifiction.
@@ -82,8 +85,9 @@ def internal_to_mod_mass(
     replacement_func = lambda match: f"[+{MOD_MASSES[match.string[match.start():match.end()]]}]"
     return [regex.sub(replacement_func, seq) for seq in sequences]
 
+
 def internal_to_mod_names(
-    sequences: List[str],
+        sequences: List[str],
 ) -> List[Tuple[str, str]]:
     """
     Function to translate an internal modstring to MSP format
@@ -120,9 +124,9 @@ def internal_to_mod_names(
         match_list.append((MOD_NAMES[match.string[match.start():match.end()]], pos[0]))
         return ""
 
-
     regex = re.compile("(%s)" % "|".join(map(re.escape, MOD_NAMES.keys())))
     return [msp_string_mapper(seq) for seq in sequences]
+
 
 def parse_modstrings(sequences, alphabet, translate=False, filter=False):
     """
@@ -147,7 +151,8 @@ def parse_modstrings(sequences, alphabet, translate=False, filter=False):
         elif filter:
             return [0]
         else:
-            not_parsable_elements = "".join([li[2] for li in difflib.ndiff(sequence, "".join(split_seq)) if li[0] == '-'])
+            not_parsable_elements = "".join(
+                [li[2] for li in difflib.ndiff(sequence, "".join(split_seq)) if li[0] == '-'])
             raise ValueError(f"The element(s) [{not_parsable_elements}] "
                              f"in the sequence [{sequence}] could not be parsed")
 

@@ -17,6 +17,9 @@ def get_modifications(peptide_sequence):
     modification_deltas = {}
     tmt_n_term = 1
     modifications = constants.MOD_MASSES.keys()
+    modification_mass = constants.MOD_MASSES
+    
+    # Handle terminal modifications here
     if peptide_sequence[:12] == '[UNIMOD:737]':  # TMT_6
         tmt_n_term = 2
         modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:737]']})
@@ -24,36 +27,30 @@ def get_modifications(peptide_sequence):
 
     if "(" in peptide_sequence:
         logger.info(
-            'Error Modification ' + peptide_sequence[peptide_sequence.find(')'):peptide_sequence.find('(')+1] + ' not found')
+            'Error Modification ' + peptide_sequence[peptide_sequence.find('(') + 1:peptide_sequence.find(')')] + 'not '
+                                                                                                                  'found')
         return
+
     while "[" in peptide_sequence:
         found_modification = False
         modification_index = peptide_sequence.index("[")
-        if peptide_sequence[modification_index:modification_index + 12] == '[UNIMOD:737]':  # TMT_6
-            if modification_index - 1 in modification_deltas:
-                modification_deltas.update(
-                    {modification_index - 1: modification_deltas[modification_index - 1] + constants.MOD_MASSES[
-                        '[UNIMOD:737]']})
-            else:
-                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:737]']})
-            peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 12:]
-            found_modification = True
-        elif peptide_sequence[modification_index:modification_index + 11] == '[UNIMOD:35]':  # Oxidation
-            modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:35]']})
-            peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 11:]
-            found_modification = True
-        elif peptide_sequence[modification_index:modification_index + 11] == '[UNIMOD:21]':  # Phospho
-            modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:21]']})
-            peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 11:]
-            found_modification = True
-        elif peptide_sequence[modification_index:modification_index + 10] == '[UNIMOD:4]':  # Carbomedomethyl
-            modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:4]']})
-            peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 10:]
-            found_modification = True
+        for mod in modifications:
+            if peptide_sequence[modification_index:modification_index + len(mod)]:
+                if modification_index - 1 in modification_deltas:
+                    modification_deltas.update(
+                        {modification_index - 1: modification_deltas[modification_index - 1] + modification_mass[
+                            mod]})
+                else:
+                    modification_deltas.update({modification_index - 1: modification_mass[mod]})
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[
+                                                                            modification_index + len(mod):]
+                found_modification = True
         if not found_modification:
             logger.info(
-                'Error Modification ' + peptide_sequence[modification_index:peptide_sequence.find(']')+1] + ' not found')
+                'Error Modification ' + peptide_sequence[
+                                        modification_index:peptide_sequence.find(']') + 1] + ' not found')
             return
+
     return modification_deltas, tmt_n_term, peptide_sequence
 
 
