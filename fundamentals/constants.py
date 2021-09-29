@@ -49,7 +49,7 @@ ALPHABET_MODS = {
     "S[UNIMOD:21]": 25,
     "T[UNIMOD:21]": 26,
     "Y[UNIMOD:21]": 27,
-    "[UNIMOD:1]-" : 32
+    "[UNIMOD:1]-": 32
 }
 
 ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS}
