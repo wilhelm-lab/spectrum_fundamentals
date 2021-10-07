@@ -18,7 +18,6 @@ def get_modifications(peptide_sequence):
     tmt_n_term = 1
     modifications = constants.MOD_MASSES.keys()
     modification_mass = constants.MOD_MASSES
-    
     # Handle terminal modifications here
     if peptide_sequence[:12] == '[UNIMOD:737]':  # TMT_6
         tmt_n_term = 2
@@ -35,7 +34,7 @@ def get_modifications(peptide_sequence):
         found_modification = False
         modification_index = peptide_sequence.index("[")
         for mod in modifications:
-            if peptide_sequence[modification_index:modification_index + len(mod)]:
+            if peptide_sequence[modification_index:modification_index + len(mod)] == mod:
                 if modification_index - 1 in modification_deltas:
                     modification_deltas.update(
                         {modification_index - 1: modification_deltas[modification_index - 1] + modification_mass[
@@ -67,6 +66,8 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
 
     neutral_losses = []
     peptide_length = len(peptide_sequence)
+    if peptide_length > 30:
+        return [], -1, ""
 
     # initialize constants
     if int(round(charge)) <= 3:

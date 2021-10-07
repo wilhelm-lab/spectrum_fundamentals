@@ -88,6 +88,19 @@ ATOM_MASSES = {
     'N': 14.003074,
 }
 
+MASSES = {
+        "PROTON": 1.007276467,
+        "ELECTRON": 0.00054858,
+        "H": 1.007825035,
+        "C": 12.0,
+        "O": 15.99491463,
+        "N": 14.003074,
+}
+
+MASSES["N_TERMINUS"] = MASSES["H"]
+MASSES["C_TERMINUS"] = MASSES["O"] + MASSES["H"]
+
+
 AA_MASSES = {
     'A': 71.037114,
     'R': 156.101111,
@@ -119,6 +132,12 @@ MOD_MASSES = {
     '[UNIMOD:35]': 15.9949146  # Oxidation
 }
 
+AA_MOD_MASSES ={
+    'K[UNIMOD:737]': 128.094963 + 229.162932
+}
+
+AA_MOD = {**AA_MASSES, **AA_MOD_MASSES}
+
 #######################################
 # HELPERS FOR FRAGMENT MZ CALCULATION #
 #######################################
@@ -126,7 +145,7 @@ MOD_MASSES = {
 # Array containing masses --- at index one is mass for A, etc.
 VEC_MZ = np.zeros(max(ALPHABET.values()) + 1)
 for a, i in AA_ALPHABET.items():
-    VEC_MZ[i] = AA_MASSES[a]
+    VEC_MZ[i] = AA_MOD[a]
 
 # TODO Investigate where MOD_NAMES are used
 MOD_NAMES = {
@@ -138,7 +157,7 @@ MOD_NAMES = {
 
 # small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
 # EPSILON = 1e-7 # chec if it can be removed
-EPSILON = np.nextafter(0, 1)
+EPSILON = 1e-7
 
 # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+
 MAX_PEPTIDE_LEN = 30
@@ -163,6 +182,11 @@ MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
 
 SPECTRONAUT_MODS = {
     "M(U:35)": "oM"
+}
+
+FRAGMENTATION_ENCODING = {
+    'HCD': 2,
+    'CID': 1
 }
 
 ############################
