@@ -15,40 +15,15 @@ class SimilarityMetrics(Metric):
         :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, 0 intensity indicates invalid peaks (charge state > peptide charge state or position >= peptide length), array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         """
-        epsilon = 2e-7
+        epsilon = 1e-7
 
         # TODO: clean this up
-        if False:
-            spectral_angle = []
-            for predicted_intensities, observed_intensities in zip(predicted_intensities_a,observed_intensities_a):
-                #observed_peaks = np.argwhere(observed_intensities > constants.EPSILON)
-                predicted_peaks = np.argwhere(predicted_intensities > constants.EPSILON)
 
-                #print(observed_peaks)
-                #print(predicted_peaks)
-                #not_both_zero = np.union1d(observed_peaks, predicted_peaks)
-                #print(not_both_zero)
-                #if len(not_both_zero) == 0:
-                    #return 0.0
-
-                observed_masked = observed_intensities[predicted_peaks]
-                predicted_masked = predicted_intensities[predicted_peaks]
-
-                true_norm = observed_masked * (1 / np.sqrt(np.sum(np.square(observed_masked), axis=0)))
-                pred_norm = predicted_masked * (1 / np.sqrt(np.sum(np.square(predicted_masked), axis=0)))
-                product = np.sum(true_norm * pred_norm, axis=0)
-                arccos = np.arccos(product)
-                spectral_angle.append(1 - 2 * arccos / np.pi)
-            return spectral_angle
-            
-            #observed_masked += epsilon
-            #predicted_masked += epsilon
-        else:
-            #print(predicted_intensities)
-            not_zero_mask = predicted_intensities > 0
-            observed_masked = observed_intensities.multiply(not_zero_mask)
-            predicted_masked = predicted_intensities.multiply(not_zero_mask)
-            #print(predicted_masked)
+        #print(predicted_intensities)
+        not_zero_mask = predicted_intensities > epsilon
+        observed_masked = observed_intensities.multiply(not_zero_mask)
+        predicted_masked = predicted_intensities.multiply(not_zero_mask)
+        #print(predicted_masked)
         
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
@@ -103,4 +78,3 @@ class SimilarityMetrics(Metric):
         Adds columns with spectral angle feature to metrics_val dataframe
         """
         self.metrics_val['spectral_angle'] = SimilarityMetrics.spectral_angle(self.true_intensities, self.pred_intensities)
-        

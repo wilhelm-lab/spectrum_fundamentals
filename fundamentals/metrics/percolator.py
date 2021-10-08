@@ -143,9 +143,9 @@ class Percolator(Metric):
     @staticmethod
     def get_target_decoy_label(reverse):
         """
-        :return: target/decoy label for percolator, 1 = Target, 0 = Decoy
+        :return: target/decoy label for percolator, 1 = Target, -1 = Decoy
         """
-        return 0 if reverse else 1
+        return -1 if reverse else 1
 
     def add_common_features(self):
         """
@@ -157,10 +157,10 @@ class Percolator(Metric):
         self.metrics_val['sequence_length'] = self.metadata['SEQUENCE'].apply(lambda x: len(x))
 
         self.metrics_val['Mass'] = self.metadata['MASS']  # this is the experimental mass used as a feature
-        self.metrics_val['deltaM_Da'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference, axis=1)
-        self.metrics_val['absDeltaM_Da'] = np.abs(self.metrics_val['deltaM_Da'])
-        self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference_ppm, axis=1)
-        self.metrics_val['absDeltaM_ppm'] = np.abs(self.metrics_val['deltaM_ppm'])
+        #self.metrics_val['deltaM_Da'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference, axis=1)
+        #self.metrics_val['absDeltaM_Da'] = np.abs(self.metrics_val['deltaM_Da'])
+        #self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference_ppm, axis=1)
+        #self.metrics_val['absDeltaM_ppm'] = np.abs(self.metrics_val['deltaM_ppm'])
 
         self.metrics_val['Charge2'] = (self.metadata['PRECURSOR_CHARGE'] == 2).astype(int)
         self.metrics_val['Charge3'] = (self.metadata['PRECURSOR_CHARGE'] == 3).astype(int)
@@ -178,21 +178,25 @@ class Percolator(Metric):
         self.metrics_val['Label'] = self.target_decoy_labels
         self.metrics_val['ScanNr'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER']].apply(Percolator.get_scannr, axis=1)
         self.metrics_val['ExpMass'] = self.metadata['MASS']
-        self.metrics_val['Peptide'] = self.metadata['MODIFIED_SEQUENCE']
-        self.metrics_val['Protein'] = self.metadata[
-            'MODIFIED_SEQUENCE']  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+        self.metrics_val['Peptide'] = self.metadata['SEQUENCE'].apply(lambda x: '_.' + x + '._')
+        self.metrics_val['Protein'] = self.metadata['SEQUENCE']  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
 
     def apply_lda_and_get_indices_below_fdr(self, initial_scoring_feature='spectral_angle', fdr_cutoff=0.01):
         """
         Applies a linear discriminant analysis on the features calculated so far (before retention time alignment) to estimate false discovery rates (FDRs).
         """
         target_idxs_below_fdr = self.get_indices_below_fdr(initial_scoring_feature, fdr_cutoff=fdr_cutoff)
+        print(len(target_idxs_below_fdr))
         decoy_idxs = np.argwhere(self.target_decoy_labels == 0).flatten()
+        print(len(decoy_idxs))
+
 
         lda_idxs = np.concatenate((target_idxs_below_fdr, decoy_idxs)).astype(int)
 
         X = self.metrics_val.iloc[lda_idxs, :].to_numpy()
         y = self.target_decoy_labels[lda_idxs]
+        print(len(X))
+        print(len(y))
 
         lda = LinearDiscriminantAnalysis()
         lda.fit(X, y)
@@ -240,7 +244,7 @@ class Percolator(Metric):
             similarity.calc()
 
             self.metrics_val = pd.concat([self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1)
-
+            #return
             idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
             sampled_idxs = Percolator.sample_balanced_over_bins(
                 self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']].iloc[idxs_below_lda_fdr, :])
@@ -250,7 +254,8 @@ class Percolator(Metric):
                 self.metadata['PREDICTED_IRT'])
 
             print(aligned_predicted_rts)
-            self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
+            #
+            #self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
             self.metrics_val['pred_RT'] = self.metadata['PREDICTED_IRT']
             self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
         else:
@@ -258,6 +263,7 @@ class Percolator(Metric):
 
         self.add_percolator_metadata_columns()
         if self.input_type == 'Prosit':
-            self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr', 'spectral_angle']], 'spectral_angle')
+            #self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr', 'spectral_angle']], 'spectral_angle')
+            return
         else:
             self.metrics_val['andromeda_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr', 'andromeda']], 'andromeda')

@@ -129,4 +129,4 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
                                             'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
         fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('mass'))
-    return fragments_meta_data, tmt_n_term, peptide_sequence
+    return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum+ion_type_offsets[0]+ion_type_offsets[1])

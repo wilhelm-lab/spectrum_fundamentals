@@ -182,7 +182,7 @@ class FragmentsRatio(Metric):
         return observed_mz > 0
     
     @staticmethod
-    def make_boolean(intensities, mask, cutoff = constants.EPSILON):
+    def make_boolean(intensities, mask, cutoff = 2e-7):
         """
         Transform array of intensities into boolean array with True if > cutoff and False otherwise
         :param intensities: observed or predicted intensities, array of length 174

@@ -98,7 +98,7 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
         raw_file_annotations.append(results)
     results_df = pd.DataFrame()
     results_df = results_df.append(raw_file_annotations)
-    results_df.columns = ["INTENSITIES", "MZ"]
+    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS"]
 
     return results_df
 
@@ -160,7 +160,7 @@ def parallel_annotate(spectrum, index_columns):
     :param spectrum: spectrum to be annotated.
     :return: annotated spectrum with meta data.
     """
-    fragments_meta_data, tmt_n_term, unmod_sequence = initialize_peaks(spectrum[index_columns['MODIFIED_SEQUENCE']],
+    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(spectrum[index_columns['MODIFIED_SEQUENCE']],
                                                                        spectrum[index_columns['MASS_ANALYZER']],
                                                                        spectrum[index_columns['PRECURSOR_CHARGE']])
     if not unmod_sequence:
@@ -171,8 +171,8 @@ def parallel_annotate(spectrum, index_columns):
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)
-        return intensity, mass
+        return intensity, mass, calc_mass
     matched_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence,
                                                    spectrum[index_columns['PRECURSOR_CHARGE']])
-    return intensities, mass
+    return intensities, mass, calc_mass
