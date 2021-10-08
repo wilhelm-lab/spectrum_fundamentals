@@ -1,4 +1,6 @@
 import hashlib
+import logging
+import enum
 
 import numpy as np
 import pandas as pd
@@ -9,6 +11,16 @@ import scipy.stats
 from .metric import Metric
 from . import fragments_ratio as fr
 from . import similarity as sim
+
+logger = logging.getLogger(__name__)
+
+
+class TargetDecoyLabel(enum.IntEnum):
+    """
+    Target and decoy labels as used by Percolator
+    """
+    TARGET = 1
+    DECOY = -1
 
 
 class Percolator(Metric):
@@ -32,14 +44,14 @@ class Percolator(Metric):
     input_type: str
     fdr_cutoff: float
 
-    def __init__(self, metadata, pred_intensities, true_intensities, input_type, fdr_cutoff=0.01):
+    def __init__(self, metadata: pd.DataFrame, pred_intensities, true_intensities, input_type, fdr_cutoff=0.01):
         self.metadata = metadata
         self.input_type = input_type
         self.fdr_cutoff = fdr_cutoff
         super().__init__(pred_intensities, true_intensities)
 
     @staticmethod
-    def sample_balanced_over_bins(retention_time_df, sample_size=5000):
+    def sample_balanced_over_bins(retention_time_df, sample_size: int = 5000):
 
         # bin retention times
         min_rt = retention_time_df['RETENTION_TIME'].min() * 0.99
@@ -145,18 +157,20 @@ class Percolator(Metric):
         """
         :return: target/decoy label for percolator, 1 = Target, -1 = Decoy
         """
-        return -1 if reverse else 1
+        return TargetDecoyLabel.DECOY if reverse else TargetDecoyLabel.TARGET
 
     def add_common_features(self):
         """
         Add features used by both Andromeda and Prosit feature scoring sets
         """
-        print(self.metadata)
         self.metrics_val['missedCleavages'] = self.metadata['SEQUENCE'].apply(Percolator.count_missed_cleavages)
         self.metrics_val['KR'] = self.metadata['SEQUENCE'].apply(Percolator.count_arginines_and_lysines)
         self.metrics_val['sequence_length'] = self.metadata['SEQUENCE'].apply(lambda x: len(x))
 
-        self.metrics_val['Mass'] = self.metadata['MASS']  # this is the experimental mass used as a feature
+        self.metrics_val['Mass'] = self.metadata['MASS']  # this is the calculated mass used as a feature
+        
+        # for now, disable delta mass features as MaxQuant does not seem to provide the 
+        # experimental mass in msms.txt. Both the Mass and m/z columns are theoretical masses
         #self.metrics_val['deltaM_Da'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference, axis=1)
         #self.metrics_val['absDeltaM_Da'] = np.abs(self.metrics_val['deltaM_Da'])
         #self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference_ppm, axis=1)
@@ -186,17 +200,13 @@ class Percolator(Metric):
         Applies a linear discriminant analysis on the features calculated so far (before retention time alignment) to estimate false discovery rates (FDRs).
         """
         target_idxs_below_fdr = self.get_indices_below_fdr(initial_scoring_feature, fdr_cutoff=fdr_cutoff)
-        print(len(target_idxs_below_fdr))
-        decoy_idxs = np.argwhere(self.target_decoy_labels == 0).flatten()
-        print(len(decoy_idxs))
-
+        decoy_idxs = np.argwhere(self.target_decoy_labels == TargetDecoyLabel.DECOY).flatten()
+        logger.info(f"Found {len(target_idxs_below_fdr)} targets and {len(decoy_idxs)} decoys as input for the LDA model")
 
         lda_idxs = np.concatenate((target_idxs_below_fdr, decoy_idxs)).astype(int)
 
         X = self.metrics_val.iloc[lda_idxs, :].to_numpy()
         y = self.target_decoy_labels[lda_idxs]
-        print(len(X))
-        print(len(y))
 
         lda = LinearDiscriminantAnalysis()
         lda.fit(X, y)
@@ -208,25 +218,38 @@ class Percolator(Metric):
     def get_indices_below_fdr(self, feature_name, fdr_cutoff=0.01):
         scores_df = self.metrics_val[[feature_name]].copy()
         scores_df['Label'] = self.target_decoy_labels
+        #scores_df['Sequence'] = self.metadata['SEQUENCE']
         scores_df = scores_df.sort_values(feature_name, ascending=False)
-
+        logger.debug(scores_df.head(100))
+        
         scores_df['fdr'] = Percolator.calculate_fdrs(scores_df['Label'])
 
         # filter for targets only
-        scores_df = scores_df[scores_df['Label'] == 1]
+        scores_df = scores_df[scores_df['Label'] == TargetDecoyLabel.TARGET]
 
         accepted_indices = scores_df.index[scores_df['fdr'] < fdr_cutoff]
         if len(accepted_indices) == 0:
+            logger.error(f"Could not find any targets below {fdr_cutoff} out of {len(scores_df.index)} targets in total")
             return np.array([])
-
+        
+        logger.info(f"Found {len(accepted_indices)} (out of {len(scores_df.index)}) targets below {fdr_cutoff} FDR using {feature_name} as feature")
+        
         return np.sort(scores_df.index[:accepted_indices.max()])
 
     @staticmethod
     def calculate_fdrs(sorted_labels):
-        cumulative_decoy_count = np.cumsum(~(sorted_labels.astype(bool))) + 1
-        cumulative_target_count = np.cumsum(sorted_labels) + 1
+        cumulative_decoy_count = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
+        cumulative_target_count = np.cumsum(sorted_labels == TargetDecoyLabel.TARGET) + 1
         return cumulative_decoy_count / cumulative_target_count
-
+    
+    def _reorder_columns_for_percolator(self):
+        all_columns = self.metrics_val.columns
+        first_columns = ['SpecId', 'Label', 'ScanNr']
+        last_columns = ['Peptide', 'Protein']
+        mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
+        new_columns = first_columns + sorted(mid_columns) + last_columns
+        self.metrics_val = self.metrics_val[new_columns]
+    
     def calc(self):
         """
         Adds percolator metadata and feature columns to metrics_val based on PSM metadata
@@ -253,9 +276,7 @@ class Percolator(Metric):
                 self.metadata['PREDICTED_IRT'][sampled_idxs],
                 self.metadata['PREDICTED_IRT'])
 
-            print(aligned_predicted_rts)
-            #
-            #self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
+            self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
             self.metrics_val['pred_RT'] = self.metadata['PREDICTED_IRT']
             self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
         else:
@@ -263,7 +284,10 @@ class Percolator(Metric):
 
         self.add_percolator_metadata_columns()
         if self.input_type == 'Prosit':
+            # TODO: only add this feature if they are not all zero
             #self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr', 'spectral_angle']], 'spectral_angle')
-            return
+            pass
         else:
             self.metrics_val['andromeda_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr', 'andromeda']], 'andromeda')
+        
+        self._reorder_columns_for_percolator()

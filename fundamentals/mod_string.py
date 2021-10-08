@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Union, Tuple
-from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES, MAXQUANT_NC_TERM
+from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES, MAXQUANT_NC_TERM, MOD_NAMES
 import numpy as np
 import re
 import difflib
