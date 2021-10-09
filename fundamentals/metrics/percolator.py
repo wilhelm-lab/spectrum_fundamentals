@@ -192,8 +192,8 @@ class Percolator(Metric):
         self.metrics_val['Label'] = self.target_decoy_labels
         self.metrics_val['ScanNr'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER']].apply(Percolator.get_scannr, axis=1)
         self.metrics_val['ExpMass'] = self.metadata['MASS']
-        self.metrics_val['Peptide'] = self.metadata['SEQUENCE'].apply(lambda x: '_.' + x + '._')
-        self.metrics_val['Protein'] = self.metadata['SEQUENCE']  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+        self.metrics_val['Peptide'] = self.metadata['MODIFIED_SEQUENCE'].apply(lambda x: '_.' + x + '._')
+        self.metrics_val['Protein'] = self.metadata['MODIFIED_SEQUENCE']  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
 
     def apply_lda_and_get_indices_below_fdr(self, initial_scoring_feature='spectral_angle', fdr_cutoff=0.01):
         """
