@@ -240,21 +240,21 @@ class TestCalc:
         
         
         # fractional count metrics relative to predictions        
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_and_predicted'][0], 2 / 4)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_and_predicted_b'][0], 1 / 2)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_and_predicted_y'][0], 1 / 2)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_and_predicted_vs_predicted'][0], 2 / 4)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_and_predicted_b_vs_predicted_b'][0], 1 / 2)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_and_predicted_y_vs_predicted_y'][0], 1 / 2)
         
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_not_observed_and_not_predicted'][0], 2 / 4)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_not_observed_and_not_predicted_b'][0], 1 / 2)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_not_observed_and_not_predicted_y'][0], 1 / 2)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_and_not_predicted_vs_predicted'][0], 2 / 4)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_and_not_predicted_b_vs_predicted_b'][0], 1 / 2)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_and_not_predicted_y_vs_predicted_y'][0], 1 / 2)
         
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_but_not_predicted'][0], 2 / 4)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_but_not_predicted_b'][0], 0 / 2)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_observed_but_not_predicted_y'][0], 2 / 2)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_but_not_predicted_vs_predicted'][0], 2 / 4)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_but_not_predicted_b_vs_predicted_b'][0], 0 / 2)
+        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_observed_but_not_predicted_y_vs_predicted_y'][0], 2 / 2)
         
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_not_observed_but_predicted'][0], 2 / 4)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_not_observed_but_predicted_b'][0], 1 / 2)
-        np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_predicted_not_observed_but_predicted_y'][0], 1 / 2)
+        #np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_but_predicted_vs_predicted'][0], 2 / 4)
+        #np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_but_predicted_b_vs_predicted_b'][0], 1 / 2)
+        #np.testing.assert_equal(fragmentsRatio.metrics_val['fraction_not_observed_but_predicted_y_vs_predicted_y'][0], 1 / 2)
         
 
 def assert_equal_sparse(a, b):

@@ -77,6 +77,8 @@ class Percolator(Metric):
         # don't use the iterative reweighting (it > 1), this result in NaNs
         aligned_rts_predicted = lowess(observed_retention_times_fdr_filtered.astype(np.float64), predicted_retention_times_fdr_filtered.astype(np.float64),
                                        xvals=predicted_retention_times_all.astype(np.float64), frac=0.5, it=0)
+        logger.info(f"Observed RT anchor points: {observed_retention_times_fdr_filtered}")
+        logger.info(f"Predicted RT anchor points: {predicted_retention_times_fdr_filtered}")
         # TODO: filter out datapoints with large residuals
         # TODO: use Akaike information criterion to choose a good value for frac
         # TODO; test for NaNs and use interpolation to fill them up
@@ -234,13 +236,22 @@ class Percolator(Metric):
         
         logger.info(f"Found {len(accepted_indices)} (out of {len(scores_df.index)}) targets below {fdr_cutoff} FDR using {feature_name} as feature")
         
-        return np.sort(scores_df.index[:accepted_indices.max()])
+        return np.sort(scores_df.index[:len(accepted_indices)])
 
     @staticmethod
     def calculate_fdrs(sorted_labels):
         cumulative_decoy_count = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
         cumulative_target_count = np.cumsum(sorted_labels == TargetDecoyLabel.TARGET) + 1
-        return cumulative_decoy_count / cumulative_target_count
+        return Percolator.fdrs_to_qvals(np.array(cumulative_decoy_count / cumulative_target_count))
+    
+    @staticmethod
+    def fdrs_to_qvals(fdrs):
+        qvals = [0] * len(fdrs)
+        if len(fdrs) > 0:
+            qvals[len(fdrs)-1] = fdrs[-1]
+            for i in range(len(fdrs)-2, -1, -1):
+                qvals[i] = min(qvals[i+1], fdrs[i])
+        return qvals
     
     def _reorder_columns_for_percolator(self):
         all_columns = self.metrics_val.columns
@@ -258,6 +269,7 @@ class Percolator(Metric):
 
         self.target_decoy_labels = self.metadata['REVERSE'].apply(Percolator.get_target_decoy_label).to_numpy()
 
+        np.random.seed(1)
         # add Prosit or Andromeda features
         if self.input_type == "Prosit":
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
@@ -267,8 +279,9 @@ class Percolator(Metric):
             similarity.calc()
 
             self.metrics_val = pd.concat([self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1)
-            #return
+            
             idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+
             sampled_idxs = Percolator.sample_balanced_over_bins(
                 self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']].iloc[idxs_below_lda_fdr, :])
             aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
@@ -279,6 +292,7 @@ class Percolator(Metric):
             self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
             self.metrics_val['pred_RT'] = self.metadata['PREDICTED_IRT']
             self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
+            logger.info(self.metrics_val[['RT', 'pred_RT', 'abs_rt_diff', 'lda_scores']].iloc[idxs_below_lda_fdr, :])
         else:
             self.metrics_val['andromeda'] = self.metadata['SCORE']
 

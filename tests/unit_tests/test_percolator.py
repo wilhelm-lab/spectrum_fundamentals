@@ -12,7 +12,7 @@ class TestFdrs:
         T = perc.TargetDecoyLabel.TARGET
         D = perc.TargetDecoyLabel.DECOY
         sorted_labels = np.array([T, T, D, D])
-        np.testing.assert_almost_equal(perc.Percolator.calculate_fdrs(sorted_labels), [0.5, 0.3333333, 0.66666667, 1.0])
+        np.testing.assert_almost_equal(perc.Percolator.calculate_fdrs(sorted_labels), [0.3333333, 0.3333333, 0.66666667, 1.0])
     
     def test_get_indices_below_fdr_none(self):
         percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
@@ -32,11 +32,11 @@ class TestFdrs:
         percolator.metrics_val['Score'] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [0, 1, 1, 0]
         '''
-        idx Score Label       fdr
-        1      3      1  0.500000
-        2      2      1  0.333333
-        3      1      0  0.666667
-        0      0      0  1.000000
+        idx Score Label       fdr      qval
+        1      3      1  0.500000  0.333333
+        2      2      1  0.333333  0.333333
+        3      1      0  0.666667  0.666667
+        0      0      0  1.000000  1.000000
         '''
         np.testing.assert_equal(percolator.get_indices_below_fdr('Score', fdr_cutoff = 0.4), np.array([1, 2]))
     

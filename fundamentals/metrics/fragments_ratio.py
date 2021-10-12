@@ -288,19 +288,20 @@ class FragmentsRatio(Metric):
         num_predicted_ions_b = np.maximum(1, self.metrics_val['count_predicted_b'])
         num_predicted_ions_y = np.maximum(1, self.metrics_val['count_predicted_y'])
         
-        self.metrics_val['fraction_predicted_observed_and_predicted'] = self.metrics_val['count_observed_and_predicted'] / num_predicted_ions
-        self.metrics_val['fraction_predicted_observed_and_predicted_b'] = self.metrics_val['count_observed_and_predicted_b'] / num_predicted_ions_b
-        self.metrics_val['fraction_predicted_observed_and_predicted_y'] = self.metrics_val['count_observed_and_predicted_y'] / num_predicted_ions_y
+        self.metrics_val['fraction_observed_and_predicted_vs_predicted'] = self.metrics_val['count_observed_and_predicted'] / num_predicted_ions
+        self.metrics_val['fraction_observed_and_predicted_b_vs_predicted_b'] = self.metrics_val['count_observed_and_predicted_b'] / num_predicted_ions_b
+        self.metrics_val['fraction_observed_and_predicted_y_vs_predicted_y'] = self.metrics_val['count_observed_and_predicted_y'] / num_predicted_ions_y
         
-        self.metrics_val['fraction_predicted_not_observed_and_not_predicted'] = self.metrics_val['count_not_observed_and_not_predicted'] / num_predicted_ions
-        self.metrics_val['fraction_predicted_not_observed_and_not_predicted_b'] = self.metrics_val['count_not_observed_and_not_predicted_b'] / num_predicted_ions_b
-        self.metrics_val['fraction_predicted_not_observed_and_not_predicted_y'] = self.metrics_val['count_not_observed_and_not_predicted_y'] / num_predicted_ions_y
+        self.metrics_val['fraction_not_observed_and_not_predicted_vs_predicted'] = self.metrics_val['count_not_observed_and_not_predicted'] / num_predicted_ions
+        self.metrics_val['fraction_not_observed_and_not_predicted_b_vs_predicted_b'] = self.metrics_val['count_not_observed_and_not_predicted_b'] / num_predicted_ions_b
+        self.metrics_val['fraction_not_observed_and_not_predicted_y_vs_predicted_y'] = self.metrics_val['count_not_observed_and_not_predicted_y'] / num_predicted_ions_y
         
-        self.metrics_val['fraction_predicted_observed_but_not_predicted'] = self.metrics_val['count_observed_but_not_predicted'] / num_predicted_ions
-        self.metrics_val['fraction_predicted_observed_but_not_predicted_b'] = self.metrics_val['count_observed_but_not_predicted_b'] / num_predicted_ions_b
-        self.metrics_val['fraction_predicted_observed_but_not_predicted_y'] = self.metrics_val['count_observed_but_not_predicted_y'] / num_predicted_ions_y
+        self.metrics_val['fraction_observed_but_not_predicted_vs_predicted'] = self.metrics_val['count_observed_but_not_predicted'] / num_predicted_ions
+        self.metrics_val['fraction_observed_but_not_predicted_b_vs_predicted_b'] = self.metrics_val['count_observed_but_not_predicted_b'] / num_predicted_ions_b
+        self.metrics_val['fraction_observed_but_not_predicted_y_vs_predicted_y'] = self.metrics_val['count_observed_but_not_predicted_y'] / num_predicted_ions_y
         
-        self.metrics_val['fraction_predicted_not_observed_but_predicted'] = self.metrics_val['count_not_observed_but_predicted'] / num_predicted_ions
-        self.metrics_val['fraction_predicted_not_observed_but_predicted_b'] = self.metrics_val['count_not_observed_but_predicted_b'] / num_predicted_ions_b
-        self.metrics_val['fraction_predicted_not_observed_but_predicted_y'] = self.metrics_val['count_not_observed_but_predicted_y'] / num_predicted_ions_y
+        # not needed, as these are simply (1 - fraction_observed_and_predicted_vs_predicted)
+        #self.metrics_val['fraction_not_observed_but_predicted_vs_predicted'] = self.metrics_val['count_not_observed_but_predicted'] / num_predicted_ions
+        #self.metrics_val['fraction_not_observed_but_predicted_b_vs_predicted'] = self.metrics_val['count_not_observed_but_predicted_b'] / num_predicted_ions_b
+        #self.metrics_val['fraction_not_observed_but_predicted_y_vs_predicted'] = self.metrics_val['count_not_observed_but_predicted_y'] / num_predicted_ions_y
         
