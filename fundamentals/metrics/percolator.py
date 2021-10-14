@@ -54,6 +54,7 @@ class Percolator(Metric):
     def sample_balanced_over_bins(retention_time_df, sample_size: int = 5000):
 
         # bin retention times
+        print(retention_time_df['RETENTION_TIME'])
         min_rt = retention_time_df['RETENTION_TIME'].min() * 0.99
         max_rt = retention_time_df['RETENTION_TIME'].max() * 1.01
         bin_width = 2 * scipy.stats.iqr(retention_time_df['RETENTION_TIME']) / len(retention_time_df['RETENTION_TIME']) ** (
@@ -77,8 +78,8 @@ class Percolator(Metric):
         # don't use the iterative reweighting (it > 1), this result in NaNs
         aligned_rts_predicted = lowess(observed_retention_times_fdr_filtered.astype(np.float64), predicted_retention_times_fdr_filtered.astype(np.float64),
                                        xvals=predicted_retention_times_all.astype(np.float64), frac=0.5, it=0)
-        logger.info(f"Observed RT anchor points: {observed_retention_times_fdr_filtered}")
-        logger.info(f"Predicted RT anchor points: {predicted_retention_times_fdr_filtered}")
+        #logger.info(f"Observed RT anchor points: {observed_retention_times_fdr_filtered}")
+        #logger.info(f"Predicted RT anchor points: {predicted_retention_times_fdr_filtered}")
         # TODO: filter out datapoints with large residuals
         # TODO: use Akaike information criterion to choose a good value for frac
         # TODO; test for NaNs and use interpolation to fill them up
@@ -169,17 +170,21 @@ class Percolator(Metric):
         self.metrics_val['KR'] = self.metadata['SEQUENCE'].apply(Percolator.count_arginines_and_lysines)
         self.metrics_val['sequence_length'] = self.metadata['SEQUENCE'].apply(lambda x: len(x))
 
-        self.metrics_val['Mass'] = self.metadata['MASS']  # this is the calculated mass used as a feature
+        self.metrics_val['Mass'] = self.metadata['CALCULATED_MASS']  # this is the calculated mass used as a feature
         
         # for now, disable delta mass features as MaxQuant does not seem to provide the 
         # experimental mass in msms.txt. Both the Mass and m/z columns are theoretical masses
-        #self.metrics_val['deltaM_Da'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference, axis=1)
-        #self.metrics_val['absDeltaM_Da'] = np.abs(self.metrics_val['deltaM_Da'])
-        #self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference_ppm, axis=1)
-        #self.metrics_val['absDeltaM_ppm'] = np.abs(self.metrics_val['deltaM_ppm'])
+        self.metrics_val['deltaM_Da'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference, axis=1)
+        self.metrics_val['absDeltaM_Da'] = np.abs(self.metrics_val['deltaM_Da'])
+        self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference_ppm, axis=1)
+        self.metrics_val['absDeltaM_ppm'] = np.abs(self.metrics_val['deltaM_ppm'])
 
+        self.metrics_val['Charge1'] = (self.metadata['PRECURSOR_CHARGE'] == 1).astype(int)
         self.metrics_val['Charge2'] = (self.metadata['PRECURSOR_CHARGE'] == 2).astype(int)
         self.metrics_val['Charge3'] = (self.metadata['PRECURSOR_CHARGE'] == 3).astype(int)
+        self.metrics_val['Charge4'] = (self.metadata['PRECURSOR_CHARGE'] == 4).astype(int)
+        self.metrics_val['Charge5'] = (self.metadata['PRECURSOR_CHARGE'] == 5).astype(int)
+        self.metrics_val['Charge6'] = (self.metadata['PRECURSOR_CHARGE'] == 6).astype(int)
 
         self.metrics_val['UnknownFragmentationMethod'] = (~self.metadata['FRAGMENTATION'].isin(['HCD', 'CID'])).astype(int)
         self.metrics_val['HCD'] = (self.metadata['FRAGMENTATION'] == 'HCD').astype(int)
@@ -193,9 +198,10 @@ class Percolator(Metric):
                                                                                                                      axis=1)
         self.metrics_val['Label'] = self.target_decoy_labels
         self.metrics_val['ScanNr'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER']].apply(Percolator.get_scannr, axis=1)
+
         self.metrics_val['ExpMass'] = self.metadata['MASS']
-        self.metrics_val['Peptide'] = self.metadata['MODIFIED_SEQUENCE'].apply(lambda x: '_.' + x + '._')
-        self.metrics_val['Protein'] = self.metadata['MODIFIED_SEQUENCE']  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+        self.metrics_val['Peptide'] = self.metadata['SEQUENCE'].apply(lambda x: '_.' + x + '._')
+        self.metrics_val['Protein'] = self.metadata['SEQUENCE']  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
 
     def apply_lda_and_get_indices_below_fdr(self, initial_scoring_feature='spectral_angle', fdr_cutoff=0.01):
         """
@@ -236,7 +242,7 @@ class Percolator(Metric):
         
         logger.info(f"Found {len(accepted_indices)} (out of {len(scores_df.index)}) targets below {fdr_cutoff} FDR using {feature_name} as feature")
         
-        return np.sort(scores_df.index[:len(accepted_indices)])
+        return np.sort(scores_df.index)[:len(accepted_indices)]
 
     @staticmethod
     def calculate_fdrs(sorted_labels):
@@ -279,11 +285,25 @@ class Percolator(Metric):
             similarity.calc()
 
             self.metrics_val = pd.concat([self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1)
-            
-            idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
 
-            sampled_idxs = Percolator.sample_balanced_over_bins(
-                self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']].iloc[idxs_below_lda_fdr, :])
+            lda_failed = False
+            idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+            current_fdr = self.fdr_cutoff
+            while len(idxs_below_lda_fdr) == 0:
+
+                current_fdr += 0.01
+                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
+                if current_fdr == 0.1:
+                    lda_failed = True
+                    break
+
+            if lda_failed:
+                sampled_idxs = Percolator.sample_balanced_over_bins(
+                    self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']])
+            else:
+                sampled_idxs = Percolator.sample_balanced_over_bins(
+                    self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']].iloc[idxs_below_lda_fdr, :])
+
             aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
                 self.metadata['RETENTION_TIME'][sampled_idxs],
                 self.metadata['PREDICTED_IRT'][sampled_idxs],
@@ -291,8 +311,10 @@ class Percolator(Metric):
 
             self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
             self.metrics_val['pred_RT'] = self.metadata['PREDICTED_IRT']
+            self.metrics_val['iRT'] = aligned_predicted_rts
+            self.metrics_val['collision_energy_aligned'] = self.metadata['COLLISION_ENERGY']/100.0
             self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
-            logger.info(self.metrics_val[['RT', 'pred_RT', 'abs_rt_diff', 'lda_scores']].iloc[idxs_below_lda_fdr, :])
+            #logger.info(self.metrics_val[['RT', 'pred_RT', 'abs_rt_diff', 'lda_scores']].iloc[idxs_below_lda_fdr, :])
         else:
             self.metrics_val['andromeda'] = self.metadata['SCORE']
 
