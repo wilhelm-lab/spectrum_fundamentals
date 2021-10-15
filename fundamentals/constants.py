@@ -124,6 +124,8 @@ AA_MASSES = {
     'W': 186.079313,
     'Y': 163.063329,
     'V': 99.068414,
+    '[]-': MASSES["N_TERMINUS"],
+    '-[]': MASSES["C_TERMINUS"],
 }
 
 MOD_MASSES = {

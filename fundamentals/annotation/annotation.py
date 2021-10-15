@@ -1,9 +1,13 @@
+import logging
+
 import pandas as pd
 from joblib import Parallel, delayed
 import numpy as np
 
 from fundamentals import constants
 from fundamentals.fragments import initialize_peaks, get_modifications
+
+logger = logging.getLogger(__name__)
 
 
 def match_peaks(fragments_meta_data: list, peaks_intensity: np,
@@ -35,6 +39,7 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                 break
             if peak_mass < min_mass:
                 start_peak += 1
+                continue
             if min_mass <= peak_mass <= max_mass:
                 if fragment['ion_type'] == 'b' and fragment_no == 1:
                     if (unmod_sequence[0] == 'R' or unmod_sequence[0] == 'H' or unmod_sequence[0] == 'K') and (
@@ -71,8 +76,10 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = 'intensity'):
     else:
         matched_peaks_df = matched_peaks_df.sort_values(by='intensity', ascending=False)
 
-    matched_peaks_df = matched_peaks_df.drop_duplicates(subset=['ion_type', 'no'], keep="first")
-    return matched_peaks_df
+    original_lenght= len(matched_peaks_df.index)
+    matched_peaks_df = matched_peaks_df.drop_duplicates(subset=['ion_type', 'no', 'charge'], keep="first")
+    length_after_matches = len(matched_peaks_df.index)
+    return matched_peaks_df, (original_lenght-length_after_matches)
 
 
 def annotate_spectra(un_annot_spectra: pd.DataFrame):
@@ -98,7 +105,8 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
         raw_file_annotations.append(results)
     results_df = pd.DataFrame()
     results_df = results_df.append(raw_file_annotations)
-    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS"]
+    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS",'removed_peaks']
+    logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
 
     return results_df
 
@@ -172,7 +180,7 @@ def parallel_annotate(spectrum, index_columns):
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)
         return intensity, mass, calc_mass
-    matched_peaks = handle_multiple_matches(matched_peaks)
+    matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence,
                                                    spectrum[index_columns['PRECURSOR_CHARGE']])
-    return intensities, mass, calc_mass
+    return intensities, mass, calc_mass, removed_peaks

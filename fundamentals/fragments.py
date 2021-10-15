@@ -124,8 +124,8 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                     min_mass = (mass * -20 / 1000000) + mass
                     max_mass = (mass * 20 / 1000000) + mass
                 else:
-                    min_mass = mass - 0.5
-                    max_mass = mass + 0.5
+                    min_mass = mass - 0.4
+                    max_mass = mass + 0.4
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
                                             'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
         fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('mass'))
