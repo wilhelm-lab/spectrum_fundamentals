@@ -54,7 +54,7 @@ class Percolator(Metric):
     def sample_balanced_over_bins(retention_time_df, sample_size: int = 5000):
 
         # bin retention times
-        print(retention_time_df['RETENTION_TIME'])
+        #print(retention_time_df['RETENTION_TIME'])
         min_rt = retention_time_df['RETENTION_TIME'].min() * 0.99
         max_rt = retention_time_df['RETENTION_TIME'].max() * 1.01
         bin_width = 2 * scipy.stats.iqr(retention_time_df['RETENTION_TIME']) / len(retention_time_df['RETENTION_TIME']) ** (
@@ -72,17 +72,42 @@ class Percolator(Metric):
     def get_aligned_predicted_retention_times(observed_retention_times_fdr_filtered, predicted_retention_times_fdr_filtered,
                                               predicted_retention_times_all):
         """
-        Use IRT value here
+        Apply loess regression to find a mapping from predicted iRT values to experimental retention times
         """
-
-        # don't use the iterative reweighting (it > 1), this result in NaNs
-        aligned_rts_predicted = lowess(observed_retention_times_fdr_filtered.astype(np.float64), predicted_retention_times_fdr_filtered.astype(np.float64),
-                                       xvals=predicted_retention_times_all.astype(np.float64), frac=0.5, it=0)
-        #logger.info(f"Observed RT anchor points: {observed_retention_times_fdr_filtered}")
-        #logger.info(f"Predicted RT anchor points: {predicted_retention_times_fdr_filtered}")
-        # TODO: filter out datapoints with large residuals
+        
+        observed_rts = np.array(observed_retention_times_fdr_filtered, dtype=np.float64)
+        predicted_rts = np.array(predicted_retention_times_fdr_filtered, dtype=np.float64)
+        
         # TODO: use Akaike information criterion to choose a good value for frac
+        frac = 0.5 # Between 0 and 1. The fraction of the data used when estimating each y-value.
+        it = 0 # The number of residual-based reweightings to perform. Don't use the iterative reweighting (it > 1), this result in NaNs
+        discard_percentage = 0.1 # in percents, so 0.1 = 0.1% (not 10%!)
+        while discard_percentage < 50.0:
+            aligned_rts_predicted = lowess(observed_rts, 
+                                           predicted_rts,
+                                           frac=frac, it=it, return_sorted=False)
+            abs_errors = np.abs(aligned_rts_predicted - observed_rts)
+            cut_off = np.percentile(abs_errors, 100 - discard_percentage)
+            median_abs_error = np.median(np.abs(abs_errors))
+            logger.debug(f"Median absolute error aligned rts: {median_abs_error}")
+            
+            if median_abs_error > 0.02:
+                keep_idxs = np.nonzero(abs_errors < cut_off)
+                observed_rts = observed_rts[keep_idxs[0]]
+                predicted_rts = predicted_rts[keep_idxs[0]]
+            else:
+                break
+            
+            discard_percentage *= 1.5
+        
+        logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
+        logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
+        
         # TODO; test for NaNs and use interpolation to fill them up
+        aligned_rts_predicted = lowess(observed_rts, 
+                                       predicted_rts,
+                                       xvals=predicted_retention_times_all.astype(np.float64), 
+                                       frac=frac, it=it)
         return aligned_rts_predicted
 
     @staticmethod
@@ -242,7 +267,7 @@ class Percolator(Metric):
         
         logger.info(f"Found {len(accepted_indices)} (out of {len(scores_df.index)}) targets below {fdr_cutoff} FDR using {feature_name} as feature")
         
-        return np.sort(scores_df.index)[:len(accepted_indices)]
+        return np.sort(scores_df.index[:len(accepted_indices)])
 
     @staticmethod
     def calculate_fdrs(sorted_labels):
@@ -290,10 +315,9 @@ class Percolator(Metric):
             idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
             current_fdr = self.fdr_cutoff
             while len(idxs_below_lda_fdr) == 0:
-
                 current_fdr += 0.01
-                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
-                if current_fdr == 0.1:
+                idxs_below_lda_fdr = self.get_indices_below_fdr('lda_scores', fdr_cutoff=current_fdr)
+                if current_fdr >= 0.1:
                     lda_failed = True
                     break
 
@@ -314,7 +338,10 @@ class Percolator(Metric):
             self.metrics_val['iRT'] = aligned_predicted_rts
             self.metrics_val['collision_energy_aligned'] = self.metadata['COLLISION_ENERGY']/100.0
             self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
-            #logger.info(self.metrics_val[['RT', 'pred_RT', 'abs_rt_diff', 'lda_scores']].iloc[idxs_below_lda_fdr, :])
+            
+            median_abs_error_lda_targets = np.median(self.metrics_val['abs_rt_diff'].iloc[idxs_below_lda_fdr])
+            logger.info(f"Median absolute error predicted vs observed retention time on targets < 1% FDR: {median_abs_error_lda_targets}")
+            logger.debug(self.metrics_val[['RT', 'pred_RT', 'abs_rt_diff', 'lda_scores']].iloc[idxs_below_lda_fdr, :])
         else:
             self.metrics_val['andromeda'] = self.metadata['SCORE']
 

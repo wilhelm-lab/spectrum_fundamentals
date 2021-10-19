@@ -17,20 +17,37 @@ class TestFdrs:
     def test_get_indices_below_fdr_none(self):
         percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1]
-        percolator.target_decoy_labels = [0, 0, 1, 0]
+        percolator.target_decoy_labels = [-1, -1, 1, -1]
         '''
         idx Score  Label  fdr
-        1      3      0  2.0
+        1      3     -1  2.0
         2      2      1  1.0
-        3      1      0  1.5
-        0      0      0  2.0
+        3      1     -1  1.5
+        0      0     -1  2.0
         '''
         np.testing.assert_equal(percolator.get_indices_below_fdr('Score', fdr_cutoff = 0.4), np.array([]))
+    
+    def test_get_indices_below_fdr_unordered_idxs(self):
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
+        percolator.metrics_val['Score'] = [0, 3, 2, 1, -1]
+        percolator.target_decoy_labels = [-1, 1, 1, -1, 1]
+        
+        percolator.metrics_val.index = [3, 4, 2, 1, 0]
+        
+        '''
+        idx Score Label       fdr      qval
+        4      3      1  0.500000  0.333333
+        2      2      1  0.333333  0.333333
+        1      1     -1  0.666667  0.600000
+        3      0     -1  1.000000  0.600000
+        0     -1      1  0.600000  0.600000
+        '''
+        np.testing.assert_equal(percolator.get_indices_below_fdr('Score', fdr_cutoff = 0.4), np.array([2, 4]))
         
     def test_get_indices_below_fdr(self):
         percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1]
-        percolator.target_decoy_labels = [0, 1, 1, 0]
+        percolator.target_decoy_labels = [-1, 1, 1, -1]
         '''
         idx Score Label       fdr      qval
         1      3      1  0.500000  0.333333
@@ -43,7 +60,7 @@ class TestFdrs:
     def test_get_indices_below_fdr_filter_decoy(self):
         percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1, 4, 5, 6, 7]
-        percolator.target_decoy_labels = [0, 1, 1, 0, 0, 1, 1, 1]
+        percolator.target_decoy_labels = [-1, 1, 1, -1, -1, 1, 1, 1]
         '''
         idx  Score Label      fdr
         7      7      1  0.500000
@@ -65,7 +82,7 @@ class TestLda:
         percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
         percolator.metrics_val['Score'] =         [0.0, 3.0, 2.0, 1.0, 4.0, 5.0, 6.0, 7.0]
         percolator.metrics_val['Score_2'] =       [1.0, 1.5, 2.0, 1.5, 1.0, 1.5, 2.0, 1.5]
-        percolator.target_decoy_labels = np.array([0,   1,   1,   0,   0,   1,   1,   1  ])
+        percolator.target_decoy_labels = np.array([-1,  1,   1,   -1,  -1,  1,   1,   1  ])
         '''
         idx lda_scores  Label       fdr
         6    8.396540      1  0.500000
@@ -87,6 +104,12 @@ class TestRetentionTimeAlignment:
         predicted_rts = np.linspace(1, 11, 10)
         predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5]) # observed = 2*(predicted - 1)
         np.testing.assert_almost_equal(perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all), [1, 3, 5, 7], decimal = 3)
+    
+    def test_get_aligned_predicted_retention_times_linear_not_sorted(self):
+        observed_rts =  np.linspace(0, 10, 10)*2
+        predicted_rts = np.linspace(1, 11, 10)
+        predicted_rts_all = np.array([1.5, 4.5, 3.5, 2.5]) # observed = 2*(predicted - 1)
+        np.testing.assert_almost_equal(perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all), [1, 7, 5, 3], decimal = 3)
     
     def test_get_aligned_predicted_retention_times_noise(self):
         observed_rts =  np.linspace(0, 10, 10)*2 + 0.001*np.random.random(10)
@@ -141,31 +164,31 @@ class TestPercolator:
         np.testing.assert_equal(perc.Percolator.get_delta_score(df, 'spectral_angle'), np.array([20, 40, 0, 40, 250, 0]))
 
     def test_calc(self):
-        cols = ['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'SEQUENCE', 'PRECURSOR_CHARGE', 'MASS', 'CALCULATED_MASS', 'SCORE', 'REVERSE', 'FRAGMENTATION', 'MASS_ANALYZER', 'RETENTION_TIME', 'PREDICTED_IRT']
+        cols = ['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'SEQUENCE', 'PRECURSOR_CHARGE', 'MASS', 'CALCULATED_MASS', 'SCORE', 'REVERSE', 'FRAGMENTATION', 'MASS_ANALYZER', 'RETENTION_TIME', 'PREDICTED_IRT', 'COLLISION_ENERGY']
         perc_input = pd.DataFrame(columns=cols)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,7978,AAIGEATRL,AAIGEATRL,2,900.50345678,900.50288029264,60.43600000000001,False,HCD,FTMS,0.5,0.5'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,7978,AAIGEATRL,AAIGEATRL,2,900.50345678,900.50288029264,60.43600000000001,False,HCD,FTMS,0.5,0.5,30'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12304,AAVPRAAFL,AAVPRAAFL,2,914.53379,914.53379,34.006,True,HCD,FTMS,1,1.5'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12304,AAVPRAAFL,AAVPRAAFL,2,914.53379,914.53379,34.006,True,HCD,FTMS,1,1.5,30'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12398,AAYFGVYDTAK,AAYFGVYDTAK,2,1204.5764,1204.5764,39.97399999999999,True,HCD,FTMS,1.5,2.5'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12398,AAYFGVYDTAK,AAYFGVYDTAK,2,1204.5764,1204.5764,39.97399999999999,True,HCD,FTMS,1.5,2.5,30'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,11716,AAYYHPSYL,AAYYHPSYL,2,1083.5025,1083.5025,99.919,False,HCD,FTMS,2,3.5'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,11716,AAYYHPSYL,AAYYHPSYL,2,1083.5025,1083.5025,99.919,False,HCD,FTMS,2,3.5,30'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,87.802,False,HCD,FTMS,2.5,4.5'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,87.802,False,HCD,FTMS,2.5,4.5,30'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,62.802,False,HCD,FTMS,3,5.5'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,62.802,False,HCD,FTMS,3,5.5,30'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,79.802,False,HCD,FTMS,3.5,6.5'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,79.802,False,HCD,FTMS,3.5,6.5,30'.split(','),
                       index=cols), ignore_index=True)
         perc_input = perc_input.append(
-            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,79.802,False,HCD,FTMS,4.0,7.5'.split(','),
+            pd.Series('20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,79.802,False,HCD,FTMS,4.0,7.5,30'.split(','),
                       index=cols), ignore_index=True)
         
                       
@@ -174,6 +197,7 @@ class TestPercolator:
         perc_input['MASS'] = perc_input['MASS'].astype(float)
         perc_input['CALCULATED_MASS'] = perc_input['CALCULATED_MASS'].astype(float)
         perc_input['REVERSE'] = perc_input['REVERSE'] == "True"
+        perc_input['COLLISION_ENERGY'] = perc_input['COLLISION_ENERGY'].astype(float)
         
         # we need to add noise to the retention times to prevent 0 residuals in the lowess regression
         perc_input['RETENTION_TIME'] = perc_input['RETENTION_TIME'].astype(float) + 1e-7*np.random.random(len(perc_input['RETENTION_TIME']))
@@ -210,7 +234,7 @@ class TestPercolator:
         np.testing.assert_equal(percolator.metrics_val['missedCleavages'][0], 1)
         np.testing.assert_equal(percolator.metrics_val['KR'][0], 1)
         np.testing.assert_equal(percolator.metrics_val['sequence_length'][0], 9)
-        np.testing.assert_almost_equal(percolator.metrics_val['Mass'][0], 900.50345678) # this is the experimental mass as a feature
+        np.testing.assert_almost_equal(percolator.metrics_val['Mass'][0], 900.50288029264) # this is the calculated mass as a feature
         #np.testing.assert_almost_equal(percolator.metrics_val['deltaM_Da'][0], -0.0005764873)
         #np.testing.assert_almost_equal(percolator.metrics_val['absDeltaM_Da'][0], 0.0005764873)
         #np.testing.assert_almost_equal(percolator.metrics_val['deltaM_ppm'][0], -0.64018339472)
