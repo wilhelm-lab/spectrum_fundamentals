@@ -174,10 +174,10 @@ class Percolator(Metric):
         
         # for now, disable delta mass features as MaxQuant does not seem to provide the 
         # experimental mass in msms.txt. Both the Mass and m/z columns are theoretical masses
-        self.metrics_val['deltaM_Da'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference, axis=1)
-        self.metrics_val['absDeltaM_Da'] = np.abs(self.metrics_val['deltaM_Da'])
-        self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference_ppm, axis=1)
-        self.metrics_val['absDeltaM_ppm'] = np.abs(self.metrics_val['deltaM_ppm'])
+        #self.metrics_val['deltaM_Da'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference, axis=1)
+        #self.metrics_val['absDeltaM_Da'] = np.abs(self.metrics_val['deltaM_Da'])
+        #self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].apply(Percolator.calculate_mass_difference_ppm, axis=1)
+        #self.metrics_val['absDeltaM_ppm'] = np.abs(self.metrics_val['deltaM_ppm'])
 
         self.metrics_val['Charge1'] = (self.metadata['PRECURSOR_CHARGE'] == 1).astype(int)
         self.metrics_val['Charge2'] = (self.metadata['PRECURSOR_CHARGE'] == 2).astype(int)
@@ -199,9 +199,9 @@ class Percolator(Metric):
         self.metrics_val['Label'] = self.target_decoy_labels
         self.metrics_val['ScanNr'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER']].apply(Percolator.get_scannr, axis=1)
 
-        self.metrics_val['ExpMass'] = self.metadata['MASS']
-        self.metrics_val['Peptide'] = self.metadata['SEQUENCE'].apply(lambda x: '_.' + x + '._')
-        self.metrics_val['Protein'] = self.metadata['SEQUENCE']  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+        #self.metrics_val['ExpMass'] = self.metadata['MASS']
+        self.metrics_val['Peptide'] = self.metadata['MODIFIED_SEQUENCE'].apply(lambda x: '_.' + x + '._')
+        self.metrics_val['Protein'] = self.metadata['MODIFIED_SEQUENCE']  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
 
     def apply_lda_and_get_indices_below_fdr(self, initial_scoring_feature='spectral_angle', fdr_cutoff=0.01):
         """

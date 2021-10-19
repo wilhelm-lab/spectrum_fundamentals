@@ -27,10 +27,15 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
     max_intensity = 1
     row_list = []
     temp_list = []
+    seq_len = len(unmod_sequence)
+    matched_peak = False
     for fragment in fragments_meta_data:
         min_mass = fragment['min_mass']
         max_mass = fragment['max_mass']
         fragment_no = fragment['no']
+        if matched_peak:
+            start_peak = next_start_peak
+        matched_peak = False
         while start_peak < no_of_peaks:
             peak_mass = peaks_masses[start_peak]
             peak_intensity = peaks_intensity[start_peak]
@@ -47,14 +52,16 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                         row_list.append(
                             {'ion_type': fragment['ion_type'], 'no': fragment_no, 'charge': fragment['charge'],
                              'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity})
-                        if peak_intensity > max_intensity:
+                        if peak_intensity > max_intensity and fragment_no < seq_len:
                             max_intensity = float(peak_intensity)
                 else:
                     row_list.append(
                         {'ion_type': fragment['ion_type'], 'no': fragment_no, 'charge': fragment['charge'],
                          'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity})
-                    if peak_intensity > max_intensity:
+                    if peak_intensity > max_intensity and fragment_no < seq_len:
                         max_intensity = float(peak_intensity)
+                matched_peak = True
+                next_start_peak = start_peak
                 start_peak += 1
     for row in row_list:
         row['intensity'] = float(row['intensity']) / max_intensity
@@ -62,7 +69,7 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
     return temp_list
 
 
-def handle_multiple_matches(matched_peaks: list, sort_by: str = 'intensity'):
+def handle_multiple_matches(matched_peaks: list, sort_by: str = 'mass_diff'):
     """
     Here we handle if multiple peaks were matched to the same fragment ion.
     We will resolve this based on the sort_by parameter.
@@ -73,13 +80,17 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = 'intensity'):
     if sort_by == 'mass_diff':
         matched_peaks_df['mass_diff'] = abs(matched_peaks_df['exp_mass'] - matched_peaks_df['theoretical_mass'])
         matched_peaks_df = matched_peaks_df.sort_values(by='mass_diff', ascending=True)
-    else:
+    elif sort_by == 'intensity':
         matched_peaks_df = matched_peaks_df.sort_values(by='intensity', ascending=False)
+    else:
+        #matched_peaks_df['mass_intensity'] = (1-abs(matched_peaks_df['exp_mass'] - matched_peaks_df['theoretical_mass'])) * matched_peaks_df['intensity']
+        matched_peaks_df = matched_peaks_df.sort_values(by='exp_mass', ascending=False)
 
-    original_lenght= len(matched_peaks_df.index)
+    original_length = len(matched_peaks_df.index)
     matched_peaks_df = matched_peaks_df.drop_duplicates(subset=['ion_type', 'no', 'charge'], keep="first")
+    #matched_peaks_df = matched_peaks_df[matched_peaks_df['intensity']>0.01]
     length_after_matches = len(matched_peaks_df.index)
-    return matched_peaks_df, (original_lenght-length_after_matches)
+    return matched_peaks_df, (original_length-length_after_matches)
 
 
 def annotate_spectra(un_annot_spectra: pd.DataFrame):
@@ -124,9 +135,9 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
 
     # change values to zeros
     if len(unmod_seq) < 30:
-        peaks_range = range(0, (len(unmod_seq) - 1) * 6)
+        peaks_range = range(0, ((len(unmod_seq) - 1) * 6))
     else:
-        peaks_range = range(0, 29 * 6)
+        peaks_range = range(0, (29 * 6 ))
     if charge == 1:
         available_peaks = [index for index in peaks_range if (index % 3 == 0)]
     elif charge == 2:
@@ -145,12 +156,12 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
 
     for peak in matched_peaks.values:
         if peak[ion_type] == 'y':
-            peak_pos = (peak[no_col] - 1) * 6 + (peak[charge_col] - 1)
+            peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1)
         else:
-            peak_pos = (peak[no_col] - 1) * 6 + (peak[charge_col] - 1) + 3
+            peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1) + 3
 
         if peak_pos >= 174:
-            break
+            continue
         intensity[peak_pos] = peak[intensity_col]
         mass[peak_pos] = peak[exp_mass_col]
 
