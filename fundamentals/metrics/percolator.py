@@ -316,7 +316,7 @@ class Percolator(Metric):
             current_fdr = self.fdr_cutoff
             while len(idxs_below_lda_fdr) == 0:
                 current_fdr += 0.01
-                idxs_below_lda_fdr = self.get_indices_below_fdr('lda_scores', fdr_cutoff=current_fdr)
+                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
                 if current_fdr >= 0.1:
                     lda_failed = True
                     break
