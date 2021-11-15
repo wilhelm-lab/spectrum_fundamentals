@@ -15,7 +15,7 @@ class TestFdrs:
         np.testing.assert_almost_equal(perc.Percolator.calculate_fdrs(sorted_labels), [0.3333333, 0.3333333, 0.66666667, 1.0])
     
     def test_get_indices_below_fdr_none(self):
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [-1, -1, 1, -1]
         '''
@@ -28,7 +28,7 @@ class TestFdrs:
         np.testing.assert_equal(percolator.get_indices_below_fdr('Score', fdr_cutoff = 0.4), np.array([]))
     
     def test_get_indices_below_fdr_unordered_idxs(self):
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1, -1]
         percolator.target_decoy_labels = [-1, 1, 1, -1, 1]
         
@@ -45,7 +45,7 @@ class TestFdrs:
         np.testing.assert_equal(percolator.get_indices_below_fdr('Score', fdr_cutoff = 0.4), np.array([2, 4]))
         
     def test_get_indices_below_fdr(self):
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [-1, 1, 1, -1]
         '''
@@ -58,7 +58,7 @@ class TestFdrs:
         np.testing.assert_equal(percolator.get_indices_below_fdr('Score', fdr_cutoff = 0.4), np.array([1, 2]))
     
     def test_get_indices_below_fdr_filter_decoy(self):
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
         percolator.metrics_val['Score'] = [0, 3, 2, 1, 4, 5, 6, 7]
         percolator.target_decoy_labels = [-1, 1, 1, -1, -1, 1, 1, 1]
         '''
@@ -79,7 +79,7 @@ class TestLda:
         """
         Score_2 adds more discriminative power between targets and decoys
         """
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "Prosit")
+        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
         percolator.metrics_val['Score'] =         [0.0, 3.0, 2.0, 1.0, 4.0, 5.0, 6.0, 7.0]
         percolator.metrics_val['Score_2'] =       [1.0, 1.5, 2.0, 1.5, 1.0, 1.5, 2.0, 1.5]
         percolator.target_decoy_labels = np.array([-1,  1,   1,   -1,  -1,  1,   1,   1  ])
@@ -219,7 +219,7 @@ class TestPercolator:
         observed_intensities[1, :] = observed_intensities_decoy
         observed_intensities[2, :] = observed_intensities_decoy
         
-        percolator = perc.Percolator(perc_input, predicted_intensities, observed_intensities, 'Prosit', fdr_cutoff=0.4)
+        percolator = perc.Percolator(perc_input, predicted_intensities, observed_intensities, 'prosit', fdr_cutoff=0.4)
         percolator.calc()
 
         # meta data for percolator
