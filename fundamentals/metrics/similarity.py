@@ -16,31 +16,19 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         """
         epsilon = 1e-7
-        
-        # TODO: clean this up
-        if False:
-            observed_peaks = np.argwhere(observed_intensities > constants.EPSILON)
-            predicted_peaks = np.argwhere(predicted_intensities > constants.EPSILON)
-            
-            print(observed_peaks)
-            print(predicted_peaks)
-            not_both_zero = np.union1d(observed_peaks, predicted_peaks)
-            print(not_both_zero)
-            if len(not_both_zero) == 0:
-                return 0.0
-            
-            observed_masked = observed_intensities[not_both_zero]
-            predicted_masked = predicted_intensities[not_both_zero]
-            
-            observed_masked += epsilon
-            predicted_masked += epsilon
+
+        #print(predicted_intensities)
+        valid_ion_mask = predicted_intensities > epsilon
+        if scipy.sparse.issparse(valid_ion_mask):
+            observed_masked = observed_intensities.multiply(valid_ion_mask)
+            predicted_masked = predicted_intensities.multiply(valid_ion_mask)
         else:
-            observed_masked = observed_intensities
-            predicted_masked = predicted_intensities
+            observed_masked = np.multiply(observed_intensities, valid_ion_mask)
+            predicted_masked = np.multiply(predicted_intensities, valid_ion_mask)
         
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
-        
+
         dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized)
         
         arccos = np.arccos(dot_product)
@@ -55,9 +43,9 @@ class SimilarityMetrics(Metric):
         """
         # = np.sqrt(np.sum(np.square(matrix), axis=0))
         if scipy.sparse.issparse(matrix):
-          return scipy.sparse.linalg.norm(matrix, axis=1)
+            return scipy.sparse.linalg.norm(matrix, axis=1)
         else:
-          return np.linalg.norm(matrix, axis=1)
+            return np.linalg.norm(matrix, axis=1)
         
     
     @staticmethod
@@ -91,4 +79,3 @@ class SimilarityMetrics(Metric):
         Adds columns with spectral angle feature to metrics_val dataframe
         """
         self.metrics_val['spectral_angle'] = SimilarityMetrics.spectral_angle(self.true_intensities, self.pred_intensities)
-        

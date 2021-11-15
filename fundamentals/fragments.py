@@ -1,8 +1,11 @@
+import logging
+import numpy as np
 from operator import itemgetter
 
-import numpy as np
-
 from . import constants as constants
+
+logger = logging.getLogger(__name__)
+MIN_CHARGE = 1
 
 
 def get_modifications(peptide_sequence):
@@ -13,45 +16,44 @@ def get_modifications(peptide_sequence):
     """
     modification_deltas = {}
     tmt_n_term = 1
-    if peptide_sequence[:13] == '[UNIMOD:737]-':   # TMT_6
+    modifications = constants.MOD_MASSES.keys()
+    modification_mass = constants.MOD_MASSES
+    # Handle terminal modifications here
+    if peptide_sequence[:12] == '[UNIMOD:737]':  # TMT_6
         tmt_n_term = 2
         modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:737]']})
-        peptide_sequence = peptide_sequence[13:]
+        peptide_sequence = peptide_sequence[12:]
 
-    # Dumb hotfix for new terminal modification encoding []- and -[]
-    if peptide_sequence[:3] == '[]-':
-        peptide_sequence = peptide_sequence[3:]
-    if peptide_sequence[-3:] == '-[]':
-        peptide_sequence = peptide_sequence[:-3]
-    count_mod = peptide_sequence.count("[")
+    if "(" in peptide_sequence:
+        logger.info(
+            'Error Modification ' + peptide_sequence[peptide_sequence.find('(') + 1:peptide_sequence.find(')')] + 'not '
+                                                                                                                  'found')
+        return
+
     while "[" in peptide_sequence:
-        if "[" in peptide_sequence:
-            modification_index = peptide_sequence.index("[")
-            if peptide_sequence[modification_index:modification_index + 12] == '[UNIMOD:737]':    # TMT_6
+        found_modification = False
+        modification_index = peptide_sequence.index("[")
+        for mod in modifications:
+            if peptide_sequence[modification_index:modification_index + len(mod)] == mod:
                 if modification_index - 1 in modification_deltas:
                     modification_deltas.update(
-                        {modification_index - 1: modification_deltas[modification_index - 1] + constants.MOD_MASSES[
-                            '[UNIMOD:737]']})
+                        {modification_index - 1: modification_deltas[modification_index - 1] + modification_mass[
+                            mod]})
                 else:
-                    modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:737]']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 12:]
-                count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 11] == '[UNIMOD:35]':   # Oxidation
-                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:35]']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 11:]
-                count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 11] == '[UNIMOD:21]':   # Phospho
-                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:21]']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 11:]
-                count_mod -= 1
-            elif peptide_sequence[modification_index:modification_index + 10] == '[UNIMOD:4]':    # Carbomedomethyl
-                modification_deltas.update({modification_index - 1: constants.MOD_MASSES['[UNIMOD:4]']})
-                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[modification_index + 10:]
-                count_mod -= 1
+                    modification_deltas.update({modification_index - 1: modification_mass[mod]})
+                peptide_sequence = peptide_sequence[0:modification_index] + peptide_sequence[
+                                                                            modification_index + len(mod):]
+                found_modification = True
+        if not found_modification:
+            logger.info(
+                'Error Modification ' + peptide_sequence[
+                                        modification_index:peptide_sequence.find(']') + 1] + ' not found')
+            return
+
     return modification_deltas, tmt_n_term, peptide_sequence
 
 
-def initialize_peaks(sequence: str, mass_analyzer: str, charge: int, MIN_CHARGE = 1):
+def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     """
     Generate theoretical peaks for a modified peptide sequence.
     :param sequence: Modified peptide sequence.
@@ -64,6 +66,8 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int, MIN_CHARGE 
 
     neutral_losses = []
     peptide_length = len(peptide_sequence)
+    if peptide_length > 30:
+        return [], -1, ""
 
     # initialize constants
     if int(round(charge)) <= 3:
@@ -120,12 +124,12 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int, MIN_CHARGE 
                     min_mass = (mass * -20 / 1000000) + mass
                     max_mass = (mass * 20 / 1000000) + mass
                 else:
-                    min_mass = mass - 0.5
-                    max_mass = mass + 0.5
+                    min_mass = mass - 0.35
+                    max_mass = mass + 0.35
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
                                             'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
         fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('mass'))
-    return fragments_meta_data, tmt_n_term, peptide_sequence
+    return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum+ion_type_offsets[0]+ion_type_offsets[1])
 
 
 def compute_ion_masses(seq_int, charge_onehot,tmt=''):
@@ -160,12 +164,12 @@ def compute_ion_masses(seq_int, charge_onehot,tmt=''):
 
         # Compute charge +1
         masses[j] = (mass_y + 1*constants.PARTICLE_MASSES["PROTON"] +
-                     constants.AA_MASSES["-[]"] + constants.ATOM_MASSES["H"])/1.0
+                     constants.MASSES["C_TERMINUS"] + constants.ATOM_MASSES["H"])/1.0
         # Compute charge +2
-        masses[j+1] = (mass_y + 2*constants.PARTICLE_MASSES["PROTON"] + constants.AA_MASSES["-[]"] +
+        masses[j+1] = (mass_y + 2*constants.PARTICLE_MASSES["PROTON"] + constants.MASSES["C_TERMINUS"] +
                        constants.ATOM_MASSES["H"])/2.0 if charge >= 2 else -1.0
         # Compute charge +3
-        masses[j+2] = (mass_y + 3*constants.PARTICLE_MASSES["PROTON"] + constants.AA_MASSES["-[]"] +
+        masses[j+2] = (mass_y + 3*constants.PARTICLE_MASSES["PROTON"] + constants.MASSES["C_TERMINUS"] +
                        constants.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
 
         # MASS FOR B IONS
@@ -176,12 +180,12 @@ def compute_ion_masses(seq_int, charge_onehot,tmt=''):
 
         # Compute charge +1
         masses[j+3] = (mass_b + 1*constants.PARTICLE_MASSES["PROTON"] +
-                       constants.AA_MASSES["[]-"] - constants.ATOM_MASSES["H"])/1.0
+                       constants.MASSES["N_TERMINUS"] - constants.ATOM_MASSES["H"])/1.0
         # Compute charge +2
-        masses[j+4] = (mass_b + 2*constants.PARTICLE_MASSES["PROTON"] + constants.AA_MASSES["[]-"] -
+        masses[j+4] = (mass_b + 2*constants.PARTICLE_MASSES["PROTON"] + constants.MASSES["N_TERMINUS"] -
                        constants.ATOM_MASSES["H"])/2.0 if charge >= 2 else -1.0
         # Compute charge +3
-        masses[j+5] = (mass_b + 3*constants.PARTICLE_MASSES["PROTON"] + constants.AA_MASSES["[]-"] -
+        masses[j+5] = (mass_b + 3*constants.PARTICLE_MASSES["PROTON"] + constants.MASSES["N_TERMINUS"] -
                        constants.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
 
     return masses
