@@ -152,9 +152,9 @@ class Percolator(Metric):
         :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge)
         :return: percolator spectrum id
         """
-        raw_file, scan_number, modified_sequence, charge = metadata_subset
-        s = "{}-{}-{}-{}".format(
-            raw_file, scan_number, modified_sequence, charge
+        raw_file, scan_number, modified_sequence, charge, scan_event_number = metadata_subset
+        s = "{}-{}-{}-{}-{}".format(
+            raw_file, scan_number, modified_sequence, charge, scan_event_number
         )
         return s
 
@@ -219,8 +219,11 @@ class Percolator(Metric):
         """
         Add metadata columns needed by percolator, e.g. to identify a PSM
         """
-        self.metrics_val['SpecId'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER', 'MODIFIED_SEQUENCE', 'PRECURSOR_CHARGE']].apply(Percolator.get_specid,
-                                                                                                                     axis=1)
+        self.metrics_val['SpecId'] = self.metadata[['RAW_FILE', 
+                                                    'SCAN_NUMBER', 
+                                                    'MODIFIED_SEQUENCE', 
+                                                    'PRECURSOR_CHARGE', 
+                                                    'SCAN_EVENT_NUMBER']].apply(Percolator.get_specid, axis=1)
         self.metrics_val['Label'] = self.target_decoy_labels
         self.metrics_val['ScanNr'] = self.metadata[['RAW_FILE', 'SCAN_NUMBER']].apply(Percolator.get_scannr, axis=1)
 
