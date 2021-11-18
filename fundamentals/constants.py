@@ -170,16 +170,17 @@ NUM_IONS = (MAX_PEPTIDE_LEN - 1) * 2 * 3
 B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], MAX_PEPTIDE_LEN - 1)
 Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], MAX_PEPTIDE_LEN - 1)
 
+SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
 META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
                           'PRECURSOR_CHARGE',
                           'FRAGMENTATION',
                           'MASS_ANALYZER',
                           'MASS',
+                          'SCAN_EVENT_NUMBER',
                           'PRECURSOR_MASS_EXP',
                           'SCORE',
-                          'REVERSE']
-
-SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
+                          'REVERSE',
+                          'RETENTION_TIME']
 META_DATA_COLUMNS = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
 MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ']
 MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
