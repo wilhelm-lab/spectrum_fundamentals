@@ -43,7 +43,7 @@ def maxquant_to_internal(
 
     regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
 
-    def find_replacement(match: re.Match) -> str:
+    def find_replacement(match: re) -> str:
         """
         Subfunction to find the corresponding substitution for a match.
         :param match: an re.Match object found by re.sub
@@ -114,7 +114,7 @@ def internal_to_mod_names(
         match_list.clear()
         return mod, mod_string
 
-    def replace_and_store(match: re.Match):
+    def replace_and_store(match: re):
         """
         Internal function that removes matched internal mods and stores there position in the sequence.
         :param match: an re.Match object found by re.sub

@@ -11,14 +11,11 @@ class SimilarityMetrics(Metric):
     @staticmethod
     def spectral_angle(observed_intensities, predicted_intensities):
         """
-        calculate spectral angle
+        calculate spectral angle, we only consider fragments for which a non-zero intensity was predicted
         :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, 0 intensity indicates invalid peaks (charge state > peptide charge state or position >= peptide length), array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         """
-        epsilon = 1e-7
-
-        #print(predicted_intensities)
-        valid_ion_mask = predicted_intensities > epsilon
+        valid_ion_mask = predicted_intensities > constants.EPSILON
         if scipy.sparse.issparse(valid_ion_mask):
             observed_masked = observed_intensities.multiply(valid_ion_mask)
             predicted_masked = predicted_intensities.multiply(valid_ion_mask)
