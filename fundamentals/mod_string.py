@@ -28,7 +28,7 @@ def maxquant_to_internal(
     """
     err_msg = f"Provided illegal fixed mod, supported modifications are {set(MAXQUANT_VAR_MODS.values())}."
     assert all(x in MAXQUANT_VAR_MODS.values() for x in fixed_mods.values()), err_msg
-    
+
     replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
 
     def custom_regex_escape(key: str) -> str:
