@@ -66,7 +66,12 @@ MAXQUANT_VAR_MODS = {
     "(ox)": "[UNIMOD:35]",
     "(Oxidation (M))": "[UNIMOD:35]",
     "(tm)": "[UNIMOD:737]",
-    "(ph)": "[UNIMOD:21]"
+    "_(tm)": "_[UNIMOD:737]",
+    "K(tm)": "K[UNIMOD:737]",
+    "(ph)": "[UNIMOD:21]",
+    "K(Lys8)": "K[UNIMOD:259]",
+    "R(Arg10)": "R[UNIMOD:267]",
+    "C(Carbamidomethyl (C))": "C[UNIMOD:4]",
 }
 
 MAXQUANT_NC_TERM = {
