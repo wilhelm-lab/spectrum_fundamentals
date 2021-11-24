@@ -26,10 +26,10 @@ def maxquant_to_internal(
     Fixed modifications must be included in the variable modificatons dictionary throws Assertion error otherwise.
     :return: List[str] of modified sequences.
     """
-    err_msg = f"Provided illegal fixed mod, supported modifications are {set(MAXQUANT_VAR_MODS.values())}."
-    assert all(x in MAXQUANT_VAR_MODS.values() for x in fixed_mods.values()), err_msg
-
     replacements = {**MAXQUANT_VAR_MODS, **fixed_mods, **MAXQUANT_NC_TERM}
+    
+    err_msg = f"Provided illegal fixed mod, supported modifications are {set(replacements.values())}."
+    assert all(x in replacements.values() for x in fixed_mods.values()), err_msg
 
     def custom_regex_escape(key: str) -> str:
         """

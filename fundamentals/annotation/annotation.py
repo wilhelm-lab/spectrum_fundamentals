@@ -5,7 +5,7 @@ from joblib import Parallel, delayed
 import numpy as np
 
 from fundamentals import constants
-from fundamentals.fragments import initialize_peaks, get_modifications
+from fundamentals.fragments import initialize_peaks
 
 logger = logging.getLogger(__name__)
 
@@ -130,14 +130,15 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
     :param charge: Precursor charge
     :return: numpy array of intensities and  numpy array of masses
     """
-    intensity = np.full(174, -1.0)
-    mass = np.full(174, -1.0)
+    intensity = np.full(constants.VEC_LENGTH, -1.0)
+    mass = np.full(constants.VEC_LENGTH, -1.0)
 
     # change values to zeros
-    if len(unmod_seq) < 30:
+    if len(unmod_seq) < constants.SEQ_LEN:
         peaks_range = range(0, ((len(unmod_seq) - 1) * 6))
     else:
-        peaks_range = range(0, (29 * 6 ))
+        peaks_range = range(0, ((constants.SEQ_LEN - 1) * 6 ))
+
     if charge == 1:
         available_peaks = [index for index in peaks_range if (index % 3 == 0)]
     elif charge == 2:
@@ -160,12 +161,12 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
         else:
             peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1) + 3
 
-        if peak_pos >= 174:
+        if peak_pos >= constants.VEC_LENGTH:
             continue
         intensity[peak_pos] = peak[intensity_col]
         mass[peak_pos] = peak[exp_mass_col]
 
-    if len(unmod_seq) < 30:
+    if len(unmod_seq) < constants.SEQ_LEN:
         mask_peaks = range((len(unmod_seq) - 1) * 6, ((len(unmod_seq) - 1) * 6) + 6)
         intensity[mask_peaks] = -1.0
         mass[mask_peaks] = -1.0

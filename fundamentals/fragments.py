@@ -5,10 +5,9 @@ from operator import itemgetter
 from . import constants as constants
 
 logger = logging.getLogger(__name__)
-MIN_CHARGE = 1
 
 
-def get_modifications(peptide_sequence):
+def _get_modifications(peptide_sequence):
     """
     Get modification masses and position in a peptide sequence.
     :param peptide_sequence: Modified peptide sequence
@@ -19,7 +18,7 @@ def get_modifications(peptide_sequence):
     modifications = constants.MOD_MASSES.keys()
     modification_mass = constants.MOD_MASSES
     # Handle terminal modifications here
-    if peptide_sequence[:12] == '[UNIMOD:737]':  # TMT_6
+    if peptide_sequence.startswith('[UNIMOD:737]'):  # TMT_6
         tmt_n_term = 2
         modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:737]']})
         peptide_sequence = peptide_sequence[12:]
@@ -62,7 +61,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
     peptide_sequence = sequence
-    modification_deltas, tmt_n_term, peptide_sequence = get_modifications(peptide_sequence)
+    modification_deltas, tmt_n_term, peptide_sequence = _get_modifications(peptide_sequence)
 
     neutral_losses = []
     peptide_length = len(peptide_sequence)
@@ -114,7 +113,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
 
         ion_type_masses[1] = backward_sum + ion_type_offsets[1]  # y ion
 
-        for charge in range(MIN_CHARGE, max_charge + 1):  # generate ion in different charge states
+        for charge in range(constants.MIN_CHARGE, max_charge + 1):  # generate ion in different charge states
             # positive charge is introduced by protons (or H - ELECTRON_MASS)
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
@@ -155,11 +154,11 @@ def compute_ion_masses(seq_int, charge_onehot,tmt=''):
     j = 0  # iterate over masses
 
     # Iterate over sequence, sequence should have length 30
-    for i in range(l-1):  # only 29 possible ios
+    for i in range(l-1):  # only 29 possible ions
         j = i*6  # index for masses array at position
 
         # MASS FOR Y IONS
-        # print("Addded", constants.VEC_MZ[seq_int[l-1-i]])
+        # print("Added", constants.VEC_MZ[seq_int[l-1-i]])
         mass_y += constants.VEC_MZ[seq_int[l-1-i]]
 
         # Compute charge +1

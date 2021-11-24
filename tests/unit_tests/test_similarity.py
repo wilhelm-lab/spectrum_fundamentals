@@ -105,4 +105,4 @@ class TestSpectralAngleMultipleRows:
     
         
 def get_padded_array(l, padding_value = 0):
-    return np.array([np.pad(l, (0, constants.NUM_IONS - len(l)), 'constant', constant_values=padding_value)])
+    return np.array([np.pad(l, (0, constants.VEC_LENGTH - len(l)), 'constant', constant_values=padding_value)])

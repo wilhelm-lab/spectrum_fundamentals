@@ -261,4 +261,4 @@ def assert_equal_sparse(a, b):
     assert (a != b).nnz == 0 # checks that there are 0 elements for which a != b
         
 def get_padded_array(l, padding_value = 0):
-    return scipy.sparse.csr_matrix(np.array([np.pad(l, (0, constants.NUM_IONS - len(l)), 'constant', constant_values=padding_value)]))
+    return scipy.sparse.csr_matrix(np.array([np.pad(l, (0, constants.VEC_LENGTH - len(l)), 'constant', constant_values=padding_value)]))
