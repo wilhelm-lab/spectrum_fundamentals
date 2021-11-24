@@ -63,6 +63,8 @@ MAXQUANT_VAR_MODS = {
     "(ox)": "[UNIMOD:35]",
     "(Oxidation (M))": "[UNIMOD:35]",
     "(tm)": "[UNIMOD:737]",
+    "_(tm)": "_[UNIMOD:737]",
+    "K(tm)": "K[UNIMOD:737]",
     "(ph)": "[UNIMOD:21]",
     "C()": "C[UNIMOD:4]",  # TODO Investigate how MaxQuant encodes variable Carbamidomethyl
 }
