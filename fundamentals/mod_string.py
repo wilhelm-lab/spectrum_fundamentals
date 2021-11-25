@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Union, Tuple
-from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES, MAXQUANT_NC_TERM
+from .constants import SPECTRONAUT_MODS, MAXQUANT_VAR_MODS, MOD_MASSES, MAXQUANT_NC_TERM, MOD_NAMES
 import numpy as np
 import re
 import difflib
@@ -29,7 +29,7 @@ def maxquant_to_internal(
     err_msg = f"Provided illegal fixed mod, supported modifications are {set(MAXQUANT_VAR_MODS.values())}."
     assert all(x in MAXQUANT_VAR_MODS.values() for x in fixed_mods.values()), err_msg
 
-    replacements = {**MAXQUANT_VAR_MODS, **fixed_mods, **MAXQUANT_NC_TERM}
+    replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
 
     def custom_regex_escape(key: str) -> str:
         """
@@ -43,7 +43,7 @@ def maxquant_to_internal(
 
     regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
 
-    def find_replacement(match: re.Match) -> str:
+    def find_replacement(match: re) -> str:
         """
         Subfunction to find the corresponding substitution for a match.
         :param match: an re.Match object found by re.sub
@@ -58,7 +58,7 @@ def maxquant_to_internal(
 
         return replacements[key]
 
-    return [regex.sub(find_replacement, seq) for seq in sequences]
+    return [regex.sub(find_replacement, seq)[1:-1] for seq in sequences]
 
 
 def internal_without_mods(
@@ -114,7 +114,7 @@ def internal_to_mod_names(
         match_list.clear()
         return mod, mod_string
 
-    def replace_and_store(match: re.Match):
+    def replace_and_store(match: re):
         """
         Internal function that removes matched internal mods and stores there position in the sequence.
         :param match: an re.Match object found by re.sub

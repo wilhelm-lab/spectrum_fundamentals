@@ -11,37 +11,25 @@ class SimilarityMetrics(Metric):
     @staticmethod
     def spectral_angle(observed_intensities, predicted_intensities):
         """
-        calculate spectral angle
+        calculate spectral angle, we only consider fragments for which a non-zero intensity was predicted
         :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, 0 intensity indicates invalid peaks (charge state > peptide charge state or position >= peptide length), array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         """
-        epsilon = 1e-7
-        
-        # TODO: clean this up
-        if False:
-            observed_peaks = np.argwhere(observed_intensities > constants.EPSILON)
-            predicted_peaks = np.argwhere(predicted_intensities > constants.EPSILON)
-            
-            print(observed_peaks)
-            print(predicted_peaks)
-            not_both_zero = np.union1d(observed_peaks, predicted_peaks)
-            print(not_both_zero)
-            if len(not_both_zero) == 0:
-                return 0.0
-            
-            observed_masked = observed_intensities[not_both_zero]
-            predicted_masked = predicted_intensities[not_both_zero]
-            
-            observed_masked += epsilon
-            predicted_masked += epsilon
+        predicted_non_zero_mask = predicted_intensities > constants.EPSILON
+        if scipy.sparse.issparse(predicted_non_zero_mask):
+            observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
+            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
         else:
-            observed_masked = observed_intensities
-            predicted_masked = predicted_intensities
+            observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
+            predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
         
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
         
-        dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized)
+        observed_non_zero_mask = observed_intensities > constants.EPSILON
+        fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, predicted_non_zero_mask)
+        
+        dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized) * (fragments_in_common > 0)
         
         arccos = np.arccos(dot_product)
         return 1 - 2 * arccos / np.pi
@@ -55,9 +43,9 @@ class SimilarityMetrics(Metric):
         """
         # = np.sqrt(np.sum(np.square(matrix), axis=0))
         if scipy.sparse.issparse(matrix):
-          return scipy.sparse.linalg.norm(matrix, axis=1)
+            return scipy.sparse.linalg.norm(matrix, axis=1)
         else:
-          return np.linalg.norm(matrix, axis=1)
+            return np.linalg.norm(matrix, axis=1)
         
     
     @staticmethod
@@ -91,4 +79,3 @@ class SimilarityMetrics(Metric):
         Adds columns with spectral angle feature to metrics_val dataframe
         """
         self.metrics_val['spectral_angle'] = SimilarityMetrics.spectral_angle(self.true_intensities, self.pred_intensities)
-        

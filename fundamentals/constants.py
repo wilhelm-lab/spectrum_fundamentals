@@ -1,4 +1,5 @@
 import numpy as np
+from enum import Enum
 
 #####################
 # GENERAL CONSTANTS #
@@ -6,9 +7,10 @@ import numpy as np
 
 SEQ_LEN = 30  # Sequence length for prosit
 NUM_CHARGES_ONEHOT = 6
+MIN_CHARGE = 1
 MAX_CHARGE = 6
 BATCH_SIZE = 6000
-VEC_LENGTH = 174
+VEC_LENGTH = (SEQ_LEN - 1) * 2 * 3 # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+, for a total of 174 fragments
 
 #############
 # ALPHABETS #
@@ -49,7 +51,9 @@ ALPHABET_MODS = {
     "S[UNIMOD:21]": 25,
     "T[UNIMOD:21]": 26,
     "Y[UNIMOD:21]": 27,
-    "[UNIMOD:1]-": 32
+    "[UNIMOD:1]-" : 32,
+    "K[UNIMOD:259]": 9,
+    "R[UNIMOD:267]": 15
 }
 
 ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS}
@@ -62,8 +66,12 @@ MAXQUANT_VAR_MODS = {
     "(ox)": "[UNIMOD:35]",
     "(Oxidation (M))": "[UNIMOD:35]",
     "(tm)": "[UNIMOD:737]",
+    "_(tm)": "_[UNIMOD:737]",
+    "K(tm)": "K[UNIMOD:737]",
     "(ph)": "[UNIMOD:21]",
-    "C()": "C[UNIMOD:4]",  # TODO Investigate how MaxQuant encodes variable Carbamidomethyl
+    "K(Lys8)": "K[UNIMOD:259]",
+    "R(Arg10)": "R[UNIMOD:267]",
+    "C(Carbamidomethyl (C))": "C[UNIMOD:4]",
 }
 
 MAXQUANT_NC_TERM = {
@@ -89,6 +97,11 @@ ATOM_MASSES = {
     'N': 14.003074,
 }
 
+MASSES = {**PARTICLE_MASSES, **ATOM_MASSES}
+MASSES["N_TERMINUS"] = MASSES["H"]
+MASSES["C_TERMINUS"] = MASSES["O"] + MASSES["H"]
+
+
 AA_MASSES = {
     'A': 71.037114,
     'R': 156.101111,
@@ -111,14 +124,24 @@ AA_MASSES = {
     'W': 186.079313,
     'Y': 163.063329,
     'V': 99.068414,
+    '[]-': MASSES["N_TERMINUS"],
+    '-[]': MASSES["C_TERMINUS"],
 }
 
 MOD_MASSES = {
     '[UNIMOD:737]': 229.162932,  # TMT_6
+    '[UNIMOD:259]': 8.014199,  # SILAC Lysine
+    '[UNIMOD:267]': 10.008269,  # SILAC Arginine
     '[UNIMOD:21]': 79.966331,  # Phospho
     '[UNIMOD:4]': 57.02146,  # Carbamidomethyl
     '[UNIMOD:35]': 15.9949146  # Oxidation
 }
+
+AA_MOD_MASSES ={
+    'K[UNIMOD:737]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:737]']
+}
+
+AA_MOD = {**AA_MASSES, **AA_MOD_MASSES}
 
 #######################################
 # HELPERS FOR FRAGMENT MZ CALCULATION #
@@ -127,9 +150,34 @@ MOD_MASSES = {
 # Array containing masses --- at index one is mass for A, etc.
 VEC_MZ = np.zeros(max(ALPHABET.values()) + 1)
 for a, i in AA_ALPHABET.items():
-    VEC_MZ[i] = AA_MASSES[a]
+    VEC_MZ[i] = AA_MOD[a]
 
-# TODO Investigate where MOD_NAMES are used
+# small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
+EPSILON = 1e-7
+
+B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], SEQ_LEN - 1)
+Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], SEQ_LEN - 1)
+
+SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
+META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
+                          'PRECURSOR_CHARGE',
+                          'FRAGMENTATION',
+                          'MASS_ANALYZER',
+                          'MASS',
+                          'SCAN_EVENT_NUMBER',
+                          'PRECURSOR_MASS_EXP',
+                          'SCORE',
+                          'REVERSE',
+                          'RETENTION_TIME']
+META_DATA_COLUMNS = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
+MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ']
+MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
+
+SPECTRONAUT_MODS = {
+    "M(U:35)": "oM"
+}
+
+# Used for MSP spectral library format
 MOD_NAMES = {
     '(U:737)': 'TMT_6',
     '(U:21)': 'Phospho',
@@ -137,33 +185,9 @@ MOD_NAMES = {
     '(U:35)': 'Oxidation'
 }
 
-# small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
-# EPSILON = 1e-7 # chec if it can be removed
-EPSILON = np.nextafter(0, 1)
-
-# peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+
-MAX_PEPTIDE_LEN = 30
-NUM_IONS = (MAX_PEPTIDE_LEN - 1) * 2 * 3
-
-B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], MAX_PEPTIDE_LEN - 1)
-Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], MAX_PEPTIDE_LEN - 1)
-
-META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
-                          'PRECURSOR_CHARGE',
-                          'FRAGMENTATION',
-                          'MASS_ANALYZER',
-                          'MASS',
-                          'PRECURSOR_MASS_EXP',
-                          'SCORE',
-                          'REVERSE']
-
-SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
-Meta_Data_Columns = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
-MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ']
-MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
-
-SPECTRONAUT_MODS = {
-    "M(U:35)": "oM"
+FRAGMENTATION_ENCODING = {
+    'HCD': 2,
+    'CID': 1
 }
 
 ############################
@@ -186,3 +210,13 @@ for pos in POSITIONS:
 
 ANNOTATION = [ANNOTATION_FRAGMENT_TYPE,
               ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
+
+
+########################
+# RESCORING PARAMETERS #
+########################
+
+class RESCORE_TYPE(Enum):
+    PROSIT = 'prosit'
+    ANDROMEDA = 'andromeda'
+

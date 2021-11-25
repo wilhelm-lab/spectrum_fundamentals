@@ -5,10 +5,9 @@ from operator import itemgetter
 from . import constants as constants
 
 logger = logging.getLogger(__name__)
-MIN_CHARGE = 1
 
 
-def get_modifications(peptide_sequence):
+def _get_modifications(peptide_sequence):
     """
     Get modification masses and position in a peptide sequence.
     :param peptide_sequence: Modified peptide sequence
@@ -18,9 +17,8 @@ def get_modifications(peptide_sequence):
     tmt_n_term = 1
     modifications = constants.MOD_MASSES.keys()
     modification_mass = constants.MOD_MASSES
-    
     # Handle terminal modifications here
-    if peptide_sequence[:12] == '[UNIMOD:737]':  # TMT_6
+    if peptide_sequence.startswith('[UNIMOD:737]'):  # TMT_6
         tmt_n_term = 2
         modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:737]']})
         peptide_sequence = peptide_sequence[12:]
@@ -35,7 +33,7 @@ def get_modifications(peptide_sequence):
         found_modification = False
         modification_index = peptide_sequence.index("[")
         for mod in modifications:
-            if peptide_sequence[modification_index:modification_index + len(mod)]:
+            if peptide_sequence[modification_index:modification_index + len(mod)] == mod:
                 if modification_index - 1 in modification_deltas:
                     modification_deltas.update(
                         {modification_index - 1: modification_deltas[modification_index - 1] + modification_mass[
@@ -63,10 +61,12 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
     peptide_sequence = sequence
-    modification_deltas, tmt_n_term, peptide_sequence = get_modifications(peptide_sequence)
+    modification_deltas, tmt_n_term, peptide_sequence = _get_modifications(peptide_sequence)
 
     neutral_losses = []
     peptide_length = len(peptide_sequence)
+    if peptide_length > 30:
+        return [], -1, ""
 
     # initialize constants
     if int(round(charge)) <= 3:
@@ -113,7 +113,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
 
         ion_type_masses[1] = backward_sum + ion_type_offsets[1]  # y ion
 
-        for charge in range(MIN_CHARGE, max_charge + 1):  # generate ion in different charge states
+        for charge in range(constants.MIN_CHARGE, max_charge + 1):  # generate ion in different charge states
             # positive charge is introduced by protons (or H - ELECTRON_MASS)
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
@@ -123,9 +123,68 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                     min_mass = (mass * -20 / 1000000) + mass
                     max_mass = (mass * 20 / 1000000) + mass
                 else:
-                    min_mass = mass - 0.5
-                    max_mass = mass + 0.5
+                    min_mass = mass - 0.35
+                    max_mass = mass + 0.35
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
                                             'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
         fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('mass'))
-    return fragments_meta_data, tmt_n_term, peptide_sequence
+    return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum+ion_type_offsets[0]+ion_type_offsets[1])
+
+
+def compute_ion_masses(seq_int, charge_onehot,tmt=''):
+    """
+    Collects an integer sequence e.g. [1,2,3] with charge 2 and returns array with 174 positions for ion masses.
+    Invalid masses are set to -1
+    charge_one is a onehot representation of charge with 6 elems for charges 1 to 6
+    """
+    charge = list(charge_onehot).index(1) + 1
+    if not (charge in (1, 2, 3, 4, 5, 6) and len(charge_onehot) == 6):
+        print("[ERROR] One-hot-enconded Charge is not in valid range 1 to 6")
+        return
+
+    if not len(seq_int) == constants.SEQ_LEN:
+        print("[ERROR] Sequence length {} is not desired length of {}".format(
+            len(seq_int), constants.SEQ_LEN))
+        return
+
+    l = list(seq_int).index(0) if 0 in seq_int else constants.SEQ_LEN
+    masses = np.ones((constants.SEQ_LEN-1)*2*3, dtype=np.float32)*-1
+    mass_b = 0
+    mass_y = 0
+    j = 0  # iterate over masses
+
+    # Iterate over sequence, sequence should have length 30
+    for i in range(l-1):  # only 29 possible ions
+        j = i*6  # index for masses array at position
+
+        # MASS FOR Y IONS
+        # print("Added", constants.VEC_MZ[seq_int[l-1-i]])
+        mass_y += constants.VEC_MZ[seq_int[l-1-i]]
+
+        # Compute charge +1
+        masses[j] = (mass_y + 1*constants.PARTICLE_MASSES["PROTON"] +
+                     constants.MASSES["C_TERMINUS"] + constants.ATOM_MASSES["H"])/1.0
+        # Compute charge +2
+        masses[j+1] = (mass_y + 2*constants.PARTICLE_MASSES["PROTON"] + constants.MASSES["C_TERMINUS"] +
+                       constants.ATOM_MASSES["H"])/2.0 if charge >= 2 else -1.0
+        # Compute charge +3
+        masses[j+2] = (mass_y + 3*constants.PARTICLE_MASSES["PROTON"] + constants.MASSES["C_TERMINUS"] +
+                       constants.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
+
+        # MASS FOR B IONS
+        if(i ==0 and tmt=='tmt'):
+            mass_b += constants.VEC_MZ[seq_int[i]]+229.162932
+        else:
+            mass_b += constants.VEC_MZ[seq_int[i]]
+
+        # Compute charge +1
+        masses[j+3] = (mass_b + 1*constants.PARTICLE_MASSES["PROTON"] +
+                       constants.MASSES["N_TERMINUS"] - constants.ATOM_MASSES["H"])/1.0
+        # Compute charge +2
+        masses[j+4] = (mass_b + 2*constants.PARTICLE_MASSES["PROTON"] + constants.MASSES["N_TERMINUS"] -
+                       constants.ATOM_MASSES["H"])/2.0 if charge >= 2 else -1.0
+        # Compute charge +3
+        masses[j+5] = (mass_b + 3*constants.PARTICLE_MASSES["PROTON"] + constants.MASSES["N_TERMINUS"] -
+                       constants.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
+
+    return masses
