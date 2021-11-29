@@ -48,10 +48,11 @@ ALPHABET_MODS = {
     "M[UNIMOD:35]": 21,
     "C[UNIMOD:4]": 2,
     "K[UNIMOD:737]": 22,
+    "K[UNIMOD:2016]": 22,
     "S[UNIMOD:21]": 25,
     "T[UNIMOD:21]": 26,
     "Y[UNIMOD:21]": 27,
-    "[UNIMOD:1]-" : 32,
+    "[UNIMOD:1]-": 32,
     "K[UNIMOD:259]": 9,
     "R[UNIMOD:267]": 15
 }
@@ -68,6 +69,9 @@ MAXQUANT_VAR_MODS = {
     "(tm)": "[UNIMOD:737]",
     "_(tm)": "_[UNIMOD:737]",
     "K(tm)": "K[UNIMOD:737]",
+    "(tmp)": "[UNIMOD:2016]",
+    "_(tmp)": "_[UNIMOD:2016]",
+    "K(tmp)": "K[UNIMOD:2016]",
     "(ph)": "[UNIMOD:21]",
     "K(Lys8)": "K[UNIMOD:259]",
     "R(Arg10)": "R[UNIMOD:267]",
@@ -130,6 +134,7 @@ AA_MASSES = {
 
 MOD_MASSES = {
     '[UNIMOD:737]': 229.162932,  # TMT_6
+    '[UNIMOD:2016]': 304.207146,  # TMT_PRO
     '[UNIMOD:259]': 8.014199,  # SILAC Lysine
     '[UNIMOD:267]': 10.008269,  # SILAC Arginine
     '[UNIMOD:21]': 79.966331,  # Phospho
@@ -149,7 +154,7 @@ AA_MOD = {**AA_MASSES, **AA_MOD_MASSES}
 
 # Array containing masses --- at index one is mass for A, etc.
 VEC_MZ = np.zeros(max(ALPHABET.values()) + 1)
-for a, i in AA_ALPHABET.items():
+for a, i in ALPHABET.items():
     VEC_MZ[i] = AA_MOD[a]
 
 # small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
@@ -179,10 +184,11 @@ SPECTRONAUT_MODS = {
 
 # Used for MSP spectral library format
 MOD_NAMES = {
-    '(U:737)': 'TMT_6',
-    '(U:21)': 'Phospho',
-    '(U:4)': 'Carbamidomethyl',
-    '(U:35)': 'Oxidation'
+    '[U:737]': 'TMT_6',
+    '[U:2016]': 'TMT_Pro',
+    '[U:21]': 'Phospho',
+    '[U:4]': 'Carbamidomethyl',
+    '[U:35]': 'Oxidation'
 }
 
 FRAGMENTATION_ENCODING = {
