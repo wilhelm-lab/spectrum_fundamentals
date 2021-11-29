@@ -57,7 +57,7 @@ ALPHABET_MODS = {
     "R[UNIMOD:267]": 15
 }
 
-ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS}
+ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS, **TERMINAL_ALPHABET}
 
 ######################
 # MaxQuant constants #
@@ -151,8 +151,8 @@ AA_MOD_MASSES ={
     "S[UNIMOD:21]": AA_MASSES['S'] + MOD_MASSES['[UNIMOD:21]'],
     "T[UNIMOD:21]": AA_MASSES['T'] + MOD_MASSES['[UNIMOD:21]'],
     "Y[UNIMOD:21]": AA_MASSES['Y'] + MOD_MASSES['[UNIMOD:21]'],
-    "[UNIMOD:1]-": MASSES["N_TERMINUS"],# + MOD_MASSES['[UNIMOD:1]'], #we need a different way of encodig mods on AA so it wouldn't have same encoding to make vecMZ work
-    "K[UNIMOD:259]": AA_MASSES['K'],# + MOD_MASSES['[UNIMOD:259]'],
+    "[UNIMOD:1]-": MASSES["N_TERMINUS"] + MOD_MASSES['[UNIMOD:1]'],
+    "K[UNIMOD:259]": AA_MASSES['K'],# + MOD_MASSES['[UNIMOD:259]'],#we need a different way of encodig mods on AA so it wouldn't have same encoding to make vecMZ work
     "R[UNIMOD:267]": AA_MASSES['R']#+ MOD_MASSES['[UNIMOD:267]']
 }
 
