@@ -139,11 +139,21 @@ MOD_MASSES = {
     '[UNIMOD:267]': 10.008269,  # SILAC Arginine
     '[UNIMOD:21]': 79.966331,  # Phospho
     '[UNIMOD:4]': 57.02146,  # Carbamidomethyl
-    '[UNIMOD:35]': 15.9949146  # Oxidation
+    '[UNIMOD:35]': 15.9949146,  # Oxidation
+    '[UNIMOD:1]': 42.010565	  # Acetylation
 }
 
 AA_MOD_MASSES ={
-    'K[UNIMOD:737]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:737]']
+    'K[UNIMOD:737]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:737]'],
+    'M[UNIMOD:35]': AA_MASSES['M'] + MOD_MASSES['[UNIMOD:35]'],
+    'C[UNIMOD:4]': AA_MASSES['C'] + MOD_MASSES['[UNIMOD:4]'],
+    'K[UNIMOD:2016]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:2016]'],
+    "S[UNIMOD:21]": AA_MASSES['S'] + MOD_MASSES['[UNIMOD:21]'],
+    "T[UNIMOD:21]": AA_MASSES['T'] + MOD_MASSES['[UNIMOD:21]'],
+    "Y[UNIMOD:21]": AA_MASSES['Y'] + MOD_MASSES['[UNIMOD:21]'],
+    "[UNIMOD:1]-": MASSES["N_TERMINUS"],# + MOD_MASSES['[UNIMOD:1]'], #we need a different way of encodig mods on AA so it wouldn't have same encoding to make vecMZ work
+    "K[UNIMOD:259]": AA_MASSES['K'],# + MOD_MASSES['[UNIMOD:259]'],
+    "R[UNIMOD:267]": AA_MASSES['R']#+ MOD_MASSES['[UNIMOD:267]']
 }
 
 AA_MOD = {**AA_MASSES, **AA_MOD_MASSES}
