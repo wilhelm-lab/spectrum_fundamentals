@@ -25,7 +25,7 @@ def _get_modifications(peptide_sequence):
 
     if "(" in peptide_sequence:
         logger.info(
-            'Error Modification ' + peptide_sequence[peptide_sequence.find('(') + 1:peptide_sequence.find(')')] + 'not '
+            'Error Modification ' + peptide_sequence[peptide_sequence.find('(') + 1:peptide_sequence.find(')')] + ' not '
                                                                                                                   'found')
         return
 

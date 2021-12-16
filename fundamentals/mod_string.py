@@ -139,7 +139,7 @@ def parse_modstrings(sequences, alphabet, translate=False, filter=False):
     from itertools import repeat
 
     def split_modstring(sequence, r_pattern):
-        # Ugly and fast fix for reading modifications as is from maxquant we should reconisder how to fix it.
+        # Ugly and fast fix for reading modifications as is from maxquant we should reconsider how to fix it.
         # sequence = sequence.replace('M(ox)','M(U:35)')
         # sequence = sequence.replace('C','C(U:4)')
         split_seq = r_pattern.findall(sequence)

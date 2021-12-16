@@ -40,8 +40,8 @@ AA_ALPHABET = {
 }
 
 TERMINAL_ALPHABET = {
-    "[]-": 30,  # unomodified n terminus
-    "-[]": 31  # unomodified c terminus
+    "[]-": 30,  # unmodified n terminus
+    "-[]": 31  # unmodified c terminus
 }
 
 ALPHABET_MODS = {
@@ -51,6 +51,9 @@ ALPHABET_MODS = {
     "S[UNIMOD:21]": 25,
     "T[UNIMOD:21]": 26,
     "Y[UNIMOD:21]": 27,
+    "S[UNIMOD:23]": 16,
+    "T[UNIMOD:23]": 17,
+    "Y[UNIMOD:23]": 20,
     "[UNIMOD:1]-" : 32,
     "K[UNIMOD:259]": 9,
     "R[UNIMOD:267]": 15
@@ -69,6 +72,9 @@ MAXQUANT_VAR_MODS = {
     "_(tm)": "_[UNIMOD:737]",
     "K(tm)": "K[UNIMOD:737]",
     "(ph)": "[UNIMOD:21]",
+    "(Phospho (STY))": "[UNIMOD:21]",
+    "(de)": "[UNIMOD:23]",
+    "(Dehydrated (ST))": "[UNIMOD:23]",
     "K(Lys8)": "K[UNIMOD:259]",
     "R(Arg10)": "R[UNIMOD:267]",
     "C(Carbamidomethyl (C))": "C[UNIMOD:4]",
@@ -133,6 +139,7 @@ MOD_MASSES = {
     '[UNIMOD:259]': 8.014199,  # SILAC Lysine
     '[UNIMOD:267]': 10.008269,  # SILAC Arginine
     '[UNIMOD:21]': 79.966331,  # Phospho
+    '[UNIMOD:23]': -18.010565,  # Dehydration after phospho loss
     '[UNIMOD:4]': 57.02146,  # Carbamidomethyl
     '[UNIMOD:35]': 15.9949146  # Oxidation
 }
