@@ -157,6 +157,67 @@ def parse_modstrings(sequences, alphabet, translate=False, filter=False):
                              f"in the sequence [{sequence}] could not be parsed")
 
     pattern = sorted(alphabet, key=len, reverse=True)
+    
     pattern = [re.escape(i) for i in pattern]
     regex_pattern = re.compile("|".join(pattern))
     return map(split_modstring, sequences, repeat(regex_pattern))
+    
+    
+def proteomicsDB_to_internal(sequence, mods_variable, mods_fixed):
+"""
+        Function to create a sequence with UNIMOD modifications from given sequence and it's varaible and fixed modifications
+        :param 
+            sequence: The sequence to modify.
+            mods_variable: the variable modifacations (e.g. "Oxidation@M45")
+            mods_fixed: the fixed modifacations (e.g. "Carbamidomethyl@C")
+        :return sequence with unimods (e.g."AAC[UNIMOD:4]GHK")
+    """
+    
+    if mods_variable == "" and mods_fixed == "":
+        return "[]-" + sequence + "-[]" 
+    elif mods_variable == "" and not mods_fixed == "":
+        mods_list = mods_fixed.split(';')
+    elif not mods_variable == "" and mods_fixed == "":
+        mods_list = mods_variable.split(';')
+    else:
+        mods_list = mods_variable.split(';') + mods_fixed.split(';')
+        
+    # Splitting "modificationtyp@acid_and_position" into [typ, acid_and_pos]
+    for count in range(len(mods_list)):
+        mods_list[count] = mods_list[count].strip()
+        mods_list[count] = mods_list[count].split('@')
+        
+    mods_dict = {"M": "m", "C": "c", "K": "k", "S": "s", "T": "t", "Y": "y"}        
+    mod_at_start = False
+    
+    # Tag all the modified AAs to replace them with UNIMOD later
+    for count in range(len(mods_list)):
+        mod_and_position = mods_list[count]
+        amino_acid = mod_and_position[1][0]
+            
+        if len(mod_and_position[1]) > 1:
+            position = int(mod_and_position[1][1:])
+            if not position == 0 and not position > len(sequence):
+                sequence = sequence[:position-1] + mods_dict[amino_acid] + sequence[position:]
+            elif position == 0:
+                mod_at_start = True
+            
+        elif len(mod_and_position[1]) == 1:
+            sequence = sequence.replace(amino_acid, mods_dict[amino_acid])
+          
+    sequence = sequence.replace("m", "M[UNIMOD:35]")
+    sequence = sequence.replace("c", "C[UNIMOD:4]")
+    sequence = sequence.replace("k", "K[UNIMOD:737]")
+    sequence = sequence.replace("s", "S[UNIMOD:21]")
+    sequence = sequence.replace("t", "T[UNIMOD:21]")
+    sequence = sequence.replace("y", "Y[UNIMOD:21]")
+
+    sequence =  sequence + "-[]"
+    if mod_at_start:
+        sequence = "[UNIMOD:1]-" + sequence
+    else:
+        sequence = "[]-" + sequence
+         
+    return sequence
+    
+
