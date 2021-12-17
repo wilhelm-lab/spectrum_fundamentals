@@ -164,13 +164,13 @@ def parse_modstrings(sequences, alphabet, translate=False, filter=False):
     
     
 def proteomicsDB_to_internal(sequence, mods_variable, mods_fixed):
-"""
-        Function to create a sequence with UNIMOD modifications from given sequence and it's varaible and fixed modifications
-        :param 
-            sequence: The sequence to modify.
-            mods_variable: the variable modifacations (e.g. "Oxidation@M45")
-            mods_fixed: the fixed modifacations (e.g. "Carbamidomethyl@C")
-        :return sequence with unimods (e.g."AAC[UNIMOD:4]GHK")
+    """
+    Function to create a sequence with UNIMOD modifications from given sequence and it's varaible and fixed modifications
+    :param 
+        sequence: The sequence to modify.
+        mods_variable: the variable modifacations (e.g. "Oxidation@M45")
+        mods_fixed: the fixed modifacations (e.g. "Carbamidomethyl@C")
+    :return sequence with unimods (e.g."AAC[UNIMOD:4]GHK")
     """
     
     if mods_variable == "" and mods_fixed == "":

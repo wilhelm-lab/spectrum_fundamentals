@@ -150,6 +150,7 @@ MOD_MASSES = {
     '[UNIMOD:1]': 42.010565	  # Acetylation
 }
 
+# these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
 AA_MOD_MASSES ={
     'K[UNIMOD:737]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:737]'],
     'M[UNIMOD:35]': AA_MASSES['M'] + MOD_MASSES['[UNIMOD:35]'],
@@ -158,8 +159,11 @@ AA_MOD_MASSES ={
     "S[UNIMOD:21]": AA_MASSES['S'] + MOD_MASSES['[UNIMOD:21]'],
     "T[UNIMOD:21]": AA_MASSES['T'] + MOD_MASSES['[UNIMOD:21]'],
     "Y[UNIMOD:21]": AA_MASSES['Y'] + MOD_MASSES['[UNIMOD:21]'],
+    "S[UNIMOD:23]": AA_MASSES['S'],# + MOD_MASSES['[UNIMOD:23]'],
+    "T[UNIMOD:23]": AA_MASSES['T'],# + MOD_MASSES['[UNIMOD:23]'],
+    "Y[UNIMOD:23]": AA_MASSES['Y'],# + MOD_MASSES['[UNIMOD:23]'],
     "[UNIMOD:1]-": MASSES["N_TERMINUS"] + MOD_MASSES['[UNIMOD:1]'],
-    "K[UNIMOD:259]": AA_MASSES['K'],# + MOD_MASSES['[UNIMOD:259]'],#we need a different way of encodig mods on AA so it wouldn't have same encoding to make vecMZ work
+    "K[UNIMOD:259]": AA_MASSES['K'],# + MOD_MASSES['[UNIMOD:259]'],#we need a different way of encoding mods on AA so it wouldn't have same encoding to make vecMZ work
     "R[UNIMOD:267]": AA_MASSES['R']#+ MOD_MASSES['[UNIMOD:267]']
 }
 
@@ -170,6 +174,7 @@ AA_MOD = {**AA_MASSES, **AA_MOD_MASSES}
 #######################################
 
 # Array containing masses --- at index one is mass for A, etc.
+# these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
 VEC_MZ = np.zeros(max(ALPHABET.values()) + 1)
 for a, i in ALPHABET.items():
     VEC_MZ[i] = AA_MOD[a]
@@ -201,11 +206,11 @@ SPECTRONAUT_MODS = {
 
 # Used for MSP spectral library format
 MOD_NAMES = {
-    '[U:737]': 'TMT_6',
-    '[U:2016]': 'TMT_Pro',
-    '[U:21]': 'Phospho',
-    '[U:4]': 'Carbamidomethyl',
-    '[U:35]': 'Oxidation'
+    '[UNIMOD:737]': 'TMT_6',
+    '[UNIMOD:2016]': 'TMT_Pro',
+    '[UNIMOD:21]': 'Phospho',
+    '[UNIMOD:4]': 'Carbamidomethyl',
+    '[UNIMOD:35]': 'Oxidation'
 }
 
 FRAGMENTATION_ENCODING = {
