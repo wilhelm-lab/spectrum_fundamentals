@@ -75,6 +75,12 @@ MAXQUANT_VAR_MODS = {
     "(tm)": "[UNIMOD:737]",
     "_(tm)": "_[UNIMOD:737]",
     "K(tm)": "K[UNIMOD:737]",
+    "(i4)": "[UNIMOD:214]",
+    "_(i4)": "_[UNIMOD:214]",
+    "K(i4)": "K[UNIMOD:214]",
+    "(i8)": "[UNIMOD:730]",
+    "_(i8)": "_[UNIMOD:730]",
+    "K(i8)": "K[UNIMOD:730]",
     "(tmp)": "[UNIMOD:2016]",
     "_(tmp)": "_[UNIMOD:2016]",
     "K(tmp)": "K[UNIMOD:2016]",
@@ -161,7 +167,7 @@ AA_MOD_MASSES ={
     'M[UNIMOD:35]': AA_MASSES['M'] + MOD_MASSES['[UNIMOD:35]'],
     'C[UNIMOD:4]': AA_MASSES['C'] + MOD_MASSES['[UNIMOD:4]'],
     'K[UNIMOD:2016]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:2016]'],
-    'K[UNIMOD:214]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:214]'|,
+    'K[UNIMOD:214]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:214]'],
     'K[UNIMOD:730]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:730]'],
     "S[UNIMOD:21]": AA_MASSES['S'] + MOD_MASSES['[UNIMOD:21]'],
     "T[UNIMOD:21]": AA_MASSES['T'] + MOD_MASSES['[UNIMOD:21]'],
@@ -191,6 +197,10 @@ EPSILON = 1e-7
 
 B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], SEQ_LEN - 1)
 Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], SEQ_LEN - 1)
+SINGLE_CHARGED_MASK = np.tile([1, 0, 0, 1, 0, 0], SEQ_LEN - 1)
+DOUBLE_CHARGED_MASK = np.tile([0, 1, 0, 0, 1, 0], SEQ_LEN - 1)
+TRIPLE_CHARGED_MASK = np.tile([0, 0, 1, 0, 0, 1], SEQ_LEN - 1)
+
 
 SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
 META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
@@ -217,7 +227,9 @@ MOD_NAMES = {
     '[UNIMOD:2016]': 'TMT_Pro',
     '[UNIMOD:21]': 'Phospho',
     '[UNIMOD:4]': 'Carbamidomethyl',
-    '[UNIMOD:35]': 'Oxidation'
+    '[UNIMOD:35]': 'Oxidation',
+    '[UNIMOD:214]': 'iTRAQ4',
+    '[UNIMOD:730]': 'iTRAQ8'
 }
 
 FRAGMENTATION_ENCODING = {
