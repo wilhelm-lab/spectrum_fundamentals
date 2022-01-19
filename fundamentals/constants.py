@@ -200,9 +200,6 @@ META_DATA_COLUMNS = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
 MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ']
 MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
 
-SPECTRONAUT_MODS = {
-    "M(U:35)": "oM"
-}
 
 # Used for MSP spectral library format
 MOD_NAMES = {
@@ -211,6 +208,15 @@ MOD_NAMES = {
     '[UNIMOD:21]': 'Phospho',
     '[UNIMOD:4]': 'Carbamidomethyl',
     '[UNIMOD:35]': 'Oxidation'
+}
+
+# Used for MSP spectral library format
+SPECTRONAUT_MODS = {
+    '[UNIMOD:737]': '[TMT_6]',
+    '[UNIMOD:2016]': '[TMT_Pro]',
+    '[UNIMOD:21]': '[Phospho]',
+    '[UNIMOD:4]': '[Carbamidomethyl (C)]',
+    '[UNIMOD:35]': '[Oxidation (O)]'
 }
 
 FRAGMENTATION_ENCODING = {

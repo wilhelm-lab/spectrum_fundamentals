@@ -51,6 +51,42 @@ def _get_modifications(peptide_sequence):
 
     return modification_deltas, tmt_n_term, peptide_sequence
 
+def compute_peptide_mass(sequence: str):
+    """
+    Compute the theoretical mass of the peptide sequence
+    :param sequence: Modified peptide sequence.
+    :return:Theoretical mass of the sequence
+    """
+    peptide_sequence = sequence
+    modification_deltas, tmt_n_term, peptide_sequence = _get_modifications(peptide_sequence)
+
+    peptide_length = len(peptide_sequence)
+    if peptide_length > 30:
+        return [], -1, ""
+
+
+    n_term_delta = 0.0
+
+    # get mass delta for the c-terminus
+    c_term_delta = 0.0
+
+    n_term = constants.ATOM_MASSES['H'] + n_term_delta  # n-terminal delta [N]
+    c_term = constants.ATOM_MASSES['O'] + constants.ATOM_MASSES[
+        'H'] + c_term_delta  # c-terminal delta [C]
+    h = constants.ATOM_MASSES['H']
+
+    ion_type_offsets = [n_term - h, c_term + h]
+
+    # calculation:
+    forward_sum = 0.0  # sum over all amino acids from left to right (neutral charge)
+
+    for i in range(0, peptide_length):  # generate substrings
+        forward_sum += constants.AA_MASSES[peptide_sequence[i]]  # sum left to right
+        if i in modification_deltas:  # add mass of modification if present
+            forward_sum += modification_deltas[i]
+    return forward_sum+ion_type_offsets[0]+ion_type_offsets[1]
+
+
 
 def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     """
