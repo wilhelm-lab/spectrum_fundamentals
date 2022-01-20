@@ -199,29 +199,29 @@ class SimilarityMetrics(Metric):
 
         self.metrics_val['spectral_angle'] = SimilarityMetrics.spectral_angle(self.true_intensities,
                                                                               self.pred_intensities, 0)
-        self.metrics_val['spectral_angle_single_charge'] = SimilarityMetrics.spectral_angle(self.true_intensities,
-                                                                                            self.pred_intensities, 1)
-        self.metrics_val['spectral_angle_double_charge'] = SimilarityMetrics.spectral_angle(self.true_intensities,
-                                                                                            self.pred_intensities, 2)
-        self.metrics_val['spectral_angle_triple_charge'] = SimilarityMetrics.spectral_angle(self.true_intensities,
-                                                                                            self.pred_intensities, 3)
-        self.metrics_val['spectral_angle_b_ions'] = SimilarityMetrics.spectral_angle(self.true_intensities,
-                                                                                     self.pred_intensities, 4)
-        self.metrics_val['spectral_angle_y_ions'] = SimilarityMetrics.spectral_angle(self.true_intensities,
-                                                                                     self.pred_intensities, 5)
         self.metrics_val['pearson_corr'] = SimilarityMetrics.correlation(self.true_intensities, self.pred_intensities,
                                                                          0, "pearson")
-        self.metrics_val['pearson_corr_single_charge'] = SimilarityMetrics.correlation(
-            self.true_intensities, self.pred_intensities, 1, "pearson")
-        self.metrics_val['pearson_corr_double_charge'] = SimilarityMetrics.correlation(
-            self.true_intensities, self.pred_intensities, 2, "pearson")
-        self.metrics_val['pearson_corr_triple_charge'] = SimilarityMetrics.correlation(
-            self.true_intensities, self.pred_intensities, 3, "pearson")
-        self.metrics_val['pearson_corr_b_ions'] = SimilarityMetrics.correlation(
-            self.true_intensities, self.pred_intensities, 4, "pearson")
-        self.metrics_val['pearson_corr_y_ions'] = SimilarityMetrics.correlation(
-            self.true_intensities, self.pred_intensities, 5, "pearson")
         if all_features:
+            self.metrics_val['spectral_angle_single_charge'] = SimilarityMetrics.spectral_angle(self.true_intensities,
+                                                                                            self.pred_intensities, 1)
+            self.metrics_val['spectral_angle_double_charge'] = SimilarityMetrics.spectral_angle(self.true_intensities,
+                                                                                            self.pred_intensities, 2)
+            self.metrics_val['spectral_angle_triple_charge'] = SimilarityMetrics.spectral_angle(self.true_intensities,
+                                                                                            self.pred_intensities, 3)
+            self.metrics_val['spectral_angle_b_ions'] = SimilarityMetrics.spectral_angle(self.true_intensities,
+                                                                                     self.pred_intensities, 4)
+            self.metrics_val['spectral_angle_y_ions'] = SimilarityMetrics.spectral_angle(self.true_intensities,
+                                                                                     self.pred_intensities, 5)
+            self.metrics_val['pearson_corr_single_charge'] = SimilarityMetrics.correlation(
+                self.true_intensities, self.pred_intensities, 1, "pearson")
+            self.metrics_val['pearson_corr_double_charge'] = SimilarityMetrics.correlation(
+                self.true_intensities, self.pred_intensities, 2, "pearson")
+            self.metrics_val['pearson_corr_triple_charge'] = SimilarityMetrics.correlation(
+                self.true_intensities, self.pred_intensities, 3, "pearson")
+            self.metrics_val['pearson_corr_b_ions'] = SimilarityMetrics.correlation(
+                self.true_intensities, self.pred_intensities, 4, "pearson")
+            self.metrics_val['pearson_corr_y_ions'] = SimilarityMetrics.correlation(
+                self.true_intensities, self.pred_intensities, 5, "pearson")
             self.metrics_val['cos'] = SimilarityMetrics.cos(
             self.true_intensities, self.pred_intensities)
             self.metrics_val['mean_abs_diff'] = SimilarityMetrics.abs_diff(
