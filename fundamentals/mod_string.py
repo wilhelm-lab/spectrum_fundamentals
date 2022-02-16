@@ -58,7 +58,7 @@ def maxquant_to_internal(
 
         return replacements[key]
 
-    return [regex.sub(find_replacement, seq)[1:-1] for seq in sequences]
+    return [regex.sub(find_replacement, seq).replace('_','') for seq in sequences]
 
 
 def internal_without_mods(
