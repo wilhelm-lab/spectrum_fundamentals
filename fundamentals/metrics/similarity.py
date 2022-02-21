@@ -19,16 +19,14 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything.
         """
-        epsilon = 1e-7
-        valid_ion_mask = predicted_intensities > epsilon
-
-        if scipy.sparse.issparse(valid_ion_mask):
-            observed_masked = observed_intensities.multiply(valid_ion_mask)
-            predicted_masked = predicted_intensities.multiply(valid_ion_mask)
+        predicted_non_zero_mask = predicted_intensities > constants.EPSILON
+        if scipy.sparse.issparse(predicted_non_zero_mask):
+            observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
+            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
         else:
-            observed_masked = np.multiply(observed_intensities, valid_ion_mask)
-            predicted_masked = np.multiply(predicted_intensities, valid_ion_mask)
-        
+            observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
+            predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
+
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
@@ -50,8 +48,12 @@ class SimilarityMetrics(Metric):
             observed_normalized = observed_normalized.multiply(boolean_array).toarray()
             predicted_normalized = predicted_normalized.multiply(boolean_array).toarray()
 
-        dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized)
-        
+        observed_non_zero_mask = observed_intensities > constants.EPSILON
+        fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, predicted_non_zero_mask)
+
+        dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized) * (
+                    fragments_in_common > 0)
+
         arccos = np.arccos(dot_product)
         return 1 - 2 * arccos / np.pi
     
@@ -94,7 +96,6 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def correlation(observed_intensities, predicted_intensities, charge=0, method="pearson"):
-        epsilon = 1e-7
         observed_intensities = observed_intensities.toarray()
         predicted_intensities = predicted_intensities.toarray()
 
@@ -118,7 +119,7 @@ class SimilarityMetrics(Metric):
 
         pear_corr = []
         for obs, pred in zip(observed_intensities, predicted_intensities):
-            valid_ion_mask = pred > epsilon
+            valid_ion_mask = pred > constants.EPSILON
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
             obs = obs[~np.isnan(obs)]
