@@ -44,9 +44,10 @@ class Percolator(Metric):
     input_type: str
     fdr_cutoff: float
 
-    def __init__(self, metadata: pd.DataFrame, pred_intensities, true_intensities, input_type, fdr_cutoff=0.01):
+    def __init__(self, metadata: pd.DataFrame, pred_intensities, true_intensities, input_type, all_features_flag=False, fdr_cutoff=0.01):
         self.metadata = metadata
         self.input_type = input_type
+        self.all_features_flag = all_features_flag
         self.fdr_cutoff = fdr_cutoff
         super().__init__(pred_intensities, true_intensities)
 
@@ -310,7 +311,7 @@ class Percolator(Metric):
             fragments_ratio.calc()
 
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities)
-            similarity.calc()
+            similarity.calc(self.all_features_flag)
 
             self.metrics_val = pd.concat([self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1)
 

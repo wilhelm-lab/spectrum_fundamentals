@@ -22,6 +22,18 @@ def _get_modifications(peptide_sequence):
         tmt_n_term = 2
         modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:737]']})
         peptide_sequence = peptide_sequence[12:]
+    elif peptide_sequence.startswith('[UNIMOD:2016]'):  # TMT_16
+        tmt_n_term = 2
+        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:2016]']})
+        peptide_sequence = peptide_sequence[13:]
+    elif peptide_sequence.startswith('[UNIMOD:214]'):  # iTRAQ4
+        tmt_n_term = 2
+        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:214]']})
+        peptide_sequence = peptide_sequence[12:]
+    elif peptide_sequence.startswith('[UNIMOD:730]'):  # iTRAQ8
+        tmt_n_term = 2
+        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:730]']})
+        peptide_sequence = peptide_sequence[12:]
 
     if "(" in peptide_sequence:
         logger.info(
