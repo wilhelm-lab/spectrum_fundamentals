@@ -12,11 +12,12 @@ from sklearn.metrics import mean_squared_error
 class SimilarityMetrics(Metric):
     
     @staticmethod
-    def spectral_angle(observed_intensities, predicted_intensities, charge):
+    def spectral_angle(observed_intensities, predicted_intensities, charge=0):
         """
         calculate spectral angle
         :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, 0 intensity indicates invalid peaks (charge state > peptide charge state or position >= peptide length), array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
+        :param charge: to filter by the peak charges, 0 means everything.
         """
         epsilon = 1e-7
         valid_ion_mask = predicted_intensities > epsilon
@@ -92,7 +93,7 @@ class SimilarityMetrics(Metric):
             return np.sum(np.multiply(observed_normalized, predicted_normalized), axis=1)
 
     @staticmethod
-    def correlation(observed_intensities, predicted_intensities, charge, method):
+    def correlation(observed_intensities, predicted_intensities, charge=0, method="pearson"):
         epsilon = 1e-7
         observed_intensities = observed_intensities.toarray()
         predicted_intensities = predicted_intensities.toarray()
