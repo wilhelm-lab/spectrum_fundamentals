@@ -1,7 +1,6 @@
 import logging
 
 import pandas as pd
-from joblib import Parallel, delayed
 import numpy as np
 
 from fundamentals import constants

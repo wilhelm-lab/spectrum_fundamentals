@@ -5,7 +5,6 @@ import scipy.stats
 from scipy import spatial
 from numpy import mean, absolute, std
 from .metric import Metric
-from .percolator import Percolator
 from .. import constants
 from sklearn.metrics import mean_squared_error
 
@@ -251,8 +250,3 @@ class SimilarityMetrics(Metric):
             self.true_intensities, self.pred_intensities, 4, "spearman")
             self.metrics_val['spearman_corr_y_ions'] = SimilarityMetrics.correlation(
             self.true_intensities, self.pred_intensities, 5, "spearman")
-
-
-
-
-
