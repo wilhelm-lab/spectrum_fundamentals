@@ -44,7 +44,7 @@ class Percolator(Metric):
     input_type: str
     fdr_cutoff: float
 
-    def __init__(self, metadata: pd.DataFrame, pred_intensities, true_intensities, input_type, all_features_flag, fdr_cutoff=0.01):
+    def __init__(self, metadata: pd.DataFrame, pred_intensities, true_intensities, input_type, all_features_flag=False, fdr_cutoff=0.01):
         self.metadata = metadata
         self.input_type = input_type
         self.all_features_flag = all_features_flag
