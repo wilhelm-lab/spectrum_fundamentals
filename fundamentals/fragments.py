@@ -179,12 +179,13 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum+ion_type_offsets[0]+ion_type_offsets[1])
 
 
-def compute_ion_masses(seq_int, charge_onehot,tmt=''):
+def compute_ion_masses(seq_int, charge_onehot, tmt=''):
     """
     Collects an integer sequence e.g. [1,2,3] with charge 2 and returns array with 174 positions for ion masses.
     Invalid masses are set to -1
     charge_one is a onehot representation of charge with 6 elems for charges 1 to 6
     """
+
     charge = list(charge_onehot).index(1) + 1
     if not (charge in (1, 2, 3, 4, 5, 6) and len(charge_onehot) == 6):
         print("[ERROR] One-hot-enconded Charge is not in valid range 1 to 6")
@@ -220,8 +221,14 @@ def compute_ion_masses(seq_int, charge_onehot,tmt=''):
                        constants.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
 
         # MASS FOR B IONS
-        if(i ==0 and tmt=='tmt'):
+        if i == 0 and tmt == 'tmt':
             mass_b += constants.VEC_MZ[seq_int[i]]+229.162932
+        elif i == 0 and tmt == 'tmtpro':
+            mass_b += constants.VEC_MZ[seq_int[i]] + 304.207146
+        elif i == 0 and tmt == 'itraq8':
+            mass_b += constants.VEC_MZ[seq_int[i]] + 304.205360
+        elif i == 0 and tmt == 'itraq4':
+            mass_b += constants.VEC_MZ[seq_int[i]] + 144.102063
         else:
             mass_b += constants.VEC_MZ[seq_int[i]]
 
