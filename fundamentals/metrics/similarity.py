@@ -19,7 +19,7 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything.
         """
-        predicted_non_zero_mask = predicted_intensities > constants.EPSILON
+        predicted_non_zero_mask = observed_intensities > 0
         if scipy.sparse.issparse(predicted_non_zero_mask):
             observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
             predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
@@ -119,7 +119,7 @@ class SimilarityMetrics(Metric):
 
         pear_corr = []
         for obs, pred in zip(observed_intensities, predicted_intensities):
-            valid_ion_mask = pred > constants.EPSILON
+            valid_ion_mask = obs > 0
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
             obs = obs[~np.isnan(obs)]

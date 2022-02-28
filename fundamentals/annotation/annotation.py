@@ -1,7 +1,6 @@
-import logging
-
 import pandas as pd
 import numpy as np
+
 
 from fundamentals import constants
 from fundamentals.fragments import initialize_peaks
@@ -68,7 +67,7 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
     return temp_list
 
 
-def handle_multiple_matches(matched_peaks: list, sort_by: str = 'mass_diff'):
+def handle_multiple_matches(matched_peaks: list, sort_by: str = 'intensity'):
     """
     Here we handle if multiple peaks were matched to the same fragment ion.
     We will resolve this based on the sort_by parameter.
@@ -173,25 +172,5 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
     return intensity, mass
 
 
-def parallel_annotate(spectrum, index_columns):
-    """
-    Parallelize the annotation pipeline, here it should annotate spectra in different threads.
-    :param spectrum: spectrum to be annotated.
-    :return: annotated spectrum with meta data.
-    """
-    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(spectrum[index_columns['MODIFIED_SEQUENCE']],
-                                                                       spectrum[index_columns['MASS_ANALYZER']],
-                                                                       spectrum[index_columns['PRECURSOR_CHARGE']])
-    if not unmod_sequence:
-        return None
-    matched_peaks = match_peaks(fragments_meta_data, spectrum[index_columns['INTENSITIES']],
-                                spectrum[index_columns['MZ']], tmt_n_term, unmod_sequence,
-                                spectrum[index_columns['PRECURSOR_CHARGE']])
-    if len(matched_peaks) == 0:
-        intensity = np.full(174, 0.0)
-        mass = np.full(174, 0.0)
-        return intensity, mass, calc_mass
-    matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
-    intensities, mass = generate_annotation_matrix(matched_peaks, unmod_sequence,
-                                                   spectrum[index_columns['PRECURSOR_CHARGE']])
-    return intensities, mass, calc_mass, removed_peaks
+def annotate_spectra(sequence: str, peaks: np):
+    pass
