@@ -316,36 +316,36 @@ class Percolator(Metric):
             self.metrics_val = pd.concat([self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1)
 
             lda_failed = False
-            idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
-            current_fdr = self.fdr_cutoff
-            while len(idxs_below_lda_fdr) == 0:
-                current_fdr += 0.01
-                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
-                if current_fdr >= 0.1:
-                    lda_failed = True
-                    break
-
-            if lda_failed:
-                sampled_idxs = Percolator.sample_balanced_over_bins(
-                    self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']])
-            else:
-                sampled_idxs = Percolator.sample_balanced_over_bins(
-                    self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']].iloc[idxs_below_lda_fdr, :])
-
-            aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
-                self.metadata['RETENTION_TIME'][sampled_idxs],
-                self.metadata['PREDICTED_IRT'][sampled_idxs],
-                self.metadata['PREDICTED_IRT'])
-
-            self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
-            self.metrics_val['pred_RT'] = self.metadata['PREDICTED_IRT']
-            self.metrics_val['iRT'] = aligned_predicted_rts
+            # idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+            # current_fdr = self.fdr_cutoff
+            # while len(idxs_below_lda_fdr) == 0:
+            #     current_fdr += 0.01
+            #     idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
+            #     if current_fdr >= 0.1:
+            #         lda_failed = True
+            #         break
+            #
+            # if lda_failed:
+            #     sampled_idxs = Percolator.sample_balanced_over_bins(
+            #         self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']])
+            # else:
+            #     sampled_idxs = Percolator.sample_balanced_over_bins(
+            #         self.metadata[['RETENTION_TIME', 'PREDICTED_IRT']].iloc[idxs_below_lda_fdr, :])
+            #
+            # aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
+            #     self.metadata['RETENTION_TIME'][sampled_idxs],
+            #     self.metadata['PREDICTED_IRT'][sampled_idxs],
+            #     self.metadata['PREDICTED_IRT'])
+            #
+            # self.metrics_val['RT'] = self.metadata['RETENTION_TIME']
+            # self.metrics_val['pred_RT'] = self.metadata['PREDICTED_IRT']
+            # self.metrics_val['iRT'] = aligned_predicted_rts
             self.metrics_val['collision_energy_aligned'] = self.metadata['COLLISION_ENERGY']/100.0
-            self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
+            #self.metrics_val['abs_rt_diff'] = np.abs(self.metadata['RETENTION_TIME'] - aligned_predicted_rts)
             
-            median_abs_error_lda_targets = np.median(self.metrics_val['abs_rt_diff'].iloc[idxs_below_lda_fdr])
-            logger.info(f"Median absolute error predicted vs observed retention time on targets < 1% FDR: {median_abs_error_lda_targets}")
-            logger.debug(self.metrics_val[['RT', 'pred_RT', 'abs_rt_diff', 'lda_scores']].iloc[idxs_below_lda_fdr, :])
+            #median_abs_error_lda_targets = np.median(self.metrics_val['abs_rt_diff'].iloc[idxs_below_lda_fdr])
+            #logger.info(f"Median absolute error predicted vs observed retention time on targets < 1% FDR: {median_abs_error_lda_targets}")
+            #logger.debug(self.metrics_val[['RT', 'pred_RT', 'abs_rt_diff', 'lda_scores']].iloc[idxs_below_lda_fdr, :])
         else:
             self.metrics_val['andromeda'] = self.metadata['SCORE']
 
