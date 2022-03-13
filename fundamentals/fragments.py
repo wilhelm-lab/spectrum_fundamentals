@@ -33,6 +33,9 @@ def _get_modifications(peptide_sequence):
         tmt_n_term = 2
         modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:730]']})
         peptide_sequence = peptide_sequence[12:]
+    elif peptide_sequence.startswith('[UNIMOD:1]'):  # acetylation
+        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:1]']})
+        peptide_sequence = peptide_sequence[10:]
 
     if "(" in peptide_sequence:
         logger.info(

@@ -16,6 +16,47 @@ VEC_LENGTH = (SEQ_LEN - 1) * 2 * 3 # peptide of length 30 has 29 b and y-ions, e
 # ALPHABETS #
 #############
 
+
+PTMs_ALPHABET = {
+    "A": 1,
+    "C": 37,
+    "D": 3,
+    "E": 4,
+    "F": 5,
+    "G": 6,
+    "H": 7,
+    "I": 8,
+    "K": 9,
+    "L": 10,
+    "M": 11,
+    "N": 12,
+    "P": 13,
+    "Q": 14,
+    "R": 15,
+    "S": 16,
+    "T": 17,
+    "V": 18,
+    "W": 19,
+    "Y": 20,
+    "[]-": 21,
+    "-[]": 22,
+    "M(ox)": 23,
+    "S(ph)": 24,
+    "T(ph)": 25,
+    "Y(ph)": 26,
+    "R(ci)": 27,
+    "K(ac)": 28,
+    "K(gl)": 29,
+    "(gl)Q": 30,
+    "R(me)": 31,
+    "K(me)": 32,
+    "T(ga)": 33,
+    "S(ga)": 34,
+    "T(gl)": 35,
+    "S(gl)": 36,
+    "[ac]-": 38,
+}
+
 AA_ALPHABET = {
     "A": 1,
     "C": 24,
@@ -91,11 +132,22 @@ MAXQUANT_VAR_MODS = {
     "K(Lys8)": "K[UNIMOD:259]",
     "R(Arg10)": "R[UNIMOD:267]",
     "C(Carbamidomethyl (C))": "C[UNIMOD:4]",
+    "R(ci)": "R[UNIMOD:7]",
+    "K(gl)": "K[UNIMOD:121]",
+    "(gl)Q": "Q[UNIMOD:28]",
+    "R(me)": "R[UNIMOD:329]",
+    "K(me)": "K[UNIMOD:329]",
+    "T(ga)": "T[UNIMOD:43]",
+    "S(ga)": "S[UNIMOD:43]",
+    "T(gl)": "T[UNIMOD:43]",
+    "S(gl)": "S[UNIMOD:43]",
+    "(ac)": "[UNIMOD:1]"
 }
 
 MAXQUANT_NC_TERM = {
-    "^_": "",
-    "_$": ""
+    "^_(ac)": '[ac]-',
+    "^_": "[]-",
+    "_$": "-[]"
 }
 
 ####################
@@ -150,15 +202,20 @@ AA_MASSES = {
 MOD_MASSES = {
     '[UNIMOD:737]': 229.162932,  # TMT_6
     '[UNIMOD:2016]': 304.207146,  # TMT_PRO
-    '[UNIMOD:214]': 144.102063, #iTRAQ4
-    '[UNIMOD:730]': 304.205360,	#iTRAQ8
+    '[UNIMOD:214]': 144.102063,  # iTRAQ4
+    '[UNIMOD:730]': 304.205360,  # iTRAQ8
     '[UNIMOD:259]': 8.014199,  # SILAC Lysine
     '[UNIMOD:267]': 10.008269,  # SILAC Arginine
     '[UNIMOD:21]': 79.966331,  # Phospho
     '[UNIMOD:23]': -18.010565,  # Dehydration after phospho loss
     '[UNIMOD:4]': 57.02146,  # Carbamidomethyl
     '[UNIMOD:35]': 15.9949146,  # Oxidation
-    '[UNIMOD:1]': 42.010565	  # Acetylation
+    '[UNIMOD:1]': 42.010565,  # Acetylation
+    '[UNIMOD:7]': 0.984016,  # Citrullination
+    '[UNIMOD:121]': 114.042927,  # Ubiquitination
+    '[UNIMOD:28]': -17.026549,  # Pyroglu from Q
+    '[UNIMOD:329]': 14.015650,  # Monomethylation
+    '[UNIMOD:43]': 203.079373,  # GalNAc/GlcNAc
 }
 
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES

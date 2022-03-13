@@ -17,19 +17,25 @@ def internal_to_spectronaut(sequences: List[str]) -> List[str]:
 
 def maxquant_to_internal(
         sequences: List[str],
-        fixed_mods: Optional[Dict[str, str]] = {'C': 'C[UNIMOD:4]'}
+        fixed_mods: Optional[Dict[str, str]] = {'C': 'C[UNIMOD:4]'},
+        var_mods: Optional = True
 ) -> List[str]:
     """
     Function to translate a MaxQuant modstring to the Prosit format
     :param sequences: List[str] of sequences
     :param fixed_mods: Optional dictionary of modifications with key aa and value mod, e.g. 'M': 'M(UNIMOD:35)'.
+    :param var_mods: Optional flag to change varmods to internal.
     Fixed modifications must be included in the variable modificatons dictionary throws Assertion error otherwise.
     :return: List[str] of modified sequences.
     """
     err_msg = f"Provided illegal fixed mod, supported modifications are {set(MAXQUANT_VAR_MODS.values())}."
     assert all(x in MAXQUANT_VAR_MODS.values() for x in fixed_mods.values()), err_msg
 
-    replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
+    if not var_mods:
+        replacements = {**fixed_mods, **MAXQUANT_NC_TERM}
+    else:
+        replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
+
 
     def custom_regex_escape(key: str) -> str:
         """
