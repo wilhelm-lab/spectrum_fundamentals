@@ -5,6 +5,7 @@ import numpy as np
 from fundamentals import constants
 from fundamentals.fragments import initialize_peaks
 import logging
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,8 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
         min_mass = fragment['min_mass']
         max_mass = fragment['max_mass']
         fragment_no = fragment['no']
+        #if fragment_no == seq_len:
+            #continue
         if matched_peak:
             start_peak = next_start_peak
         matched_peak = False
@@ -50,20 +53,22 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                             tmt_n_term == 1):
                         row_list.append(
                             {'ion_type': fragment['ion_type'], 'no': fragment_no, 'charge': fragment['charge'],
-                             'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity})
-                        if peak_intensity > max_intensity and fragment_no < seq_len:
-                            max_intensity = float(peak_intensity)
+                             'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity, 
+                             'neutral_loss': fragment['neutral_loss'], 'score': fragment['score']})
+                        #if peak_intensity > max_intensity and fragment_no < seq_len:
+                           #max_intensity = float(peak_intensity)
                 else:
                     row_list.append(
                         {'ion_type': fragment['ion_type'], 'no': fragment_no, 'charge': fragment['charge'],
-                         'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity})
-                    if peak_intensity > max_intensity and fragment_no < seq_len:
-                        max_intensity = float(peak_intensity)
+                         'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity, 
+                         'neutral_loss': fragment['neutral_loss'], 'score': fragment['score']})
+                    #if peak_intensity > max_intensity and fragment_no < seq_len:
+                        #max_intensity = float(peak_intensity)
                 matched_peak = True
                 next_start_peak = start_peak
                 start_peak += 1
     for row in row_list:
-        row['intensity'] = float(row['intensity']) / max_intensity
+        #row['intensity'] = float(row['intensity']) / max_intensity
         temp_list.append(row)
     return temp_list
 
@@ -99,6 +104,9 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     :return: List of annotated spectra.
     """
     raw_file_annotations = []
+    sequences = []
+    scan_numbers = []
+    prec_charges = []
     # modified_sequence_column = un_annot_spectra.columns.get_loc('MODIFIED_SEQUENCE')
     # mass_analyzer_column = un_annot_spectra.columns.get_loc('MASS_ANALYZER')
     # charge_column = un_annot_spectra.columns.get_loc('PRECURSOR_CHARGE')
@@ -108,17 +116,21 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     # index_columns = {'mod_sequence'}
 
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
-    for row in un_annot_spectra.values:
-        results = parallel_annotate(row, index_columns)
+    for row in tqdm(un_annot_spectra.values):
+        seq, scan_num, prec_charge, results = parallel_annotate(row, index_columns)
         if not results:
             continue
         raw_file_annotations.append(results)
-    results_df = pd.DataFrame()
-    results_df = results_df.append(raw_file_annotations)
-    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS",'removed_peaks']
-    logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
+        for r in results:
+            sequences.append(seq)
+            scan_numbers.append(scan_num)
+            prec_charges.append(prec_charge)
+    #results_df = pd.DataFrame()
+    #results_df = results_df.append(raw_file_annotations)
+    #results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS",'removed_peaks']
+    #logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
 
-    return results_df
+    return sequences, scan_numbers, prec_charges, raw_file_annotations
 
 
 def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
@@ -186,6 +198,7 @@ def parallel_annotate(spectrum, index_columns):
     matched_peaks = match_peaks(fragments_meta_data, spectrum[index_columns['INTENSITIES']],
                                 spectrum[index_columns['MZ']], tmt_n_term, unmod_sequence,
                                 spectrum[index_columns['PRECURSOR_CHARGE']])
+    return spectrum[index_columns['MODIFIED_SEQUENCE']], spectrum[index_columns['SCAN_NUMBER']],spectrum[index_columns['PRECURSOR_CHARGE']], matched_peaks
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)

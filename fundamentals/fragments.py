@@ -65,6 +65,75 @@ def _get_modifications(peptide_sequence):
 
     return modification_deltas, tmt_n_term, peptide_sequence
 
+
+def _add_nl(neutral_losses, nl_dict, start_aa_index, end_aa_index):
+    first_nl = True
+    new_nls = {}
+    for nl in neutral_losses:
+        for i in range(start_aa_index, end_aa_index):
+            current_aa_nl = nl_dict[i]
+            if first_nl:
+                new_nls[i] = list(set(neutral_losses) - set(current_aa_nl))
+            if len(current_aa_nl) !=0:
+                for exist_nl in current_aa_nl:
+                    if exist_nl in new_nls[i]:
+                        continue
+                    if '-' not in exist_nl:
+                        nl_list = [exist_nl, nl]
+                        nl_list.sort()
+                        nl_sorted = '-'.join(nl_list)
+                        if nl_sorted in current_aa_nl:
+                            continue
+                        current_aa_nl.append(nl_sorted)
+            if nl not in current_aa_nl:
+                current_aa_nl.append(nl)
+        first_nl = False
+    return nl_dict
+
+
+def _get_neutral_losses(peptide_sequence, modifications):
+    """
+    Get possible neutral losses and position in a peptide sequence.
+    :param peptide_sequence: Modified peptide sequence
+    :return: Dict with neutral losses position as an ID and composition as its value.
+    """
+    sequence_length = len(peptide_sequence)
+    keys = range(0, sequence_length - 1)
+
+    NL_b_ions = dict([(key, []) for key in keys])
+    NL_y_ions = dict([(key, []) for key in keys])
+
+    for i in range(0, sequence_length):
+        aa = peptide_sequence[i]
+        if aa in constants.AA_Neutral_losses:
+            if i in modifications:
+                if aa == 'M' and modifications[i] == 15.9949146:
+                    NL_b_ions = _add_nl(constants.AA_Neutral_losses['M[UNIMOD:35]'], NL_b_ions, i, sequence_length - 1)
+                    NL_y_ions = _add_nl(constants.AA_Neutral_losses['M[UNIMOD:35]'], NL_y_ions, sequence_length - i - 1,
+                                        sequence_length - 1)
+                elif aa == 'R' and modifications[i] == 0.984016:
+                    NL_b_ions = _add_nl(constants.Mod_Neutral_losses['R[UNIMOD:7]'], NL_b_ions, i, sequence_length - 1)
+                    NL_y_ions = _add_nl(constants.Mod_Neutral_losses['R[UNIMOD:7]'], NL_y_ions, sequence_length - i - 1,
+                                        sequence_length - 1)
+                else:
+                    continue
+            else:
+                NL_b_ions = _add_nl(constants.AA_Neutral_losses[aa], NL_b_ions, i, sequence_length - 1)
+                NL_y_ions = _add_nl(constants.AA_Neutral_losses[aa], NL_y_ions, sequence_length - i - 1, sequence_length - 1)
+    return NL_b_ions, NL_y_ions
+
+def _calculate_nl_score_mass(neutral_losses):
+    score = 100
+    mass = 0
+    neutral_losses = neutral_losses.split('-')
+    for nl in neutral_losses:
+        mass += constants.Neutral_losses_Mass[nl]
+        if nl == 'H2O' or nl == 'NH3':
+            score -= 5
+        else:
+            score -= 30
+    return score, mass
+
 def compute_peptide_mass(sequence: str):
     """
     Compute the theoretical mass of the peptide sequence
@@ -77,7 +146,6 @@ def compute_peptide_mass(sequence: str):
     peptide_length = len(peptide_sequence)
     if peptide_length > 30:
         return [], -1, ""
-
 
     n_term_delta = 0.0
 
@@ -101,7 +169,6 @@ def compute_peptide_mass(sequence: str):
     return forward_sum+ion_type_offsets[0]+ion_type_offsets[1]
 
 
-
 def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     """
     Generate theoretical peaks for a modified peptide sequence.
@@ -112,8 +179,8 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     """
     peptide_sequence = sequence
     modification_deltas, tmt_n_term, peptide_sequence = _get_modifications(peptide_sequence)
+    nl_b_ions, nl_y_ions = _get_neutral_losses(peptide_sequence, modification_deltas)
 
-    neutral_losses = []
     peptide_length = len(peptide_sequence)
     if peptide_length > 30:
         return [], -1, ""
@@ -133,11 +200,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     c_term = constants.ATOM_MASSES['O'] + constants.ATOM_MASSES[
         'H'] + c_term_delta  # c-terminal delta [C]
 
-    cho = constants.ATOM_MASSES['H'] + constants.ATOM_MASSES['C'] + constants.ATOM_MASSES[
-        'O']
     h = constants.ATOM_MASSES['H']
-    co = constants.ATOM_MASSES['C'] + constants.ATOM_MASSES['O']
-    nh2 = constants.ATOM_MASSES['N'] + constants.ATOM_MASSES['H'] * 2.0
 
     ion_type_offsets = [n_term - h, c_term + h]
 
@@ -151,7 +214,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     forward_sum = 0.0  # sum over all amino acids from left to right (neutral charge)
     backward_sum = 0.0  # sum over all amino acids from right to left (neutral charge)
     added_sequence = False
-    for i in range(0, peptide_length):  # generate substrings
+    for i in range(0, peptide_length - 1):  # generate substrings
         forward_sum += constants.AA_MASSES[peptide_sequence[i]]  # sum left to right
         if i in modification_deltas:  # add mass of modification if present
             forward_sum += modification_deltas[i]
@@ -176,7 +239,28 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                     min_mass = mass - 0.5
                     max_mass = mass + 0.5
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
-                                            'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass})
+                                            'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass,
+                                            'neutral_loss': '', 'score': 100-(charge-1)})
+                possible_neutral_losses = []
+                if i < peptide_length -1:
+                    if ion_types[ion_type] == 'b':
+                        possible_neutral_losses = nl_b_ions[i]
+                    else:
+                        possible_neutral_losses = nl_y_ions[i]
+                for nl in possible_neutral_losses:
+                    nl_score, nl_mass = _calculate_nl_score_mass(nl)
+
+                    mass = (ion_type_masses[ion_type] - nl_mass + charge_delta) / charge
+                    if mass_analyzer == 'FTMS':
+                        min_mass = (mass * -20 / 1000000) + mass
+                        max_mass = (mass * 20 / 1000000) + mass
+                    else:
+                        min_mass = mass - 0.5
+                        max_mass = mass + 0.5
+                    fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
+                                                'mass': mass, 'min_mass': min_mass, 'max_mass': max_mass,
+                                                'neutral_loss': nl, 'score': nl_score - (charge - 1)})
+
         fragments_meta_data = sorted(fragments_meta_data, key=itemgetter('mass'))
     return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum+ion_type_offsets[0]+ion_type_offsets[1])
 

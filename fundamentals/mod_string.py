@@ -31,10 +31,10 @@ def maxquant_to_internal(
     err_msg = f"Provided illegal fixed mod, supported modifications are {set(MAXQUANT_VAR_MODS.values())}."
     assert all(x in MAXQUANT_VAR_MODS.values() for x in fixed_mods.values()), err_msg
 
-    if not var_mods:
-        replacements = {**fixed_mods, **MAXQUANT_NC_TERM}
-    else:
-        replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
+    #if not var_mods:
+     #   replacements = {**fixed_mods}#, **MAXQUANT_NC_TERM}
+    #else:
+    replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
 
 
     def custom_regex_escape(key: str) -> str:

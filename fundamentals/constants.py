@@ -55,6 +55,8 @@ PTMs_ALPHABET = {
     "T(gl)": 35,
     "S(gl)": 36,
     "[ac]-": 38,
+    "N(de)": 39,
+    "Q(de)": 40,
 }
 
 AA_ALPHABET = {
@@ -89,7 +91,6 @@ ALPHABET_MODS = {
     "M[UNIMOD:35]": 21,
     "C[UNIMOD:4]": 2,
     "K[UNIMOD:737]": 22,
-    "K[UNIMOD:2016]": 22,
     "K[UNIMOD:2016]": 22,
     "K[UNIMOD:214]": 22,
     "K[UNIMOD:730]": 22,
@@ -133,6 +134,8 @@ MAXQUANT_VAR_MODS = {
     "R(Arg10)": "R[UNIMOD:267]",
     "C(Carbamidomethyl (C))": "C[UNIMOD:4]",
     "R(ci)": "R[UNIMOD:7]",
+    "N(de)": "N[UNIMOD:7]",
+    "Q(de)": "Q[UNIMOD:7]",
     "K(gl)": "K[UNIMOD:121]",
     "(gl)Q": "Q[UNIMOD:28]",
     "R(me)": "R[UNIMOD:329]",
@@ -166,6 +169,7 @@ ATOM_MASSES = {
     'C': 12.0,
     'O': 15.9949146,
     'N': 14.003074,
+    'S': 31.9720707,
 }
 
 MASSES = {**PARTICLE_MASSES, **ATOM_MASSES}
@@ -238,6 +242,60 @@ AA_MOD_MASSES ={
 }
 
 AA_MOD = {**AA_MASSES, **AA_MOD_MASSES}
+
+AA_Neutral_losses = {
+    'R': ['NH3', 'CH2N2', 'C3H9N3'],
+    'N': ['NH3', 'CH3NO', 'C2H5NO', 'C3H5NO'],
+    'D': ['H2O', 'CO2', 'C2H4O2'],
+    'C': ['CH2S'],
+    'E': ['H2O', 'C2H4O2'],
+    'Q': ['NH3', 'CH3NO', 'C2H5NO', 'C3H5NO'],
+    'I': ['C2H4'],
+    'L': ['C3H6', 'C4H8'],
+    'K': ['C2H5N', 'C4H9N', 'C4H11N', 'C3H9N'],
+    'M': ['C2H4S', 'C3H6S'],
+    'M[UNIMOD:35]': ['CH4SO', 'C3H8SO', 'C3H6SO'],
+    'S': ['H2O', 'CH4O'],
+    'T': ['H2O', 'C2H4O'],
+    'W': ['C8H7N', 'C9H9N'],
+    'V': ['C3H6'],
+    '[]-': ['NH3'],
+    '-[]': ['H2O'],
+}
+
+Mod_Neutral_losses = {
+    'R[UNIMOD:7]': ['CHNO']
+}
+
+Neutral_losses_Mass = {
+ 'C2H4': (ATOM_MASSES['C']*2) + (ATOM_MASSES['H']*4),
+ 'C2H4O': (ATOM_MASSES['C']*2) + (ATOM_MASSES['H']*4) + ATOM_MASSES['O'],
+ 'C2H4O2': (ATOM_MASSES['C']*2) + (ATOM_MASSES['H']*4) + (ATOM_MASSES['O']*2),
+ 'C2H4S': (ATOM_MASSES['C']*2) + (ATOM_MASSES['H']*4) + ATOM_MASSES['S'],
+ 'C2H5N':  (ATOM_MASSES['C']*2) + (ATOM_MASSES['H']*5) + ATOM_MASSES['N'],
+ 'CHNO': (ATOM_MASSES['C']) + (ATOM_MASSES['H']) + ATOM_MASSES['N'] + ATOM_MASSES['O'],
+ 'C2H5NO': (ATOM_MASSES['C']*2) + (ATOM_MASSES['H']*5) + ATOM_MASSES['N'] + ATOM_MASSES['O'],
+ 'C3H5NO': (ATOM_MASSES['C']*3) + (ATOM_MASSES['H']*5) + ATOM_MASSES['N'] + ATOM_MASSES['O'],
+ 'C3H6': (ATOM_MASSES['C']*3) + (ATOM_MASSES['H']*6),
+ 'C3H6S': (ATOM_MASSES['C']*3) + (ATOM_MASSES['H']*6) + ATOM_MASSES['S'],
+ 'C3H6SO': (ATOM_MASSES['C']*3) + (ATOM_MASSES['H']*6) + ATOM_MASSES['S'] + ATOM_MASSES['O'],
+ 'C3H8SO': (ATOM_MASSES['C']*3) + (ATOM_MASSES['H']*8) + ATOM_MASSES['S'] + ATOM_MASSES['O'],
+ 'C3H9N': (ATOM_MASSES['C']*3) + (ATOM_MASSES['H']*9) + ATOM_MASSES['N'],
+ 'C3H9N3': (ATOM_MASSES['C']*3) + (ATOM_MASSES['H']*9) + (ATOM_MASSES['N']*3),
+ 'C4H11N': (ATOM_MASSES['C']*4) + (ATOM_MASSES['H']*11) + ATOM_MASSES['N'],
+ 'C4H8': (ATOM_MASSES['C']*4) + (ATOM_MASSES['H']*8),
+ 'C4H9N': (ATOM_MASSES['C']*4) + (ATOM_MASSES['H']*9) + ATOM_MASSES['N'],
+ 'C8H7N': (ATOM_MASSES['C']*8) + (ATOM_MASSES['H']*7) + ATOM_MASSES['N'],
+ 'C9H9N': (ATOM_MASSES['C']*9) + (ATOM_MASSES['H']*9) + ATOM_MASSES['N'],
+ 'CH2N2': ATOM_MASSES['C'] + (ATOM_MASSES['H']*2) + (ATOM_MASSES['N']*2),
+ 'CH2S': ATOM_MASSES['C'] + (ATOM_MASSES['H']*2) + ATOM_MASSES['S'],
+ 'CH3NO': ATOM_MASSES['C'] + (ATOM_MASSES['H']*3) + ATOM_MASSES['N'] + ATOM_MASSES['O'],
+ 'CH4O': ATOM_MASSES['C'] + (ATOM_MASSES['H']*4) + ATOM_MASSES['O'],
+ 'CH4SO': ATOM_MASSES['C'] + (ATOM_MASSES['H']*4) + ATOM_MASSES['S'] + ATOM_MASSES['O'],
+ 'CO2': ATOM_MASSES['C'] + (ATOM_MASSES['O']*2),
+ 'H2O': (ATOM_MASSES['H']*2) + ATOM_MASSES['O'],
+ 'NH3': ATOM_MASSES['N'] + (ATOM_MASSES['H']*3),
+}
 
 #######################################
 # HELPERS FOR FRAGMENT MZ CALCULATION #
@@ -329,4 +387,3 @@ ANNOTATION = [ANNOTATION_FRAGMENT_TYPE,
 class RESCORE_TYPE(Enum):
     PROSIT = 'prosit'
     ANDROMEDA = 'andromeda'
-
