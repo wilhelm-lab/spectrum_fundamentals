@@ -55,20 +55,20 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
                             {'ion_type': fragment['ion_type'], 'no': fragment_no, 'charge': fragment['charge'],
                              'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity, 
                              'neutral_loss': fragment['neutral_loss'], 'score': fragment['score']})
-                        #if peak_intensity > max_intensity and fragment_no < seq_len:
-                           #max_intensity = float(peak_intensity)
+                        if peak_intensity > max_intensity and fragment_no < seq_len:
+                           max_intensity = float(peak_intensity)
                 else:
                     row_list.append(
                         {'ion_type': fragment['ion_type'], 'no': fragment_no, 'charge': fragment['charge'],
                          'exp_mass': peak_mass, 'theoretical_mass': fragment['mass'], 'intensity': peak_intensity, 
                          'neutral_loss': fragment['neutral_loss'], 'score': fragment['score']})
-                    #if peak_intensity > max_intensity and fragment_no < seq_len:
-                        #max_intensity = float(peak_intensity)
+                    if peak_intensity > max_intensity and fragment_no < seq_len:
+                        max_intensity = float(peak_intensity)
                 matched_peak = True
                 next_start_peak = start_peak
                 start_peak += 1
     for row in row_list:
-        #row['intensity'] = float(row['intensity']) / max_intensity
+        row['intensity'] = float(row['intensity']) / max_intensity
         temp_list.append(row)
     return temp_list
 
@@ -190,6 +190,7 @@ def parallel_annotate(spectrum, index_columns):
     :param spectrum: spectrum to be annotated.
     :return: annotated spectrum with meta data.
     """
+
     fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(spectrum[index_columns['MODIFIED_SEQUENCE']],
                                                                        spectrum[index_columns['MASS_ANALYZER']],
                                                                        spectrum[index_columns['PRECURSOR_CHARGE']])
@@ -198,7 +199,8 @@ def parallel_annotate(spectrum, index_columns):
     matched_peaks = match_peaks(fragments_meta_data, spectrum[index_columns['INTENSITIES']],
                                 spectrum[index_columns['MZ']], tmt_n_term, unmod_sequence,
                                 spectrum[index_columns['PRECURSOR_CHARGE']])
-    return spectrum[index_columns['MODIFIED_SEQUENCE']], spectrum[index_columns['SCAN_NUMBER']],spectrum[index_columns['PRECURSOR_CHARGE']], matched_peaks
+    
+    return spectrum[index_columns['MODIFIED_SEQUENCE']], spectrum[index_columns['SCAN_NUMBER']], spectrum[index_columns['PRECURSOR_CHARGE']], matched_peaks
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)

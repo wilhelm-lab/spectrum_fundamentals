@@ -182,8 +182,8 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
     nl_b_ions, nl_y_ions = _get_neutral_losses(peptide_sequence, modification_deltas)
 
     peptide_length = len(peptide_sequence)
-    if peptide_length > 30:
-        return [], -1, ""
+    #if peptide_length > 30:
+        #return [], -1, ""
 
     # initialize constants
     if int(round(charge)) <= 3:
