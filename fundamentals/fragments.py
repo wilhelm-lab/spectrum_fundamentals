@@ -111,10 +111,10 @@ def _get_neutral_losses(peptide_sequence, modifications):
                     NL_b_ions = _add_nl(constants.AA_Neutral_losses['M[UNIMOD:35]'], NL_b_ions, i, sequence_length - 1)
                     NL_y_ions = _add_nl(constants.AA_Neutral_losses['M[UNIMOD:35]'], NL_y_ions, sequence_length - i - 1,
                                         sequence_length - 1)
-                elif aa == 'R' and modifications[i] == 0.984016:
-                    NL_b_ions = _add_nl(constants.Mod_Neutral_losses['R[UNIMOD:7]'], NL_b_ions, i, sequence_length - 1)
-                    NL_y_ions = _add_nl(constants.Mod_Neutral_losses['R[UNIMOD:7]'], NL_y_ions, sequence_length - i - 1,
-                                        sequence_length - 1)
+                #elif aa == 'R' and modifications[i] == 0.984016:
+                    #NL_b_ions = _add_nl(constants.Mod_Neutral_losses['R[UNIMOD:7]'], NL_b_ions, i, sequence_length - 1)
+                    #NL_y_ions = _add_nl(constants.Mod_Neutral_losses['R[UNIMOD:7]'], NL_y_ions, sequence_length - i - 1,
+                                        #sequence_length - 1)
                 else:
                     continue
             else:

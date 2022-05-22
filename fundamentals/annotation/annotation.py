@@ -116,7 +116,7 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     # index_columns = {'mod_sequence'}
 
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
-    for row in tqdm(un_annot_spectra.values):
+    for row in un_annot_spectra.values:
         seq, scan_num, prec_charge, results = parallel_annotate(row, index_columns)
         if not results:
             continue
