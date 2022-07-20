@@ -68,14 +68,16 @@ def match_peaks(fragments_meta_data: list, peaks_intensity: np,
     return temp_list
 
 
-def handle_multiple_matches(matched_peaks: list, sort_by: str = 'mass_diff'):
+def handle_multiple_matches(matched_peaks_df, sort_by: str = 'intensity'):
     """
     Here we handle if multiple peaks were matched to the same fragment ion.
     We will resolve this based on the sort_by parameter.
-    :param matched_peaks: all matched peaks we have for the spectrum.
+    :param matched_peaks_df: all matched peaks we have for the spectrum.
     :param sort_by: choose how to sort peaks e.g. intensity, mass_diff
     """
-    matched_peaks_df = pd.DataFrame(matched_peaks)
+
+    if not type(matched_peaks_df) is pd.DataFrame:
+        matched_peaks_df = pd.DataFrame(matched_peaks_df)
     if sort_by == 'mass_diff':
         matched_peaks_df['mass_diff'] = abs(matched_peaks_df['exp_mass'] - matched_peaks_df['theoretical_mass'])
         matched_peaks_df = matched_peaks_df.sort_values(by='mass_diff', ascending=True)
@@ -92,31 +94,53 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = 'mass_diff'):
     return matched_peaks_df, (original_length-length_after_matches)
 
 
-def annotate_spectra(un_annot_spectra: pd.DataFrame):
+def annotate_spectra(un_annot_spectra: pd.DataFrame, merge_multiple_annotations: bool):
     """
     The base method for annotating spectra.
     :param un_annot_spectra: dataframe of raw peaks and metadata.
+    :param merge_multiple_annotations: flag to indicate whether to merge multi annotation or return the full data frame
     :return: List of annotated spectra.
     """
     raw_file_annotations = []
-    # modified_sequence_column = un_annot_spectra.columns.get_loc('MODIFIED_SEQUENCE')
-    # mass_analyzer_column = un_annot_spectra.columns.get_loc('MASS_ANALYZER')
-    # charge_column = un_annot_spectra.columns.get_loc('PRECURSOR_CHARGE')
-    # peaks_intensities_column = un_annot_spectra.columns.get_loc('INTENSITIES')
-    # peaks_mz_column = un_annot_spectra.columns.get_loc('MZ')
-    #
-    # index_columns = {'mod_sequence'}
+    scan_numbers = []
+    calc_masses = []
+    unmod_sequences = []
+    mod_sequences = []
+    prec_charges =[]
 
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-        results = parallel_annotate(row, index_columns)
+        if not merge_multiple_annotations:
+            scan_num, calc_mass, unmod_sequence, mod_sequence, prec_charge, results = \
+                parallel_annotate(row, index_columns, merge_multiple_annotations)
+        else:
+            results = parallel_annotate(row, index_columns, merge_multiple_annotations)
         if not results:
             continue
         raw_file_annotations.append(results)
-    results_df = pd.DataFrame()
-    results_df = results_df.append(raw_file_annotations)
-    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS",'removed_peaks']
-    logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
+        if not merge_multiple_annotations:
+            for _ in results:
+                scan_numbers.append(scan_num)
+                calc_masses.append(calc_mass)
+                unmod_sequences.append(unmod_sequence)
+                mod_sequences.append(mod_sequence)
+                prec_charges.append(prec_charge)
+
+    if not merge_multiple_annotations:
+        flat_list = [item for sublist in raw_file_annotations for item in sublist]
+        results_df = pd.DataFrame()
+        results_df = results_df.append(flat_list)
+        results_df['SCAN_NUMBER'] = scan_numbers
+        results_df['CALCULATED_MASS'] = calc_masses
+        results_df['UNMOD_SEQUENCES'] = unmod_sequences
+        results_df['MODIFIED_SEQUENCE'] = mod_sequences
+        results_df['PRECURSOR_CHARGE'] = prec_charges
+
+    else:
+        results_df = pd.DataFrame()
+        results_df = results_df.append(raw_file_annotations)
+        results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS",'removed_peaks']
+        logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
 
     return results_df
 
@@ -136,7 +160,7 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
     if len(unmod_seq) < constants.SEQ_LEN:
         peaks_range = range(0, ((len(unmod_seq) - 1) * 6))
     else:
-        peaks_range = range(0, ((constants.SEQ_LEN - 1) * 6 ))
+        peaks_range = range(0, ((constants.SEQ_LEN - 1) * 6))
 
     if charge == 1:
         available_peaks = [index for index in peaks_range if (index % 3 == 0)]
@@ -173,7 +197,7 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
     return intensity, mass
 
 
-def parallel_annotate(spectrum, index_columns):
+def parallel_annotate(spectrum, index_columns, merge_multiple_annotations):
     """
     Parallelize the annotation pipeline, here it should annotate spectra in different threads.
     :param spectrum: spectrum to be annotated.
@@ -187,6 +211,10 @@ def parallel_annotate(spectrum, index_columns):
     matched_peaks = match_peaks(fragments_meta_data, spectrum[index_columns['INTENSITIES']],
                                 spectrum[index_columns['MZ']], tmt_n_term, unmod_sequence,
                                 spectrum[index_columns['PRECURSOR_CHARGE']])
+    if not merge_multiple_annotations:
+        return spectrum[index_columns['SCAN_NUMBER']], calc_mass, unmod_sequence, spectrum[index_columns['MODIFIED_SEQUENCE']], \
+               spectrum[index_columns['PRECURSOR_CHARGE']], matched_peaks
+
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)
