@@ -19,16 +19,6 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything.
         """
-        predicted_non_zero_mask = predicted_intensities > constants.EPSILON
-        if scipy.sparse.issparse(predicted_non_zero_mask):
-            observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
-            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
-        else:
-            observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
-            predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
-
-        observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
-        predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
         if charge != 0:
             if charge == 1:
@@ -43,10 +33,20 @@ class SimilarityMetrics(Metric):
                 boolean_array = constants.Y_ION_MASK
 
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
-            observed_normalized = scipy.sparse.csr_matrix(observed_normalized)
-            predicted_normalized = scipy.sparse.csr_matrix(predicted_normalized)
-            observed_normalized = observed_normalized.multiply(boolean_array).toarray()
-            predicted_normalized = predicted_normalized.multiply(boolean_array).toarray()
+            observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
+            predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
+            observed_intensities = observed_intensities.multiply(boolean_array).toarray()
+            predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
+
+        predicted_non_zero_mask = predicted_intensities > constants.EPSILON
+        if scipy.sparse.issparse(predicted_non_zero_mask):
+            observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
+            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
+        else:
+            observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
+            predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
+        observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
+        predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
         observed_non_zero_mask = observed_intensities > constants.EPSILON
         fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, predicted_non_zero_mask)
@@ -55,7 +55,9 @@ class SimilarityMetrics(Metric):
                     fragments_in_common > 0)
 
         arccos = np.arccos(dot_product)
-        return 1 - 2 * arccos / np.pi
+        sa = 1 - 2 * arccos / np.pi
+        sa = np.nan_to_num(sa)
+        return sa
     
     @staticmethod
     def l2_norm(matrix):
