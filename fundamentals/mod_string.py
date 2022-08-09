@@ -57,6 +57,12 @@ def maxquant_to_internal(
                 key = f"{key}$"
 
         return replacements[key]
+    
+    for seq in sequences:
+
+        seq =  seq + "-[]"
+        if not  seq.startsWith("_["):
+            seq = "[]-" + seq
 
     return [regex.sub(find_replacement, seq).replace('_','') for seq in sequences]
 
