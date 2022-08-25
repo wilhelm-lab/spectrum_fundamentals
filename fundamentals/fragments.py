@@ -170,6 +170,9 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                 if mass_analyzer == 'FTMS':
                     min_mass = (mass * -20 / 1000000) + mass
                     max_mass = (mass * 20 / 1000000) + mass
+                elif mass_analyzer == 'TOF':
+                    min_mass = (mass * -40 / 1000000) + mass
+                    max_mass = (mass * 40 / 1000000) + mass
                 else:
                     min_mass = mass - 0.35
                     max_mass = mass + 0.35
