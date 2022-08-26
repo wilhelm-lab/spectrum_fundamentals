@@ -28,6 +28,7 @@ pytest:
     - coverage xml
   tags:
     - docker
+  coverage: /(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/
   artifacts:
     when: always
     reports:
