@@ -11,29 +11,21 @@ def _get_modifications(peptide_sequence):
     """
     Get modification masses and position in a peptide sequence.
     :param peptide_sequence: Modified peptide sequence
-    :return: Dict with modification position as an ID and mass as the value.
+    :return: tuple with - dictionary of modification_position => mod_mass
+                        - 2 if there is an isobaric tag on the n-terminal, else 1
+                        - sequence without modifications
     """
     modification_deltas = {}
     tmt_n_term = 1
     modifications = constants.MOD_MASSES.keys()
     modification_mass = constants.MOD_MASSES
     # Handle terminal modifications here
-    if peptide_sequence.startswith('[UNIMOD:737]'):  # TMT_6
-        tmt_n_term = 2
-        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:737]']})
-        peptide_sequence = peptide_sequence[12:]
-    elif peptide_sequence.startswith('[UNIMOD:2016]'):  # TMT_16
-        tmt_n_term = 2
-        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:2016]']})
-        peptide_sequence = peptide_sequence[13:]
-    elif peptide_sequence.startswith('[UNIMOD:214]'):  # iTRAQ4
-        tmt_n_term = 2
-        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:214]']})
-        peptide_sequence = peptide_sequence[12:]
-    elif peptide_sequence.startswith('[UNIMOD:730]'):  # iTRAQ8
-        tmt_n_term = 2
-        modification_deltas.update({0: constants.MOD_MASSES['[UNIMOD:730]']})
-        peptide_sequence = peptide_sequence[12:]
+    for possible_tmt_mod in constants.TMT_MODS.values():
+        if peptide_sequence.startswith(possible_tmt_mod):  # TMT_6
+            tmt_n_term = 2
+            modification_deltas.update({0: constants.MOD_MASSES[possible_tmt_mod]})
+            peptide_sequence = peptide_sequence[len(possible_tmt_mod):]
+            break
 
     if "(" in peptide_sequence:
         logger.info(
@@ -62,6 +54,7 @@ def _get_modifications(peptide_sequence):
             return
 
     return modification_deltas, tmt_n_term, peptide_sequence
+
 
 def compute_peptide_mass(sequence: str):
     """
@@ -97,7 +90,6 @@ def compute_peptide_mass(sequence: str):
         if i in modification_deltas:  # add mass of modification if present
             forward_sum += modification_deltas[i]
     return forward_sum+ion_type_offsets[0]+ion_type_offsets[1]
-
 
 
 def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
@@ -173,7 +165,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int):
                 elif mass_analyzer == 'TOF':
                     min_mass = (mass * -40 / 1000000) + mass
                     max_mass = (mass * 40 / 1000000) + mass
-                else:
+                else: # use ITMS otherwise
                     min_mass = mass - 0.35
                     max_mass = mass + 0.35
                 fragments_meta_data.append({'ion_type': ion_types[ion_type], 'no': i + 1, 'charge': charge,
@@ -224,14 +216,8 @@ def compute_ion_masses(seq_int, charge_onehot, tmt=''):
                        constants.ATOM_MASSES["H"])/3.0 if charge >= 3.0 else -1.0
 
         # MASS FOR B IONS
-        if i == 0 and tmt == 'tmt':
-            mass_b += constants.VEC_MZ[seq_int[i]]+229.162932
-        elif i == 0 and tmt == 'tmtpro':
-            mass_b += constants.VEC_MZ[seq_int[i]] + 304.207146
-        elif i == 0 and tmt == 'itraq8':
-            mass_b += constants.VEC_MZ[seq_int[i]] + 304.205360
-        elif i == 0 and tmt == 'itraq4':
-            mass_b += constants.VEC_MZ[seq_int[i]] + 144.102063
+        if i == 0 and tmt != '':
+            mass_b += constants.VEC_MZ[seq_int[i]] + constants.MOD_MASSES[constants.TMT_MODS[tmt]]
         else:
             mass_b += constants.VEC_MZ[seq_int[i]]
 
