@@ -58,13 +58,14 @@ def maxquant_to_internal(
 
         return replacements[key]
     
-    for seq in sequences:
+    sequences = [regex.sub(find_replacement, seq).replace('_','') for seq in sequences]
 
+    for seq in sequences:
         seq =  seq + "-[]"
-        if not  seq.startsWith("_["):
+        if not seq.startsWith("["):
             seq = "[]-" + seq
-    print("Sequences encoded")
-    return [regex.sub(find_replacement, seq).replace('_','') for seq in sequences]
+    
+    return sequences
 
 
 def internal_without_mods(
