@@ -91,7 +91,7 @@ MAXQUANT_VAR_MODS = {
     "K(Lys8)": "K[UNIMOD:259]",
     "R(Arg10)": "R[UNIMOD:267]",
     "C(Carbamidomethyl (C))": "C[UNIMOD:4]",
-    "_(ac)": "_[UNIMOD:1]-",
+    "^_(ac)": "_[UNIMOD:1]-",
 }
 
 MAXQUANT_NC_TERM = {
