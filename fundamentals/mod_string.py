@@ -50,15 +50,12 @@ def maxquant_to_internal(
         :return substitution string for the given match
         """
         key = match.string[match.start():match.end()]
-        print(key)
         if "_" in key:  # If _ is in the match we need to differentiate n and c term
             if match.start() == 0:
                 key = f"^{key}"
             else:
                 key = f"{key}$"
 
-            print(key)
-        print(replacements)
         return replacements[key]
     
     sequences = [regex.sub(find_replacement, seq).replace('_','') for seq in sequences]
