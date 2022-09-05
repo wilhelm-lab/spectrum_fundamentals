@@ -63,7 +63,7 @@ def maxquant_to_internal(
         seq =  seq + "-[]"
         if not  seq.startsWith("_["):
             seq = "[]-" + seq
-
+    print("Sequences encoded")
     return [regex.sub(find_replacement, seq).replace('_','') for seq in sequences]
 
 
