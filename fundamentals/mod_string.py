@@ -60,10 +60,11 @@ def maxquant_to_internal(
     
     sequences = [regex.sub(find_replacement, seq).replace('_','') for seq in sequences]
 
-    for seq in sequences:
-        seq =  seq + "-[]"
+    for i in range(len(sequences)):
+        seq = sequences[i] + "-[]"
         if not seq.startswith("["):
             seq = "[]-" + seq
+        sequences[i] = seq
     
     return sequences
 
