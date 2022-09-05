@@ -30,7 +30,7 @@ def maxquant_to_internal(
     assert all(x in MAXQUANT_VAR_MODS.values() for x in fixed_mods.values()), err_msg
 
     replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
-
+    
     def custom_regex_escape(key: str) -> str:
         """
         Subfunction to escape only normal brackets in the modstring
@@ -50,12 +50,15 @@ def maxquant_to_internal(
         :return substitution string for the given match
         """
         key = match.string[match.start():match.end()]
+        print(key)
         if "_" in key:  # If _ is in the match we need to differentiate n and c term
             if match.start() == 0:
                 key = f"^{key}"
             else:
                 key = f"{key}$"
 
+            print(key)
+        print(replacements)
         return replacements[key]
     
     sequences = [regex.sub(find_replacement, seq).replace('_','') for seq in sequences]
