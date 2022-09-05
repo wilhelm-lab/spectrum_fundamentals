@@ -62,7 +62,7 @@ def maxquant_to_internal(
 
     for seq in sequences:
         seq =  seq + "-[]"
-        if not seq.startsWith("["):
+        if not seq.startswith("["):
             seq = "[]-" + seq
     
     return sequences
