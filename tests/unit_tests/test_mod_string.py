@@ -17,10 +17,16 @@ class TestMaxQuantToInternal:
   
   def test_maxquant_to_internal_variable_oxidation_long(self):
     assert mod.maxquant_to_internal(["_ABCDM(Oxidation (M))EFGH_"]) == ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"]
-  
+ 
   def test_maxquant_to_internal_variable_dehydration_long(self):
     assert mod.maxquant_to_internal(["_ABCDS(Dehydrated (ST))EFGH_"]) == ["ABC[UNIMOD:4]DS[UNIMOD:23]EFGH"]
+
+  def test_maxquant_to_internal_acytelation_on_terminus(self):
+    assert mod.maxquant_to_internal(["_(ac)ABCDEFGH_"]) == ["[UNIMOD:1]-ABC[UNIMOD:4]DEFGH"]
   
+  def test_maxquant_to_internal_empty_termini(self):
+    assert mod.maxquant_to_internal(["_ABCDS(Dehydrated (ST))EFGH_"], empty_termini=True) == ["[]-ABC[UNIMOD:4]DS[UNIMOD:23]EFGH-[]"]
+
   def test_maxquant_to_internal_tmt(self):
     fixed_mods = {'C': 'C[UNIMOD:4]',
                   '^_':'_[UNIMOD:737]', 
