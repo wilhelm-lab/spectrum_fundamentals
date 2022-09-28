@@ -66,6 +66,58 @@ ALPHABET_MODS = {
 ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS, **TERMINAL_ALPHABET}
 
 ######################
+#  Reverse Alphabet  #
+######################
+
+AA_ALPHABET_REV = {
+    1:"A",
+    24: "C",
+    3: "D",
+    4: "E",
+    5: "F",
+    6: "G",
+    7: "H",
+    8: "I",
+    9:"K",
+    10: "L",
+    11: "M",
+    12: "N",
+    13: "P",
+    14: "Q",
+    15: "R",
+    16: "S",
+    17: "T",
+    18: "V",
+    19: "W",
+    20: "Y",
+}
+
+TERMINAL_ALPHABET_REV = {
+    30: "[]-",  # unmodified n terminus
+    31: "-[]"  # unmodified c terminus
+}
+
+ALPHABET_MODS_REV = {
+    21: "M[UNIMOD:35]",
+    2: "C[UNIMOD:4]",
+    22: "K[UNIMOD:737]",
+    #22: "K[UNIMOD:2016]",
+    #22: "K[UNIMOD:214]",
+    #22: "K[UNIMOD:730]",
+    25: "S[UNIMOD:21]",
+    26: "T[UNIMOD:21]",
+    27: "Y[UNIMOD:21]",
+    16: "S[UNIMOD:23]",
+    17: "T[UNIMOD:23]",
+    20: "Y[UNIMOD:23]",
+    32: "[UNIMOD:1]-",
+    9: "K[UNIMOD:259]",
+    15: "R[UNIMOD:267]"
+}
+
+ALPHABET_REV = {**AA_ALPHABET_REV, **ALPHABET_MODS_REV, **TERMINAL_ALPHABET_REV}
+
+######################
 # MaxQuant constants #
 ######################
 

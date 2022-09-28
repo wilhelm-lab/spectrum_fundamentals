@@ -231,4 +231,13 @@ def proteomicsDB_to_internal(sequence, mods_variable, mods_fixed):
          
     return sequence
     
+def internal_to_string(internal_sequences, alphabet):
+    string_seqs = []
+    for seq in internal_sequences:
+        str_seq = ""
+        for letter in seq:
+            if not letter == 0:
+                str_seq += alphabet[letter]
+        string_seqs.append(str_seq)
+    return string_seqs
 
