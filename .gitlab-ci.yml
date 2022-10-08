@@ -1,0 +1,39 @@
+image: docker:latest
+
+variables:
+  REGISTRY: $CI_REGISTRY
+  PROJECT_PATH: none
+  DOCKER_DRIVER: overlay2
+  # SELECT ONE OF INTERNAL,EXTERNAL
+  CI_DEPLOY_NETWORK: INTERNAL
+  CI_DEPLOY_TAG: none
+  # SELECT ONE OF public,private
+  CI_PUBLISH: public
+  # hotfix for https://gitlab.com/gitlab-org/gitlab-ce/issues/64959
+  DOCKER_TLS_CERTDIR: ""
+
+stages:
+  - test
+
+pytest:
+  stage: test
+  image: python:3.8.12
+  before_script:
+    - pip install -U pip poetry pytest
+    - poetry config virtualenvs.create false
+    - poetry install
+  script:
+    - echo $CONTAINER_IMAGE
+    - python3 -m pytest --cov=fundamentals --cov-report term --junitxml=report.xml
+    - coverage xml
+  tags:
+    - docker
+  coverage: /(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
