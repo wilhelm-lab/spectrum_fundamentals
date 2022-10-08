@@ -179,7 +179,11 @@ def parallel_annotate(spectrum, index_columns):
     :param spectrum: spectrum to be annotated.
     :return: annotated spectrum with meta data.
     """
-    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(spectrum[index_columns['MODIFIED_SEQUENCE']],
+    mod_seq_column = 'MODIFIED_SEQUENCE'
+    if 'MODIFIED_SEQUENCE_MSA' in index_columns:
+        mod_seq_column = 'MODIFIED_SEQUENCE_MSA'
+
+    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(spectrum[index_columns[mod_seq_column]],
                                                                        spectrum[index_columns['MASS_ANALYZER']],
                                                                        spectrum[index_columns['PRECURSOR_CHARGE']])
     if not unmod_sequence:
