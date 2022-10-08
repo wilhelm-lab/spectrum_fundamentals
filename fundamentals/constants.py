@@ -217,6 +217,16 @@ META_DATA_COLUMNS = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
 MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ', 'MASS_ANALYZER', 'FRAGMENTATION', 'MZ_RANGE']
 MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
 
+TMT_MODS = {
+    'tmt': '[UNIMOD:737]',
+    'tmtpro': '[UNIMOD:2016]',
+    'itraq4': '[UNIMOD:214]',
+    'itraq8': '[UNIMOD:730]',
+    'tmt_msa': '[UNIMOD:737]',
+    'tmtpro_msa': '[UNIMOD:2016]',
+    'itraq4_msa': '[UNIMOD:214]',
+    'itraq8_msa': '[UNIMOD:730]'
+}
 
 # Used for MSP spectral library format
 MOD_NAMES = {
