@@ -1,5 +1,6 @@
-import numpy as np
 from enum import Enum
+
+import numpy as np
 
 #####################
 # GENERAL CONSTANTS #
@@ -10,7 +11,9 @@ NUM_CHARGES_ONEHOT = 6
 MIN_CHARGE = 1
 MAX_CHARGE = 6
 BATCH_SIZE = 6000
-VEC_LENGTH = (SEQ_LEN - 1) * 2 * 3 # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+, for a total of 174 fragments
+VEC_LENGTH = (
+    (SEQ_LEN - 1) * 2 * 3
+)  # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+, for a total of 174 fragments
 
 #############
 # ALPHABETS #
@@ -39,10 +42,7 @@ AA_ALPHABET = {
     "Y": 20,
 }
 
-TERMINAL_ALPHABET = {
-    "[]-": 30,  # unmodified n terminus
-    "-[]": 31  # unmodified c terminus
-}
+TERMINAL_ALPHABET = {"[]-": 30, "-[]": 31}  # unmodified n terminus  # unmodified c terminus
 
 ALPHABET_MODS = {
     "M[UNIMOD:35]": 21,
@@ -60,7 +60,7 @@ ALPHABET_MODS = {
     "Y[UNIMOD:23]": 20,
     "[UNIMOD:1]-": 32,
     "K[UNIMOD:259]": 9,
-    "R[UNIMOD:267]": 15
+    "R[UNIMOD:267]": 15,
 }
 
 ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS, **TERMINAL_ALPHABET}
@@ -93,27 +93,21 @@ MAXQUANT_VAR_MODS = {
     "C(Carbamidomethyl (C))": "C[UNIMOD:4]",
 }
 
-MAXQUANT_NC_TERM = {
-    "^_": "",
-    "_$": ""
-}
+MAXQUANT_NC_TERM = {"^_": "", "_$": ""}
 
 ####################
 # MASS CALCULATION #
 ####################
 
 # initialize other masses
-PARTICLE_MASSES = {
-    "PROTON": 1.007276467,
-    "ELECTRON": 0.00054858
-}
+PARTICLE_MASSES = {"PROTON": 1.007276467, "ELECTRON": 0.00054858}
 
 # masses of different atoms
 ATOM_MASSES = {
-    'H': 1.007825035,
-    'C': 12.0,
-    'O': 15.9949146,
-    'N': 14.003074,
+    "H": 1.007825035,
+    "C": 12.0,
+    "O": 15.9949146,
+    "N": 14.003074,
 }
 
 MASSES = {**PARTICLE_MASSES, **ATOM_MASSES}
@@ -122,62 +116,65 @@ MASSES["C_TERMINUS"] = MASSES["O"] + MASSES["H"]
 
 
 AA_MASSES = {
-    'A': 71.037114,
-    'R': 156.101111,
-    'N': 114.042927,
-    'D': 115.026943,
-    'C': 103.009185,
-    'E': 129.042593,
-    'Q': 128.058578,
-    'G': 57.021464,
-    'H': 137.058912,
-    'I': 113.084064,
-    'L': 113.084064,
-    'K': 128.094963,
-    'M': 131.040485,
-    'F': 147.068414,
-    'P': 97.052764,
-    'S': 87.032028,
-    'T': 101.047679,
-    'U': 150.95363,
-    'W': 186.079313,
-    'Y': 163.063329,
-    'V': 99.068414,
-    '[]-': MASSES["N_TERMINUS"],
-    '-[]': MASSES["C_TERMINUS"],
+    "A": 71.037114,
+    "R": 156.101111,
+    "N": 114.042927,
+    "D": 115.026943,
+    "C": 103.009185,
+    "E": 129.042593,
+    "Q": 128.058578,
+    "G": 57.021464,
+    "H": 137.058912,
+    "I": 113.084064,
+    "L": 113.084064,
+    "K": 128.094963,
+    "M": 131.040485,
+    "F": 147.068414,
+    "P": 97.052764,
+    "S": 87.032028,
+    "T": 101.047679,
+    "U": 150.95363,
+    "W": 186.079313,
+    "Y": 163.063329,
+    "V": 99.068414,
+    "[]-": MASSES["N_TERMINUS"],
+    "-[]": MASSES["C_TERMINUS"],
 }
 
 MOD_MASSES = {
-    '[UNIMOD:737]': 229.162932,  # TMT_6
-    '[UNIMOD:2016]': 304.207146,  # TMT_PRO
-    '[UNIMOD:214]': 144.102063, #iTRAQ4
-    '[UNIMOD:730]': 304.205360,	#iTRAQ8
-    '[UNIMOD:259]': 8.014199,  # SILAC Lysine
-    '[UNIMOD:267]': 10.008269,  # SILAC Arginine
-    '[UNIMOD:21]': 79.966331,  # Phospho
-    '[UNIMOD:23]': -18.010565,  # Dehydration after phospho loss
-    '[UNIMOD:4]': 57.02146,  # Carbamidomethyl
-    '[UNIMOD:35]': 15.9949146,  # Oxidation
-    '[UNIMOD:1]': 42.010565	  # Acetylation
+    "[UNIMOD:737]": 229.162932,  # TMT_6
+    "[UNIMOD:2016]": 304.207146,  # TMT_PRO
+    "[UNIMOD:214]": 144.102063,  # iTRAQ4
+    "[UNIMOD:730]": 304.205360,  # iTRAQ8
+    "[UNIMOD:259]": 8.014199,  # SILAC Lysine
+    "[UNIMOD:267]": 10.008269,  # SILAC Arginine
+    "[UNIMOD:21]": 79.966331,  # Phospho
+    "[UNIMOD:23]": -18.010565,  # Dehydration after phospho loss
+    "[UNIMOD:4]": 57.02146,  # Carbamidomethyl
+    "[UNIMOD:35]": 15.9949146,  # Oxidation
+    "[UNIMOD:1]": 42.010565,  # Acetylation
 }
 
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
-AA_MOD_MASSES ={
-    'K[UNIMOD:737]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:737]'],
-    'M[UNIMOD:35]': AA_MASSES['M'] + MOD_MASSES['[UNIMOD:35]'],
-    'C[UNIMOD:4]': AA_MASSES['C'] + MOD_MASSES['[UNIMOD:4]'],
-    'K[UNIMOD:2016]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:2016]'],
-    'K[UNIMOD:214]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:214]'],
-    'K[UNIMOD:730]': AA_MASSES['K'] + MOD_MASSES['[UNIMOD:730]'],
-    "S[UNIMOD:21]": AA_MASSES['S'] + MOD_MASSES['[UNIMOD:21]'],
-    "T[UNIMOD:21]": AA_MASSES['T'] + MOD_MASSES['[UNIMOD:21]'],
-    "Y[UNIMOD:21]": AA_MASSES['Y'] + MOD_MASSES['[UNIMOD:21]'],
-    "S[UNIMOD:23]": AA_MASSES['S'],# + MOD_MASSES['[UNIMOD:23]'],
-    "T[UNIMOD:23]": AA_MASSES['T'],# + MOD_MASSES['[UNIMOD:23]'],
-    "Y[UNIMOD:23]": AA_MASSES['Y'],# + MOD_MASSES['[UNIMOD:23]'],
-    "[UNIMOD:1]-": MASSES["N_TERMINUS"] + MOD_MASSES['[UNIMOD:1]'],
-    "K[UNIMOD:259]": AA_MASSES['K'],# + MOD_MASSES['[UNIMOD:259]'],#we need a different way of encoding mods on AA so it wouldn't have same encoding to make vecMZ work
-    "R[UNIMOD:267]": AA_MASSES['R']#+ MOD_MASSES['[UNIMOD:267]']
+AA_MOD_MASSES = {
+    "K[UNIMOD:737]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:737]"],
+    "M[UNIMOD:35]": AA_MASSES["M"] + MOD_MASSES["[UNIMOD:35]"],
+    "C[UNIMOD:4]": AA_MASSES["C"] + MOD_MASSES["[UNIMOD:4]"],
+    "K[UNIMOD:2016]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:2016]"],
+    "K[UNIMOD:214]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:214]"],
+    "K[UNIMOD:730]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:730]"],
+    "S[UNIMOD:21]": AA_MASSES["S"] + MOD_MASSES["[UNIMOD:21]"],
+    "T[UNIMOD:21]": AA_MASSES["T"] + MOD_MASSES["[UNIMOD:21]"],
+    "Y[UNIMOD:21]": AA_MASSES["Y"] + MOD_MASSES["[UNIMOD:21]"],
+    "S[UNIMOD:23]": AA_MASSES["S"],  # + MOD_MASSES['[UNIMOD:23]'],
+    "T[UNIMOD:23]": AA_MASSES["T"],  # + MOD_MASSES['[UNIMOD:23]'],
+    "Y[UNIMOD:23]": AA_MASSES["Y"],  # + MOD_MASSES['[UNIMOD:23]'],
+    "[UNIMOD:1]-": MASSES["N_TERMINUS"] + MOD_MASSES["[UNIMOD:1]"],
+    "K[UNIMOD:259]": AA_MASSES[
+        "K"
+    ],  # + MOD_MASSES['[UNIMOD:259]'],#we need a different way of encoding mods on AA so it wouldn't have same encoding
+    # to make vecMZ work
+    "R[UNIMOD:267]": AA_MASSES["R"],  # + MOD_MASSES['[UNIMOD:267]']
 }
 
 AA_MOD = {**AA_MASSES, **AA_MOD_MASSES}
@@ -202,62 +199,61 @@ DOUBLE_CHARGED_MASK = np.tile([0, 1, 0, 0, 1, 0], SEQ_LEN - 1)
 TRIPLE_CHARGED_MASK = np.tile([0, 0, 1, 0, 0, 1], SEQ_LEN - 1)
 
 
-SHARED_DATA_COLUMNS = ['RAW_FILE', 'SCAN_NUMBER']
-META_DATA_ONLY_COLUMNS = ['MODIFIED_SEQUENCE',
-                          'PRECURSOR_CHARGE',
-                          'FRAGMENTATION',
-                          'MASS_ANALYZER',
-                          'MASS',
-                          'SCAN_EVENT_NUMBER',
-                          'PRECURSOR_MASS_EXP',
-                          'SCORE',
-                          'REVERSE',
-                          'RETENTION_TIME']
+SHARED_DATA_COLUMNS = ["RAW_FILE", "SCAN_NUMBER"]
+META_DATA_ONLY_COLUMNS = [
+    "MODIFIED_SEQUENCE",
+    "PRECURSOR_CHARGE",
+    "FRAGMENTATION",
+    "MASS_ANALYZER",
+    "MASS",
+    "SCAN_EVENT_NUMBER",
+    "PRECURSOR_MASS_EXP",
+    "SCORE",
+    "REVERSE",
+    "RETENTION_TIME",
+]
 META_DATA_COLUMNS = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
-MZML_ONLY_DATA_COLUMNS = ['INTENSITIES', 'MZ', 'MASS_ANALYZER', 'FRAGMENTATION', 'MZ_RANGE']
+MZML_ONLY_DATA_COLUMNS = ["INTENSITIES", "MZ", "MASS_ANALYZER", "FRAGMENTATION", "MZ_RANGE"]
 MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
 
 TMT_MODS = {
-    'tmt': '[UNIMOD:737]',
-    'tmtpro': '[UNIMOD:2016]',
-    'itraq4': '[UNIMOD:214]',
-    'itraq8': '[UNIMOD:730]',
-    'tmt_msa': '[UNIMOD:737]',
-    'tmtpro_msa': '[UNIMOD:2016]',
-    'itraq4_msa': '[UNIMOD:214]',
-    'itraq8_msa': '[UNIMOD:730]'
+    "tmt": "[UNIMOD:737]",
+    "tmtpro": "[UNIMOD:2016]",
+    "itraq4": "[UNIMOD:214]",
+    "itraq8": "[UNIMOD:730]",
+    "tmt_msa": "[UNIMOD:737]",
+    "tmtpro_msa": "[UNIMOD:2016]",
+    "itraq4_msa": "[UNIMOD:214]",
+    "itraq8_msa": "[UNIMOD:730]",
 }
 
 # Used for MSP spectral library format
 MOD_NAMES = {
-    '[UNIMOD:737]': 'TMT_6',
-    '[UNIMOD:2016]': 'TMT_Pro',
-    '[UNIMOD:21]': 'Phospho',
-    '[UNIMOD:4]': 'Carbamidomethyl',
-    '[UNIMOD:35]': 'Oxidation',
-    '[UNIMOD:214]': 'iTRAQ4',
-    '[UNIMOD:730]': 'iTRAQ8'
+    "[UNIMOD:737]": "TMT_6",
+    "[UNIMOD:2016]": "TMT_Pro",
+    "[UNIMOD:21]": "Phospho",
+    "[UNIMOD:4]": "Carbamidomethyl",
+    "[UNIMOD:35]": "Oxidation",
+    "[UNIMOD:214]": "iTRAQ4",
+    "[UNIMOD:730]": "iTRAQ8",
 }
 
 # Used for MSP spectral library format
 SPECTRONAUT_MODS = {
-    '[UNIMOD:737]': '[TMT_6]',
-    '[UNIMOD:2016]': '[TMT_Pro]',
-    '[UNIMOD:21]': '[Phospho]',
-    '[UNIMOD:4]': '[Carbamidomethyl (C)]',
-    '[UNIMOD:35]': '[Oxidation (O)]'
+    "[UNIMOD:737]": "[TMT_6]",
+    "[UNIMOD:2016]": "[TMT_Pro]",
+    "[UNIMOD:21]": "[Phospho]",
+    "[UNIMOD:4]": "[Carbamidomethyl (C)]",
+    "[UNIMOD:35]": "[Oxidation (O)]",
 }
 
-FRAGMENTATION_ENCODING = {
-    'HCD': 2,
-    'CID': 1
-}
+FRAGMENTATION_ENCODING = {"HCD": 2, "CID": 1}
 
 ############################
 # GENERATION OF ANNOTATION #
 ############################
 
-IONS = ['y', 'b']  # limited to single character unicode string when array is created
+IONS = ["y", "b"]  # limited to single character unicode string when array is created
 CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
 POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
 
@@ -271,15 +267,16 @@ for pos in POSITIONS:
             ANNOTATION_FRAGMENT_CHARGE.append(charge)
             ANNOTATION_FRAGMENT_NUMBER.append(pos)
 
-ANNOTATION = [ANNOTATION_FRAGMENT_TYPE,
-              ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
+ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
 
 
 ########################
 # RESCORING PARAMETERS #
 ########################
 
-class RESCORE_TYPE(Enum):
-    PROSIT = 'prosit'
-    ANDROMEDA = 'andromeda'
 
+class RescoreType(Enum):
+    """Class for rescoring types."""
+
+    PROSIT = "prosit"
+    ANDROMEDA = "andromeda"
