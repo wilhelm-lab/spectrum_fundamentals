@@ -1,4 +1,5 @@
 import enum
+from typing import Optional
 
 import numpy as np
 import scipy.sparse
@@ -37,7 +38,7 @@ class FragmentsRatio(Metric):
                               False for missing observed/predicted peaks, array of length 174
         :return: number of observed/predicted peaks
         """
-        return FragmentsRatio.count_with_ion_mask(boolean_array)
+        return FragmentsRatio.count_with_ion_mask(boolean_array, None)
 
     @staticmethod
     def count_ions_b(boolean_array: np.ndarray) -> int:
@@ -62,7 +63,7 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_with_ion_mask(boolean_array, constants.Y_ION_MASK)
 
     @staticmethod
-    def count_with_ion_mask(boolean_array: np.ndarray, ion_mask: np.ndarray) -> int:
+    def count_with_ion_mask(boolean_array: np.ndarray, ion_mask: Optional[np.ndarray]) -> int:
         """
         Add value to metrics val.
 
@@ -72,7 +73,7 @@ class FragmentsRatio(Metric):
                          integer array of length 174
         :return: number of observed/predicted peaks not masked by ion_mask
         """
-        if len(ion_mask) == 0:
+        if ion_mask is None:
             ion_mask = scipy.sparse.csr_matrix(np.ones((174, 1)))
         else:
             ion_mask = scipy.sparse.csr_matrix(ion_mask).T
@@ -86,7 +87,7 @@ class FragmentsRatio(Metric):
         :param observation_state: integer observation_state, array of length 174
         :return: number of peaks that were both observed and predicted
         """
-        return FragmentsRatio.count_observation_states(observation_state, ObservationState.OBS_AND_PRED)
+        return FragmentsRatio.count_observation_states(observation_state, ObservationState.OBS_AND_PRED, None)
 
     @staticmethod
     def count_observed_and_predicted_b(observation_state: np.ndarray) -> int:
@@ -120,7 +121,7 @@ class FragmentsRatio(Metric):
         :param observation_state: integer observation_state, array of length 174
         :return: number of peaks that were observed but not predicted
         """
-        return FragmentsRatio.count_observation_states(observation_state, ObservationState.NOT_OBS_AND_NOT_PRED)
+        return FragmentsRatio.count_observation_states(observation_state, ObservationState.NOT_OBS_AND_NOT_PRED, None)
 
     @staticmethod
     def count_not_observed_and_not_predicted_b(observation_state: np.ndarray) -> int:
@@ -154,7 +155,7 @@ class FragmentsRatio(Metric):
         :param observation_state: integer observation_state, array of length 174
         :return: number of peaks that were not observed but predicted
         """
-        return FragmentsRatio.count_observation_states(observation_state, ObservationState.NOT_OBS_BUT_PRED)
+        return FragmentsRatio.count_observation_states(observation_state, ObservationState.NOT_OBS_BUT_PRED, None)
 
     @staticmethod
     def count_not_observed_but_predicted_b(observation_state: np.ndarray) -> int:
@@ -188,7 +189,7 @@ class FragmentsRatio(Metric):
         :param observation_state: integer observation_state, array of length 174
         :return: number of peaks that were both not observed and not predicted
         """
-        return FragmentsRatio.count_observation_states(observation_state, ObservationState.OBS_BUT_NOT_PRED)
+        return FragmentsRatio.count_observation_states(observation_state, ObservationState.OBS_BUT_NOT_PRED, None)
 
     @staticmethod
     def count_observed_but_not_predicted_b(observation_state: np.ndarray) -> int:
@@ -215,7 +216,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_observation_states(observation_state: np.ndarray, test_state: np.ndarray, ion_mask: np.ndarray) -> int:
+    def count_observation_states(observation_state: np.ndarray, test_state: int, ion_mask: Optional[np.ndarray]) -> int:
         """
         Add value to metrics val.
 
@@ -226,6 +227,8 @@ class FragmentsRatio(Metric):
         :return: number of observation states equal to test_state per row
         """
         state_boolean = observation_state == test_state
+        if ion_mask is None:
+            ion_mask = scipy.sparse.csr_matrix(np.ones((174, 1)))
         return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask)
 
     @staticmethod
@@ -250,7 +253,7 @@ class FragmentsRatio(Metric):
                        for predicted intensities, set a cutoff, e.g. 0.05
         :return: boolean array, array of length 174
         """
-        intensities_above_cutoff = (intensities > cutoff).multiply(mask)
+        intensities_above_cutoff = np.multiply((intensities > cutoff), mask)
         return intensities_above_cutoff
 
     @staticmethod
@@ -276,7 +279,7 @@ class FragmentsRatio(Metric):
             print(observation_state)
         else:
             observation_state = np.zeros_like(observed_boolean, dtype=int)
-        observation_state += observed_boolean.multiply(predicted_boolean) * int(ObservationState.OBS_AND_PRED)
+        observation_state += np.multiply(observed_boolean, predicted_boolean) * int(ObservationState.OBS_AND_PRED)
         observation_state += (observed_boolean > predicted_boolean) * int(ObservationState.OBS_BUT_NOT_PRED)
         observation_state += (observed_boolean < predicted_boolean) * int(ObservationState.NOT_OBS_BUT_PRED)
         observation_state += (mask > (observed_boolean + predicted_boolean)) * int(

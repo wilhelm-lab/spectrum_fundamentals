@@ -1,6 +1,6 @@
 import logging
 from operator import itemgetter
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from . import constants as constants
 logger = logging.getLogger(__name__)
 
 
-def _get_modifications(peptide_sequence: str) -> Tuple[Dict[int, float], int, str]:
+def _get_modifications(peptide_sequence: str) -> Optional[Tuple[Dict[int, float], int, str]]:
     """
     Get modification masses and position in a peptide sequence.
 
@@ -37,7 +37,7 @@ def _get_modifications(peptide_sequence: str) -> Tuple[Dict[int, float], int, st
             + " not "
             "found"
         )
-        return
+        return None
 
     while "[" in peptide_sequence:
         found_modification = False
@@ -60,12 +60,12 @@ def _get_modifications(peptide_sequence: str) -> Tuple[Dict[int, float], int, st
                 + peptide_sequence[modification_index : peptide_sequence.find("]") + 1]
                 + " not found"
             )
-            return
+            return None
 
     return modification_deltas, tmt_n_term, peptide_sequence
 
 
-def compute_peptide_mass(sequence: str) -> List[float]:
+def compute_peptide_mass(sequence: str) -> Optional[float]:
     """
     Compute the theoretical mass of the peptide sequence.
 
@@ -73,11 +73,16 @@ def compute_peptide_mass(sequence: str) -> List[float]:
     :return: Theoretical mass of the sequence
     """
     peptide_sequence = sequence
-    modification_deltas, tmt_n_term, peptide_sequence = _get_modifications(peptide_sequence)
+    modifications = _get_modifications(peptide_sequence)
+    if modifications is None:
+        raise AssertionError("Modification not found.")
+    else:
+        modification_deltas, tmt_n_term, peptide_sequence = modifications
 
     peptide_length = len(peptide_sequence)
     if peptide_length > 30:
-        return [], -1, ""
+        # return [], -1, ""
+        return -1.0
 
     n_term_delta = 0.0
 
@@ -100,7 +105,9 @@ def compute_peptide_mass(sequence: str) -> List[float]:
     return forward_sum + ion_type_offsets[0] + ion_type_offsets[1]
 
 
-def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[List, bool, str, float]:
+def initialize_peaks(
+    sequence: str, mass_analyzer: str, charge: int
+) -> Optional[Tuple[List[Dict[str, object]], int, str, float]]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 
@@ -110,11 +117,15 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
     peptide_sequence = sequence
-    modification_deltas, tmt_n_term, peptide_sequence = _get_modifications(peptide_sequence)
+    modifications = _get_modifications(peptide_sequence)
+    if modifications is None:
+        raise AssertionError("Modification not found.")
+    else:
+        modification_deltas, tmt_n_term, peptide_sequence = modifications
 
     peptide_length = len(peptide_sequence)
     if peptide_length > 30:
-        return [], -1, ""
+        return [], -1, "", 0.0
 
     # initialize constants
     if int(round(charge)) <= 3:
@@ -138,7 +149,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
     ion_type_offsets = [n_term - h, c_term + h]
 
     # tmp place holder
-    ion_type_masses = [0, 0]
+    ion_type_masses = [0.0, 0.0]
     ion_types = ["b", "y"]
 
     number_of_ion_types = len(ion_type_offsets)
@@ -164,15 +175,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
                 # Check for neutral loss here
                 mass = (ion_type_masses[ion_type] + charge_delta) / charge
-                if mass_analyzer == "FTMS":
-                    min_mass = (mass * -20 / 1000000) + mass
-                    max_mass = (mass * 20 / 1000000) + mass
-                elif mass_analyzer == "TOF":
-                    min_mass = (mass * -40 / 1000000) + mass
-                    max_mass = (mass * 40 / 1000000) + mass
-                else:  # use ITMS otherwise
-                    min_mass = mass - 0.35
-                    max_mass = mass + 0.35
+                min_mass, max_mass = get_min_max_mass(mass_analyzer, mass)
                 fragments_meta_data.append(
                     {
                         "ion_type": ion_types[ion_type],
@@ -187,7 +190,21 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
     return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
 
 
-def compute_ion_masses(seq_int: List[int], charge_onehot: List[int], tmt: str = "") -> List[float]:
+def get_min_max_mass(mass_analyzer: str, mass: float) -> Tuple[float, float]:
+    """Helper function to get min and max mass based on mass analyzer."""
+    if mass_analyzer == "FTMS":
+        min_mass = (mass * -20 / 1000000) + mass
+        max_mass = (mass * 20 / 1000000) + mass
+    elif mass_analyzer == "TOF":
+        min_mass = (mass * -40 / 1000000) + mass
+        max_mass = (mass * 40 / 1000000) + mass
+    else:  # use ITMS otherwise
+        min_mass = mass - 0.35
+        max_mass = mass + 0.35
+    return (min_mass, max_mass)
+
+
+def compute_ion_masses(seq_int: List[int], charge_onehot: List[int], tmt: str = "") -> Optional[np.ndarray]:
     """
     Collects an integer sequence e.g. [1,2,3] with charge 2 and returns array with 174 positions for ion masses.
 
@@ -198,11 +215,11 @@ def compute_ion_masses(seq_int: List[int], charge_onehot: List[int], tmt: str = 
     charge = list(charge_onehot).index(1) + 1
     if not (charge in (1, 2, 3, 4, 5, 6) and len(charge_onehot) == 6):
         print("[ERROR] One-hot-enconded Charge is not in valid range 1 to 6")
-        return
+        return None
 
     if not len(seq_int) == constants.SEQ_LEN:
         print(f"[ERROR] Sequence length {len(seq_int)} is not desired length of {constants.SEQ_LEN}")
-        return
+        return None
 
     idx = list(seq_int).index(0) if 0 in seq_int else constants.SEQ_LEN
     masses = np.ones((constants.SEQ_LEN - 1) * 2 * 3, dtype=np.float32) * -1

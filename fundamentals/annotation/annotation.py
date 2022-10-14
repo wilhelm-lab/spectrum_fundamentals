@@ -10,7 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 def match_peaks(
-    fragments_meta_data: list, peaks_intensity: np, peaks_masses: np, tmt_n_term: int, unmod_sequence: str, charge: int
+    fragments_meta_data: list,
+    peaks_intensity: np.ndarray,
+    peaks_masses: np.ndarray,
+    tmt_n_term: int,
+    unmod_sequence: str,
+    charge: int,
 ) -> list:
     """
     Matching experimental peaks with theoretical fragment ions.
@@ -25,10 +30,10 @@ def match_peaks(
     """
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
-    max_intensity = 1
+    max_intensity = 1.0
     row_list = []
     temp_list = []
-    next_start_peak = None
+    next_start_peak = 0
     seq_len = len(unmod_sequence)
     matched_peak = False
     for fragment in fragments_meta_data:

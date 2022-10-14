@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
@@ -14,7 +16,9 @@ class SimilarityMetrics(Metric):
     """Class with several similarity metrics."""
 
     @staticmethod
-    def spectral_angle(observed_intensities: np.ndarray, predicted_intensities: np.ndarray, charge: int = 0) -> float:
+    def spectral_angle(
+        observed_intensities: scipy.sparse.csr_matrix, predicted_intensities: scipy.sparse.csr_matrix, charge: int = 0
+    ) -> np.ndarray:
         """
         Calculate spectral angle.
 
@@ -40,13 +44,15 @@ class SimilarityMetrics(Metric):
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
             predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
-            observed_intensities = observed_intensities.multiply(boolean_array).toarray()
-            predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
+            # observed_intensities = np.multiply(observed_intensities, boolean_array).toarray()
+            # predicted_intensities = np.multiply(predicted_intensities, boolean_array).toarray()
+            observed_intensities = np.multiply(observed_intensities, boolean_array)
+            predicted_intensities = np.multiply(predicted_intensities, boolean_array)
 
         predicted_non_zero_mask = predicted_intensities > constants.EPSILON
         if scipy.sparse.issparse(predicted_non_zero_mask):
-            observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
-            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
+            observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
+            predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
         else:
             observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
             predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
@@ -82,7 +88,7 @@ class SimilarityMetrics(Metric):
             return np.linalg.norm(matrix, axis=1)
 
     @staticmethod
-    def unit_normalization(matrix: np.ndarry) -> np.ndarray:
+    def unit_normalization(matrix: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:
         """
         Normalize each row of the matrix such that the norm equals 1.0.
 
@@ -119,8 +125,11 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def correlation(
-        observed_intensities: np.ndarray, predicted_intensities: np.ndarray, charge: int = 0, method: str = "pearson"
-    ) -> np.ndarray:
+        observed_intensities: scipy.sparse.csr_matrix,
+        predicted_intensities: scipy.sparse.csr_matrix,
+        charge: int = 0,
+        method: str = "pearson",
+    ) -> List[float]:
         """
         Calculate correlation between observed and predicted.
 
@@ -173,7 +182,9 @@ class SimilarityMetrics(Metric):
         return pear_corr
 
     @staticmethod
-    def cos(observed_intensities: np.ndarray, predicted_intensities: np.ndarray) -> np.ndarray:
+    def cos(
+        observed_intensities: scipy.sparse.csr_matrix, predicted_intensities: scipy.sparse.csr_matrix
+    ) -> List[float]:
         """
         Calculate cosine similarity.
 
@@ -204,7 +215,9 @@ class SimilarityMetrics(Metric):
         return cos_values
 
     @staticmethod
-    def abs_diff(observed_intensities: np.ndarray, predicted_intensities: np.ndarray, metric: str) -> np.ndarray:
+    def abs_diff(
+        observed_intensities: scipy.sparse.csr_matrix, predicted_intensities: scipy.sparse.csr_matrix, metric: str
+    ) -> List[float]:
         """
         Calculate several similarity metrics.
 
@@ -247,7 +260,9 @@ class SimilarityMetrics(Metric):
         return diff_values
 
     @staticmethod
-    def calculate_quantiles(observed: np.ndarray, predicted: np.ndarray, quantile: str) -> float:
+    def calculate_quantiles(
+        observed: scipy.sparse.csr_matrix, predicted: scipy.sparse.csr_matrix, quantile: str
+    ) -> float:
         """
         Helper function to calculcate quantiles.
 
@@ -263,7 +278,7 @@ class SimilarityMetrics(Metric):
         else:
             return np.quantile(absolute(observed - mean(predicted)), 0.25)
 
-    def calc(self, all_features: bool) -> np.ndarray:
+    def calc(self, all_features: bool):
         """
         Adds columns with spectral angle feature to metrics_val dataframe.
 

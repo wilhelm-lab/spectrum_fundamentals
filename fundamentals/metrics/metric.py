@@ -25,7 +25,7 @@ class Metric:
         self.metrics_val = pd.DataFrame()
 
     @abstractmethod
-    def calc(self):
+    def calc(self, all_features: bool):
         """Calculate."""
         pass
 

@@ -46,7 +46,7 @@ def maxquant_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, st
 
     regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
 
-    def find_replacement(match: re) -> str:
+    def find_replacement(match: re.Match) -> str:
         """
         Subfunction to find the corresponding substitution for a match.
 
@@ -120,7 +120,7 @@ def internal_to_mod_names(
         match_list.clear()
         return mod, mod_string
 
-    def replace_and_store(match: re):
+    def replace_and_store(match: re.Match):
         """
         Internal function that removes matched internal mods and stores there position in the sequence.
 
@@ -225,7 +225,7 @@ def proteomicsdb_to_internal(sequence: str, mods_variable: str, mods_fixed: str)
     return sequence
 
 
-def get_mods_list(mods_variable: str, mods_fixed: str) -> List[str]:
+def get_mods_list(mods_variable: str, mods_fixed: str):
     """Helper function to get mods list."""
     if mods_variable == "" and not mods_fixed == "":
         return mods_fixed.split(";")

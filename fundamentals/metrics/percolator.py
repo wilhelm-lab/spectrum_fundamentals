@@ -1,7 +1,7 @@
 import enum
 import hashlib
 import logging
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -42,7 +42,7 @@ class Percolator(Metric):
     """
 
     metadata: pd.DataFrame
-    target_decoy_labels: np.array
+    target_decoy_labels: np.ndarray
     input_type: str
     fdr_cutoff: float
 
@@ -309,7 +309,7 @@ class Percolator(Metric):
 
         return self.get_indices_below_fdr("lda_scores", fdr_cutoff=fdr_cutoff)
 
-    def get_indices_below_fdr(self, feature_name: str, fdr_cutoff: float = 0.01) -> np.array:
+    def get_indices_below_fdr(self, feature_name: str, fdr_cutoff: float = 0.01) -> np.ndarray:
         """
         Get indices below FDR.
 
@@ -343,7 +343,7 @@ class Percolator(Metric):
         return np.sort(scores_df.index[: len(accepted_indices)])
 
     @staticmethod
-    def calculate_fdrs(sorted_labels: np.ndarray) -> np.ndarray:
+    def calculate_fdrs(sorted_labels: np.ndarray) -> List:
         """
         Calculate FDR.
 
@@ -355,7 +355,7 @@ class Percolator(Metric):
         return Percolator.fdrs_to_qvals(np.array(cumulative_decoy_count / cumulative_target_count))
 
     @staticmethod
-    def fdrs_to_qvals(fdrs: np.ndarray) -> np.ndarray:
+    def fdrs_to_qvals(fdrs: np.ndarray) -> List:
         """
         Converts FDRs to q-values.
 
