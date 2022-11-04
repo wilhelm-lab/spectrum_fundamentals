@@ -1,8 +1,8 @@
 import numpy as np
 import scipy.sparse
 
-import fundamentals.constants as constants
-import fundamentals.metrics.similarity as sim
+import spec_fundamentals.constants as constants
+import spec_fundamentals.metrics.similarity as sim
 
 
 class TestSpectralAngle:

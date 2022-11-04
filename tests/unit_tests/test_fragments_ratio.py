@@ -1,8 +1,8 @@
 import numpy as np
 import scipy.sparse
 
-import fundamentals.constants as constants
-import fundamentals.metrics.fragments_ratio as fr
+import spec_fundamentals.constants as constants
+import spec_fundamentals.metrics.fragments_ratio as fr
 
 
 class TestObservationState:
