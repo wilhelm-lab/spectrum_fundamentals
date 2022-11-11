@@ -243,16 +243,6 @@ class Percolator(Metric):
         self.metrics_val["sequence_length"] = self.metadata["SEQUENCE"].apply(lambda x: len(x))
 
         self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
-
-        # for now, disable delta mass features as MaxQuant does not seem to provide the
-        # experimental mass in msms.txt. Both the Mass and m/z columns are theoretical masses
-        # self.metrics_val['deltaM_Da'] = self.metadata[['MASS', 'CALCULATED_MASS']].
-        #      apply(Percolator.calculate_mass_difference, axis=1)
-        # self.metrics_val['absDeltaM_Da'] = np.abs(self.metrics_val['deltaM_Da'])
-        # self.metrics_val['deltaM_ppm'] = self.metadata[['MASS', 'CALCULATED_MASS']].
-        #       apply(Percolator.calculate_mass_difference_ppm, axis=1)
-        # self.metrics_val['absDeltaM_ppm'] = np.abs(self.metrics_val['deltaM_ppm'])
-
         self.metrics_val["Charge1"] = (self.metadata["PRECURSOR_CHARGE"] == 1).astype(int)
         self.metrics_val["Charge2"] = (self.metadata["PRECURSOR_CHARGE"] == 2).astype(int)
         self.metrics_val["Charge3"] = (self.metadata["PRECURSOR_CHARGE"] == 3).astype(int)

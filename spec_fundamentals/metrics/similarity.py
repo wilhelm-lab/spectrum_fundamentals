@@ -13,7 +13,7 @@ from .metric import Metric
 
 
 class SimilarityMetrics(Metric):
-    """Class with several similarity metrics."""
+    """Class to generate several features than can be used by percoltor for rescoring."""
 
     @staticmethod
     def spectral_angle(

@@ -79,9 +79,9 @@ def match_peaks(
     return temp_list
 
 
-def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff"):
+def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff") -> tuple(list, int):
     """
-    Here we handle if multiple peaks were matched to the same fragment ion.
+    Handle if multiple peaks were matched to the same fragment ion.
 
     We will resolve this based on the sort_by parameter.
     :param matched_peaks: all matched peaks we have for the spectrum
@@ -94,8 +94,6 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff"):
     elif sort_by == "intensity":
         matched_peaks_df = matched_peaks_df.sort_values(by="intensity", ascending=False)
     else:
-        # matched_peaks_df['mass_intensity'] = (1-abs(matched_peaks_df['exp_mass'] -
-        #                                       matched_peaks_df['theoretical_mass'])) * matched_peaks_df['intensity']
         matched_peaks_df = matched_peaks_df.sort_values(by="exp_mass", ascending=False)
 
     original_length = len(matched_peaks_df.index)
@@ -105,22 +103,14 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff"):
     return matched_peaks_df, (original_length - length_after_matches)
 
 
-def annotate_spectra(un_annot_spectra: pd.DataFrame):
+def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
     """
     The base method for annotating spectra.
 
     :param un_annot_spectra: dataframe of raw peaks and metadata
-    :return: List of annotated spectra
+    :return: annotated spectra
     """
     raw_file_annotations = []
-    # modified_sequence_column = un_annot_spectra.columns.get_loc('MODIFIED_SEQUENCE')
-    # mass_analyzer_column = un_annot_spectra.columns.get_loc('MASS_ANALYZER')
-    # charge_column = un_annot_spectra.columns.get_loc('PRECURSOR_CHARGE')
-    # peaks_intensities_column = un_annot_spectra.columns.get_loc('INTENSITIES')
-    # peaks_mz_column = un_annot_spectra.columns.get_loc('MZ')
-    #
-    # index_columns = {'mod_sequence'}
-
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
         results = parallel_annotate(row, index_columns)
@@ -135,14 +125,14 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame):
     return results_df
 
 
-def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
+def generate_annotation_matrix(matched_peaks: pd.DataFrame, unmod_seq: str, charge: int) -> tuple(np.array, np.array):
     """
     Generate the annotation matrix in the prosit format from matched peaks.
 
     :param matched_peaks: matched peaks needed to be converted
     :param unmod_seq: Un modified peptide sequence
     :param charge: Precursor charge
-    :return: numpy array of intensities and  numpy array of masses
+    :return: numpy array of intensities and numpy array of masses
     """
     intensity = np.full(constants.VEC_LENGTH, -1.0)
     mass = np.full(constants.VEC_LENGTH, -1.0)
@@ -188,7 +178,7 @@ def generate_annotation_matrix(matched_peaks, unmod_seq: str, charge: int):
     return intensity, mass
 
 
-def parallel_annotate(spectrum, index_columns):
+def parallel_annotate(spectrum: pd.Series, index_columns: dict):
     """
     Parallelize the annotation pipeline, here it should annotate spectra in different threads.
 
