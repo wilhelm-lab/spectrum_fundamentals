@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from typing import Tuple
 
 from spec_fundamentals import constants
 from spec_fundamentals.fragments import initialize_peaks
@@ -79,7 +80,7 @@ def match_peaks(
     return temp_list
 
 
-def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff") -> tuple(list, int):
+def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff") -> Tuple[list, int]:
     """
     Handle if multiple peaks were matched to the same fragment ion.
 
@@ -125,7 +126,7 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
     return results_df
 
 
-def generate_annotation_matrix(matched_peaks: pd.DataFrame, unmod_seq: str, charge: int) -> tuple(np.array, np.array):
+def generate_annotation_matrix(matched_peaks: pd.DataFrame, unmod_seq: str, charge: int) -> Tuple[np.array, np.array]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
 
