@@ -1,10 +1,8 @@
-"""Top-level package for spec_fundamentals."""
-
+"""Initialize fundamentals."""
 __author__ = "Victor Giurcoiu"
 __email__ = "victor.giurcoiu@tum.de"
 __version__ = "0.1.0"
 
-"""Initialize fundamentals."""
 import logging
 import logging.handlers
 import sys

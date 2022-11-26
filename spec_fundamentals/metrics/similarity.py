@@ -44,15 +44,13 @@ class SimilarityMetrics(Metric):
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
             predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
-            # observed_intensities = np.multiply(observed_intensities, boolean_array).toarray()
-            # predicted_intensities = np.multiply(predicted_intensities, boolean_array).toarray()
-            observed_intensities = np.multiply(observed_intensities, boolean_array)
-            predicted_intensities = np.multiply(predicted_intensities, boolean_array)
+            observed_intensities = observed_intensities.multiply(boolean_array).toarray()
+            predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
 
         predicted_non_zero_mask = predicted_intensities > constants.EPSILON
         if scipy.sparse.issparse(predicted_non_zero_mask):
-            observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
-            predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
+            observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
+            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
         else:
             observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
             predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
