@@ -72,6 +72,8 @@ class FragmentsRatio(Metric):
                          integer array of length 174
         :return: number of observed/predicted peaks not masked by ion_mask
         """
+        if ion_mask is None:
+            ion_mask = []
         if len(ion_mask) == 0:
             ion_mask = scipy.sparse.csr_matrix(np.ones((174, 1)))
         else:
@@ -225,6 +227,8 @@ class FragmentsRatio(Metric):
                          integer array of length 174
         :return: number of observation states equal to test_state per row
         """
+        if ion_mask is None:
+            ion_mask = []
         state_boolean = observation_state == test_state
         return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask)
 
