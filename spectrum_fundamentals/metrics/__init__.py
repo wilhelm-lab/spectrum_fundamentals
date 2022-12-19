@@ -1,0 +1,1 @@
+"""Initialize metrics."""
