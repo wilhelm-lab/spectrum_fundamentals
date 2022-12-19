@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 
-import spec_fundamentals.constants as constants
-import spec_fundamentals.metrics.percolator as perc
+import spectrum_fundamentals.constants as constants
+import spectrum_fundamentals.metrics.percolator as perc
 
 
 class TestFdrs:

@@ -13,9 +13,9 @@ Here is a list of important resources for contributors:
 - `Code of Conduct`_
 
 .. _MIT license: https://opensource.org/licenses/MIT
-.. _Source Code: https://github.com/wilhelm-lab/spec_fundamentals
-.. _Documentation: https://spec_fundamentals.readthedocs.io/
-.. _Issue Tracker: https://github.com/wilhelm-lab/spec_fundamentals/issues
+.. _Source Code: https://github.com/wilhelm-lab/spectrum_fundamentals
+.. _Documentation: https://spectrum_fundamentals.readthedocs.io/
+.. _Issue Tracker: https://github.com/wilhelm-lab/spectrum_fundamentals/issues
 
 How to report a bug
 -------------------
@@ -56,7 +56,7 @@ or the command-line interface:
 .. code:: console
 
    $ poetry run python
-   $ poetry run spec_fundamentals
+   $ poetry run spectrum_fundamentals
 
 .. _Poetry: https://python-poetry.org/
 .. _Nox: https://nox.thea.codes/
@@ -102,7 +102,7 @@ To install all required dependencies for the documentation run:
 
     $ pip install -r docs/requirements.txt
 
-Please note that spec_fundamentals itself must also be installed. To build the documentation run:
+Please note that spectrum_fundamentals itself must also be installed. To build the documentation run:
 
 .. code:: console
 
@@ -134,5 +134,5 @@ To run linting and code formatting checks before committing your change, you can
 It is recommended to open an issue before starting work on anything.
 This will allow a chance to talk it over with the owners and validate your approach.
 
-.. _pull request: https://github.com/wilhelm-lab/spec_fundamentals/pulls
+.. _pull request: https://github.com/wilhelm-lab/spectrum_fundamentals/pulls
 .. _Code of Conduct: CODE_OF_CONDUCT.rst

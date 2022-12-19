@@ -1,4 +1,4 @@
-name: Publish spec_fundamentals to PyPI
+name: Publish spectrum_fundamentals to PyPI
 
 on:
     release:

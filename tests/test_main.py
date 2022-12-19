@@ -2,7 +2,7 @@
 import pytest
 from click.testing import CliRunner
 
-from spec_fundamentals import __main__
+from spectrum_fundamentals import __main__
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-import spec_fundamentals.mod_string as mod
+import spectrum_fundamentals.mod_string as mod
 
 
 class TestMSP:
