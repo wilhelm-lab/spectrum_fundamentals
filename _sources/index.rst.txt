@@ -1,6 +1,6 @@
 .. include:: ../README.rst
 ===========================
-Welcome to spec_fundamentals's documentation!
+Welcome to spectrum_fundamentals's documentation!
 ==========================================================
 
 .. toctree::

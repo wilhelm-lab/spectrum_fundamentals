@@ -8,13 +8,13 @@ Installation
 Stable release
 --------------
 
-To install spec_fundamentals, run this command in your terminal:
+To install spectrum_fundamentals, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install spec_fundamentals
+    $ pip install spectrum_fundamentals
 
-This is the preferred method to install spec_fundamentals, as it will always install the most recent stable release.
+This is the preferred method to install spectrum_fundamentals, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -26,20 +26,20 @@ you through the process.
 From sources
 ------------
 
-The sources for spec_fundamentals can be downloaded from the `Github repo`_.
+The sources for spectrum_fundamentals can be downloaded from the `Github repo`_.
 Please note that you require `poetry`_ to be installed.
 
 You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/wilhelm-lab/spec_fundamentals
+    $ git clone git://github.com/wilhelm-lab/spectrum_fundamentals
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl -OJL https://github.com/wilhelm-lab/spec_fundamentals/tarball/master
+    $ curl -OJL https://github.com/wilhelm-lab/spectrum_fundamentals/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -48,6 +48,6 @@ Once you have a copy of the source, you can install it with:
     $ make install
 
 
-.. _Github repo: https://github.com/wilhelm-lab/spec_fundamentals
-.. _tarball: https://github.com/wilhelm-lab/spec_fundamentals/tarball/master
+.. _Github repo: https://github.com/wilhelm-lab/spectrum_fundamentals
+.. _tarball: https://github.com/wilhelm-lab/spectrum_fundamentals/tarball/master
 .. _poetry: https://python-poetry.org/
