@@ -2,7 +2,7 @@
 name = "spec_fundamentals"
 version = "0.1.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Fundamentals public repo"
-authors = ["Victor Giurcoiu <victor.giurcoiu@tum.de>"]
+authors = ["WassimG <wassim.gabriel@gmail.com>"]
 license = "MIT"
 readme = "README.rst"
 homepage = "https://github.com/wilhelm-lab/spec_fundamentals"

@@ -25,7 +25,7 @@ The annotation script can be found in the package in annotation/annotation.py.
 -   Install and import the function:
 
 ```
-from fundamentals.annotation.annotation import annotate_spectra
+from spec_fundamentals.annotation.annotation import annotate_spectra
 ```
 
 -   Apply the function on any given dataframe with peptides meta data, raw intensities and mz:
