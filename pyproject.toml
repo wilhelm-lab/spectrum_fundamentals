@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "spec_fundamentals"
+name = "spectrum_fundamentals"
 version = "0.1.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Fundamentals public repo"
 authors = ["WassimG <wassim.gabriel@gmail.com>"]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://github.com/wilhelm-lab/spec_fundamentals"
-repository = "https://github.com/wilhelm-lab/spec_fundamentals"
-documentation = "https://spec_fundamentals.readthedocs.io"
+homepage = "https://github.com/wilhelm-lab/spectrum_fundamentals"
+repository = "https://github.com/wilhelm-lab/spectrum_fundamentals"
+documentation = "https://spectrum_fundamentals.readthedocs.io"
 packages = [
-    { include = "spec_fundamentals" },
+    { include = "spectrum_fundamentals" },
 ]
 classifiers = [
     "Programming Language :: Python :: 3.7",
@@ -61,7 +61,7 @@ mypy = ">=0.910"
 pyupgrade = ">=2.31.0"
 
 [tool.poetry.scripts]
-spec_fundamentals = "spec_fundamentals.__main__:main"
+spectrum_fundamentals = "spectrum_fundamentals.__main__:main"
 
 [tool.black]
 line-length = 120
@@ -82,11 +82,11 @@ line_length=120
 profile = "black"
 
 [tool.coverage.paths]
-source = ["spec_fundamentals", "*/site-packages"]
+source = ["spectrum_fundamentals", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["spec_fundamentals"]
+source = ["spectrum_fundamentals"]
 
 [tool.coverage.report]
 show_missing = true

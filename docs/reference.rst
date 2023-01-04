@@ -6,5 +6,5 @@ Reference
     :backlinks: none
 
 
-.. automodule:: spec_fundamentals.__main__
+.. automodule:: spectrum_fundamentals.__main__
    :members:

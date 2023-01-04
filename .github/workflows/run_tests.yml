@@ -1,4 +1,4 @@
-name: Run spec_fundamentals Tests
+name: Run spectrum_fundamentals Tests
 
 on:
     - push

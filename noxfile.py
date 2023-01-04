@@ -16,7 +16,7 @@ except ImportError:
     print("[bold blue]Try installing it using [bold green]pip install nox-poetry [bold blue]! ")
     sys.exit(1)
 
-package = "spec_fundamentals"
+package = "spectrum_fundamentals"
 python_versions = ["3.8", "3.9"]
 nox.options.sessions = (
     "pre-commit",
@@ -131,7 +131,7 @@ def safety(session: Session) -> None:
 @session(python=python_versions)
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
-    args = session.posargs or ["spec_fundamentals", "tests", "docs/conf.py"]
+    args = session.posargs or ["spectrum_fundamentals", "tests", "docs/conf.py"]
     session.install(".")
     session.install("mypy", "pytest", "types-pkg-resources", "types-requests", "types-attrs")
     session.run("mypy", *args)

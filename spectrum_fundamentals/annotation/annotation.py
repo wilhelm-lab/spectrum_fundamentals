@@ -4,8 +4,8 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
-from spec_fundamentals import constants
-from spec_fundamentals.fragments import initialize_peaks
+from spectrum_fundamentals import constants
+from spectrum_fundamentals.fragments import initialize_peaks
 
 logger = logging.getLogger(__name__)
 

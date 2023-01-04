@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # mypy: ignore-errors
-# spec_fundamentals documentation build configuration file
+# spectrum_fundamentals documentation build configuration file
 #
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -43,7 +43,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "spec_fundamentals"
+project = "spectrum_fundamentals"
 copyright = "2022, Victor Giurcoiu"
 author = "Victor Giurcoiu"
 
@@ -97,7 +97,7 @@ html_static_path = ["_static"]
 # -- Options for HTMLHelp output ---------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "spec_fundamentalsdoc"
+htmlhelp_basename = "spectrum_fundamentalsdoc"
 
 
 # -- Options for LaTeX output ------------------------------------------
@@ -123,8 +123,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "spec_fundamentals.tex",
-        "spec_fundamentals Documentation",
+        "spectrum_fundamentals.tex",
+        "spectrum_fundamentals Documentation",
         "Victor Giurcoiu",
         "manual",
     ),
@@ -138,8 +138,8 @@ latex_documents = [
 man_pages = [
     (
         master_doc,
-        "spec_fundamentals",
-        "spec_fundamentals Documentation",
+        "spectrum_fundamentals",
+        "spectrum_fundamentals Documentation",
         [author],
         1,
     )
@@ -156,10 +156,10 @@ autodoc_typehints = "description"
 texinfo_documents = [
     (
         master_doc,
-        "spec_fundamentals",
-        "spec_fundamentals Documentation",
+        "spectrum_fundamentals",
+        "spectrum_fundamentals Documentation",
         author,
-        "spec_fundamentals",
+        "spectrum_fundamentals",
         "One line description of project.",
         "Miscellaneous",
     ),

@@ -1,6 +1,6 @@
 Usage
 =====
 
-.. click:: spec_fundamentals.__main__:main
-   :prog: spec_fundamentals
+.. click:: spectrum_fundamentals.__main__:main
+   :prog: spectrum_fundamentals
    :nested: full

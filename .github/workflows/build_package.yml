@@ -1,4 +1,4 @@
-name: Build spec_fundamentals Package
+name: Build spectrum_fundamentals Package
 
 on: [push, pull_request]
 

@@ -1,8 +1,8 @@
 cookietemple_version: '1.4.1 # <<COOKIETEMPLE_NO_BUMP>>'
 domain: cli
 language: python
-project_slug: spec_fundamentals
-project_slug_no_hyphen: spec_fundamentals
+project_slug: spectrum_fundamentals
+project_slug_no_hyphen: spectrum_fundamentals
 template_version: '2.1.1 # <<COOKIETEMPLE_NO_BUMP>>'
 template_handle: cli-python
 github_username: wilhelm-lab
@@ -13,7 +13,7 @@ is_github_orga: true
 github_orga: wilhelm-lab
 full_name: Victor Giurcoiu
 email: victor.giurcoiu@tum.de
-project_name: spec_fundamentals
+project_name: spectrum_fundamentals
 project_short_description: Fundamentals public repo
 version: 0.1.0
 license: MIT

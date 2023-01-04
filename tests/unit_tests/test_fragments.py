@@ -1,6 +1,6 @@
 from numpy.testing import assert_almost_equal
 
-import spec_fundamentals.fragments as fragments
+import spectrum_fundamentals.fragments as fragments
 
 
 class TestGetModifications:
