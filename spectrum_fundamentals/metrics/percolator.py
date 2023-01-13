@@ -1,7 +1,7 @@
 import enum
 import hashlib
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -49,10 +49,10 @@ class Percolator(Metric):
     def __init__(
         self,
         metadata: pd.DataFrame,
-        pred_intensities: np.ndarray,
-        true_intensities: np.ndarray,
         input_type: str,
-        all_features_flag=False,
+        pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        all_features_flag: bool = False,
         fdr_cutoff: float = 0.01,
     ):
         """Initialize a Percolator obj."""
@@ -92,9 +92,9 @@ class Percolator(Metric):
 
     @staticmethod
     def get_aligned_predicted_retention_times(
-        observed_retention_times_fdr_filtered: np.ndarray,
-        predicted_retention_times_fdr_filtered: np.ndarray,
-        predicted_retention_times_all: np.ndarray,
+        observed_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
+        predicted_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
+        predicted_retention_times_all: Union[np.ndarray, pd.Series],
     ) -> np.ndarray:
         """
         Apply loess regression to find a mapping from predicted iRT values to experimental retention times.
@@ -138,7 +138,7 @@ class Percolator(Metric):
         return aligned_rts_predicted
 
     @staticmethod
-    def get_scannr(metadata_subset: Tuple[str, int]) -> int:
+    def get_scannr(metadata_subset: Union[pd.Series, Tuple[str, int]]) -> int:
         """
         Creates a hash of the raw_file and scan number to use as a unique scan number in percolator.
 
@@ -173,7 +173,7 @@ class Percolator(Metric):
         return scores_df["delta_" + scoring_feature].to_numpy()
 
     @staticmethod
-    def get_specid(metadata_subset: pd.Series) -> str:
+    def get_specid(metadata_subset: Union[pd.Series, Tuple]) -> str:
         """
         Create a unique identifier used as spectrum id in percolator, this is not parsed by percolator but functions \
         as a key to map percolator results back to our internal representation.
@@ -270,7 +270,9 @@ class Percolator(Metric):
         ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
 
     def apply_lda_and_get_indices_below_fdr(
-        self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
+        self,
+        initial_scoring_feature: str = "spectral_angle",
+        fdr_cutoff: float = 0.01
     ):
         """
         Applies a linear discriminant analysis on the features calculated so far (before retention time alignment) \
@@ -332,26 +334,28 @@ class Percolator(Metric):
         return np.sort(scores_df.index[: len(accepted_indices)])
 
     @staticmethod
-    def calculate_fdrs(sorted_labels: np.ndarray) -> List:
+    def calculate_fdrs(sorted_labels: Union[pd.Series, np.ndarray]) -> np.ndarray:
         """
         Calculate FDR.
 
         :param sorted_labels: array with labels sorted (target, decoy)
         :return: array with calculated FDRs
         """
+        if isinstance(sorted_labels, pd.Series):
+            sorted_labels = sorted_labels.to_numpy()
         cumulative_decoy_count = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
         cumulative_target_count = np.cumsum(sorted_labels == TargetDecoyLabel.TARGET) + 1
-        return Percolator.fdrs_to_qvals(np.array(cumulative_decoy_count / cumulative_target_count))
+        return Percolator.fdrs_to_qvals(cumulative_decoy_count / cumulative_target_count)
 
     @staticmethod
-    def fdrs_to_qvals(fdrs: np.ndarray) -> List:
+    def fdrs_to_qvals(fdrs: np.ndarray) -> np.ndarray:
         """
         Converts FDRs to q-values.
 
         :param fdrs: array with FDRs
         :return: array with qvals
         """
-        qvals = [0] * len(fdrs)
+        qvals = np.zeros(len(fdrs), dtype=float)
         if len(fdrs) > 0:
             qvals[len(fdrs) - 1] = fdrs[-1]
             for i in range(len(fdrs) - 2, -1, -1):

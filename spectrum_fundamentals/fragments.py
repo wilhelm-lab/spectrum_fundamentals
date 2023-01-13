@@ -107,7 +107,7 @@ def compute_peptide_mass(sequence: str) -> Optional[float]:
 
 def initialize_peaks(
     sequence: str, mass_analyzer: str, charge: int
-) -> Optional[Tuple[List[Dict[str, object]], int, str, float]]:
+) -> Tuple[List[Dict[str, object]], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 

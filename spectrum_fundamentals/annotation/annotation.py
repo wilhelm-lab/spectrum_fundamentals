@@ -126,7 +126,7 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
     return results_df
 
 
-def generate_annotation_matrix(matched_peaks: pd.DataFrame, unmod_seq: str, charge: int) -> Tuple[np.array, np.array]:
+def generate_annotation_matrix(matched_peaks: pd.DataFrame, unmod_seq: str, charge: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import scipy.sparse
@@ -17,7 +17,7 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def spectral_angle(
-        observed_intensities: scipy.sparse.csr_matrix, predicted_intensities: scipy.sparse.csr_matrix, charge: int = 0
+        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray], predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray], charge: int = 0
     ) -> np.ndarray:
         """
         Calculate spectral angle.
@@ -48,12 +48,17 @@ class SimilarityMetrics(Metric):
             predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
 
         predicted_non_zero_mask = predicted_intensities > constants.EPSILON
-        if scipy.sparse.issparse(predicted_non_zero_mask):
+
+        if isinstance(observed_intensities, scipy.sparse.csr_matrix):
             observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
-            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
         else:
             observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
+        
+        if isinstance(predicted_intensities, scipy.sparse.csr_matrix):
+            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
+        else:
             predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
+        
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
@@ -86,7 +91,7 @@ class SimilarityMetrics(Metric):
             return np.linalg.norm(matrix, axis=1)
 
     @staticmethod
-    def unit_normalization(matrix: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:
+    def unit_normalization(matrix: Union[scipy.sparse.csr_matrix, np.ndarray]) -> Union[scipy.sparse.csr_matrix, np.ndarray]:
         """
         Normalize each row of the matrix such that the norm equals 1.0.
 
@@ -105,7 +110,7 @@ class SimilarityMetrics(Metric):
             return matrix / rowwise_norm[:, np.newaxis]
 
     @staticmethod
-    def rowwise_dot_product(observed_normalized: np.ndarray, predicted_normalized: np.ndarray) -> np.ndarray:
+    def rowwise_dot_product(observed_normalized: Union[scipy.sparse.csr_matrix, np.ndarray], predicted_normalized: Union[scipy.sparse.csr_matrix, np.ndarray]) -> np.ndarray:
         """
         Calculate rowwise dot product.
 
@@ -195,11 +200,14 @@ class SimilarityMetrics(Metric):
         epsilon = 1e-7
         observed_normalized = SimilarityMetrics.unit_normalization(observed_intensities)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_intensities)
-        observed_intensities = observed_normalized.toarray()
-        predicted_intensities = predicted_normalized.toarray()
+        
+        if isinstance(observed_normalized, scipy.sparse.csr_matrix):
+            observed_normalized = observed_normalized.toarray()
+        if isinstance(predicted_normalized, scipy.sparse.csr_matrix):
+            predicted_normalized = predicted_normalized.toarray()
 
         cos_values = []
-        for obs, pred in zip(observed_intensities, predicted_intensities):
+        for obs, pred in zip(observed_normalized, predicted_normalized):
             valid_ion_mask = pred > epsilon
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
@@ -229,11 +237,14 @@ class SimilarityMetrics(Metric):
         epsilon = 1e-7
         observed_normalized = SimilarityMetrics.unit_normalization(observed_intensities)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_intensities)
-        observed_intensities = observed_normalized.toarray()
-        predicted_intensities = predicted_normalized.toarray()
-
+        
+        if isinstance(observed_normalized, scipy.sparse.csr_matrix):
+            observed_normalized = observed_normalized.toarray()
+        if isinstance(predicted_normalized, scipy.sparse.csr_matrix):
+            predicted_normalized = predicted_normalized.toarray()
+            
         diff_values = []
-        for obs, pred in zip(observed_intensities, predicted_intensities):
+        for obs, pred in zip(observed_normalized, predicted_normalized):
             valid_ion_mask = pred > epsilon
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]

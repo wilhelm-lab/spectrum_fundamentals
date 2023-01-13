@@ -7,6 +7,8 @@ from .. import constants
 from .metric import Metric
 
 
+from typing import Optional, Union
+
 class ObservationState(enum.IntEnum):
     """
     States.
@@ -29,7 +31,7 @@ class FragmentsRatio(Metric):
     """Main to initialize a FragmentsRatio obj."""
 
     @staticmethod
-    def count_ions(boolean_array: np.ndarray) -> int:
+    def count_ions(boolean_array: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -40,7 +42,7 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_with_ion_mask(boolean_array)
 
     @staticmethod
-    def count_ions_b(boolean_array: np.ndarray) -> int:
+    def count_ions_b(boolean_array: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -51,7 +53,7 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_with_ion_mask(boolean_array, constants.B_ION_MASK)
 
     @staticmethod
-    def count_ions_y(boolean_array: np.ndarray) -> int:
+    def count_ions_y(boolean_array: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -62,7 +64,7 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_with_ion_mask(boolean_array, constants.Y_ION_MASK)
 
     @staticmethod
-    def count_with_ion_mask(boolean_array: np.ndarray, ion_mask=None) -> int:
+    def count_with_ion_mask(boolean_array: scipy.sparse.csr_matrix, ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -81,7 +83,7 @@ class FragmentsRatio(Metric):
         return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
 
     @staticmethod
-    def count_observed_and_predicted(observation_state: np.ndarray) -> int:
+    def count_observed_and_predicted(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -91,7 +93,7 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_observation_states(observation_state, ObservationState.OBS_AND_PRED)
 
     @staticmethod
-    def count_observed_and_predicted_b(observation_state: np.ndarray) -> int:
+    def count_observed_and_predicted_b(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -103,7 +105,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_observed_and_predicted_y(observation_state: np.ndarray) -> int:
+    def count_observed_and_predicted_y(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -115,7 +117,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_not_observed_and_not_predicted(observation_state: np.ndarray) -> int:
+    def count_not_observed_and_not_predicted(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -125,7 +127,7 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_observation_states(observation_state, ObservationState.NOT_OBS_AND_NOT_PRED)
 
     @staticmethod
-    def count_not_observed_and_not_predicted_b(observation_state: np.ndarray) -> int:
+    def count_not_observed_and_not_predicted_b(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -137,7 +139,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_not_observed_and_not_predicted_y(observation_state: np.ndarray) -> int:
+    def count_not_observed_and_not_predicted_y(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -149,7 +151,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_not_observed_but_predicted(observation_state: np.ndarray) -> int:
+    def count_not_observed_but_predicted(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -159,7 +161,7 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_observation_states(observation_state, ObservationState.NOT_OBS_BUT_PRED)
 
     @staticmethod
-    def count_not_observed_but_predicted_b(observation_state: np.ndarray) -> int:
+    def count_not_observed_but_predicted_b(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -171,7 +173,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_not_observed_but_predicted_y(observation_state: np.ndarray) -> int:
+    def count_not_observed_but_predicted_y(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -183,7 +185,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_observed_but_not_predicted(observation_state: np.ndarray) -> int:
+    def count_observed_but_not_predicted(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -193,7 +195,7 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_observation_states(observation_state, ObservationState.OBS_BUT_NOT_PRED)
 
     @staticmethod
-    def count_observed_but_not_predicted_b(observation_state: np.ndarray) -> int:
+    def count_observed_but_not_predicted_b(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -205,7 +207,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_observed_but_not_predicted_y(observation_state: np.ndarray) -> int:
+    def count_observed_but_not_predicted_y(observation_state: scipy.sparse.csr_matrix) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -217,7 +219,7 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_observation_states(observation_state: np.ndarray, test_state: int, ion_mask=None) -> int:
+    def count_observation_states(observation_state: scipy.sparse.csr_matrix, test_state: int, ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -227,13 +229,11 @@ class FragmentsRatio(Metric):
                          integer array of length 174
         :return: number of observation states equal to test_state per row
         """
-        if ion_mask is None:
-            ion_mask = []
         state_boolean = observation_state == test_state
         return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask)
 
     @staticmethod
-    def get_mask_observed_valid(observed_mz: np.ndarray) -> np.ndarray:
+    def get_mask_observed_valid(observed_mz: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:
         """
         Creates a mask out of an observed m/z array with True for invalid entries and \
         False for valid entries in the observed intensities array.
@@ -244,7 +244,7 @@ class FragmentsRatio(Metric):
         return observed_mz > 0
 
     @staticmethod
-    def make_boolean(intensities: np.ndarray, mask: np.ndarray, cutoff: float = 2e-7) -> np.ndarray:
+    def make_boolean(intensities: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix, cutoff: float = 2e-7) -> scipy.sparse.csr_matrix:
         """
         Transform array of intensities into boolean array with True if > cutoff and False otherwise.
 
@@ -259,8 +259,8 @@ class FragmentsRatio(Metric):
 
     @staticmethod
     def get_observation_state(
-        observed_boolean: np.ndarray, predicted_boolean: np.ndarray, mask: np.ndarray
-    ) -> np.ndarray:
+        observed_boolean: scipy.sparse.csr_matrix, predicted_boolean: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix
+    ) -> scipy.sparse.csr_matrix:
         """
         Computes the observation state between the observed and predicted boolean arrays.
 

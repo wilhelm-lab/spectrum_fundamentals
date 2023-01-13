@@ -20,7 +20,7 @@ class TestFdrs:
 
     def test_get_indices_below_fdr_none(self):
         """Test get_indices_below_fdr."""
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
         percolator.metrics_val["Score"] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [-1, -1, 1, -1]
         """
@@ -34,7 +34,7 @@ class TestFdrs:
 
     def test_get_indices_below_fdr_unordered_idxs(self):
         """Test get_indices_below_fdr."""
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
         percolator.metrics_val["Score"] = [0, 3, 2, 1, -1]
         percolator.target_decoy_labels = [-1, 1, 1, -1, 1]
 
@@ -52,7 +52,7 @@ class TestFdrs:
 
     def test_get_indices_below_fdr(self):
         """Test get_indices_below_fdr."""
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
         percolator.metrics_val["Score"] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [-1, 1, 1, -1]
         """
@@ -66,7 +66,7 @@ class TestFdrs:
 
     def test_get_indices_below_fdr_filter_decoy(self):
         """Test get_indices_below_fdr."""
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
         percolator.metrics_val["Score"] = [0, 3, 2, 1, 4, 5, 6, 7]
         percolator.target_decoy_labels = [-1, 1, 1, -1, -1, 1, 1, 1]
         """
@@ -88,7 +88,7 @@ class TestLda:
 
     def test_apply_lda_and_get_indices_below_fdr(self):
         """Score_2 adds more discriminative power between targets and decoys."""
-        percolator = perc.Percolator(pd.DataFrame(), None, None, "prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
         percolator.metrics_val["Score"] = [0.0, 3.0, 2.0, 1.0, 4.0, 5.0, 6.0, 7.0]
         percolator.metrics_val["Score_2"] = [1.0, 1.5, 2.0, 1.5, 1.0, 1.5, 2.0, 1.5]
         percolator.target_decoy_labels = np.array([-1, 1, 1, -1, -1, 1, 1, 1])
@@ -331,7 +331,13 @@ class TestPercolator:
         observed_intensities[1, :] = observed_intensities_decoy
         observed_intensities[2, :] = observed_intensities_decoy
 
-        percolator = perc.Percolator(perc_input, predicted_intensities, observed_intensities, "prosit", fdr_cutoff=0.4)
+        percolator = perc.Percolator(
+            metadata=perc_input, 
+            input_type="prosit",
+            pred_intensities=predicted_intensities,
+            true_intensities=observed_intensities, 
+            fdr_cutoff=0.4
+        )
         percolator.calc()
 
         # meta data for percolator
