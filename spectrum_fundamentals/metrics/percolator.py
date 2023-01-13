@@ -173,17 +173,15 @@ class Percolator(Metric):
         return scores_df["delta_" + scoring_feature].to_numpy()
 
     @staticmethod
-    def get_specid(metadata_subset: Tuple[str, int, str, int]) -> str:
+    def get_specid(metadata_subset: pd.Series) -> str:
         """
         Create a unique identifier used as spectrum id in percolator, this is not parsed by percolator but functions \
         as a key to map percolator results back to our internal representation.
 
-        :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge)
+        :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge and optionally scan_event_number)
         :return: percolator spectrum id
         """
-        raw_file, scan_number, modified_sequence, charge = metadata_subset
-        s = f"{raw_file}-{scan_number}-{modified_sequence}-{charge}"
-        return s
+        return '-'.join([f"{elem}" for elem in metadata_subset])
 
     @staticmethod
     def count_missed_cleavages(sequence: str) -> int:
@@ -258,9 +256,10 @@ class Percolator(Metric):
 
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
-        self.metrics_val["SpecId"] = self.metadata[
-            ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
-        ].apply(Percolator.get_specid, axis=1)
+        spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
+        if 'SCAN_EVENT_NUMBER' in self.metadata.columns:
+            spec_id_cols.append('SCAN_EVENT_NUMBER')
+        self.metrics_val["SpecId"] = self.metadata[spec_id_cols].apply(Percolator.get_specid, axis=1)
         self.metrics_val["Label"] = self.target_decoy_labels
         self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_NUMBER"]].apply(Percolator.get_scannr, axis=1)
 
