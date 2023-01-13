@@ -1,7 +1,7 @@
 import enum
 import hashlib
 import logging
-from typing import List, Tuple, Optional, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -158,6 +158,8 @@ class Percolator(Metric):
         The lowest scoring PSM of each group receives a delta score of 0.
         :param scores_df: must contain two columns: scoring_feature (eg. 'spectral_angle') and 'ScanNr'
         :param scoring_feature: feature name to get the delta scores of
+
+        :raises NotImplementedError: If there is only one unique value for ScanNr in the scores_df.
         :return: numpy array of delta scores
         """
         # TODO: sort after grouping for better efficiency
@@ -181,7 +183,7 @@ class Percolator(Metric):
         :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge and optionally scan_event_number)
         :return: percolator spectrum id
         """
-        return '-'.join([f"{elem}" for elem in metadata_subset])
+        return "-".join([f"{elem}" for elem in metadata_subset])
 
     @staticmethod
     def count_missed_cleavages(sequence: str) -> int:
@@ -230,7 +232,8 @@ class Percolator(Metric):
         """
         Get target or decoy label.
 
-        :return: target/decoy label for percolator, 1 = Target, -1 = Decoy
+        :param reverse: if true, return the label for DECOY, otherwise return the label for TARGET
+        :return: target/decoy label for percolator
         """
         return TargetDecoyLabel.DECOY if reverse else TargetDecoyLabel.TARGET
 
@@ -257,8 +260,8 @@ class Percolator(Metric):
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
         spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
-        if 'SCAN_EVENT_NUMBER' in self.metadata.columns:
-            spec_id_cols.append('SCAN_EVENT_NUMBER')
+        if "SCAN_EVENT_NUMBER" in self.metadata.columns:
+            spec_id_cols.append("SCAN_EVENT_NUMBER")
         self.metrics_val["SpecId"] = self.metadata[spec_id_cols].apply(Percolator.get_specid, axis=1)
         self.metrics_val["Label"] = self.target_decoy_labels
         self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_NUMBER"]].apply(Percolator.get_scannr, axis=1)
@@ -270,9 +273,7 @@ class Percolator(Metric):
         ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
 
     def apply_lda_and_get_indices_below_fdr(
-        self,
-        initial_scoring_feature: str = "spectral_angle",
-        fdr_cutoff: float = 0.01
+        self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
     ):
         """
         Applies a linear discriminant analysis on the features calculated so far (before retention time alignment) \

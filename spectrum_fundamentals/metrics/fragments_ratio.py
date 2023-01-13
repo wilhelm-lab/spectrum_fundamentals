@@ -1,4 +1,5 @@
 import enum
+from typing import Optional, Union
 
 import numpy as np
 import scipy.sparse
@@ -6,8 +7,6 @@ import scipy.sparse
 from .. import constants
 from .metric import Metric
 
-
-from typing import Optional, Union
 
 class ObservationState(enum.IntEnum):
     """
@@ -64,7 +63,9 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_with_ion_mask(boolean_array, constants.Y_ION_MASK)
 
     @staticmethod
-    def count_with_ion_mask(boolean_array: scipy.sparse.csr_matrix, ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None) -> np.ndarray:
+    def count_with_ion_mask(
+        boolean_array: scipy.sparse.csr_matrix, ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None
+    ) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -219,7 +220,11 @@ class FragmentsRatio(Metric):
         )
 
     @staticmethod
-    def count_observation_states(observation_state: scipy.sparse.csr_matrix, test_state: int, ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None) -> np.ndarray:
+    def count_observation_states(
+        observation_state: scipy.sparse.csr_matrix,
+        test_state: int,
+        ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+    ) -> np.ndarray:
         """
         Add value to metrics val.
 
@@ -244,7 +249,9 @@ class FragmentsRatio(Metric):
         return observed_mz > 0
 
     @staticmethod
-    def make_boolean(intensities: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix, cutoff: float = 2e-7) -> scipy.sparse.csr_matrix:
+    def make_boolean(
+        intensities: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix, cutoff: float = 2e-7
+    ) -> scipy.sparse.csr_matrix:
         """
         Transform array of intensities into boolean array with True if > cutoff and False otherwise.
 
@@ -259,7 +266,9 @@ class FragmentsRatio(Metric):
 
     @staticmethod
     def get_observation_state(
-        observed_boolean: scipy.sparse.csr_matrix, predicted_boolean: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix
+        observed_boolean: scipy.sparse.csr_matrix,
+        predicted_boolean: scipy.sparse.csr_matrix,
+        mask: scipy.sparse.csr_matrix,
     ) -> scipy.sparse.csr_matrix:
         """
         Computes the observation state between the observed and predicted boolean arrays.

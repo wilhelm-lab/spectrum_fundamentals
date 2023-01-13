@@ -1,10 +1,9 @@
 from abc import abstractmethod
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 import scipy.sparse
-
-from typing import Optional, Union
 
 
 class Metric:
@@ -19,7 +18,7 @@ class Metric:
     def __init__(
         self,
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None
+        true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
     ):
         """
         Initialize a Metric object.

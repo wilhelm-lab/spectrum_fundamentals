@@ -87,6 +87,7 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff") -> 
     We will resolve this based on the sort_by parameter.
     :param matched_peaks: all matched peaks we have for the spectrum
     :param sort_by: choose how to sort peaks e.g. intensity, mass_diff
+    :return: tuple of matched peak dataframe and the difference between original length and the length after matches
     """
     matched_peaks_df = pd.DataFrame(matched_peaks)
     if sort_by == "mass_diff":
@@ -126,7 +127,9 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
     return results_df
 
 
-def generate_annotation_matrix(matched_peaks: pd.DataFrame, unmod_seq: str, charge: int) -> Tuple[np.ndarray, np.ndarray]:
+def generate_annotation_matrix(
+    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
 
@@ -184,6 +187,7 @@ def parallel_annotate(spectrum: pd.Series, index_columns: dict):
     Parallelize the annotation pipeline, here it should annotate spectra in different threads.
 
     :param spectrum: spectrum to be annotated
+    :param index_columns: TODO
     :return: annotated spectrum with meta data
     """
     mod_seq_column = "MODIFIED_SEQUENCE"

@@ -332,11 +332,11 @@ class TestPercolator:
         observed_intensities[2, :] = observed_intensities_decoy
 
         percolator = perc.Percolator(
-            metadata=perc_input, 
+            metadata=perc_input,
             input_type="prosit",
             pred_intensities=predicted_intensities,
-            true_intensities=observed_intensities, 
-            fdr_cutoff=0.4
+            true_intensities=observed_intensities,
+            fdr_cutoff=0.4,
         )
         percolator.calc()
 
