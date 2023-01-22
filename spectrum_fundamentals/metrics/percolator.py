@@ -53,7 +53,6 @@ class Percolator(Metric):
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         all_features_flag: bool = False,
-
         fdr_cutoff: float = 0.01,
     ):
         """Initialize a Percolator obj."""
@@ -179,7 +178,7 @@ class Percolator(Metric):
         """
         Create a unique identifier used as spectrum id in percolator, this is not parsed by percolator but functions \
         as a key to map percolator results back to our internal representation.
-        
+
         :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge and optionally scan_event_number)
         :return: percolator spectrum id
         """
