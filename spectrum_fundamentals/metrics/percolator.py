@@ -158,7 +158,6 @@ class Percolator(Metric):
         The lowest scoring PSM of each group receives a delta score of 0.
         :param scores_df: must contain two columns: scoring_feature (eg. 'spectral_angle') and 'ScanNr'
         :param scoring_feature: feature name to get the delta scores of
-
         :raises NotImplementedError: If there is only one unique value for ScanNr in the scores_df.
         :return: numpy array of delta scores
         """
