@@ -8,7 +8,7 @@ template_handle: cli-python
 github_username: wilhelm-lab
 creator_github_username: victorgiurcoiu
 is_github_repo: true
-is_repo_private: true
+is_repo_private: false
 is_github_orga: true
 github_orga: wilhelm-lab
 full_name: Victor Giurcoiu

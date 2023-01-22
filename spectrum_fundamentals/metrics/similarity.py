@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import scipy.sparse
@@ -12,12 +12,41 @@ from .. import constants
 from .metric import Metric
 
 
+def get_metric_func(metric: str):
+    """
+    Return a callable function for a given metric shortcut.
+
+    :param metric: a shortcut for the desired metric.
+
+    :raises ValueError: if the provided metric is not known
+
+    :return: callable metric function
+
+    """
+    if metric == "mean":
+        return lambda obs, pred: mean(absolute(obs - mean(pred)))
+    if metric == "std":
+        return lambda obs, pred: std(absolute(obs - mean(pred)))
+    if metric == "max":
+        return lambda obs, pred: np.max(absolute(obs - mean(pred)))
+    if metric == "min":
+        return lambda obs, pred: np.min(absolute(obs - mean(pred)))
+    if metric == "mse":
+        return lambda obs, pred: mean_squared_error(obs, pred)
+    if metric.startswith("q"):
+        return lambda obs, pred: SimilarityMetrics.calculate_quantiles(obs, pred, metric)
+
+    raise ValueError(f"Unknown metric function {metric}")
+
+
 class SimilarityMetrics(Metric):
     """Class to generate several features than can be used by percoltor for rescoring."""
 
     @staticmethod
     def spectral_angle(
-        observed_intensities: scipy.sparse.csr_matrix, predicted_intensities: scipy.sparse.csr_matrix, charge: int = 0
+        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        charge: int = 0,
     ) -> np.ndarray:
         """
         Calculate spectral angle.
@@ -48,12 +77,17 @@ class SimilarityMetrics(Metric):
             predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
 
         predicted_non_zero_mask = predicted_intensities > constants.EPSILON
-        if scipy.sparse.issparse(predicted_non_zero_mask):
+
+        if isinstance(observed_intensities, scipy.sparse.csr_matrix):
             observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
-            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
         else:
             observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
+
+        if isinstance(predicted_intensities, scipy.sparse.csr_matrix):
+            predicted_masked = predicted_intensities.multiply(predicted_non_zero_mask)
+        else:
             predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
+
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
@@ -86,7 +120,9 @@ class SimilarityMetrics(Metric):
             return np.linalg.norm(matrix, axis=1)
 
     @staticmethod
-    def unit_normalization(matrix: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:
+    def unit_normalization(
+        matrix: Union[scipy.sparse.csr_matrix, np.ndarray]
+    ) -> Union[scipy.sparse.csr_matrix, np.ndarray]:
         """
         Normalize each row of the matrix such that the norm equals 1.0.
 
@@ -105,21 +141,25 @@ class SimilarityMetrics(Metric):
             return matrix / rowwise_norm[:, np.newaxis]
 
     @staticmethod
-    def rowwise_dot_product(observed_normalized: np.ndarray, predicted_normalized: np.ndarray) -> np.ndarray:
+    def rowwise_dot_product(
+        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+    ) -> np.ndarray:
         """
         Calculate rowwise dot product.
 
-        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \
-                                     0 intensity indicates invalid peaks (charge state > peptide charge state or \
-                                     position >= peptide length), array of length 174
+        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks,
+            0 intensity indicates invalid peaks (charge state > peptide charge state or position >= peptide length),
+            array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
+        :return: matrix containing the rowwise dotproduct
         """
-        if scipy.sparse.issparse(observed_normalized):
+        if isinstance(observed_intensities, scipy.sparse.csr_matrix):
             return np.array(
-                np.sum(scipy.sparse.csr_matrix.multiply(observed_normalized, predicted_normalized), axis=1)
+                np.sum(scipy.sparse.csr_matrix.multiply(observed_intensities, predicted_intensities), axis=1)
             ).flatten()
         else:
-            return np.sum(np.multiply(observed_normalized, predicted_normalized), axis=1)
+            return np.sum(np.multiply(observed_intensities, predicted_intensities), axis=1)
 
     @staticmethod
     def correlation(
@@ -195,11 +235,14 @@ class SimilarityMetrics(Metric):
         epsilon = 1e-7
         observed_normalized = SimilarityMetrics.unit_normalization(observed_intensities)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_intensities)
-        observed_intensities = observed_normalized.toarray()
-        predicted_intensities = predicted_normalized.toarray()
+
+        if isinstance(observed_normalized, scipy.sparse.csr_matrix):
+            observed_normalized = observed_normalized.toarray()
+        if isinstance(predicted_normalized, scipy.sparse.csr_matrix):
+            predicted_normalized = predicted_normalized.toarray()
 
         cos_values = []
-        for obs, pred in zip(observed_intensities, predicted_intensities):
+        for obs, pred in zip(observed_normalized, predicted_normalized):
             valid_ion_mask = pred > epsilon
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
@@ -226,31 +269,25 @@ class SimilarityMetrics(Metric):
         :param metric: metric (mean, std, q1, q2, q3, min, max, or mse)
         :return: calculates similarity values
         """
+        chosen_metric = get_metric_func(metric)
+
         epsilon = 1e-7
         observed_normalized = SimilarityMetrics.unit_normalization(observed_intensities)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_intensities)
-        observed_intensities = observed_normalized.toarray()
-        predicted_intensities = predicted_normalized.toarray()
+
+        if isinstance(observed_normalized, scipy.sparse.csr_matrix):
+            observed_normalized = observed_normalized.toarray()
+        if isinstance(predicted_normalized, scipy.sparse.csr_matrix):
+            predicted_normalized = predicted_normalized.toarray()
 
         diff_values = []
-        for obs, pred in zip(observed_intensities, predicted_intensities):
+        for obs, pred in zip(observed_normalized, predicted_normalized):
             valid_ion_mask = pred > epsilon
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
             obs = obs[~np.isnan(obs)]
             pred = pred[~np.isnan(pred)]
-            if metric == "mean":
-                diff = mean(absolute(obs - mean(pred)))
-            elif metric == "std":
-                diff = std(absolute(obs - mean(pred)))
-            elif metric == "max":
-                diff = np.max(absolute(obs - mean(pred)))
-            elif metric == "min":
-                diff = np.min(absolute(obs - mean(pred)))
-            elif metric == "mse":
-                diff = mean_squared_error(obs, pred)
-            elif metric.startswith("q"):
-                diff = SimilarityMetrics.calculate_quantiles(obs, pred, metric)
+            diff = chosen_metric(obs, pred)
             if np.isnan(diff):
                 diff = 0
             diff_values.append(diff)

@@ -1,7 +1,7 @@
 import enum
 import hashlib
 import logging
-from typing import List, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -49,10 +49,10 @@ class Percolator(Metric):
     def __init__(
         self,
         metadata: pd.DataFrame,
-        pred_intensities: np.ndarray,
-        true_intensities: np.ndarray,
         input_type: str,
-        all_features_flag=False,
+        pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        all_features_flag: bool = False,
         fdr_cutoff: float = 0.01,
     ):
         """Initialize a Percolator obj."""
@@ -92,9 +92,9 @@ class Percolator(Metric):
 
     @staticmethod
     def get_aligned_predicted_retention_times(
-        observed_retention_times_fdr_filtered: np.ndarray,
-        predicted_retention_times_fdr_filtered: np.ndarray,
-        predicted_retention_times_all: np.ndarray,
+        observed_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
+        predicted_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
+        predicted_retention_times_all: Union[np.ndarray, pd.Series],
     ) -> np.ndarray:
         """
         Apply loess regression to find a mapping from predicted iRT values to experimental retention times.
@@ -138,7 +138,7 @@ class Percolator(Metric):
         return aligned_rts_predicted
 
     @staticmethod
-    def get_scannr(metadata_subset: Tuple[str, int]) -> int:
+    def get_scannr(metadata_subset: Union[pd.Series, Tuple[str, int]]) -> int:
         """
         Creates a hash of the raw_file and scan number to use as a unique scan number in percolator.
 
@@ -158,6 +158,7 @@ class Percolator(Metric):
         The lowest scoring PSM of each group receives a delta score of 0.
         :param scores_df: must contain two columns: scoring_feature (eg. 'spectral_angle') and 'ScanNr'
         :param scoring_feature: feature name to get the delta scores of
+        :raises NotImplementedError: If there is only one unique value for ScanNr in the scores_df.
         :return: numpy array of delta scores
         """
         # TODO: sort after grouping for better efficiency
@@ -173,17 +174,15 @@ class Percolator(Metric):
         return scores_df["delta_" + scoring_feature].to_numpy()
 
     @staticmethod
-    def get_specid(metadata_subset: Tuple[str, int, str, int]) -> str:
+    def get_specid(metadata_subset: Union[pd.Series, Tuple]) -> str:
         """
         Create a unique identifier used as spectrum id in percolator, this is not parsed by percolator but functions \
         as a key to map percolator results back to our internal representation.
 
-        :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge)
+        :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge and optionally scan_event_number)
         :return: percolator spectrum id
         """
-        raw_file, scan_number, modified_sequence, charge = metadata_subset
-        s = f"{raw_file}-{scan_number}-{modified_sequence}-{charge}"
-        return s
+        return "-".join([f"{elem}" for elem in metadata_subset])
 
     @staticmethod
     def count_missed_cleavages(sequence: str) -> int:
@@ -232,7 +231,8 @@ class Percolator(Metric):
         """
         Get target or decoy label.
 
-        :return: target/decoy label for percolator, 1 = Target, -1 = Decoy
+        :param reverse: if true, return the label for DECOY, otherwise return the label for TARGET
+        :return: target/decoy label for percolator
         """
         return TargetDecoyLabel.DECOY if reverse else TargetDecoyLabel.TARGET
 
@@ -258,9 +258,10 @@ class Percolator(Metric):
 
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
-        self.metrics_val["SpecId"] = self.metadata[
-            ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
-        ].apply(Percolator.get_specid, axis=1)
+        spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
+        if "SCAN_EVENT_NUMBER" in self.metadata.columns:
+            spec_id_cols.append("SCAN_EVENT_NUMBER")
+        self.metrics_val["SpecId"] = self.metadata[spec_id_cols].apply(Percolator.get_specid, axis=1)
         self.metrics_val["Label"] = self.target_decoy_labels
         self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_NUMBER"]].apply(Percolator.get_scannr, axis=1)
 
@@ -333,26 +334,28 @@ class Percolator(Metric):
         return np.sort(scores_df.index[: len(accepted_indices)])
 
     @staticmethod
-    def calculate_fdrs(sorted_labels: np.ndarray) -> List:
+    def calculate_fdrs(sorted_labels: Union[pd.Series, np.ndarray]) -> np.ndarray:
         """
         Calculate FDR.
 
         :param sorted_labels: array with labels sorted (target, decoy)
         :return: array with calculated FDRs
         """
+        if isinstance(sorted_labels, pd.Series):
+            sorted_labels = sorted_labels.to_numpy()
         cumulative_decoy_count = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
         cumulative_target_count = np.cumsum(sorted_labels == TargetDecoyLabel.TARGET) + 1
-        return Percolator.fdrs_to_qvals(np.array(cumulative_decoy_count / cumulative_target_count))
+        return Percolator.fdrs_to_qvals(cumulative_decoy_count / cumulative_target_count)
 
     @staticmethod
-    def fdrs_to_qvals(fdrs: np.ndarray) -> List:
+    def fdrs_to_qvals(fdrs: np.ndarray) -> np.ndarray:
         """
         Converts FDRs to q-values.
 
         :param fdrs: array with FDRs
         :return: array with qvals
         """
-        qvals = [0] * len(fdrs)
+        qvals = np.zeros(len(fdrs), dtype=float)
         if len(fdrs) > 0:
             qvals[len(fdrs) - 1] = fdrs[-1]
             for i in range(len(fdrs) - 2, -1, -1):
