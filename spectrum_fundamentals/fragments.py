@@ -70,9 +70,7 @@ def compute_peptide_mass(sequence: str) -> float:
     Compute the theoretical mass of the peptide sequence.
 
     :param sequence: Modified peptide sequence
-
     :raises AssertionError: if an unknown modification has been found in the peptide sequence
-
     :return: Theoretical mass of the sequence
     """
     peptide_sequence = sequence
@@ -115,7 +113,6 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
     :param sequence: Modified peptide sequence
     :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
     :param charge: Precursor charge
-
     :raises AssertionError:  if peptide sequence contained an unknown modification. TODO do this within the get_mod func.
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
@@ -212,6 +209,7 @@ def compute_ion_masses(seq_int: List[int], charge_onehot: List[int], tmt: str = 
     Collects an integer sequence e.g. [1,2,3] with charge 2 and returns array with 174 positions for ion masses.
 
     Invalid masses are set to -1.
+
     :param seq_int: TODO
     :param charge_onehot: is a onehot representation of charge with 6 elems for charges 1 to 6
     :param tmt: TODO

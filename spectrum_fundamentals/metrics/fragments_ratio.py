@@ -1,6 +1,7 @@
 import enum
 from typing import Optional, Union
 
+
 import numpy as np
 import scipy.sparse
 
