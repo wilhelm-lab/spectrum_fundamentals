@@ -147,7 +147,7 @@ class Percolator(Metric):
         """
         raw_file, scan_number = metadata_subset
         s = f"{raw_file}{scan_number}".encode()
-        return int(hashlib.sha224(s).hexdigest()[:12], 16)
+        return int(hashlib.sha224(s).hexdigest()[:6], 16)
 
     @staticmethod
     def get_delta_score(scores_df: pd.DataFrame, scoring_feature: str) -> np.ndarray:
