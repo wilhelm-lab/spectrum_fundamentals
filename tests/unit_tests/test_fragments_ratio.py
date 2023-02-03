@@ -64,26 +64,26 @@ class TestCountIons:
     """Class to test ion counts."""
 
     def test_count_ions(self):
-        """Test count_ions."""
+        """Test count ions predicted."""
         predicted_boolean = get_padded_array([True, False, False, False, False])
-        np.testing.assert_equal(fr.FragmentsRatio.count_ions(predicted_boolean), 1)
+        np.testing.assert_equal(fr.FragmentsRatio.count_with_ion_mask(predicted_boolean), 1)
 
     def test_count_ions_b(self):
-        """Test count_ions_b."""
+        """Test count b ions predicted."""
         predicted_boolean = get_padded_array([True, False, False, False, False])
-        np.testing.assert_equal(fr.FragmentsRatio.count_ions_b(predicted_boolean), 0)
+        np.testing.assert_equal(fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, constants.B_ION_MASK), 0)
 
     def test_count_ions_y(self):
-        """Test count_ions_y."""
+        """Test count y ions predicted."""
         predicted_boolean = get_padded_array([True, False, False, False, False])
-        np.testing.assert_equal(fr.FragmentsRatio.count_ions_y(predicted_boolean), 1)
+        np.testing.assert_equal(fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, constants.Y_ION_MASK), 1)
 
 
 class TestCountObservedAndPredicted:
     """Class to test count observed and predicted."""
 
     def test_count_observed_and_predicted(self):
-        """Test count_observed_and_predicted."""
+        """Test count observation states observed and predicted."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -93,10 +93,12 @@ class TestCountObservedAndPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_observed_and_predicted(observation_state), 1)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(observation_state, fr.ObservationState.OBS_AND_PRED), 1
+        )
 
     def test_count_observed_and_predicted_b(self):
-        """Test count_observed_and_predicted_b."""
+        """Test count observation states observed and predicted b ions."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -106,10 +108,15 @@ class TestCountObservedAndPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_observed_and_predicted_b(observation_state), 1)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(
+                observation_state, fr.ObservationState.OBS_AND_PRED, constants.B_ION_MASK
+            ),
+            1,
+        )
 
     def test_count_observed_and_predicted_y(self):
-        """Test count_observed_and_predicted_y."""
+        """Test count observation states observed and predicted y ions."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -119,14 +126,19 @@ class TestCountObservedAndPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_observed_and_predicted_y(observation_state), 0)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(
+                observation_state, fr.ObservationState.OBS_AND_PRED, constants.Y_ION_MASK
+            ),
+            0,
+        )
 
 
 class TestCountNotObservedAndNotPredicted:
     """Class to test count not observed and not predicted."""
 
     def test_count_not_observed_and_not_predicted(self):
-        """Test count_observed_and_predicted."""
+        """Test count observation states not observed and not predicted."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -137,10 +149,12 @@ class TestCountNotObservedAndNotPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_not_observed_and_not_predicted(observation_state), 2)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED), 2
+        )
 
     def test_count_not_observed_and_not_predicted_b(self):
-        """Test count_not_observed_and_not_predicted_b."""
+        """Test count observation states not observed and not predicted b ions."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -151,10 +165,15 @@ class TestCountNotObservedAndNotPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_not_observed_and_not_predicted(observation_state), 2)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(
+                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, constants.B_ION_MASK
+            ),
+            1,
+        )
 
     def test_count_not_observed_and_not_predicted_y(self):
-        """Test count_not_observed_and_not_predicted_y."""
+        """Test count observation states not observed and not predicted y ions."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -165,14 +184,19 @@ class TestCountNotObservedAndNotPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_not_observed_and_not_predicted(observation_state), 2)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(
+                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, constants.Y_ION_MASK
+            ),
+            1,
+        )
 
 
 class TestCountNotObservedButPredicted:
     """Class to test count not observed but predicted."""
 
     def test_count_not_observed_but_predicted(self):
-        """Test count_not_observed_but_predicted."""
+        """Test count observation states not observed but predicted."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -184,10 +208,12 @@ class TestCountNotObservedButPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_not_observed_but_predicted(observation_state), 3)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(observation_state, fr.ObservationState.NOT_OBS_BUT_PRED), 3
+        )
 
     def test_count_not_observed_but_predicted_b(self):
-        """Test count_not_observed_but_predicted_b."""
+        """Test count observation states not observed but predicted b ions."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -199,10 +225,15 @@ class TestCountNotObservedButPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_not_observed_but_predicted_b(observation_state), 2)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(
+                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, constants.B_ION_MASK
+            ),
+            2,
+        )
 
     def test_count_not_observed_but_predicted_y(self):
-        """Test count_not_observed_but_predicted_y."""
+        """Test count observation states not observed but predicted y ions."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -214,14 +245,19 @@ class TestCountNotObservedButPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_not_observed_but_predicted_y(observation_state), 1)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(
+                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, constants.Y_ION_MASK
+            ),
+            1,
+        )
 
 
 class TestCountObservedButNotPredicted:
     """Class to test count observed but not predicted."""
 
     def test_count_observed_but_not_predicted(self):
-        """Test count_observed_but_not_predicted."""
+        """Test count observation states observed but not predicted."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -234,10 +270,12 @@ class TestCountObservedButNotPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_observed_but_not_predicted(observation_state), 4)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(observation_state, fr.ObservationState.OBS_BUT_NOT_PRED), 4
+        )
 
     def test_count_observed_but_not_predicted_b(self):
-        """Test count_observed_but_not_predicted_b."""
+        """Test count observation states observed but not predicted b ions."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -250,10 +288,15 @@ class TestCountObservedButNotPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_observed_but_not_predicted_b(observation_state), 2)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(
+                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, constants.B_ION_MASK
+            ),
+            2,
+        )
 
     def test_count_observed_but_not_predicted_y(self):
-        """Test count_observed_but_not_predicted_y."""
+        """Test count observation states observed but not predicted y ions."""
         observation_state = get_padded_array(
             [
                 fr.ObservationState.NOT_OBS_AND_NOT_PRED,
@@ -266,7 +309,12 @@ class TestCountObservedButNotPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
-        np.testing.assert_equal(fr.FragmentsRatio.count_observed_but_not_predicted_y(observation_state), 2)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_observation_states(
+                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK
+            ),
+            2,
+        )
 
 
 class TestCalc:
