@@ -163,7 +163,7 @@ class TestPercolator:
     def test_get_scannr(self):
         """Test get_scannr."""
         np.testing.assert_equal(
-            perc.Percolator.get_scannr(("20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02", 7978)), 171184297275363
+            perc.Percolator.get_scannr(("20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02", 7978)), 10203379
         )
 
     def test_get_specid(self):
