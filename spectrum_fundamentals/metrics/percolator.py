@@ -378,7 +378,7 @@ class Percolator(Metric):
 
         np.random.seed(1)
         # add Prosit or Andromeda features
-        if self.input_type == "prosit":
+        if self.input_type == "rescore":
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
             fragments_ratio.calc()
 
@@ -427,7 +427,7 @@ class Percolator(Metric):
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
 
         self.add_percolator_metadata_columns()
-        if self.input_type == "prosit":
+        if self.input_type == "rescore":
             # TODO: only add this feature if they are not all zero
             # self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr',
             # 'spectral_angle']], 'spectral_angle')
