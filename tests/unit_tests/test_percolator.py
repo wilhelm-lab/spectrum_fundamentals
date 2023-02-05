@@ -20,7 +20,7 @@ class TestFdrs:
 
     def test_get_indices_below_fdr_none(self):
         """Test get_indices_below_fdr."""
-        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="rescore")
         percolator.metrics_val["Score"] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [-1, -1, 1, -1]
         """
@@ -34,7 +34,7 @@ class TestFdrs:
 
     def test_get_indices_below_fdr_unordered_idxs(self):
         """Test get_indices_below_fdr."""
-        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="rescore")
         percolator.metrics_val["Score"] = [0, 3, 2, 1, -1]
         percolator.target_decoy_labels = [-1, 1, 1, -1, 1]
 
@@ -52,7 +52,7 @@ class TestFdrs:
 
     def test_get_indices_below_fdr(self):
         """Test get_indices_below_fdr."""
-        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="rescore")
         percolator.metrics_val["Score"] = [0, 3, 2, 1]
         percolator.target_decoy_labels = [-1, 1, 1, -1]
         """
@@ -66,7 +66,7 @@ class TestFdrs:
 
     def test_get_indices_below_fdr_filter_decoy(self):
         """Test get_indices_below_fdr."""
-        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="rescore")
         percolator.metrics_val["Score"] = [0, 3, 2, 1, 4, 5, 6, 7]
         percolator.target_decoy_labels = [-1, 1, 1, -1, -1, 1, 1, 1]
         """
@@ -88,7 +88,7 @@ class TestLda:
 
     def test_apply_lda_and_get_indices_below_fdr(self):
         """Score_2 adds more discriminative power between targets and decoys."""
-        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="prosit")
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="rescore")
         percolator.metrics_val["Score"] = [0.0, 3.0, 2.0, 1.0, 4.0, 5.0, 6.0, 7.0]
         percolator.metrics_val["Score_2"] = [1.0, 1.5, 2.0, 1.5, 1.0, 1.5, 2.0, 1.5]
         percolator.target_decoy_labels = np.array([-1, 1, 1, -1, -1, 1, 1, 1])
@@ -163,7 +163,7 @@ class TestPercolator:
     def test_get_scannr(self):
         """Test get_scannr."""
         np.testing.assert_equal(
-            perc.Percolator.get_scannr(("20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02", 7978)), 171184297275363
+            perc.Percolator.get_scannr(("20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02", 7978)), 10203379
         )
 
     def test_get_specid(self):
@@ -333,7 +333,7 @@ class TestPercolator:
 
         percolator = perc.Percolator(
             metadata=perc_input,
-            input_type="prosit",
+            input_type="rescore",
             pred_intensities=predicted_intensities,
             true_intensities=observed_intensities,
             fdr_cutoff=0.4,
@@ -345,7 +345,7 @@ class TestPercolator:
             percolator.metrics_val["SpecId"][0], "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02-7978-AAIGEATRL-2-1"
         )
         np.testing.assert_equal(percolator.metrics_val["Label"][0], 1)
-        np.testing.assert_equal(percolator.metrics_val["ScanNr"][0], 171184297275363)
+        np.testing.assert_equal(percolator.metrics_val["ScanNr"][0], 10203379)
         # np.testing.assert_almost_equal(percolator.metrics_val['ExpMass'][0], 900.50345678)
         np.testing.assert_string_equal(percolator.metrics_val["Peptide"][0], "_.AAIGEATRL._")
         np.testing.assert_string_equal(
