@@ -52,6 +52,7 @@ class Percolator(Metric):
         input_type: str,
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         all_features_flag: bool = False,
         fdr_cutoff: float = 0.01,
     ):
@@ -60,7 +61,7 @@ class Percolator(Metric):
         self.input_type = input_type
         self.all_features_flag = all_features_flag
         self.fdr_cutoff = fdr_cutoff
-        super().__init__(pred_intensities, true_intensities)
+        super().__init__(pred_intensities, true_intensities, mz)
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:

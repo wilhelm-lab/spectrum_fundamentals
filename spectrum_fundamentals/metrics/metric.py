@@ -19,6 +19,7 @@ class Metric:
         self,
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
     ):
         """
         Initialize a Metric object.
@@ -28,6 +29,7 @@ class Metric:
         """
         self.pred_intensities = pred_intensities
         self.true_intensities = true_intensities
+        self.mz = mz
         self.metrics_val = pd.DataFrame()
 
     @abstractmethod
