@@ -337,21 +337,25 @@ class SimilarityMetrics(Metric):
             observed_normalized = observed_normalized.toarray()
         if isinstance(predicted_normalized, scipy.sparse.csr_matrix):
             predicted_normalized = predicted_normalized.toarray()
+        if isinstance(mz, scipy.sparse.csr_matrix):
+            mz = mz.toarray()
 
         cos_values = []
         mz_power = 0.9
         intensity_power = 0.4
-        for obs, pred in zip(observed_normalized, predicted_normalized):
+        for obs, pred, mz_vec in zip(observed_normalized, predicted_normalized, mz):
             valid_ion_mask = pred > epsilon
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
-            mz = mz[valid_ion_mask]
+            mz_vec = mz_vec[valid_ion_mask]
             obs = obs[~np.isnan(obs)]
             pred = pred[~np.isnan(pred)]
-            mz = mz[~np.isnan(mz)]
-            sum_matched = np.sum(obs**intensity_power * mz**mz_power * pred**intensity_power * mz**mz_power)
-            sqrt_sum_pred = (np.sum(obs**intensity_power * mz ** (mz_power**2))) ** 0.5
-            sqrt_sum_obs = (np.sum(pred**intensity_power * mz ** (mz_power**2))) ** 0.5
+            mz_vec = mz_vec[~np.isnan(mz_vec)]
+            sum_matched = np.sum(
+                (obs**intensity_power) * (mz_vec**mz_power) * (pred**intensity_power) * (mz_vec**mz_power)
+            )
+            sqrt_sum_pred = (np.sum(((pred**intensity_power) * (mz_vec**mz_power)) ** 2)) ** 0.5
+            sqrt_sum_obs = (np.sum(((obs**intensity_power) * (mz_vec**mz_power)) ** 2)) ** 0.5
             cosine = sum_matched / (sqrt_sum_pred * sqrt_sum_obs)
             cos_values.append(cosine)
 
