@@ -162,6 +162,39 @@ class SimilarityMetrics(Metric):
             return np.sum(np.multiply(observed_intensities, predicted_intensities), axis=1)
 
     @staticmethod
+    def spectral_entropy_similarity(
+        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+    ) -> List[float]:
+        """
+        Calculate spectral entropy similarity.
+
+        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \
+                                     0 intensity indicates invalid peaks (charge state > peptide charge state or \
+                                     position >= peptide length), array of length 174
+        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
+        :return: spectral entropy similarity values
+        """
+        if type(observed_intensities) == scipy.sparse.csr_matrix:
+            observed_intensities = observed_intensities.toarray()
+        if type(predicted_intensities) == scipy.sparse.csr_matrix:
+            predicted_intensities = predicted_intensities.toarray()
+
+        entropies = []
+        for obs, pred in zip(observed_intensities, predicted_intensities):
+            valid_ion_mask = pred > constants.EPSILON
+            obs = obs[valid_ion_mask]
+            pred = pred[valid_ion_mask]
+            obs = obs[~np.isnan(obs)]
+            pred = pred[~np.isnan(pred)]
+            entropy_merged = scipy.stats.entropy(obs + pred)
+            entropy_pred = scipy.stats.entropy(pred)
+            entropy_obs = scipy.stats.entropy(obs)
+            entropies.append(1 - (2 * entropy_merged - entropy_obs - entropy_pred) / np.log(4))
+
+        return entropies
+
+    @staticmethod
     def correlation(
         observed_intensities: scipy.sparse.csr_matrix,
         predicted_intensities: scipy.sparse.csr_matrix,
