@@ -410,6 +410,9 @@ class SimilarityMetrics(Metric):
             self.true_intensities, self.pred_intensities, self.mz
         )
         if all_features:
+            self.metrics_val["spectral_entropy_similarity"] = SimilarityMetrics.spectral_entropy_similarity(
+                self.true_intensities, self.pred_intensities
+            )
             self.metrics_val["spectral_angle_single_charge"] = SimilarityMetrics.spectral_angle(
                 self.true_intensities, self.pred_intensities, 1
             )
