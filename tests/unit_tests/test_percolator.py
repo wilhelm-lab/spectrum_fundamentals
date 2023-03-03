@@ -337,6 +337,7 @@ class TestPercolator:
             pred_intensities=predicted_intensities,
             true_intensities=observed_intensities,
             fdr_cutoff=0.4,
+            regression_method="lowess",
         )
         percolator.calc()
 

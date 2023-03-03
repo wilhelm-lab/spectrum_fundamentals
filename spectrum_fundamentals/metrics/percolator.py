@@ -431,7 +431,7 @@ class Percolator(Metric):
                 self.metadata["RETENTION_TIME"][sampled_idxs],
                 self.metadata["PREDICTED_IRT"][sampled_idxs],
                 self.metadata["PREDICTED_IRT"],
-                self.regression_method
+                self.regression_method,
             )
 
             self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
