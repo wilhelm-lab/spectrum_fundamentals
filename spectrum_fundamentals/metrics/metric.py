@@ -26,6 +26,7 @@ class Metric:
 
         :param pred_intensities: predicted intensities
         :param true_intensities: observed intensities
+        :param mz: observed mz values
         """
         self.pred_intensities = pred_intensities
         self.true_intensities = true_intensities
