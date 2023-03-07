@@ -352,10 +352,10 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def modified_cosine(
-        observed_intensities: scipy.sparse.csr_matrix,
-        predicted_intensities: scipy.sparse.csr_matrix,
-        observed_mz: scipy.sparse.csr_matrix,
-        theoretical_mz: scipy.sparse.csr_matrix,
+        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        observed_mz: Union[scipy.sparse.csr_matrix, np.ndarray],
+        theoretical_mz: Union[scipy.sparse.csr_matrix, np.ndarray],
     ) -> List[float]:
         """
         Calculate modified cosine similarity as defined in Chris D. McGann et al. (Real-time spectral library \
