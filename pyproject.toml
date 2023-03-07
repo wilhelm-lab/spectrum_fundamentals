@@ -26,9 +26,9 @@ rich = ">=10.3.0"
 PyYAML = ">=5.4.1"
 numpy = "^1.24.1"
 pandas = "^1.3.0"
-statsmodels = {git = "https://github.com/statsmodels/statsmodels.git", rev = "main"}
 scikit-learn = "^1.0"
 joblib = "^1.0.1"
+moepy = "^1.1.4"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.2.4"
