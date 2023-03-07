@@ -167,7 +167,8 @@ class SimilarityMetrics(Metric):
         predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
     ) -> List[float]:
         """
-        Calculate spectral entropy similarity.
+        Calculate spectral entropy similarity as defined in Li et al. (Spectral entropy outperforms MS/MS dot product \
+        similarity for small-molecule compound identification).
 
         :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \
                                      0 intensity indicates invalid peaks (charge state > peptide charge state or \
@@ -190,7 +191,10 @@ class SimilarityMetrics(Metric):
             entropy_merged = scipy.stats.entropy(obs + pred)
             entropy_pred = scipy.stats.entropy(pred)
             entropy_obs = scipy.stats.entropy(obs)
-            entropies.append(1 - (2 * entropy_merged - entropy_obs - entropy_pred) / np.log(4))
+            entropy = 1 - (2 * entropy_merged - entropy_obs - entropy_pred) / np.log(4)
+            if np.isnan(entropy):
+                entropy = 0
+            entropies.append(entropy)
 
         return entropies
 
@@ -351,10 +355,11 @@ class SimilarityMetrics(Metric):
         observed_intensities: scipy.sparse.csr_matrix,
         predicted_intensities: scipy.sparse.csr_matrix,
         observed_mz: scipy.sparse.csr_matrix,
-        theoretical_mz: scipy.sparse.csr_matrix
+        theoretical_mz: scipy.sparse.csr_matrix,
     ) -> List[float]:
         """
-        Calculate modified cosine similarity.
+        Calculate modified cosine similarity as defined in Chris D. McGann et al. (Real-time spectral library \
+        matching for sample multiplexed quantitative proteomics).
 
         :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \
                                      0 intensity indicates invalid peaks (charge state > peptide charge state or \
@@ -395,6 +400,8 @@ class SimilarityMetrics(Metric):
             sqrt_sum_pred = (np.sum(((pred**intensity_power) * (th_mz**mz_power)) ** 2)) ** 0.5
             sqrt_sum_obs = (np.sum(((obs**intensity_power) * (obs_mz**mz_power)) ** 2)) ** 0.5
             cosine = sum_matched / (sqrt_sum_pred * sqrt_sum_obs)
+            if np.isnan(cosine):
+                cosine = 0
             cos_values.append(cosine)
 
         return cos_values
