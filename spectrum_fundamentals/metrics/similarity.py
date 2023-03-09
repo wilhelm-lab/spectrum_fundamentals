@@ -162,6 +162,43 @@ class SimilarityMetrics(Metric):
             return np.sum(np.multiply(observed_intensities, predicted_intensities), axis=1)
 
     @staticmethod
+    def spectral_entropy_similarity(
+        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+    ) -> List[float]:
+        """
+        Calculate spectral entropy similarity as defined in Li et al. (Spectral entropy outperforms MS/MS dot product \
+        similarity for small-molecule compound identification).
+
+        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \
+                                     0 intensity indicates invalid peaks (charge state > peptide charge state or \
+                                     position >= peptide length), array of length 174
+        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
+        :return: spectral entropy similarity values
+        """
+        if type(observed_intensities) == scipy.sparse.csr_matrix:
+            observed_intensities = observed_intensities.toarray()
+        if type(predicted_intensities) == scipy.sparse.csr_matrix:
+            predicted_intensities = predicted_intensities.toarray()
+
+        entropies = []
+        for obs, pred in zip(observed_intensities, predicted_intensities):
+            valid_ion_mask = pred > constants.EPSILON
+            obs = obs[valid_ion_mask]
+            pred = pred[valid_ion_mask]
+            obs = obs[~np.isnan(obs)]
+            pred = pred[~np.isnan(pred)]
+            entropy_merged = scipy.stats.entropy(obs + pred)
+            entropy_pred = scipy.stats.entropy(pred)
+            entropy_obs = scipy.stats.entropy(obs)
+            entropy = 1 - (2 * entropy_merged - entropy_obs - entropy_pred) / np.log(4)
+            if np.isnan(entropy):
+                entropy = 0
+            entropies.append(entropy)
+
+        return entropies
+
+    @staticmethod
     def correlation(
         observed_intensities: scipy.sparse.csr_matrix,
         predicted_intensities: scipy.sparse.csr_matrix,
@@ -267,7 +304,7 @@ class SimilarityMetrics(Metric):
                                      position >= peptide length), array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param metric: metric (mean, std, q1, q2, q3, min, max, or mse)
-        :return: calculates similarity values
+        :return: calculated similarity values
         """
         chosen_metric = get_metric_func(metric)
 
@@ -313,6 +350,62 @@ class SimilarityMetrics(Metric):
         else:
             return np.quantile(absolute(observed - mean(predicted)), 0.25)
 
+    @staticmethod
+    def modified_cosine(
+        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        observed_mz: Union[scipy.sparse.csr_matrix, np.ndarray],
+        theoretical_mz: Union[scipy.sparse.csr_matrix, np.ndarray],
+    ) -> List[float]:
+        """
+        Calculate modified cosine similarity as defined in Chris D. McGann et al. (Real-time spectral library \
+        matching for sample multiplexed quantitative proteomics).
+
+        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \
+                                     0 intensity indicates invalid peaks (charge state > peptide charge state or \
+                                     position >= peptide length), array of length 174
+        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
+        :param mz: observed mz values
+        :return: calculates cosine values
+        """
+        epsilon = 1e-7
+        observed_normalized = SimilarityMetrics.unit_normalization(observed_intensities)
+        predicted_normalized = SimilarityMetrics.unit_normalization(predicted_intensities)
+
+        if isinstance(observed_normalized, scipy.sparse.csr_matrix):
+            observed_normalized = observed_normalized.toarray()
+        if isinstance(predicted_normalized, scipy.sparse.csr_matrix):
+            predicted_normalized = predicted_normalized.toarray()
+        if isinstance(observed_mz, scipy.sparse.csr_matrix):
+            observed_mz = observed_mz.toarray()
+        if isinstance(theoretical_mz, scipy.sparse.csr_matrix):
+            theoretical_mz = theoretical_mz.toarray()
+
+        cos_values = []
+        mz_power = 0.9
+        intensity_power = 0.4
+        for obs, pred, obs_mz, th_mz in zip(observed_normalized, predicted_normalized, observed_mz, theoretical_mz):
+            valid_ion_mask = pred > epsilon
+            obs = obs[valid_ion_mask]
+            pred = pred[valid_ion_mask]
+            obs_mz = obs_mz[valid_ion_mask]
+            th_mz = th_mz[valid_ion_mask]
+            obs = obs[~np.isnan(obs)]
+            pred = pred[~np.isnan(pred)]
+            obs_mz = obs_mz[~np.isnan(obs_mz)]
+            th_mz = th_mz[~np.isnan(th_mz)]
+            sum_matched = np.sum(
+                (obs**intensity_power) * (obs_mz**mz_power) * (pred**intensity_power) * (th_mz**mz_power)
+            )
+            sqrt_sum_pred = (np.sum(((pred**intensity_power) * (th_mz**mz_power)) ** 2)) ** 0.5
+            sqrt_sum_obs = (np.sum(((obs**intensity_power) * (obs_mz**mz_power)) ** 2)) ** 0.5
+            cosine = sum_matched / (sqrt_sum_pred * sqrt_sum_obs)
+            if np.isnan(cosine):
+                cosine = 0
+            cos_values.append(cosine)
+
+        return cos_values
+
     def calc(self, all_features: bool):
         """
         Adds columns with spectral angle feature to metrics_val dataframe.
@@ -325,7 +418,13 @@ class SimilarityMetrics(Metric):
         self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
             self.true_intensities, self.pred_intensities, 0, "pearson"
         )
+        self.metrics_val["modified_cosine"] = SimilarityMetrics.modified_cosine(
+            self.true_intensities, self.pred_intensities, self.mz, self.mz
+        )
         if all_features:
+            self.metrics_val["spectral_entropy_similarity"] = SimilarityMetrics.spectral_entropy_similarity(
+                self.true_intensities, self.pred_intensities
+            )
             self.metrics_val["spectral_angle_single_charge"] = SimilarityMetrics.spectral_angle(
                 self.true_intensities, self.pred_intensities, 1
             )

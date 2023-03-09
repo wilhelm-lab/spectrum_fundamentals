@@ -120,11 +120,12 @@ def internal_to_mod_names(
         match_list.clear()
         return mod, mod_string
 
-    def replace_and_store(match: re.Match):
+    def replace_and_store(match: re.Match) -> str:
         """
         Internal function that removes matched internal mods and stores there position in the sequence.
 
         :param match: an re.Match object found by re.sub
+        :return: empty string
         """
         pos[0] = match.start() - 1 - offset[0]
         offset[0] += match.end() - match.start()
@@ -135,13 +136,14 @@ def internal_to_mod_names(
     return [msp_string_mapper(seq) for seq in sequences]
 
 
-def parse_modstrings(sequences: List[str], alphabet, translate: bool = False, filter: bool = False):
+def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: bool = False, filter: bool = False):
     """
     Parse modstrings.
 
     :param sequences: List of strings
-    :param ALPHABET: dictionary where the keys correspond to all possible 'Elements' that can occur in the string
+    :param alphabet: dictionary where the keys correspond to all possible 'Elements' that can occur in the string
     :param translate: boolean to determine if the Elements should be translated to the corresponding values of ALPHABET
+    :param filter: boolean to determine if non-parsable sequences should be filtered out
     :return: generator that yields a list of sequence 'Elements' or the translated sequence "Elements"
     """
 

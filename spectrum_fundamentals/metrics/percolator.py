@@ -54,6 +54,7 @@ class Percolator(Metric):
         input_type: str,
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         all_features_flag: bool = False,
         regression_method: str = lowess,
         fdr_cutoff: float = 0.01,
@@ -64,7 +65,7 @@ class Percolator(Metric):
         self.all_features_flag = all_features_flag
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
-        super().__init__(pred_intensities, true_intensities)
+        super().__init__(pred_intensities, true_intensities, mz)
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -403,7 +404,7 @@ class Percolator(Metric):
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
             fragments_ratio.calc()
 
-            similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities)
+            similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
             similarity.calc(self.all_features_flag)
 
             self.metrics_val = pd.concat(

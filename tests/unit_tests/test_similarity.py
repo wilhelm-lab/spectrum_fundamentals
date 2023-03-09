@@ -69,6 +69,162 @@ class TestSpectralAngle:
         np.testing.assert_almost_equal(sim.SimilarityMetrics.spectral_angle(observed, predicted), 0.40966552939)
 
 
+class TestSpectralEntropy:
+    """Class to test spectral entropy."""
+
+    def test_spectral_entropy_equal(self):
+        """Test spectral entropy."""
+        observed = get_padded_array([1.0, 2.0, 3.0, 4.0])
+        predicted = get_padded_array([1.0, 2.0, 3.0, 4.0])
+        np.testing.assert_almost_equal(sim.SimilarityMetrics.spectral_entropy_similarity(observed, predicted), 1.0)
+
+    def test_spectral_entropy_equal_scaled(self):
+        """Test spectral entropy."""
+        observed = get_padded_array([1.0, 2.0, 3.0, 4.0])
+        predicted = get_padded_array([2.0, 4.0, 6.0, 8.0])
+        np.testing.assert_almost_equal(sim.SimilarityMetrics.spectral_entropy_similarity(observed, predicted), 1.0)
+
+    def test_spectral_entropy_all_zero(self):
+        """Test spectral entropy."""
+        z = constants.EPSILON
+        observed = get_padded_array([z, z, z, z])
+        predicted = get_padded_array([z, z, z, z])
+        np.testing.assert_almost_equal(sim.SimilarityMetrics.spectral_entropy_similarity(observed, predicted), 1.0)
+
+    def test_spectral_entropy_invalid(self):
+        """Test spectral entropy."""
+        observed = get_padded_array([0.0, 2.0, 0.0, 4.0])
+        predicted = get_padded_array([1.0, 0.0, 3.0, 0.0])
+        np.testing.assert_almost_equal(sim.SimilarityMetrics.spectral_entropy_similarity(observed, predicted), 0.0)
+
+    def test_spectral_entropy_full(self):
+        """Test spectral entropy."""
+        # 1 - 2*arccos(28/30)/pi
+        observed = get_padded_array([1.0, 2.0, 4.0, 3.0])
+        predicted = get_padded_array([2.0, 1.0, 3.0, 4.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.spectral_entropy_similarity(observed, predicted), 0.96514844
+        )
+
+    def test_spectral_entropy_full_with_zeros(self):
+        """Test spectral entropy."""
+        # 1 - 2*arccos(24/sqrt(25*29))/pi
+        z = constants.EPSILON
+        observed = get_padded_array([z, 2.0, 4.0, 3.0])
+        predicted = get_padded_array([2.0, z, 3.0, 4.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.spectral_entropy_similarity(observed, predicted), 0.83929633
+        )
+
+    def test_spectral_entropy_full_with_both_zeros(self):
+        """Test spectral entropy."""
+        # 1 - 2*arccos(12/sqrt(16*25))/pi
+        z = constants.EPSILON
+        observed = get_padded_array([z, 3.0, 4.0, z])
+        predicted = get_padded_array([z, z, 3.0, 4.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.spectral_entropy_similarity(observed, predicted), 0.5469540
+        )
+
+
+class TestModifiedCosine:
+    """Class to test modified cosine."""
+
+    def test_modified_cosine_equal(self):
+        """Test modified cosine."""
+        observed = get_padded_array([1.0, 2.0, 3.0, 4.0])
+        predicted = get_padded_array([1.0, 2.0, 3.0, 4.0])
+        observed_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        theoretical_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 1.0
+        )
+
+    def test_modified_cosine_equal_scaled(self):
+        """Test modified cosine."""
+        observed = get_padded_array([1.0, 2.0, 3.0, 4.0])
+        predicted = get_padded_array([2.0, 4.0, 6.0, 8.0])
+        observed_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        theoretical_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 1.0
+        )
+
+    def test_modified_cosine_zero(self):
+        """Test modified cosine."""
+        z = constants.EPSILON
+        observed = get_padded_array([z, 2.0, z, 4.0])
+        predicted = get_padded_array([1.0, z, 3.0, z])
+        observed_mz = get_padded_array([0.0, 0.0, 0.0, 0.0])
+        theoretical_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 0.0
+        )
+
+    def test_modified_cosine_all_zero(self):
+        """Test modified cosine."""
+        z = constants.EPSILON
+        observed = get_padded_array([z, z, z, z])
+        predicted = get_padded_array([z, z, z, z])
+        observed_mz = get_padded_array([0.0, 0.0, 0.0, 0.0])
+        theoretical_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 0.0
+        )
+
+    def test_modified_cosine_invalid(self):
+        """Test modified cosine."""
+        observed = get_padded_array([0.0, 2.0, 0.0, 4.0])
+        predicted = get_padded_array([1.0, 0.0, 3.0, 0.0])
+        observed_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        theoretical_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 0.0
+        )
+
+    def test_modified_cosine_full(self):
+        """Test modified cosine."""
+        observed = get_padded_array([1.0, 2.0, 4.0, 3.0])
+        predicted = get_padded_array([2.0, 1.0, 3.0, 4.0])
+        observed_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        theoretical_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 0.990263903
+        )
+
+    def test_modified_cosine_full_with_zeros(self):
+        """Test modified cosine."""
+        z = constants.EPSILON
+        observed = get_padded_array([z, 2.0, 4.0, 3.0])
+        predicted = get_padded_array([2.0, z, 3.0, 4.0])
+        observed_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        theoretical_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 0.978272764
+        )
+
+    def test_modified_cosine_full_with_both_zeros(self):
+        """Test modified cosine."""
+        z = constants.EPSILON
+        observed = get_padded_array([z, 3.0, 4.0, z])
+        predicted = get_padded_array([z, z, 3.0, 4.0])
+        observed_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        theoretical_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 0.56777188
+        )
+
+    def test_modified_cosine_full_different_mz(self):
+        """Test modified cosine."""
+        observed = get_padded_array([1.0, 2.0, 4.0, 3.0])
+        predicted = get_padded_array([2.0, 1.0, 3.0, 4.0])
+        observed_mz = get_padded_array([100.0, 200.0, 300.0, 400.0])
+        theoretical_mz = get_padded_array([200.0, 100.0, 400.0, 300.0])
+        np.testing.assert_almost_equal(
+            sim.SimilarityMetrics.modified_cosine(observed, predicted, observed_mz, theoretical_mz), 0.95422659
+        )
+
+
 class TestSpectralAngleMultipleRows:
     """Class to test SA."""
 
