@@ -5,9 +5,11 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import scipy.optimize as opt
 import scipy.stats
+from moepy import lowess
+from scipy import interpolate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from statsmodels.nonparametric.smoothers_lowess import lowess
 
 from . import fragments_ratio as fr
 from . import similarity as sim
@@ -52,15 +54,18 @@ class Percolator(Metric):
         input_type: str,
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         all_features_flag: bool = False,
+        regression_method: str = lowess,
         fdr_cutoff: float = 0.01,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
         self.input_type = input_type
         self.all_features_flag = all_features_flag
+        self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
-        super().__init__(pred_intensities, true_intensities)
+        super().__init__(pred_intensities, true_intensities, mz)
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -95,14 +100,16 @@ class Percolator(Metric):
         observed_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_all: Union[np.ndarray, pd.Series],
+        curve_fitting_method: Optional[str] = "lowess",
     ) -> np.ndarray:
         """
-        Apply loess regression to find a mapping from predicted iRT values to experimental retention times.
+        Apply regression to find a mapping from predicted iRT values to experimental retention times.
 
         :param observed_retention_times_fdr_filtered: observed retention times after FDR filter
         :param predicted_retention_times_fdr_filtered: predicted retention times after FDR filter
         :param predicted_retention_times_all: all predicted retention times
-        :return: alignet predicted retention times
+        :param curve_fitting_method: method for curve fitting (lowess, spline, or logistic regression)
+        :return: aligned predicted retention times
         """
         observed_rts = np.array(observed_retention_times_fdr_filtered, dtype=np.float64)
         predicted_rts = np.array(predicted_retention_times_fdr_filtered, dtype=np.float64)
@@ -112,8 +119,23 @@ class Percolator(Metric):
         it = 0  # The number of residual-based reweightings to perform. Don't use the iterative reweighting (it > 1),
         # this result in NaNs
         discard_percentage = 0.1  # in percents, so 0.1 = 0.1% (not 10%!)
+
+        if curve_fitting_method == "lowess":
+            lowess_model = lowess.Lowess()
+        elif curve_fitting_method == "spline":
+            # spline works only with unique values
+            predicted_rts, indices = np.unique(predicted_rts, return_index=True)
+            observed_rts = observed_rts[indices]
+
+        if curve_fitting_method == "logistic":
+            (a_, b_, c_, d_), _ = opt.curve_fit(f, predicted_rts, observed_rts, method="lm")
+            return f(predicted_retention_times_all, a_, b_, c_, d_)
         while discard_percentage < 50.0:
-            aligned_rts_predicted = lowess(observed_rts, predicted_rts, frac=frac, it=it, return_sorted=False)
+            if curve_fitting_method == "spline":
+                aligned_rts_predicted, t, c, k = spline(2, predicted_rts, observed_rts, predicted_rts)
+            else:
+                lowess_model.fit(predicted_rts, observed_rts, frac=frac, robust_iters=it)
+                aligned_rts_predicted = lowess_model.predict(predicted_rts)
             abs_errors = np.abs(aligned_rts_predicted - observed_rts)
             cut_off = np.percentile(abs_errors, 100 - discard_percentage)
             median_abs_error = np.median(np.abs(abs_errors))
@@ -125,16 +147,16 @@ class Percolator(Metric):
                 predicted_rts = predicted_rts[keep_idxs[0]]
             else:
                 break
-
             discard_percentage *= 1.5
 
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
 
-        # TODO; test for NaNs and use interpolation to fill them up
-        aligned_rts_predicted = lowess(
-            observed_rts, predicted_rts, xvals=predicted_retention_times_all.astype(np.float64), frac=frac, it=it
-        )
+        if curve_fitting_method == "spline":
+            aligned_rts_predicted = interpolate.BSpline(t, c, k)(predicted_retention_times_all)
+        else:
+            aligned_rts_predicted = lowess_model.predict(np.array(predicted_retention_times_all))
+
         return aligned_rts_predicted
 
     @staticmethod
@@ -382,7 +404,7 @@ class Percolator(Metric):
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
             fragments_ratio.calc()
 
-            similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities)
+            similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
             similarity.calc(self.all_features_flag)
 
             self.metrics_val = pd.concat(
@@ -410,6 +432,7 @@ class Percolator(Metric):
                 self.metadata["RETENTION_TIME"][sampled_idxs],
                 self.metadata["PREDICTED_IRT"][sampled_idxs],
                 self.metadata["PREDICTED_IRT"],
+                self.regression_method,
             )
 
             self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
@@ -438,3 +461,17 @@ class Percolator(Metric):
             )
 
         self._reorder_columns_for_percolator()
+
+
+def spline(knots: int, x: np.ndarray, y: np.ndarray, x_full: np.ndarray):
+    """Calculates spline fitting."""
+    x_new = np.linspace(0, 1, knots + 2)[1:-1]
+    q_knots = np.quantile(x, x_new)
+    t, c, k = interpolate.splrep(x, y, t=q_knots, s=2)
+    yfit = interpolate.BSpline(t, c, k)(x_full)
+    return yfit, t, c, k
+
+
+def f(x: Union[pd.Series, np.ndarray], a: float, b: float, c: float, d: float):
+    """Calculates logistic regression function."""
+    return a / (1.0 + np.exp(-c * (x - d))) + b

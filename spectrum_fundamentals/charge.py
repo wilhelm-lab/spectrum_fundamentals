@@ -1,16 +1,36 @@
+from typing import List, Optional, Union
+
 import numpy as np
 
 
-def indices_to_one_hot(data, nb_classes):
+def indices_to_one_hot(labels: Union[int, List[int], np.ndarray], classes: Optional[int] = None) -> np.ndarray:
     """
-    Convert an iterable of indices to one-hot encoded labels.
+    Convert a single or a list of labels to one-hot encoding.
 
-    :param data: charge, int between 1 and 6
+    :param labels: The labels to be one-hot encoding. Must be zero-based.
+    :param classes: The number of classes, i.e. the length of the encoding. If omitted, set to the max label + 1.
+
+    :raises TypeError: If the type of labels is not understood
+    :raises ValueError: If the highest label in labels is larger or equal to the number of classes.
+
+    :return: np.ndarray with the one-hot encoded labels.
     """
-    targets = np.array([data])
-    targets = targets.astype(np.uint8)
-    targets = targets - 1  # -1 for 0 indexing
-    try:
-        return np.int_(np.eye(nb_classes)[targets]).tolist()[0]
-    except IndexError as ie:
-        raise IndexError("Please validate the precursor charge values are between 1 and 6") from ie
+    if isinstance(labels, int):
+        labels = np.array([labels])
+    elif isinstance(labels, (list, np.ndarray)):
+        labels = np.array(labels)
+    else:
+        raise TypeError(
+            f"Type of labels not understood. Only int, List[int] and np.ndarray are supported. Given: {type(labels)}."
+        )
+
+    max_label = labels.max()
+    if classes is None:
+        classes = max_label + 1
+    if max_label >= classes:
+        raise ValueError("All labels must be smaller to the number of classes.")
+
+    one_hot = np.zeros((labels.size, classes), dtype=int)
+    one_hot[np.arange(labels.size), labels] = 1
+
+    return one_hot

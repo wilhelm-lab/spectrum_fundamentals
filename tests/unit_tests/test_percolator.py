@@ -319,24 +319,31 @@ class TestPercolator:
         #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
         predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
         observed_intensities_target = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0])
+        mz_target = get_padded_array([100, 0, 150, 0, 0, 0, 300, 0, 0])
 
         predicted_intensities_decoy = get_padded_array([z, 3.0, 4.0, z])
         observed_intensities_decoy = get_padded_array([z, z, 3.0, 4.0])
+        mz_decoy = get_padded_array([0, 0, 100, 0])
 
         predicted_intensities = scipy.sparse.vstack(np.repeat(predicted_intensities_target, len(perc_input)))
         observed_intensities = scipy.sparse.vstack(np.repeat(observed_intensities_target, len(perc_input)))
+        mz = scipy.sparse.vstack(np.repeat(mz_target, len(perc_input)))
 
         predicted_intensities[1, :] = predicted_intensities_decoy
         predicted_intensities[2, :] = predicted_intensities_decoy
         observed_intensities[1, :] = observed_intensities_decoy
         observed_intensities[2, :] = observed_intensities_decoy
+        mz[1, :] = mz_decoy
+        mz[2, :] = mz_target
 
         percolator = perc.Percolator(
             metadata=perc_input,
             input_type="rescore",
             pred_intensities=predicted_intensities,
             true_intensities=observed_intensities,
+            mz=mz,
             fdr_cutoff=0.4,
+            regression_method="lowess",
         )
         percolator.calc()
 
