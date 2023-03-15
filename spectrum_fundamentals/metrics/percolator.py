@@ -122,11 +122,6 @@ class Percolator(Metric):
 
         if curve_fitting_method == "lowess":
             lowess_model = lowess.Lowess()
-        elif curve_fitting_method == "spline":
-            # spline works only with unique values
-            predicted_rts, indices = np.unique(predicted_rts, return_index=True)
-            observed_rts = observed_rts[indices]
-
         if curve_fitting_method == "logistic":
             (a_, b_, c_, d_), _ = opt.curve_fit(f, predicted_rts, observed_rts, method="lm")
             return f(predicted_retention_times_all, a_, b_, c_, d_)
@@ -428,9 +423,10 @@ class Percolator(Metric):
                     self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
                 )
 
+            file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
             aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
-                self.metadata["RETENTION_TIME"][sampled_idxs],
-                self.metadata["PREDICTED_IRT"][sampled_idxs],
+                file_sample["RETENTION_TIME"],
+                file_sample["PREDICTED_IRT"],
                 self.metadata["PREDICTED_IRT"],
                 self.regression_method,
             )
