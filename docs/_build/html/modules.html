@@ -1,286 +1,1872 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<html class="writer-html5" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="generator"
+            content="Docutils 0.17.1: http://docutils.sourceforge.net/"
+        />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>spectrum_fundamentals &mdash; spectrum_fundamentals 0.3.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="_static/custom_cookietemple.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            spectrum_fundamentals &mdash; spectrum_fundamentals 0.3.0
+            documentation
+        </title>
+        <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+        <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+        <link
+            rel="stylesheet"
+            href="_static/custom_cookietemple.css"
+            type="text/css"
+        />
+        <!--[if lt IE 9]>
+            <script src="_static/js/html5shiv.min.js"></script>
+        <![endif]-->
+
+        <script
+            data-url_root="./"
+            id="documentation_options"
+            src="_static/documentation_options.js"
+        ></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="spectrum_fundamentals package" href="spectrum_fundamentals.html" />
-    <link rel="prev" title="Contributor Covenant Code of Conduct" href="code_of_conduct.html" /> 
-</head>
+        <script src="_static/js/theme.js"></script>
+        <link rel="index" title="Index" href="genindex.html" />
+        <link rel="search" title="Search" href="search.html" />
+        <link
+            rel="next"
+            title="spectrum_fundamentals package"
+            href="spectrum_fundamentals.html"
+        />
+        <link
+            rel="prev"
+            title="Contributor Covenant Code of Conduct"
+            href="code_of_conduct.html"
+        />
+    </head>
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> spectrum_fundamentals
-          </a>
-              <div class="version">
-                0.3.0
-              </div>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="readme.html">spectrum_fundamentals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributor Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">spectrum_fundamentals</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html">spectrum_fundamentals package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.annotation.html">spectrum_fundamentals.annotation package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.metrics.html">spectrum_fundamentals.metrics package</a></li>
-</ul>
-</li>
-</ul>
+    <body class="wy-body-for-nav">
+        <div class="wy-grid-for-nav">
+            <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+                <div class="wy-side-scroll">
+                    <div class="wy-side-nav-search">
+                        <a href="index.html" class="icon icon-home">
+                            spectrum_fundamentals
+                        </a>
+                        <div class="version">0.3.0</div>
+                        <div role="search">
+                            <form
+                                id="rtd-search-form"
+                                class="wy-form"
+                                action="search.html"
+                                method="get"
+                            >
+                                <input
+                                    type="text"
+                                    name="q"
+                                    placeholder="Search docs"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="check_keywords"
+                                    value="yes"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="area"
+                                    value="default"
+                                />
+                            </form>
+                        </div>
+                    </div>
+                    <div
+                        class="wy-menu wy-menu-vertical"
+                        data-spy="affix"
+                        role="navigation"
+                        aria-label="Navigation menu"
+                    >
+                        <p class="caption" role="heading">
+                            <span class="caption-text">Contents:</span>
+                        </p>
+                        <ul class="current">
+                            <li class="toctree-l1">
+                                <a class="reference internal" href="readme.html"
+                                    >spectrum_fundamentals</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="installation.html"
+                                    >Installation</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a class="reference internal" href="usage.html"
+                                    >Usage</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="reference.html"
+                                    >Reference</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="contributing.html"
+                                    >Contributor Guide</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="authors.html"
+                                    >Credits</a
+                                >
+                            </li>
+                            <li class="toctree-l1">
+                                <a
+                                    class="reference internal"
+                                    href="code_of_conduct.html"
+                                    >Contributor Covenant Code of Conduct</a
+                                >
+                            </li>
+                            <li class="toctree-l1 current">
+                                <a class="current reference internal" href="#"
+                                    >spectrum_fundamentals</a
+                                >
+                                <ul>
+                                    <li class="toctree-l2">
+                                        <a
+                                            class="reference internal"
+                                            href="spectrum_fundamentals.html"
+                                            >spectrum_fundamentals package</a
+                                        >
+                                    </li>
+                                    <li class="toctree-l2">
+                                        <a
+                                            class="reference internal"
+                                            href="spectrum_fundamentals.annotation.html"
+                                            >spectrum_fundamentals.annotation
+                                            package</a
+                                        >
+                                    </li>
+                                    <li class="toctree-l2">
+                                        <a
+                                            class="reference internal"
+                                            href="spectrum_fundamentals.metrics.html"
+                                            >spectrum_fundamentals.metrics
+                                            package</a
+                                        >
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
 
+            <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+                <nav class="wy-nav-top" aria-label="Mobile navigation menu">
+                    <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+                    <a href="index.html">spectrum_fundamentals</a>
+                </nav>
+
+                <div class="wy-nav-content">
+                    <div class="rst-content">
+                        <div role="navigation" aria-label="Page navigation">
+                            <ul class="wy-breadcrumbs">
+                                <li>
+                                    <a
+                                        href="index.html"
+                                        class="icon icon-home"
+                                    ></a>
+                                    &raquo;
+                                </li>
+                                <li>spectrum_fundamentals</li>
+                                <li class="wy-breadcrumbs-aside">
+                                    <a
+                                        href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/development/spectrum_fundamentals/modules.rst"
+                                        class="fa fa-github"
+                                    >
+                                        Edit on GitHub</a
+                                    >
+                                </li>
+                            </ul>
+                            <hr />
+                        </div>
+                        <div
+                            role="main"
+                            class="document"
+                            itemscope="itemscope"
+                            itemtype="http://schema.org/Article"
+                        >
+                            <div itemprop="articleBody">
+                                <section id="spectrum-fundamentals">
+                                    <h1>
+                                        spectrum_fundamentals<a
+                                            class="headerlink"
+                                            href="#spectrum-fundamentals"
+                                            title="Permalink to this heading"
+                                            ></a
+                                        >
+                                    </h1>
+                                    <div class="toctree-wrapper compound">
+                                        <ul>
+                                            <li class="toctree-l1">
+                                                <a
+                                                    class="reference internal"
+                                                    href="spectrum_fundamentals.html"
+                                                    >spectrum_fundamentals
+                                                    package</a
+                                                >
+                                                <ul>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.html#subpackages"
+                                                            >Subpackages</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.annotation.html"
+                                                                    >spectrum_fundamentals.annotation
+                                                                    package</a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.annotation.html#submodules"
+                                                                            >Submodules</a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation.annotation"
+                                                                            >spectrum_fundamentals.annotation.annotation
+                                                                            module</a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation"
+                                                                            >Module
+                                                                            contents</a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html"
+                                                                    >spectrum_fundamentals.metrics
+                                                                    package</a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#submodules"
+                                                                            >Submodules</a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.fragments_ratio"
+                                                                            >spectrum_fundamentals.metrics.fragments_ratio
+                                                                            module</a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.metric"
+                                                                            >spectrum_fundamentals.metrics.metric
+                                                                            module</a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.percolator"
+                                                                            >spectrum_fundamentals.metrics.percolator
+                                                                            module</a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.similarity"
+                                                                            >spectrum_fundamentals.metrics.similarity
+                                                                            module</a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics"
+                                                                            >Module
+                                                                            contents</a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.html#submodules"
+                                                            >Submodules</a
+                                                        >
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.html#module-spectrum_fundamentals.charge"
+                                                            >spectrum_fundamentals.charge
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.charge.indices_to_one_hot"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >indices_to_one_hot()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.html#module-spectrum_fundamentals.constants"
+                                                            >spectrum_fundamentals.constants
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.constants.RescoreType"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >RescoreType</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.html#spectrum_fundamentals.constants.RescoreType.ANDROMEDA"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >RescoreType.ANDROMEDA</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.html#spectrum_fundamentals.constants.RescoreType.PROSIT"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >RescoreType.PROSIT</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.html#module-spectrum_fundamentals.fragments"
+                                                            >spectrum_fundamentals.fragments
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.fragments.compute_ion_masses"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >compute_ion_masses()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.fragments.compute_peptide_mass"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >compute_peptide_mass()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.fragments.get_min_max_mass"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >get_min_max_mass()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.fragments.initialize_peaks"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >initialize_peaks()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.html#module-spectrum_fundamentals.mod_string"
+                                                            >spectrum_fundamentals.mod_string
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.get_mods_list"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >get_mods_list()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.internal_to_mod_mass"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >internal_to_mod_mass()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.internal_to_mod_names"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >internal_to_mod_names()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.internal_to_spectronaut"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >internal_to_spectronaut()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.internal_without_mods"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >internal_without_mods()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.maxquant_to_internal"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >maxquant_to_internal()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.parse_modstrings"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >parse_modstrings()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.proteomicsdb_to_internal"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >proteomicsdb_to_internal()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.html#module-spectrum_fundamentals"
+                                                            >Module contents</a
+                                                        >
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li class="toctree-l1">
+                                                <a
+                                                    class="reference internal"
+                                                    href="spectrum_fundamentals.annotation.html"
+                                                    >spectrum_fundamentals.annotation
+                                                    package</a
+                                                >
+                                                <ul>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.annotation.html#submodules"
+                                                            >Submodules</a
+                                                        >
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation.annotation"
+                                                            >spectrum_fundamentals.annotation.annotation
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.annotate_spectra"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >annotate_spectra()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.generate_annotation_matrix"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >generate_annotation_matrix()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.handle_multiple_matches"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >handle_multiple_matches()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.match_peaks"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >match_peaks()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.parallel_annotate"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >parallel_annotate()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation"
+                                                            >Module contents</a
+                                                        >
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li class="toctree-l1">
+                                                <a
+                                                    class="reference internal"
+                                                    href="spectrum_fundamentals.metrics.html"
+                                                    >spectrum_fundamentals.metrics
+                                                    package</a
+                                                >
+                                                <ul>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.metrics.html#submodules"
+                                                            >Submodules</a
+                                                        >
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.fragments_ratio"
+                                                            >spectrum_fundamentals.metrics.fragments_ratio
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >FragmentsRatio</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.calc"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.calc()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.count_observation_states"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.count_observation_states()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.count_with_ion_mask"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.count_with_ion_mask()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.get_mask_observed_valid"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.get_mask_observed_valid()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.get_observation_state"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.get_observation_state()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.make_boolean"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.make_boolean()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.metrics_val"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.metrics_val</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.pred_intensities"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.pred_intensities</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.true_intensities"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >FragmentsRatio.true_intensities</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >ObservationState</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.INVALID_ION"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >ObservationState.INVALID_ION</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.NOT_OBS_AND_NOT_PRED"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >ObservationState.NOT_OBS_AND_NOT_PRED</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.NOT_OBS_BUT_PRED"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >ObservationState.NOT_OBS_BUT_PRED</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.OBS_AND_PRED"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >ObservationState.OBS_AND_PRED</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.OBS_BUT_NOT_PRED"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >ObservationState.OBS_BUT_NOT_PRED</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.metric"
+                                                            >spectrum_fundamentals.metrics.metric
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >Metric</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.calc"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Metric.calc()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.metrics_val"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Metric.metrics_val</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.pred_intensities"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Metric.pred_intensities</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.true_intensities"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Metric.true_intensities</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.write_to_file"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Metric.write_to_file()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.percolator"
+                                                            >spectrum_fundamentals.metrics.percolator
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >Percolator</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.add_common_features"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.add_common_features()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.add_percolator_metadata_columns"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.add_percolator_metadata_columns()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.apply_lda_and_get_indices_below_fdr"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.apply_lda_and_get_indices_below_fdr()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calc"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.calc()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_fdrs"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.calculate_fdrs()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.calculate_mass_difference()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference_ppm"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.calculate_mass_difference_ppm()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.count_arginines_and_lysines"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.count_arginines_and_lysines()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.count_missed_cleavages"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.count_missed_cleavages()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.fdr_cutoff"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.fdr_cutoff</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.fdrs_to_qvals"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.fdrs_to_qvals()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_aligned_predicted_retention_times"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.get_aligned_predicted_retention_times()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_delta_score"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.get_delta_score()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_indices_below_fdr"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.get_indices_below_fdr()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_scannr"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.get_scannr()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_specid"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.get_specid()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_target_decoy_label"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.get_target_decoy_label()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.input_type"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.input_type</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.metadata"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.metadata</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.sample_balanced_over_bins"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.sample_balanced_over_bins()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.target_decoy_labels"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >Percolator.target_decoy_labels</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >TargetDecoyLabel</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel.DECOY"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >TargetDecoyLabel.DECOY</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel.TARGET"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >TargetDecoyLabel.TARGET</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.f"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >f()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.spline"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >spline()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.similarity"
+                                                            >spectrum_fundamentals.metrics.similarity
+                                                            module</a
+                                                        >
+                                                        <ul>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >SimilarityMetrics</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                                <ul>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.abs_diff"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.abs_diff()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.calc"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.calc()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.calculate_quantiles"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.calculate_quantiles()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.correlation"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.correlation()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.cos"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.cos()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.l2_norm"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.l2_norm()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.metrics_val"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.metrics_val</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.modified_cosine"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.modified_cosine()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.pred_intensities"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.pred_intensities</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.rowwise_dot_product"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.rowwise_dot_product()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.spectral_angle"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.spectral_angle()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.spectral_entropy_similarity"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.spectral_entropy_similarity()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.true_intensities"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.true_intensities</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                    <li
+                                                                        class="toctree-l4"
+                                                                    >
+                                                                        <a
+                                                                            class="reference internal"
+                                                                            href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.unit_normalization"
+                                                                            ><code
+                                                                                class="docutils literal notranslate"
+                                                                                ><span
+                                                                                    class="pre"
+                                                                                    >SimilarityMetrics.unit_normalization()</span
+                                                                                ></code
+                                                                            ></a
+                                                                        >
+                                                                    </li>
+                                                                </ul>
+                                                            </li>
+                                                            <li
+                                                                class="toctree-l3"
+                                                            >
+                                                                <a
+                                                                    class="reference internal"
+                                                                    href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.get_metric_func"
+                                                                    ><code
+                                                                        class="docutils literal notranslate"
+                                                                        ><span
+                                                                            class="pre"
+                                                                            >get_metric_func()</span
+                                                                        ></code
+                                                                    ></a
+                                                                >
+                                                            </li>
+                                                        </ul>
+                                                    </li>
+                                                    <li class="toctree-l2">
+                                                        <a
+                                                            class="reference internal"
+                                                            href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics"
+                                                            >Module contents</a
+                                                        >
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                        <footer>
+                            <div
+                                class="rst-footer-buttons"
+                                role="navigation"
+                                aria-label="Footer"
+                            >
+                                <a
+                                    href="code_of_conduct.html"
+                                    class="btn btn-neutral float-left"
+                                    title="Contributor Covenant Code of Conduct"
+                                    accesskey="p"
+                                    rel="prev"
+                                    ><span
+                                        class="fa fa-arrow-circle-left"
+                                        aria-hidden="true"
+                                    ></span>
+                                    Previous</a
+                                >
+                                <a
+                                    href="spectrum_fundamentals.html"
+                                    class="btn btn-neutral float-right"
+                                    title="spectrum_fundamentals package"
+                                    accesskey="n"
+                                    rel="next"
+                                    >Next
+                                    <span
+                                        class="fa fa-arrow-circle-right"
+                                        aria-hidden="true"
+                                    ></span
+                                ></a>
+                            </div>
+
+                            <hr />
+
+                            <div role="contentinfo">
+                                <p>&#169; Copyright 2022, Victor Giurcoiu.</p>
+                            </div>
+
+                            Built with
+                            <a href="https://www.sphinx-doc.org/">Sphinx</a>
+                            using a
+                            <a
+                                href="https://github.com/readthedocs/sphinx_rtd_theme"
+                                >theme</a
+                            >
+                            provided by
+                            <a href="https://readthedocs.org">Read the Docs</a>.
+                        </footer>
+                    </div>
+                </div>
+            </section>
         </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">spectrum_fundamentals</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>spectrum_fundamentals</li>
-      <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/development/spectrum_fundamentals/modules.rst" class="fa fa-github"> Edit on GitHub</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
-  <section id="spectrum-fundamentals">
-<h1>spectrum_fundamentals<a class="headerlink" href="#spectrum-fundamentals" title="Permalink to this heading"></a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="spectrum_fundamentals.html">spectrum_fundamentals package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html">spectrum_fundamentals.annotation package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.annotation.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation.annotation">spectrum_fundamentals.annotation.annotation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html">spectrum_fundamentals.metrics package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.fragments_ratio">spectrum_fundamentals.metrics.fragments_ratio module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.metric">spectrum_fundamentals.metrics.metric module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.percolator">spectrum_fundamentals.metrics.percolator module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.similarity">spectrum_fundamentals.metrics.similarity module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html#module-spectrum_fundamentals.charge">spectrum_fundamentals.charge module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.charge.indices_to_one_hot"><code class="docutils literal notranslate"><span class="pre">indices_to_one_hot()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html#module-spectrum_fundamentals.constants">spectrum_fundamentals.constants module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.constants.RescoreType"><code class="docutils literal notranslate"><span class="pre">RescoreType</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.constants.RescoreType.ANDROMEDA"><code class="docutils literal notranslate"><span class="pre">RescoreType.ANDROMEDA</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.constants.RescoreType.PROSIT"><code class="docutils literal notranslate"><span class="pre">RescoreType.PROSIT</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html#module-spectrum_fundamentals.fragments">spectrum_fundamentals.fragments module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.fragments.compute_ion_masses"><code class="docutils literal notranslate"><span class="pre">compute_ion_masses()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.fragments.compute_peptide_mass"><code class="docutils literal notranslate"><span class="pre">compute_peptide_mass()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.fragments.get_min_max_mass"><code class="docutils literal notranslate"><span class="pre">get_min_max_mass()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.fragments.initialize_peaks"><code class="docutils literal notranslate"><span class="pre">initialize_peaks()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html#module-spectrum_fundamentals.mod_string">spectrum_fundamentals.mod_string module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.get_mods_list"><code class="docutils literal notranslate"><span class="pre">get_mods_list()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.internal_to_mod_mass"><code class="docutils literal notranslate"><span class="pre">internal_to_mod_mass()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.internal_to_mod_names"><code class="docutils literal notranslate"><span class="pre">internal_to_mod_names()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.internal_to_spectronaut"><code class="docutils literal notranslate"><span class="pre">internal_to_spectronaut()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.internal_without_mods"><code class="docutils literal notranslate"><span class="pre">internal_without_mods()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.maxquant_to_internal"><code class="docutils literal notranslate"><span class="pre">maxquant_to_internal()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.parse_modstrings"><code class="docutils literal notranslate"><span class="pre">parse_modstrings()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.html#spectrum_fundamentals.mod_string.proteomicsdb_to_internal"><code class="docutils literal notranslate"><span class="pre">proteomicsdb_to_internal()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html#module-spectrum_fundamentals">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="spectrum_fundamentals.annotation.html">spectrum_fundamentals.annotation package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.annotation.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation.annotation">spectrum_fundamentals.annotation.annotation module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.annotate_spectra"><code class="docutils literal notranslate"><span class="pre">annotate_spectra()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.generate_annotation_matrix"><code class="docutils literal notranslate"><span class="pre">generate_annotation_matrix()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.handle_multiple_matches"><code class="docutils literal notranslate"><span class="pre">handle_multiple_matches()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.match_peaks"><code class="docutils literal notranslate"><span class="pre">match_peaks()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.parallel_annotate"><code class="docutils literal notranslate"><span class="pre">parallel_annotate()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="spectrum_fundamentals.metrics.html">spectrum_fundamentals.metrics package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.metrics.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.fragments_ratio">spectrum_fundamentals.metrics.fragments_ratio module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.calc"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.calc()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.count_observation_states"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.count_observation_states()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.count_with_ion_mask"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.count_with_ion_mask()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.get_mask_observed_valid"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.get_mask_observed_valid()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.get_observation_state"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.get_observation_state()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.make_boolean"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.make_boolean()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.metrics_val"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.metrics_val</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.pred_intensities"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.pred_intensities</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.FragmentsRatio.true_intensities"><code class="docutils literal notranslate"><span class="pre">FragmentsRatio.true_intensities</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState"><code class="docutils literal notranslate"><span class="pre">ObservationState</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.INVALID_ION"><code class="docutils literal notranslate"><span class="pre">ObservationState.INVALID_ION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.NOT_OBS_AND_NOT_PRED"><code class="docutils literal notranslate"><span class="pre">ObservationState.NOT_OBS_AND_NOT_PRED</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.NOT_OBS_BUT_PRED"><code class="docutils literal notranslate"><span class="pre">ObservationState.NOT_OBS_BUT_PRED</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.OBS_AND_PRED"><code class="docutils literal notranslate"><span class="pre">ObservationState.OBS_AND_PRED</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.fragments_ratio.ObservationState.OBS_BUT_NOT_PRED"><code class="docutils literal notranslate"><span class="pre">ObservationState.OBS_BUT_NOT_PRED</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.metric">spectrum_fundamentals.metrics.metric module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric"><code class="docutils literal notranslate"><span class="pre">Metric</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.calc"><code class="docutils literal notranslate"><span class="pre">Metric.calc()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.metrics_val"><code class="docutils literal notranslate"><span class="pre">Metric.metrics_val</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.pred_intensities"><code class="docutils literal notranslate"><span class="pre">Metric.pred_intensities</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.true_intensities"><code class="docutils literal notranslate"><span class="pre">Metric.true_intensities</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.metric.Metric.write_to_file"><code class="docutils literal notranslate"><span class="pre">Metric.write_to_file()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.percolator">spectrum_fundamentals.metrics.percolator module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator"><code class="docutils literal notranslate"><span class="pre">Percolator</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.add_common_features"><code class="docutils literal notranslate"><span class="pre">Percolator.add_common_features()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.add_percolator_metadata_columns"><code class="docutils literal notranslate"><span class="pre">Percolator.add_percolator_metadata_columns()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.apply_lda_and_get_indices_below_fdr"><code class="docutils literal notranslate"><span class="pre">Percolator.apply_lda_and_get_indices_below_fdr()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calc"><code class="docutils literal notranslate"><span class="pre">Percolator.calc()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_fdrs"><code class="docutils literal notranslate"><span class="pre">Percolator.calculate_fdrs()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference"><code class="docutils literal notranslate"><span class="pre">Percolator.calculate_mass_difference()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference_ppm"><code class="docutils literal notranslate"><span class="pre">Percolator.calculate_mass_difference_ppm()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.count_arginines_and_lysines"><code class="docutils literal notranslate"><span class="pre">Percolator.count_arginines_and_lysines()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.count_missed_cleavages"><code class="docutils literal notranslate"><span class="pre">Percolator.count_missed_cleavages()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.fdr_cutoff"><code class="docutils literal notranslate"><span class="pre">Percolator.fdr_cutoff</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.fdrs_to_qvals"><code class="docutils literal notranslate"><span class="pre">Percolator.fdrs_to_qvals()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_aligned_predicted_retention_times"><code class="docutils literal notranslate"><span class="pre">Percolator.get_aligned_predicted_retention_times()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_delta_score"><code class="docutils literal notranslate"><span class="pre">Percolator.get_delta_score()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_indices_below_fdr"><code class="docutils literal notranslate"><span class="pre">Percolator.get_indices_below_fdr()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_scannr"><code class="docutils literal notranslate"><span class="pre">Percolator.get_scannr()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_specid"><code class="docutils literal notranslate"><span class="pre">Percolator.get_specid()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_target_decoy_label"><code class="docutils literal notranslate"><span class="pre">Percolator.get_target_decoy_label()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.input_type"><code class="docutils literal notranslate"><span class="pre">Percolator.input_type</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.metadata"><code class="docutils literal notranslate"><span class="pre">Percolator.metadata</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.sample_balanced_over_bins"><code class="docutils literal notranslate"><span class="pre">Percolator.sample_balanced_over_bins()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.target_decoy_labels"><code class="docutils literal notranslate"><span class="pre">Percolator.target_decoy_labels</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel"><code class="docutils literal notranslate"><span class="pre">TargetDecoyLabel</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel.DECOY"><code class="docutils literal notranslate"><span class="pre">TargetDecoyLabel.DECOY</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel.TARGET"><code class="docutils literal notranslate"><span class="pre">TargetDecoyLabel.TARGET</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.f"><code class="docutils literal notranslate"><span class="pre">f()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.spline"><code class="docutils literal notranslate"><span class="pre">spline()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics.similarity">spectrum_fundamentals.metrics.similarity module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.abs_diff"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.abs_diff()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.calc"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.calc()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.calculate_quantiles"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.calculate_quantiles()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.correlation"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.correlation()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.cos"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.cos()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.l2_norm"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.l2_norm()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.metrics_val"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.metrics_val</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.modified_cosine"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.modified_cosine()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.pred_intensities"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.pred_intensities</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.rowwise_dot_product"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.rowwise_dot_product()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.spectral_angle"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.spectral_angle()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.spectral_entropy_similarity"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.spectral_entropy_similarity()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.true_intensities"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.true_intensities</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.unit_normalization"><code class="docutils literal notranslate"><span class="pre">SimilarityMetrics.unit_normalization()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.get_metric_func"><code class="docutils literal notranslate"><span class="pre">get_metric_func()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.metrics.html#module-spectrum_fundamentals.metrics">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-
-
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="code_of_conduct.html" class="btn btn-neutral float-left" title="Contributor Covenant Code of Conduct" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="spectrum_fundamentals.html" class="btn btn-neutral float-right" title="spectrum_fundamentals package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2022, Victor Giurcoiu.</p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
-      </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+        <script>
+            jQuery(function () {
+                SphinxRtdTheme.Navigation.enable(true);
+            });
+        </script>
+    </body>
 </html>
