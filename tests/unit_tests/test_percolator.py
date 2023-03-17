@@ -112,38 +112,111 @@ class TestLda:
 class TestRetentionTimeAlignment:
     """Class to test RT alignment."""
 
-    def test_get_aligned_predicted_retention_times_linear(self):
+    def test_get_aligned_predicted_retention_times_linear_lowess(self):
         """Test get_aligned_predicted_retention_times."""
         observed_rts = np.linspace(0, 10, 10) * 2
         predicted_rts = np.linspace(1, 11, 10)
         predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = 2*(predicted - 1)
         np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all),
+            perc.Percolator.get_aligned_predicted_retention_times(
+                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
+            ),
             [1, 3, 5, 7],
             decimal=3,
         )
 
-    def test_get_aligned_predicted_retention_times_linear_not_sorted(self):
+    def test_get_aligned_predicted_retention_times_linear_not_sorted_lowess(self):
         """Test get_aligned_predicted_retention_times."""
         observed_rts = np.linspace(0, 10, 10) * 2
         predicted_rts = np.linspace(1, 11, 10)
         predicted_rts_all = np.array([1.5, 4.5, 3.5, 2.5])  # observed = 2*(predicted - 1)
         np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all),
+            perc.Percolator.get_aligned_predicted_retention_times(
+                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
+            ),
             [1, 7, 5, 3],
             decimal=3,
         )
 
-    def test_get_aligned_predicted_retention_times_noise(self):
+    def test_get_aligned_predicted_retention_times_noise_lowess(self):
         """Test get_aligned_predicted_retention_times."""
         observed_rts = np.linspace(0, 10, 10) * 2 + 0.001 * np.random.random(10)
         predicted_rts = np.linspace(1, 11, 10)
         predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = (predicted - 1)^2
         np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all),
+            perc.Percolator.get_aligned_predicted_retention_times(
+                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
+            ),
             [1, 3, 5, 7],
             decimal=3,
         )
+
+    def test_get_aligned_predicted_retention_times_linear_lowess_error(self):
+        """Test get_aligned_predicted_retention_times."""
+        observed_rts = np.linspace(0, 10, 10) * 2
+        predicted_rts = np.linspace(1, 11, 10)
+        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])
+        aligned_predicted_rts = perc.Percolator.get_aligned_predicted_retention_times(
+            observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
+        )
+
+        errors = aligned_predicted_rts - observed_rts[0:4]
+        percentile_95 = np.percentile(np.abs(errors), 95)
+
+        assert percentile_95 < 1
+
+    def test_get_aligned_predicted_retention_times_linear_spline(self):
+        """Test get_aligned_predicted_retention_times."""
+        observed_rts = np.linspace(0, 10, 10) * 2
+        predicted_rts = np.linspace(1, 11, 10)
+        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = 2*(predicted - 1)
+        np.testing.assert_almost_equal(
+            perc.Percolator.get_aligned_predicted_retention_times(
+                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="spline"
+            ),
+            [1, 3, 5, 7],
+            decimal=3,
+        )
+
+    def test_get_aligned_predicted_retention_times_linear_not_sorted_spline(self):
+        """Test get_aligned_predicted_retention_times."""
+        observed_rts = np.linspace(0, 10, 10) * 2
+        predicted_rts = np.linspace(1, 11, 10)
+        predicted_rts_all = np.array([1.5, 4.5, 3.5, 2.5])  # observed = 2*(predicted - 1)
+        np.testing.assert_almost_equal(
+            perc.Percolator.get_aligned_predicted_retention_times(
+                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="spline"
+            ),
+            [1, 7, 5, 3],
+            decimal=3,
+        )
+
+    def test_get_aligned_predicted_retention_times_noise_spline(self):
+        """Test get_aligned_predicted_retention_times."""
+        observed_rts = np.linspace(0, 10, 10) * 2 + 0.001 * np.random.random(10)
+        predicted_rts = np.linspace(1, 11, 10)
+        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = (predicted - 1)^2
+        np.testing.assert_almost_equal(
+            perc.Percolator.get_aligned_predicted_retention_times(
+                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="spline"
+            ),
+            [1, 3, 5, 7],
+            decimal=3,
+        )
+
+    def test_get_aligned_predicted_retention_times_linear_spline_error(self):
+        """Test get_aligned_predicted_retention_times."""
+        observed_rts = np.linspace(0, 10, 10) * 2
+        predicted_rts = np.linspace(1, 11, 10)
+        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])
+        aligned_predicted_rts = perc.Percolator.get_aligned_predicted_retention_times(
+            observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="spline"
+        )
+
+        errors = aligned_predicted_rts - observed_rts[0:4]
+        percentile_95 = np.percentile(np.abs(errors), 95)
+
+        assert percentile_95 < 1
 
     def test_sample_balanced_over_bins(self):
         """Test sample_balanced_over_bins."""
