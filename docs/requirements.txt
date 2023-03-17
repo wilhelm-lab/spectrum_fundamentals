@@ -124,9 +124,6 @@ shellingham==1.5.0
 six==1.16.0
 smmap==5.0.0
 snowballstemmer==2.2.0
-# Editable install with no version control (spec-fundamentals==0.1.0)
--e /home/victor/github/spec_fundamentals
--e git+ssh://git@github.com/wilhelm-lab/spectrum_fundamentals.git@4aeb5242c17d44798534c1655c416212ff69dcea#egg=spectrum_fundamentals
 Sphinx==5.3.0
 sphinx-autobuild==2021.3.14
 sphinx-click==4.3.0
