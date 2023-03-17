@@ -1,0 +1,7 @@
+create\_setup module
+====================
+
+.. automodule:: create_setup
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spectrum_fundamentals.fragments &mdash; spectrum_fundamentals 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> spectrum_fundamentals
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">spec_fundamentals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">spectrum_fundamentals</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>spectrum_fundamentals.fragments</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for spectrum_fundamentals.fragments</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">constants</span> <span class="k">as</span> <span class="n">constants</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_modifications</span><span class="p">(</span><span class="n">peptide_sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get modification masses and position in a peptide sequence.</span>
+
+<span class="sd">    :param peptide_sequence: Modified peptide sequence</span>
+<span class="sd">    :return: tuple with - dictionary of modification_position =&gt; mod_mass</span>
+<span class="sd">                        - 2 if there is an isobaric tag on the n-terminal, else 1</span>
+<span class="sd">                        - sequence without modifications</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">modification_deltas</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">tmt_n_term</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">modifications</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">MOD_MASSES</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">modification_mass</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">MOD_MASSES</span>
+    <span class="c1"># Handle terminal modifications here</span>
+    <span class="k">for</span> <span class="n">possible_tmt_mod</span> <span class="ow">in</span> <span class="n">constants</span><span class="o">.</span><span class="n">TMT_MODS</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">peptide_sequence</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">possible_tmt_mod</span><span class="p">):</span>  <span class="c1"># TMT_6</span>
+            <span class="n">tmt_n_term</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="n">modification_deltas</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="mi">0</span><span class="p">:</span> <span class="n">constants</span><span class="o">.</span><span class="n">MOD_MASSES</span><span class="p">[</span><span class="n">possible_tmt_mod</span><span class="p">]})</span>
+            <span class="n">peptide_sequence</span> <span class="o">=</span> <span class="n">peptide_sequence</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">possible_tmt_mod</span><span class="p">)</span> <span class="p">:]</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="s2">&quot;(&quot;</span> <span class="ow">in</span> <span class="n">peptide_sequence</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Error Modification &quot;</span>
+            <span class="o">+</span> <span class="n">peptide_sequence</span><span class="p">[</span><span class="n">peptide_sequence</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">peptide_sequence</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">)]</span>
+            <span class="o">+</span> <span class="s2">&quot; not &quot;</span>
+            <span class="s2">&quot;found&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">while</span> <span class="s2">&quot;[&quot;</span> <span class="ow">in</span> <span class="n">peptide_sequence</span><span class="p">:</span>
+        <span class="n">found_modification</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">modification_index</span> <span class="o">=</span> <span class="n">peptide_sequence</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">modifications</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">peptide_sequence</span><span class="p">[</span><span class="n">modification_index</span> <span class="p">:</span> <span class="n">modification_index</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">mod</span><span class="p">)]</span> <span class="o">==</span> <span class="n">mod</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">modification_index</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">in</span> <span class="n">modification_deltas</span><span class="p">:</span>
+                    <span class="n">modification_deltas</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                        <span class="p">{</span><span class="n">modification_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span> <span class="n">modification_deltas</span><span class="p">[</span><span class="n">modification_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">modification_mass</span><span class="p">[</span><span class="n">mod</span><span class="p">]}</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">modification_deltas</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">modification_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span> <span class="n">modification_mass</span><span class="p">[</span><span class="n">mod</span><span class="p">]})</span>
+                <span class="n">peptide_sequence</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">peptide_sequence</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">modification_index</span><span class="p">]</span> <span class="o">+</span> <span class="n">peptide_sequence</span><span class="p">[</span><span class="n">modification_index</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span> <span class="p">:]</span>
+                <span class="p">)</span>
+                <span class="n">found_modification</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">found_modification</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Error Modification &quot;</span>
+                <span class="o">+</span> <span class="n">peptide_sequence</span><span class="p">[</span><span class="n">modification_index</span> <span class="p">:</span> <span class="n">peptide_sequence</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="o">+</span> <span class="s2">&quot; not found&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">modification_deltas</span><span class="p">,</span> <span class="n">tmt_n_term</span><span class="p">,</span> <span class="n">peptide_sequence</span>
+
+
+<div class="viewcode-block" id="compute_peptide_mass"><a class="viewcode-back" href="../../spectrum_fundamentals.html#spectrum_fundamentals.fragments.compute_peptide_mass">[docs]</a><span class="k">def</span> <span class="nf">compute_peptide_mass</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the theoretical mass of the peptide sequence.</span>
+
+<span class="sd">    :param sequence: Modified peptide sequence</span>
+<span class="sd">    :raises AssertionError: if an unknown modification has been found in the peptide sequence</span>
+<span class="sd">    :return: Theoretical mass of the sequence</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">peptide_sequence</span> <span class="o">=</span> <span class="n">sequence</span>
+    <span class="n">modifications</span> <span class="o">=</span> <span class="n">_get_modifications</span><span class="p">(</span><span class="n">peptide_sequence</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">modifications</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">&quot;Modification not found.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">modification_deltas</span><span class="p">,</span> <span class="n">tmt_n_term</span><span class="p">,</span> <span class="n">peptide_sequence</span> <span class="o">=</span> <span class="n">modifications</span>
+
+    <span class="n">peptide_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">peptide_sequence</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">peptide_length</span> <span class="o">&gt;</span> <span class="mi">30</span><span class="p">:</span>
+        <span class="c1"># return [], -1, &quot;&quot;</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mf">1.0</span>
+
+    <span class="n">n_term_delta</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="c1"># get mass delta for the c-terminus</span>
+    <span class="n">c_term_delta</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">n_term</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">n_term_delta</span>  <span class="c1"># n-terminal delta [N]</span>
+    <span class="n">c_term</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;O&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">c_term_delta</span>  <span class="c1"># c-terminal delta [C]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+
+    <span class="n">ion_type_offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">n_term</span> <span class="o">-</span> <span class="n">h</span><span class="p">,</span> <span class="n">c_term</span> <span class="o">+</span> <span class="n">h</span><span class="p">]</span>
+
+    <span class="c1"># calculation:</span>
+    <span class="n">forward_sum</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># sum over all amino acids from left to right (neutral charge)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">peptide_length</span><span class="p">):</span>  <span class="c1"># generate substrings</span>
+        <span class="n">forward_sum</span> <span class="o">+=</span> <span class="n">constants</span><span class="o">.</span><span class="n">AA_MASSES</span><span class="p">[</span><span class="n">peptide_sequence</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>  <span class="c1"># sum left to right</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">modification_deltas</span><span class="p">:</span>  <span class="c1"># add mass of modification if present</span>
+            <span class="n">forward_sum</span> <span class="o">+=</span> <span class="n">modification_deltas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">forward_sum</span> <span class="o">+</span> <span class="n">ion_type_offsets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">ion_type_offsets</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="initialize_peaks"><a class="viewcode-back" href="../../spectrum_fundamentals.html#spectrum_fundamentals.fragments.initialize_peaks">[docs]</a><span class="k">def</span> <span class="nf">initialize_peaks</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mass_analyzer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">charge</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate theoretical peaks for a modified peptide sequence.</span>
+
+<span class="sd">    :param sequence: Modified peptide sequence</span>
+<span class="sd">    :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS</span>
+<span class="sd">    :param charge: Precursor charge</span>
+<span class="sd">    :raises AssertionError:  if peptide sequence contained an unknown modification. TODO do this within the get_mod func.</span>
+<span class="sd">    :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">peptide_sequence</span> <span class="o">=</span> <span class="n">sequence</span>
+    <span class="n">modifications</span> <span class="o">=</span> <span class="n">_get_modifications</span><span class="p">(</span><span class="n">peptide_sequence</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">modifications</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">&quot;Modification not found.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">modification_deltas</span><span class="p">,</span> <span class="n">tmt_n_term</span><span class="p">,</span> <span class="n">peptide_sequence</span> <span class="o">=</span> <span class="n">modifications</span>
+
+    <span class="n">peptide_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">peptide_sequence</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">peptide_length</span> <span class="o">&gt;</span> <span class="mi">30</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mf">0.0</span>
+
+    <span class="c1"># initialize constants</span>
+    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">charge</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">max_charge</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">charge</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">max_charge</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="n">n_term_delta</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="c1"># get mass delta for the c-terminus</span>
+    <span class="n">c_term_delta</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">n_term</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">n_term_delta</span>  <span class="c1"># n-terminal delta [N]</span>
+    <span class="n">c_term</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;O&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">c_term_delta</span>  <span class="c1"># c-terminal delta [C]</span>
+
+    <span class="c1"># cho = constants.ATOM_MASSES[&quot;H&quot;] + constants.ATOM_MASSES[&quot;C&quot;] + constants.ATOM_MASSES[&quot;O&quot;]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+    <span class="c1"># co = constants.ATOM_MASSES[&quot;C&quot;] + constants.ATOM_MASSES[&quot;O&quot;]</span>
+    <span class="c1"># nh2 = constants.ATOM_MASSES[&quot;N&quot;] + constants.ATOM_MASSES[&quot;H&quot;] * 2.0</span>
+
+    <span class="n">ion_type_offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">n_term</span> <span class="o">-</span> <span class="n">h</span><span class="p">,</span> <span class="n">c_term</span> <span class="o">+</span> <span class="n">h</span><span class="p">]</span>
+
+    <span class="c1"># tmp place holder</span>
+    <span class="n">ion_type_masses</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+    <span class="n">ion_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]</span>
+
+    <span class="n">number_of_ion_types</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ion_type_offsets</span><span class="p">)</span>
+    <span class="n">fragments_meta_data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># calculation:</span>
+    <span class="n">forward_sum</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># sum over all amino acids from left to right (neutral charge)</span>
+    <span class="n">backward_sum</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># sum over all amino acids from right to left (neutral charge)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">peptide_length</span><span class="p">):</span>  <span class="c1"># generate substrings</span>
+        <span class="n">forward_sum</span> <span class="o">+=</span> <span class="n">constants</span><span class="o">.</span><span class="n">AA_MASSES</span><span class="p">[</span><span class="n">peptide_sequence</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>  <span class="c1"># sum left to right</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">modification_deltas</span><span class="p">:</span>  <span class="c1"># add mass of modification if present</span>
+            <span class="n">forward_sum</span> <span class="o">+=</span> <span class="n">modification_deltas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">backward_sum</span> <span class="o">+=</span> <span class="n">constants</span><span class="o">.</span><span class="n">AA_MASSES</span><span class="p">[</span><span class="n">peptide_sequence</span><span class="p">[</span><span class="n">peptide_length</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]]</span>  <span class="c1"># sum right to left</span>
+        <span class="k">if</span> <span class="n">peptide_length</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">in</span> <span class="n">modification_deltas</span><span class="p">:</span>  <span class="c1"># add mass of modification if present</span>
+            <span class="n">backward_sum</span> <span class="o">+=</span> <span class="n">modification_deltas</span><span class="p">[</span><span class="n">peptide_length</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">ion_type_masses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">forward_sum</span> <span class="o">+</span> <span class="n">ion_type_offsets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># b ion - ...</span>
+
+        <span class="n">ion_type_masses</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">backward_sum</span> <span class="o">+</span> <span class="n">ion_type_offsets</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># y ion</span>
+
+        <span class="k">for</span> <span class="n">charge</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">MIN_CHARGE</span><span class="p">,</span> <span class="n">max_charge</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>  <span class="c1"># generate ion in different charge states</span>
+            <span class="c1"># positive charge is introduced by protons (or H - ELECTRON_MASS)</span>
+            <span class="n">charge_delta</span> <span class="o">=</span> <span class="n">charge</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PARTICLE_MASSES</span><span class="p">[</span><span class="s2">&quot;PROTON&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">ion_type</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">number_of_ion_types</span><span class="p">):</span>  <span class="c1"># generate all ion types</span>
+                <span class="c1"># Check for neutral loss here</span>
+                <span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">ion_type_masses</span><span class="p">[</span><span class="n">ion_type</span><span class="p">]</span> <span class="o">+</span> <span class="n">charge_delta</span><span class="p">)</span> <span class="o">/</span> <span class="n">charge</span>
+                <span class="n">min_mass</span><span class="p">,</span> <span class="n">max_mass</span> <span class="o">=</span> <span class="n">get_min_max_mass</span><span class="p">(</span><span class="n">mass_analyzer</span><span class="p">,</span> <span class="n">mass</span><span class="p">)</span>
+                <span class="n">fragments_meta_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;ion_type&quot;</span><span class="p">:</span> <span class="n">ion_types</span><span class="p">[</span><span class="n">ion_type</span><span class="p">],</span>
+                        <span class="s2">&quot;no&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="s2">&quot;charge&quot;</span><span class="p">:</span> <span class="n">charge</span><span class="p">,</span>
+                        <span class="s2">&quot;mass&quot;</span><span class="p">:</span> <span class="n">mass</span><span class="p">,</span>
+                        <span class="s2">&quot;min_mass&quot;</span><span class="p">:</span> <span class="n">min_mass</span><span class="p">,</span>
+                        <span class="s2">&quot;max_mass&quot;</span><span class="p">:</span> <span class="n">max_mass</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+        <span class="n">fragments_meta_data</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fragments_meta_data</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="s2">&quot;mass&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">fragments_meta_data</span><span class="p">,</span> <span class="n">tmt_n_term</span><span class="p">,</span> <span class="n">peptide_sequence</span><span class="p">,</span> <span class="p">(</span><span class="n">forward_sum</span> <span class="o">+</span> <span class="n">ion_type_offsets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">ion_type_offsets</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="get_min_max_mass"><a class="viewcode-back" href="../../spectrum_fundamentals.html#spectrum_fundamentals.fragments.get_min_max_mass">[docs]</a><span class="k">def</span> <span class="nf">get_min_max_mass</span><span class="p">(</span><span class="n">mass_analyzer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mass</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Helper function to get min and max mass based on mass analyzer.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mass_analyzer</span> <span class="o">==</span> <span class="s2">&quot;FTMS&quot;</span><span class="p">:</span>
+        <span class="n">min_mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">mass</span> <span class="o">*</span> <span class="o">-</span><span class="mi">20</span> <span class="o">/</span> <span class="mi">1000000</span><span class="p">)</span> <span class="o">+</span> <span class="n">mass</span>
+        <span class="n">max_mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">mass</span> <span class="o">*</span> <span class="mi">20</span> <span class="o">/</span> <span class="mi">1000000</span><span class="p">)</span> <span class="o">+</span> <span class="n">mass</span>
+    <span class="k">elif</span> <span class="n">mass_analyzer</span> <span class="o">==</span> <span class="s2">&quot;TOF&quot;</span><span class="p">:</span>
+        <span class="n">min_mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">mass</span> <span class="o">*</span> <span class="o">-</span><span class="mi">40</span> <span class="o">/</span> <span class="mi">1000000</span><span class="p">)</span> <span class="o">+</span> <span class="n">mass</span>
+        <span class="n">max_mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">mass</span> <span class="o">*</span> <span class="mi">40</span> <span class="o">/</span> <span class="mi">1000000</span><span class="p">)</span> <span class="o">+</span> <span class="n">mass</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># use ITMS otherwise</span>
+        <span class="n">min_mass</span> <span class="o">=</span> <span class="n">mass</span> <span class="o">-</span> <span class="mf">0.35</span>
+        <span class="n">max_mass</span> <span class="o">=</span> <span class="n">mass</span> <span class="o">+</span> <span class="mf">0.35</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">min_mass</span><span class="p">,</span> <span class="n">max_mass</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compute_ion_masses"><a class="viewcode-back" href="../../spectrum_fundamentals.html#spectrum_fundamentals.fragments.compute_ion_masses">[docs]</a><span class="k">def</span> <span class="nf">compute_ion_masses</span><span class="p">(</span><span class="n">seq_int</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">charge_onehot</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">tmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collects an integer sequence e.g. [1,2,3] with charge 2 and returns array with 174 positions for ion masses.</span>
+
+<span class="sd">    Invalid masses are set to -1.</span>
+
+<span class="sd">    :param seq_int: TODO</span>
+<span class="sd">    :param charge_onehot: is a onehot representation of charge with 6 elems for charges 1 to 6</span>
+<span class="sd">    :param tmt: TODO</span>
+<span class="sd">    :return: list of masses as floats</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">charge</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">charge_onehot</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">charge</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">charge_onehot</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[ERROR] One-hot-enconded Charge is not in valid range 1 to 6&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq_int</span><span class="p">)</span> <span class="o">==</span> <span class="n">constants</span><span class="o">.</span><span class="n">SEQ_LEN</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[ERROR] Sequence length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seq_int</span><span class="p">)</span><span class="si">}</span><span class="s2"> is not desired length of </span><span class="si">{</span><span class="n">constants</span><span class="o">.</span><span class="n">SEQ_LEN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">seq_int</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="mi">0</span> <span class="ow">in</span> <span class="n">seq_int</span> <span class="k">else</span> <span class="n">constants</span><span class="o">.</span><span class="n">SEQ_LEN</span>
+    <span class="n">masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">constants</span><span class="o">.</span><span class="n">SEQ_LEN</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">mass_b</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">mass_y</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># iterate over masses</span>
+
+    <span class="c1"># Iterate over sequence, sequence should have length 30</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>  <span class="c1"># only 29 possible ions</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="mi">6</span>  <span class="c1"># index for masses array at position</span>
+
+        <span class="c1"># MASS FOR Y IONS</span>
+        <span class="c1"># print(&quot;Added&quot;, constants.VEC_MZ[seq_int[l-1-i]])</span>
+        <span class="n">mass_y</span> <span class="o">+=</span> <span class="n">constants</span><span class="o">.</span><span class="n">VEC_MZ</span><span class="p">[</span><span class="n">seq_int</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">]]</span>
+
+        <span class="c1"># Compute charge +1</span>
+        <span class="n">masses</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">mass_y</span>
+            <span class="o">+</span> <span class="mi">1</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PARTICLE_MASSES</span><span class="p">[</span><span class="s2">&quot;PROTON&quot;</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">MASSES</span><span class="p">[</span><span class="s2">&quot;C_TERMINUS&quot;</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="mf">1.0</span>
+        <span class="c1"># Compute charge +2</span>
+        <span class="n">masses</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">mass_y</span>
+                <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PARTICLE_MASSES</span><span class="p">[</span><span class="s2">&quot;PROTON&quot;</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">MASSES</span><span class="p">[</span><span class="s2">&quot;C_TERMINUS&quot;</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">/</span> <span class="mf">2.0</span>
+            <span class="k">if</span> <span class="n">charge</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+            <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="p">)</span>
+        <span class="c1"># Compute charge +3</span>
+        <span class="n">masses</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">mass_y</span>
+                <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PARTICLE_MASSES</span><span class="p">[</span><span class="s2">&quot;PROTON&quot;</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">MASSES</span><span class="p">[</span><span class="s2">&quot;C_TERMINUS&quot;</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">/</span> <span class="mf">3.0</span>
+            <span class="k">if</span> <span class="n">charge</span> <span class="o">&gt;=</span> <span class="mf">3.0</span>
+            <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="p">)</span>
+
+        <span class="c1"># MASS FOR B IONS</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">tmt</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">mass_b</span> <span class="o">+=</span> <span class="n">constants</span><span class="o">.</span><span class="n">VEC_MZ</span><span class="p">[</span><span class="n">seq_int</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">MOD_MASSES</span><span class="p">[</span><span class="n">constants</span><span class="o">.</span><span class="n">TMT_MODS</span><span class="p">[</span><span class="n">tmt</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mass_b</span> <span class="o">+=</span> <span class="n">constants</span><span class="o">.</span><span class="n">VEC_MZ</span><span class="p">[</span><span class="n">seq_int</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+
+        <span class="c1"># Compute charge +1</span>
+        <span class="n">masses</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">mass_b</span>
+            <span class="o">+</span> <span class="mi">1</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PARTICLE_MASSES</span><span class="p">[</span><span class="s2">&quot;PROTON&quot;</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">MASSES</span><span class="p">[</span><span class="s2">&quot;N_TERMINUS&quot;</span><span class="p">]</span>
+            <span class="o">-</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="mf">1.0</span>
+        <span class="c1"># Compute charge +2</span>
+        <span class="n">masses</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">mass_b</span>
+                <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PARTICLE_MASSES</span><span class="p">[</span><span class="s2">&quot;PROTON&quot;</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">MASSES</span><span class="p">[</span><span class="s2">&quot;N_TERMINUS&quot;</span><span class="p">]</span>
+                <span class="o">-</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">/</span> <span class="mf">2.0</span>
+            <span class="k">if</span> <span class="n">charge</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+            <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="p">)</span>
+        <span class="c1"># Compute charge +3</span>
+        <span class="n">masses</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">mass_b</span>
+                <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">constants</span><span class="o">.</span><span class="n">PARTICLE_MASSES</span><span class="p">[</span><span class="s2">&quot;PROTON&quot;</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">constants</span><span class="o">.</span><span class="n">MASSES</span><span class="p">[</span><span class="s2">&quot;N_TERMINUS&quot;</span><span class="p">]</span>
+                <span class="o">-</span> <span class="n">constants</span><span class="o">.</span><span class="n">ATOM_MASSES</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">/</span> <span class="mf">3.0</span>
+            <span class="k">if</span> <span class="n">charge</span> <span class="o">&gt;=</span> <span class="mf">3.0</span>
+            <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">masses</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Victor-George Giurcoiu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

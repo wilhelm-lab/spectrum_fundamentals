@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spectrum_fundamentals.metrics.percolator &mdash; spectrum_fundamentals 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> spectrum_fundamentals
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">spec_fundamentals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">spectrum_fundamentals</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>spectrum_fundamentals.metrics.percolator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for spectrum_fundamentals.metrics.percolator</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">enum</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scipy.optimize</span> <span class="k">as</span> <span class="nn">opt</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span>
+<span class="kn">from</span> <span class="nn">moepy</span> <span class="kn">import</span> <span class="n">lowess</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">interpolate</span>
+<span class="kn">from</span> <span class="nn">sklearn.discriminant_analysis</span> <span class="kn">import</span> <span class="n">LinearDiscriminantAnalysis</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">fragments_ratio</span> <span class="k">as</span> <span class="n">fr</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">similarity</span> <span class="k">as</span> <span class="n">sim</span>
+<span class="kn">from</span> <span class="nn">.metric</span> <span class="kn">import</span> <span class="n">Metric</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TargetDecoyLabel"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel">[docs]</a><span class="k">class</span> <span class="nc">TargetDecoyLabel</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Target and decoy labels as used by Percolator.&quot;&quot;&quot;</span>
+
+    <span class="n">TARGET</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">DECOY</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="Percolator"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator">[docs]</a><span class="k">class</span> <span class="nc">Percolator</span><span class="p">(</span><span class="n">Metric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Expects the following metadata columns.</span>
+
+<span class="sd">    RAW_FILE</span>
+<span class="sd">    SCAN_NUMBER</span>
+<span class="sd">    MODIFIED_SEQUENCE: sequence with modifications</span>
+<span class="sd">    SEQUENCE: sequence without modifications</span>
+<span class="sd">    CHARGE: precursor charge state</span>
+<span class="sd">    MASS: experimental precursor mass</span>
+<span class="sd">    CALCULATED_MASS: calculated mass based on sequence and modifications</span>
+<span class="sd">    SCORE: Andromeda score</span>
+<span class="sd">    REVERSE: does the sequence come from the reversed (=decoy) database</span>
+<span class="sd">    FRAGMENTATION: fragmentation method, e.g. HCD, CID</span>
+<span class="sd">    RETENTION_TIME: observed retention time</span>
+<span class="sd">    PREDICTED_RETENTION_TIME: predicted retention time by Prosit</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="n">target_decoy_labels</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">input_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">fdr_cutoff</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">input_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">pred_intensities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">true_intensities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mz</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">all_features_flag</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">regression_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">lowess</span><span class="p">,</span>
+        <span class="n">fdr_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize a Percolator obj.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_type</span> <span class="o">=</span> <span class="n">input_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_features_flag</span> <span class="o">=</span> <span class="n">all_features_flag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regression_method</span> <span class="o">=</span> <span class="n">regression_method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fdr_cutoff</span> <span class="o">=</span> <span class="n">fdr_cutoff</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="n">true_intensities</span><span class="p">,</span> <span class="n">mz</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Percolator.sample_balanced_over_bins"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.sample_balanced_over_bins">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">sample_balanced_over_bins</span><span class="p">(</span><span class="n">retention_time_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample balanced over bins.</span>
+
+<span class="sd">        :param retention_time_df: DataFrame with observed and predicted retention times</span>
+<span class="sd">        :param sample_size: number of samples</span>
+<span class="sd">        :return: RT Index</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># bin retention times</span>
+        <span class="c1"># print(retention_time_df[&#39;RETENTION_TIME&#39;])</span>
+        <span class="n">min_rt</span> <span class="o">=</span> <span class="n">retention_time_df</span><span class="p">[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.99</span>
+        <span class="n">max_rt</span> <span class="o">=</span> <span class="n">retention_time_df</span><span class="p">[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1.01</span>
+        <span class="n">bin_width</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">2</span>
+            <span class="o">*</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">iqr</span><span class="p">(</span><span class="n">retention_time_df</span><span class="p">[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">])</span>
+            <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">retention_time_df</span><span class="p">[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">])</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="p">)</span>  <span class="c1"># Freedman–Diaconis rule</span>
+        <span class="n">break_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">min_rt</span><span class="p">,</span> <span class="n">max_rt</span><span class="p">,</span> <span class="n">bin_width</span><span class="p">)</span>
+        <span class="n">retention_time_df</span><span class="p">[</span><span class="s2">&quot;rt_bin_index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">retention_time_df</span><span class="p">[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">],</span> <span class="n">break_points</span><span class="p">)</span>
+
+        <span class="c1"># sample a subset in each bin. Arbitrary target is 5000 datapoints spread over the bin counts</span>
+        <span class="n">points_per_bin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">sample_size</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">break_points</span><span class="p">)))</span>
+        <span class="n">retention_time_df</span> <span class="o">=</span> <span class="n">retention_time_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;rt_bin_index&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">points_per_bin</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">retention_time_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">index</span></div>
+
+<div class="viewcode-block" id="Percolator.get_aligned_predicted_retention_times"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_aligned_predicted_retention_times">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_aligned_predicted_retention_times</span><span class="p">(</span>
+        <span class="n">observed_retention_times_fdr_filtered</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
+        <span class="n">predicted_retention_times_fdr_filtered</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
+        <span class="n">predicted_retention_times_all</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">],</span>
+        <span class="n">curve_fitting_method</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;lowess&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply regression to find a mapping from predicted iRT values to experimental retention times.</span>
+
+<span class="sd">        :param observed_retention_times_fdr_filtered: observed retention times after FDR filter</span>
+<span class="sd">        :param predicted_retention_times_fdr_filtered: predicted retention times after FDR filter</span>
+<span class="sd">        :param predicted_retention_times_all: all predicted retention times</span>
+<span class="sd">        :param curve_fitting_method: method for curve fitting (lowess, spline, or logistic regression)</span>
+<span class="sd">        :return: aligned predicted retention times</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">observed_rts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">observed_retention_times_fdr_filtered</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">predicted_rts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">predicted_retention_times_fdr_filtered</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="c1"># TODO: use Akaike information criterion to choose a good value for frac</span>
+        <span class="n">frac</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># Between 0 and 1. The fraction of the data used when estimating each y-value.</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># The number of residual-based reweightings to perform. Don&#39;t use the iterative reweighting (it &gt; 1),</span>
+        <span class="c1"># this result in NaNs</span>
+        <span class="n">discard_percentage</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># in percents, so 0.1 = 0.1% (not 10%!)</span>
+
+        <span class="k">if</span> <span class="n">curve_fitting_method</span> <span class="o">==</span> <span class="s2">&quot;lowess&quot;</span><span class="p">:</span>
+            <span class="n">lowess_model</span> <span class="o">=</span> <span class="n">lowess</span><span class="o">.</span><span class="n">Lowess</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">curve_fitting_method</span> <span class="o">==</span> <span class="s2">&quot;spline&quot;</span><span class="p">:</span>
+            <span class="c1"># spline works only with unique values</span>
+            <span class="n">predicted_rts</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">predicted_rts</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">observed_rts</span> <span class="o">=</span> <span class="n">observed_rts</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">curve_fitting_method</span> <span class="o">==</span> <span class="s2">&quot;logistic&quot;</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">a_</span><span class="p">,</span> <span class="n">b_</span><span class="p">,</span> <span class="n">c_</span><span class="p">,</span> <span class="n">d_</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">curve_fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">predicted_rts</span><span class="p">,</span> <span class="n">observed_rts</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;lm&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">predicted_retention_times_all</span><span class="p">,</span> <span class="n">a_</span><span class="p">,</span> <span class="n">b_</span><span class="p">,</span> <span class="n">c_</span><span class="p">,</span> <span class="n">d_</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">discard_percentage</span> <span class="o">&lt;</span> <span class="mf">50.0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">curve_fitting_method</span> <span class="o">==</span> <span class="s2">&quot;spline&quot;</span><span class="p">:</span>
+                <span class="n">aligned_rts_predicted</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="n">spline</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">predicted_rts</span><span class="p">,</span> <span class="n">observed_rts</span><span class="p">,</span> <span class="n">predicted_rts</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lowess_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">predicted_rts</span><span class="p">,</span> <span class="n">observed_rts</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="n">frac</span><span class="p">,</span> <span class="n">robust_iters</span><span class="o">=</span><span class="n">it</span><span class="p">)</span>
+                <span class="n">aligned_rts_predicted</span> <span class="o">=</span> <span class="n">lowess_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">predicted_rts</span><span class="p">)</span>
+            <span class="n">abs_errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">aligned_rts_predicted</span> <span class="o">-</span> <span class="n">observed_rts</span><span class="p">)</span>
+            <span class="n">cut_off</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">abs_errors</span><span class="p">,</span> <span class="mi">100</span> <span class="o">-</span> <span class="n">discard_percentage</span><span class="p">)</span>
+            <span class="n">median_abs_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">abs_errors</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Median absolute error aligned rts: </span><span class="si">{</span><span class="n">median_abs_error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">median_abs_error</span> <span class="o">&gt;</span> <span class="mf">0.02</span><span class="p">:</span>
+                <span class="n">keep_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">abs_errors</span> <span class="o">&lt;</span> <span class="n">cut_off</span><span class="p">)</span>
+                <span class="n">observed_rts</span> <span class="o">=</span> <span class="n">observed_rts</span><span class="p">[</span><span class="n">keep_idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                <span class="n">predicted_rts</span> <span class="o">=</span> <span class="n">predicted_rts</span><span class="p">[</span><span class="n">keep_idxs</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">discard_percentage</span> <span class="o">*=</span> <span class="mf">1.5</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Observed RT anchor points:</span><span class="se">\n</span><span class="si">{</span><span class="n">observed_retention_times_fdr_filtered</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Predicted RT anchor points:</span><span class="se">\n</span><span class="si">{</span><span class="n">predicted_retention_times_fdr_filtered</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">curve_fitting_method</span> <span class="o">==</span> <span class="s2">&quot;spline&quot;</span><span class="p">:</span>
+            <span class="n">aligned_rts_predicted</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">BSpline</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">k</span><span class="p">)(</span><span class="n">predicted_retention_times_all</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">aligned_rts_predicted</span> <span class="o">=</span> <span class="n">lowess_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">predicted_retention_times_all</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">aligned_rts_predicted</span></div>
+
+<div class="viewcode-block" id="Percolator.get_scannr"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_scannr">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_scannr</span><span class="p">(</span><span class="n">metadata_subset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a hash of the raw_file and scan number to use as a unique scan number in percolator.</span>
+
+<span class="sd">        :param metadata_subset: tuple of (raw_file, scan_number)</span>
+<span class="sd">        :return: hashed unique id</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">raw_file</span><span class="p">,</span> <span class="n">scan_number</span> <span class="o">=</span> <span class="n">metadata_subset</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">raw_file</span><span class="si">}{</span><span class="n">scan_number</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha224</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">6</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Percolator.get_delta_score"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_delta_score">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_delta_score</span><span class="p">(</span><span class="n">scores_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">scoring_feature</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates delta scores by sorting (from high to low) and grouping PSMs by scan number.</span>
+
+<span class="sd">        Inside each group the delta scores are calculated per PSM to the next best of that group.</span>
+<span class="sd">        The lowest scoring PSM of each group receives a delta score of 0.</span>
+<span class="sd">        :param scores_df: must contain two columns: scoring_feature (eg. &#39;spectral_angle&#39;) and &#39;ScanNr&#39;</span>
+<span class="sd">        :param scoring_feature: feature name to get the delta scores of</span>
+<span class="sd">        :raises NotImplementedError: If there is only one unique value for ScanNr in the scores_df.</span>
+<span class="sd">        :return: numpy array of delta scores</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: sort after grouping for better efficiency</span>
+        <span class="n">scores_df</span> <span class="o">=</span> <span class="n">scores_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">scoring_feature</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">scores_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">&quot;ScanNr&quot;</span><span class="p">])</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">scores_df_</span><span class="p">:</span> <span class="n">scores_df_</span><span class="p">[</span><span class="n">scoring_feature</span><span class="p">]</span> <span class="o">-</span> <span class="n">scores_df_</span><span class="p">[</span><span class="n">scoring_feature</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="c1"># apply doesnt work for one group only</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="n">scores_df</span><span class="p">[</span><span class="s2">&quot;delta_&quot;</span> <span class="o">+</span> <span class="n">scoring_feature</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="n">scores_df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">scores_df</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">scores_df</span><span class="p">[</span><span class="s2">&quot;delta_&quot;</span> <span class="o">+</span> <span class="n">scoring_feature</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Percolator.get_specid"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_specid">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_specid</span><span class="p">(</span><span class="n">metadata_subset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a unique identifier used as spectrum id in percolator, this is not parsed by percolator but functions \</span>
+<span class="sd">        as a key to map percolator results back to our internal representation.</span>
+
+<span class="sd">        :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge and optionally scan_event_number)</span>
+<span class="sd">        :return: percolator spectrum id</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;-&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">elem</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">metadata_subset</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Percolator.count_missed_cleavages"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.count_missed_cleavages">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">count_missed_cleavages</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Count number of missed cleavages assuming Trypsin/P proteolysis.</span>
+
+<span class="sd">        :param sequence: peptide sequence</span>
+<span class="sd">        :return: number of missed cleavages</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">sequence</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;K&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">sequence</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Percolator.count_arginines_and_lysines"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.count_arginines_and_lysines">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">count_arginines_and_lysines</span><span class="p">(</span><span class="n">sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Count number of arginines and lysines.</span>
+
+<span class="sd">        :param sequence: peptide sequence</span>
+<span class="sd">        :return: number of arginines and lysines</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">sequence</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;K&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">sequence</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Percolator.calculate_mass_difference"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">calculate_mass_difference</span><span class="p">(</span><span class="n">metadata_subset</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate mass difference.</span>
+
+<span class="sd">        :param metadata_subset: experimental and calculated mass as tuple</span>
+<span class="sd">        :return: mass difference</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">experimental_mass</span><span class="p">,</span> <span class="n">calculated_mass</span> <span class="o">=</span> <span class="n">metadata_subset</span>
+        <span class="k">return</span> <span class="n">calculated_mass</span> <span class="o">-</span> <span class="n">experimental_mass</span></div>
+
+<div class="viewcode-block" id="Percolator.calculate_mass_difference_ppm"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference_ppm">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">calculate_mass_difference_ppm</span><span class="p">(</span><span class="n">metadata_subset</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate mass difference in ppm.</span>
+
+<span class="sd">        :param metadata_subset: experimental and calculated mass as tuple</span>
+<span class="sd">        :return: mass difference in ppm</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">experimental_mass</span><span class="p">,</span> <span class="n">calculated_mass</span> <span class="o">=</span> <span class="n">metadata_subset</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">calculated_mass</span> <span class="o">-</span> <span class="n">experimental_mass</span><span class="p">)</span> <span class="o">/</span> <span class="n">experimental_mass</span> <span class="o">*</span> <span class="mf">1e6</span></div>
+
+<div class="viewcode-block" id="Percolator.get_target_decoy_label"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_target_decoy_label">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_target_decoy_label</span><span class="p">(</span><span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get target or decoy label.</span>
+
+<span class="sd">        :param reverse: if true, return the label for DECOY, otherwise return the label for TARGET</span>
+<span class="sd">        :return: target/decoy label for percolator</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">TargetDecoyLabel</span><span class="o">.</span><span class="n">DECOY</span> <span class="k">if</span> <span class="n">reverse</span> <span class="k">else</span> <span class="n">TargetDecoyLabel</span><span class="o">.</span><span class="n">TARGET</span></div>
+
+<div class="viewcode-block" id="Percolator.add_common_features"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.add_common_features">[docs]</a>    <span class="k">def</span> <span class="nf">add_common_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add features used by both Andromeda and Prosit feature scoring sets.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;missedCleavages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;SEQUENCE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Percolator</span><span class="o">.</span><span class="n">count_missed_cleavages</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;KR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;SEQUENCE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Percolator</span><span class="o">.</span><span class="n">count_arginines_and_lysines</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;sequence_length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;SEQUENCE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Mass&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;CALCULATED_MASS&quot;</span><span class="p">]</span>  <span class="c1"># this is the calculated mass used as a feature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Charge1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PRECURSOR_CHARGE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Charge2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PRECURSOR_CHARGE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Charge3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PRECURSOR_CHARGE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Charge4&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PRECURSOR_CHARGE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Charge5&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PRECURSOR_CHARGE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Charge6&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PRECURSOR_CHARGE&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;UnknownFragmentationMethod&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;FRAGMENTATION&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">&quot;HCD&quot;</span><span class="p">,</span> <span class="s2">&quot;CID&quot;</span><span class="p">]))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+            <span class="nb">int</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;HCD&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;FRAGMENTATION&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;HCD&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;CID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;FRAGMENTATION&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;CID&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Percolator.add_percolator_metadata_columns"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.add_percolator_metadata_columns">[docs]</a>    <span class="k">def</span> <span class="nf">add_percolator_metadata_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add metadata columns needed by percolator, e.g. to identify a PSM.&quot;&quot;&quot;</span>
+        <span class="n">spec_id_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RAW_FILE&quot;</span><span class="p">,</span> <span class="s2">&quot;SCAN_NUMBER&quot;</span><span class="p">,</span> <span class="s2">&quot;MODIFIED_SEQUENCE&quot;</span><span class="p">,</span> <span class="s2">&quot;PRECURSOR_CHARGE&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;SCAN_EVENT_NUMBER&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">spec_id_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;SCAN_EVENT_NUMBER&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;SpecId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">spec_id_cols</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Percolator</span><span class="o">.</span><span class="n">get_specid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_decoy_labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;ScanNr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[[</span><span class="s2">&quot;RAW_FILE&quot;</span><span class="p">,</span> <span class="s2">&quot;SCAN_NUMBER&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Percolator</span><span class="o">.</span><span class="n">get_scannr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># self.metrics_val[&#39;ExpMass&#39;] = self.metadata[&#39;MASS&#39;]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Peptide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;MODIFIED_SEQUENCE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot;_.&quot;</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="s2">&quot;._&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;Protein&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span>
+            <span class="s2">&quot;MODIFIED_SEQUENCE&quot;</span>
+        <span class="p">]</span>  <span class="c1"># we don&#39;t need the protein ID to get PSM / peptide results, fill with peptide sequence</span></div>
+
+<div class="viewcode-block" id="Percolator.apply_lda_and_get_indices_below_fdr"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.apply_lda_and_get_indices_below_fdr">[docs]</a>    <span class="k">def</span> <span class="nf">apply_lda_and_get_indices_below_fdr</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">initial_scoring_feature</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;spectral_angle&quot;</span><span class="p">,</span> <span class="n">fdr_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Applies a linear discriminant analysis on the features calculated so far (before retention time alignment) \</span>
+<span class="sd">        to estimate false discovery rates (FDRs).</span>
+
+<span class="sd">        :param initial_scoring_feature: name of the initial scoring feature</span>
+<span class="sd">        :param fdr_cutoff: FDR cutoff as float</span>
+<span class="sd">        :return: array with indices below FDR</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">target_idxs_below_fdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_indices_below_fdr</span><span class="p">(</span><span class="n">initial_scoring_feature</span><span class="p">,</span> <span class="n">fdr_cutoff</span><span class="o">=</span><span class="n">fdr_cutoff</span><span class="p">)</span>
+        <span class="n">decoy_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_decoy_labels</span> <span class="o">==</span> <span class="n">TargetDecoyLabel</span><span class="o">.</span><span class="n">DECOY</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">target_idxs_below_fdr</span><span class="p">)</span><span class="si">}</span><span class="s2"> targets and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">decoy_idxs</span><span class="p">)</span><span class="si">}</span><span class="s2"> decoys as input for the LDA model&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">lda_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">target_idxs_below_fdr</span><span class="p">,</span> <span class="n">decoy_idxs</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">lda_idxs</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_decoy_labels</span><span class="p">[</span><span class="n">lda_idxs</span><span class="p">]</span>
+
+        <span class="n">lda</span> <span class="o">=</span> <span class="n">LinearDiscriminantAnalysis</span><span class="p">()</span>
+        <span class="n">lda</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;lda_scores&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lda</span><span class="o">.</span><span class="n">decision_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_indices_below_fdr</span><span class="p">(</span><span class="s2">&quot;lda_scores&quot;</span><span class="p">,</span> <span class="n">fdr_cutoff</span><span class="o">=</span><span class="n">fdr_cutoff</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Percolator.get_indices_below_fdr"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.get_indices_below_fdr">[docs]</a>    <span class="k">def</span> <span class="nf">get_indices_below_fdr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fdr_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get indices below FDR.</span>
+
+<span class="sd">        :param feature_name: name of the feature to sort by as string</span>
+<span class="sd">        :param fdr_cutoff: FDR cutoff as float</span>
+<span class="sd">        :return: array with indices below FDR</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scores_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[[</span><span class="n">feature_name</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">scores_df</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_decoy_labels</span>
+        <span class="c1"># scores_df[&#39;Sequence&#39;] = self.metadata[&#39;SEQUENCE&#39;]</span>
+        <span class="n">scores_df</span> <span class="o">=</span> <span class="n">scores_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">feature_name</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">scores_df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+
+        <span class="n">scores_df</span><span class="p">[</span><span class="s2">&quot;fdr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Percolator</span><span class="o">.</span><span class="n">calculate_fdrs</span><span class="p">(</span><span class="n">scores_df</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">])</span>
+
+        <span class="c1"># filter for targets only</span>
+        <span class="n">scores_df</span> <span class="o">=</span> <span class="n">scores_df</span><span class="p">[</span><span class="n">scores_df</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">TargetDecoyLabel</span><span class="o">.</span><span class="n">TARGET</span><span class="p">]</span>
+
+        <span class="n">accepted_indices</span> <span class="o">=</span> <span class="n">scores_df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">scores_df</span><span class="p">[</span><span class="s2">&quot;fdr&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">fdr_cutoff</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">accepted_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Could not find any targets below </span><span class="si">{</span><span class="n">fdr_cutoff</span><span class="si">}</span><span class="s2"> out of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">scores_df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2"> targets in total&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">accepted_indices</span><span class="p">)</span><span class="si">}</span><span class="s2"> (out of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">scores_df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2">) targets below </span><span class="si">{</span><span class="n">fdr_cutoff</span><span class="si">}</span><span class="s2"> </span><span class="se">\</span>
+<span class="s2">            FDR using </span><span class="si">{</span><span class="n">feature_name</span><span class="si">}</span><span class="s2"> as feature&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">scores_df</span><span class="o">.</span><span class="n">index</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">accepted_indices</span><span class="p">)])</span></div>
+
+<div class="viewcode-block" id="Percolator.calculate_fdrs"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calculate_fdrs">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">calculate_fdrs</span><span class="p">(</span><span class="n">sorted_labels</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate FDR.</span>
+
+<span class="sd">        :param sorted_labels: array with labels sorted (target, decoy)</span>
+<span class="sd">        :return: array with calculated FDRs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sorted_labels</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="n">sorted_labels</span> <span class="o">=</span> <span class="n">sorted_labels</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">cumulative_decoy_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">sorted_labels</span> <span class="o">==</span> <span class="n">TargetDecoyLabel</span><span class="o">.</span><span class="n">DECOY</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">cumulative_target_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">sorted_labels</span> <span class="o">==</span> <span class="n">TargetDecoyLabel</span><span class="o">.</span><span class="n">TARGET</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">Percolator</span><span class="o">.</span><span class="n">fdrs_to_qvals</span><span class="p">(</span><span class="n">cumulative_decoy_count</span> <span class="o">/</span> <span class="n">cumulative_target_count</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Percolator.fdrs_to_qvals"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.fdrs_to_qvals">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fdrs_to_qvals</span><span class="p">(</span><span class="n">fdrs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts FDRs to q-values.</span>
+
+<span class="sd">        :param fdrs: array with FDRs</span>
+<span class="sd">        :return: array with qvals</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">qvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fdrs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fdrs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">qvals</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">fdrs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">fdrs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fdrs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">qvals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">qvals</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">fdrs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">qvals</span></div>
+
+    <span class="k">def</span> <span class="nf">_reorder_columns_for_percolator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">all_columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="o">.</span><span class="n">columns</span>
+        <span class="n">first_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SpecId&quot;</span><span class="p">,</span> <span class="s2">&quot;Label&quot;</span><span class="p">,</span> <span class="s2">&quot;ScanNr&quot;</span><span class="p">]</span>
+        <span class="n">last_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Peptide&quot;</span><span class="p">,</span> <span class="s2">&quot;Protein&quot;</span><span class="p">]</span>
+        <span class="n">mid_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">first_columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">last_columns</span><span class="p">))</span>
+        <span class="n">new_columns</span> <span class="o">=</span> <span class="n">first_columns</span> <span class="o">+</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mid_columns</span><span class="p">)</span> <span class="o">+</span> <span class="n">last_columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="n">new_columns</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Percolator.calc"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.Percolator.calc">[docs]</a>    <span class="k">def</span> <span class="nf">calc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds percolator metadata and feature columns to metrics_val based on PSM metadata.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_common_features</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_decoy_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;REVERSE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Percolator</span><span class="o">.</span><span class="n">get_target_decoy_label</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># add Prosit or Andromeda features</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_type</span> <span class="o">==</span> <span class="s2">&quot;rescore&quot;</span><span class="p">:</span>
+            <span class="n">fragments_ratio</span> <span class="o">=</span> <span class="n">fr</span><span class="o">.</span><span class="n">FragmentsRatio</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">)</span>
+            <span class="n">fragments_ratio</span><span class="o">.</span><span class="n">calc</span><span class="p">()</span>
+
+            <span class="n">similarity</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">SimilarityMetrics</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mz</span><span class="p">)</span>
+            <span class="n">similarity</span><span class="o">.</span><span class="n">calc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_features_flag</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">,</span> <span class="n">fragments_ratio</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">,</span> <span class="n">similarity</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+            <span class="p">)</span>
+
+            <span class="n">lda_failed</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">idxs_below_lda_fdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_lda_and_get_indices_below_fdr</span><span class="p">(</span><span class="n">fdr_cutoff</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fdr_cutoff</span><span class="p">)</span>
+            <span class="n">current_fdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fdr_cutoff</span>
+            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">idxs_below_lda_fdr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">current_fdr</span> <span class="o">+=</span> <span class="mf">0.01</span>
+                <span class="n">idxs_below_lda_fdr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_lda_and_get_indices_below_fdr</span><span class="p">(</span><span class="n">fdr_cutoff</span><span class="o">=</span><span class="n">current_fdr</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">current_fdr</span> <span class="o">&gt;=</span> <span class="mf">0.1</span><span class="p">:</span>
+                    <span class="n">lda_failed</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+
+            <span class="k">if</span> <span class="n">lda_failed</span><span class="p">:</span>
+                <span class="n">sampled_idxs</span> <span class="o">=</span> <span class="n">Percolator</span><span class="o">.</span><span class="n">sample_balanced_over_bins</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">,</span> <span class="s2">&quot;PREDICTED_IRT&quot;</span><span class="p">]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sampled_idxs</span> <span class="o">=</span> <span class="n">Percolator</span><span class="o">.</span><span class="n">sample_balanced_over_bins</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">,</span> <span class="s2">&quot;PREDICTED_IRT&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idxs_below_lda_fdr</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="p">)</span>
+
+            <span class="n">aligned_predicted_rts</span> <span class="o">=</span> <span class="n">Percolator</span><span class="o">.</span><span class="n">get_aligned_predicted_retention_times</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">][</span><span class="n">sampled_idxs</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PREDICTED_IRT&quot;</span><span class="p">][</span><span class="n">sampled_idxs</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PREDICTED_IRT&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">regression_method</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;RT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;pred_RT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;PREDICTED_IRT&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;iRT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_predicted_rts</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;collision_energy_aligned&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;COLLISION_ENERGY&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">100.0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;abs_rt_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;RETENTION_TIME&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">aligned_predicted_rts</span><span class="p">)</span>
+
+            <span class="n">median_abs_error_lda_targets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;abs_rt_diff&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idxs_below_lda_fdr</span><span class="p">])</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Median absolute error predicted vs observed retention time on targets &lt; 1% FDR: </span><span class="si">{</span><span class="n">median_abs_error_lda_targets</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[[</span><span class="s2">&quot;RT&quot;</span><span class="p">,</span> <span class="s2">&quot;pred_RT&quot;</span><span class="p">,</span> <span class="s2">&quot;abs_rt_diff&quot;</span><span class="p">,</span> <span class="s2">&quot;lda_scores&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idxs_below_lda_fdr</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;andromeda&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;SCORE&quot;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_percolator_metadata_columns</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_type</span> <span class="o">==</span> <span class="s2">&quot;rescore&quot;</span><span class="p">:</span>
+            <span class="c1"># TODO: only add this feature if they are not all zero</span>
+            <span class="c1"># self.metrics_val[&#39;spectral_angle_delta_score&#39;] = Percolator.get_delta_score(self.metrics_val[[&#39;ScanNr&#39;,</span>
+            <span class="c1"># &#39;spectral_angle&#39;]], &#39;spectral_angle&#39;)</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;andromeda_delta_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Percolator</span><span class="o">.</span><span class="n">get_delta_score</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[[</span><span class="s2">&quot;ScanNr&quot;</span><span class="p">,</span> <span class="s2">&quot;andromeda&quot;</span><span class="p">]],</span> <span class="s2">&quot;andromeda&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reorder_columns_for_percolator</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="spline"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.spline">[docs]</a><span class="k">def</span> <span class="nf">spline</span><span class="p">(</span><span class="n">knots</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">x_full</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates spline fitting.&quot;&quot;&quot;</span>
+    <span class="n">x_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">knots</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">q_knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_new</span><span class="p">)</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">splrep</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">q_knots</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">yfit</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">BSpline</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">k</span><span class="p">)(</span><span class="n">x_full</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">yfit</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">k</span></div>
+
+
+<div class="viewcode-block" id="f"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.percolator.f">[docs]</a><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates logistic regression function.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">c</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">d</span><span class="p">)))</span> <span class="o">+</span> <span class="n">b</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Victor-George Giurcoiu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

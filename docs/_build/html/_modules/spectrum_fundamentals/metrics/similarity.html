@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spectrum_fundamentals.metrics.similarity &mdash; spectrum_fundamentals 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> spectrum_fundamentals
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">spec_fundamentals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">spectrum_fundamentals</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>spectrum_fundamentals.metrics.similarity</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for spectrum_fundamentals.metrics.similarity</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse.linalg</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">absolute</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">spatial</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">mean_squared_error</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">constants</span>
+<span class="kn">from</span> <span class="nn">.metric</span> <span class="kn">import</span> <span class="n">Metric</span>
+
+
+<div class="viewcode-block" id="get_metric_func"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.get_metric_func">[docs]</a><span class="k">def</span> <span class="nf">get_metric_func</span><span class="p">(</span><span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a callable function for a given metric shortcut.</span>
+
+<span class="sd">    :param metric: a shortcut for the desired metric.</span>
+
+<span class="sd">    :raises ValueError: if the provided metric is not known</span>
+
+<span class="sd">    :return: callable metric function</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">:</span> <span class="n">mean</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">obs</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">pred</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;std&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">:</span> <span class="n">std</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">obs</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">pred</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">obs</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">pred</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">obs</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">pred</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;mse&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">:</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">metric</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">:</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">calculate_quantiles</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown metric function </span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SimilarityMetrics"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics">[docs]</a><span class="k">class</span> <span class="nc">SimilarityMetrics</span><span class="p">(</span><span class="n">Metric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to generate several features than can be used by percoltor for rescoring.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SimilarityMetrics.spectral_angle"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.spectral_angle">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">spectral_angle</span><span class="p">(</span>
+        <span class="n">observed_intensities</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">predicted_intensities</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">charge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate spectral angle.</span>
+
+<span class="sd">        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \</span>
+<span class="sd">                                     0 intensity indicates invalid peaks (charge state &gt; peptide charge state or \</span>
+<span class="sd">                                     position &gt;= peptide length), array of length 174</span>
+<span class="sd">        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174</span>
+<span class="sd">        :param charge: to filter by the peak charges, 0 means everything</span>
+<span class="sd">        :return: SA values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">charge</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">charge</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">SINGLE_CHARGED_MASK</span>
+            <span class="k">elif</span> <span class="n">charge</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">DOUBLE_CHARGED_MASK</span>
+            <span class="k">elif</span> <span class="n">charge</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRIPLE_CHARGED_MASK</span>
+            <span class="k">elif</span> <span class="n">charge</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">B_ION_MASK</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">Y_ION_MASK</span>
+
+            <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">boolean_array</span><span class="p">)</span>
+            <span class="n">observed_intensities</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">)</span>
+            <span class="n">predicted_intensities</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">predicted_intensities</span><span class="p">)</span>
+            <span class="n">observed_intensities</span> <span class="o">=</span> <span class="n">observed_intensities</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">boolean_array</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+            <span class="n">predicted_intensities</span> <span class="o">=</span> <span class="n">predicted_intensities</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">boolean_array</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+        <span class="n">predicted_non_zero_mask</span> <span class="o">=</span> <span class="n">predicted_intensities</span> <span class="o">&gt;</span> <span class="n">constants</span><span class="o">.</span><span class="n">EPSILON</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">observed_masked</span> <span class="o">=</span> <span class="n">observed_intensities</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">predicted_non_zero_mask</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">observed_masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">,</span> <span class="n">predicted_non_zero_mask</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">predicted_intensities</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">predicted_masked</span> <span class="o">=</span> <span class="n">predicted_intensities</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">predicted_non_zero_mask</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">predicted_masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">predicted_intensities</span><span class="p">,</span> <span class="n">predicted_non_zero_mask</span><span class="p">)</span>
+
+        <span class="n">observed_normalized</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">unit_normalization</span><span class="p">(</span><span class="n">observed_masked</span><span class="p">)</span>
+        <span class="n">predicted_normalized</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">unit_normalization</span><span class="p">(</span><span class="n">predicted_masked</span><span class="p">)</span>
+
+        <span class="n">observed_non_zero_mask</span> <span class="o">=</span> <span class="n">observed_intensities</span> <span class="o">&gt;</span> <span class="n">constants</span><span class="o">.</span><span class="n">EPSILON</span>
+        <span class="n">fragments_in_common</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">rowwise_dot_product</span><span class="p">(</span><span class="n">observed_non_zero_mask</span><span class="p">,</span> <span class="n">predicted_non_zero_mask</span><span class="p">)</span>
+
+        <span class="n">dot_product</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">rowwise_dot_product</span><span class="p">(</span><span class="n">observed_normalized</span><span class="p">,</span> <span class="n">predicted_normalized</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">fragments_in_common</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+        <span class="n">arccos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span><span class="n">dot_product</span><span class="p">)</span>
+        <span class="n">sa</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">arccos</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="n">sa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">sa</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sa</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.l2_norm"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.l2_norm">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">l2_norm</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the l2-norm (sqrt(sum(x^2) ) for each row of the matrix.</span>
+
+<span class="sd">        :param matrix: matrix with intensities, constants.EPSILON intensity indicates zero intensity peaks, \</span>
+<span class="sd">                       0 intensity indicates invalid peaks (charge state &gt; peptide charge state or position &gt;= peptide length), \</span>
+<span class="sd">                       matrix of size (nspectra, 174)</span>
+<span class="sd">        :return: vector with rowwise norms of the matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># = np.sqrt(np.sum(np.square(matrix), axis=0))</span>
+        <span class="k">if</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">matrix</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.unit_normalization"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.unit_normalization">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">unit_normalization</span><span class="p">(</span>
+        <span class="n">matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalize each row of the matrix such that the norm equals 1.0.</span>
+
+<span class="sd">        :param matrix: matrix with intensities, constants.EPSILON intensity indicates zero intensity peaks, \</span>
+<span class="sd">                       0 intensity indicates invalid peaks (charge state &gt; peptide charge state or position &gt;= peptide length), \</span>
+<span class="sd">                       matrix of size (nspectra, 174)</span>
+<span class="sd">        :return: normalized matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rowwise_norm</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">l2_norm</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
+        <span class="c1"># prevent divide by zero</span>
+        <span class="n">rowwise_norm</span><span class="p">[</span><span class="n">rowwise_norm</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">matrix</span><span class="p">):</span>
+            <span class="n">reciprocal_rowwise_norm_matrix</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">rowwise_norm</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">reciprocal_rowwise_norm_matrix</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">matrix</span> <span class="o">/</span> <span class="n">rowwise_norm</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.rowwise_dot_product"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.rowwise_dot_product">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">rowwise_dot_product</span><span class="p">(</span>
+        <span class="n">observed_intensities</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">predicted_intensities</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate rowwise dot product.</span>
+
+<span class="sd">        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks,</span>
+<span class="sd">            0 intensity indicates invalid peaks (charge state &gt; peptide charge state or position &gt;= peptide length),</span>
+<span class="sd">            array of length 174</span>
+<span class="sd">        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174</span>
+<span class="sd">        :return: matrix containing the rowwise dotproduct</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">,</span> <span class="n">predicted_intensities</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">,</span> <span class="n">predicted_intensities</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.spectral_entropy_similarity"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.spectral_entropy_similarity">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">spectral_entropy_similarity</span><span class="p">(</span>
+        <span class="n">observed_intensities</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">predicted_intensities</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate spectral entropy similarity as defined in Li et al. (Spectral entropy outperforms MS/MS dot product \</span>
+<span class="sd">        similarity for small-molecule compound identification).</span>
+
+<span class="sd">        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \</span>
+<span class="sd">                                     0 intensity indicates invalid peaks (charge state &gt; peptide charge state or \</span>
+<span class="sd">                                     position &gt;= peptide length), array of length 174</span>
+<span class="sd">        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174</span>
+<span class="sd">        :return: spectral entropy similarity values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">)</span> <span class="o">==</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">:</span>
+            <span class="n">observed_intensities</span> <span class="o">=</span> <span class="n">observed_intensities</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">predicted_intensities</span><span class="p">)</span> <span class="o">==</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">:</span>
+            <span class="n">predicted_intensities</span> <span class="o">=</span> <span class="n">predicted_intensities</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+        <span class="n">entropies</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">,</span> <span class="n">predicted_intensities</span><span class="p">):</span>
+            <span class="n">valid_ion_mask</span> <span class="o">=</span> <span class="n">pred</span> <span class="o">&gt;</span> <span class="n">constants</span><span class="o">.</span><span class="n">EPSILON</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">obs</span><span class="p">)]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pred</span><span class="p">)]</span>
+            <span class="n">entropy_merged</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">entropy</span><span class="p">(</span><span class="n">obs</span> <span class="o">+</span> <span class="n">pred</span><span class="p">)</span>
+            <span class="n">entropy_pred</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">entropy</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+            <span class="n">entropy_obs</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">entropy</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+            <span class="n">entropy</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">entropy_merged</span> <span class="o">-</span> <span class="n">entropy_obs</span> <span class="o">-</span> <span class="n">entropy_pred</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">entropy</span><span class="p">):</span>
+                <span class="n">entropy</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">entropies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entropy</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">entropies</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.correlation"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.correlation">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">correlation</span><span class="p">(</span>
+        <span class="n">observed_intensities</span><span class="p">:</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span>
+        <span class="n">predicted_intensities</span><span class="p">:</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span>
+        <span class="n">charge</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pearson&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate correlation between observed and predicted.</span>
+
+<span class="sd">        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \</span>
+<span class="sd">                                     0 intensity indicates invalid peaks (charge state &gt; peptide charge state or \</span>
+<span class="sd">                                     position &gt;= peptide length), array of length 174</span>
+<span class="sd">        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174</span>
+<span class="sd">        :param charge: to filter by the peak charges, 0 means everything</span>
+<span class="sd">        :param method: either pearson or spearman</span>
+<span class="sd">        :return: calculated correlations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">observed_intensities</span> <span class="o">=</span> <span class="n">observed_intensities</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="n">predicted_intensities</span> <span class="o">=</span> <span class="n">predicted_intensities</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">charge</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">charge</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">SINGLE_CHARGED_MASK</span>
+            <span class="k">elif</span> <span class="n">charge</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">DOUBLE_CHARGED_MASK</span>
+            <span class="k">elif</span> <span class="n">charge</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">TRIPLE_CHARGED_MASK</span>
+            <span class="k">elif</span> <span class="n">charge</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">B_ION_MASK</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">Y_ION_MASK</span>
+
+            <span class="n">boolean_array</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">boolean_array</span><span class="p">)</span>
+            <span class="n">observed_intensities</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">)</span>
+            <span class="n">predicted_intensities</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">predicted_intensities</span><span class="p">)</span>
+            <span class="n">observed_intensities</span> <span class="o">=</span> <span class="n">observed_intensities</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">boolean_array</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+            <span class="n">predicted_intensities</span> <span class="o">=</span> <span class="n">predicted_intensities</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">boolean_array</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+        <span class="n">pear_corr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">,</span> <span class="n">predicted_intensities</span><span class="p">):</span>
+            <span class="n">valid_ion_mask</span> <span class="o">=</span> <span class="n">pred</span> <span class="o">&gt;</span> <span class="n">constants</span><span class="o">.</span><span class="n">EPSILON</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">obs</span><span class="p">)]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pred</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">corr</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">pearsonr</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;pearson&quot;</span> <span class="k">else</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">spearmanr</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">corr</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr</span><span class="p">):</span>
+                <span class="n">corr</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">pear_corr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pear_corr</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.cos"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.cos">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">cos</span><span class="p">(</span>
+        <span class="n">observed_intensities</span><span class="p">:</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">predicted_intensities</span><span class="p">:</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate cosine similarity.</span>
+
+<span class="sd">        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \</span>
+<span class="sd">                                     0 intensity indicates invalid peaks (charge state &gt; peptide charge state or \</span>
+<span class="sd">                                     position &gt;= peptide length), array of length 174</span>
+<span class="sd">        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174</span>
+<span class="sd">        :return: cosine values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-7</span>
+        <span class="n">observed_normalized</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">unit_normalization</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">)</span>
+        <span class="n">predicted_normalized</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">unit_normalization</span><span class="p">(</span><span class="n">predicted_intensities</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observed_normalized</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">observed_normalized</span> <span class="o">=</span> <span class="n">observed_normalized</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">predicted_normalized</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">predicted_normalized</span> <span class="o">=</span> <span class="n">predicted_normalized</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+        <span class="n">cos_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">observed_normalized</span><span class="p">,</span> <span class="n">predicted_normalized</span><span class="p">):</span>
+            <span class="n">valid_ion_mask</span> <span class="o">=</span> <span class="n">pred</span> <span class="o">&gt;</span> <span class="n">epsilon</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">obs</span><span class="p">)]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pred</span><span class="p">)]</span>
+            <span class="n">cos</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">spatial</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">cosine</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">cos</span><span class="p">):</span>
+                <span class="n">cos</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cos_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cos</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cos_values</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.abs_diff"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.abs_diff">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">abs_diff</span><span class="p">(</span>
+        <span class="n">observed_intensities</span><span class="p">:</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">predicted_intensities</span><span class="p">:</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate several similarity metrics.</span>
+
+<span class="sd">        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \</span>
+<span class="sd">                                     0 intensity indicates invalid peaks (charge state &gt; peptide charge state or \</span>
+<span class="sd">                                     position &gt;= peptide length), array of length 174</span>
+<span class="sd">        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174</span>
+<span class="sd">        :param metric: metric (mean, std, q1, q2, q3, min, max, or mse)</span>
+<span class="sd">        :return: calculated similarity values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">chosen_metric</span> <span class="o">=</span> <span class="n">get_metric_func</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-7</span>
+        <span class="n">observed_normalized</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">unit_normalization</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">)</span>
+        <span class="n">predicted_normalized</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">unit_normalization</span><span class="p">(</span><span class="n">predicted_intensities</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observed_normalized</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">observed_normalized</span> <span class="o">=</span> <span class="n">observed_normalized</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">predicted_normalized</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">predicted_normalized</span> <span class="o">=</span> <span class="n">predicted_normalized</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+        <span class="n">diff_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">observed_normalized</span><span class="p">,</span> <span class="n">predicted_normalized</span><span class="p">):</span>
+            <span class="n">valid_ion_mask</span> <span class="o">=</span> <span class="n">pred</span> <span class="o">&gt;</span> <span class="n">epsilon</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">obs</span><span class="p">)]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pred</span><span class="p">)]</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">chosen_metric</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">diff</span><span class="p">):</span>
+                <span class="n">diff</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">diff_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">diff_values</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.calculate_quantiles"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.calculate_quantiles">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">calculate_quantiles</span><span class="p">(</span>
+        <span class="n">observed</span><span class="p">:</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">predicted</span><span class="p">:</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">quantile</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper function to calculcate quantiles.</span>
+
+<span class="sd">        :param observed: observed intensities</span>
+<span class="sd">        :param predicted: predicted intensities</span>
+<span class="sd">        :param quantile: quantile method</span>
+<span class="sd">        :return: calculated quantile</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">quantile</span> <span class="o">==</span> <span class="s2">&quot;q3&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">observed</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">predicted</span><span class="p">)),</span> <span class="mf">0.75</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">quantile</span> <span class="o">==</span> <span class="s2">&quot;q2&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">observed</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">predicted</span><span class="p">)),</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">observed</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">predicted</span><span class="p">)),</span> <span class="mf">0.25</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.modified_cosine"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.modified_cosine">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">modified_cosine</span><span class="p">(</span>
+        <span class="n">observed_intensities</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">predicted_intensities</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">observed_mz</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">theoretical_mz</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate modified cosine similarity as defined in Chris D. McGann et al. (Real-time spectral library \</span>
+<span class="sd">        matching for sample multiplexed quantitative proteomics).</span>
+
+<span class="sd">        :param observed_intensities: observed intensities, constants.EPSILON intensity indicates zero intensity peaks, \</span>
+<span class="sd">                                     0 intensity indicates invalid peaks (charge state &gt; peptide charge state or \</span>
+<span class="sd">                                     position &gt;= peptide length), array of length 174</span>
+<span class="sd">        :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174</span>
+<span class="sd">        :param mz: observed mz values</span>
+<span class="sd">        :return: calculates cosine values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-7</span>
+        <span class="n">observed_normalized</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">unit_normalization</span><span class="p">(</span><span class="n">observed_intensities</span><span class="p">)</span>
+        <span class="n">predicted_normalized</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">unit_normalization</span><span class="p">(</span><span class="n">predicted_intensities</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observed_normalized</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">observed_normalized</span> <span class="o">=</span> <span class="n">observed_normalized</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">predicted_normalized</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">predicted_normalized</span> <span class="o">=</span> <span class="n">predicted_normalized</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observed_mz</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">observed_mz</span> <span class="o">=</span> <span class="n">observed_mz</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theoretical_mz</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">):</span>
+            <span class="n">theoretical_mz</span> <span class="o">=</span> <span class="n">theoretical_mz</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+        <span class="n">cos_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">mz_power</span> <span class="o">=</span> <span class="mf">0.9</span>
+        <span class="n">intensity_power</span> <span class="o">=</span> <span class="mf">0.4</span>
+        <span class="k">for</span> <span class="n">obs</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">obs_mz</span><span class="p">,</span> <span class="n">th_mz</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">observed_normalized</span><span class="p">,</span> <span class="n">predicted_normalized</span><span class="p">,</span> <span class="n">observed_mz</span><span class="p">,</span> <span class="n">theoretical_mz</span><span class="p">):</span>
+            <span class="n">valid_ion_mask</span> <span class="o">=</span> <span class="n">pred</span> <span class="o">&gt;</span> <span class="n">epsilon</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">obs_mz</span> <span class="o">=</span> <span class="n">obs_mz</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">th_mz</span> <span class="o">=</span> <span class="n">th_mz</span><span class="p">[</span><span class="n">valid_ion_mask</span><span class="p">]</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">obs</span><span class="p">)]</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pred</span><span class="p">)]</span>
+            <span class="n">obs_mz</span> <span class="o">=</span> <span class="n">obs_mz</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">obs_mz</span><span class="p">)]</span>
+            <span class="n">th_mz</span> <span class="o">=</span> <span class="n">th_mz</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">th_mz</span><span class="p">)]</span>
+            <span class="n">sum_matched</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">obs</span><span class="o">**</span><span class="n">intensity_power</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">obs_mz</span><span class="o">**</span><span class="n">mz_power</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">pred</span><span class="o">**</span><span class="n">intensity_power</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">th_mz</span><span class="o">**</span><span class="n">mz_power</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">sqrt_sum_pred</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(((</span><span class="n">pred</span><span class="o">**</span><span class="n">intensity_power</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">th_mz</span><span class="o">**</span><span class="n">mz_power</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">sqrt_sum_obs</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(((</span><span class="n">obs</span><span class="o">**</span><span class="n">intensity_power</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">obs_mz</span><span class="o">**</span><span class="n">mz_power</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">cosine</span> <span class="o">=</span> <span class="n">sum_matched</span> <span class="o">/</span> <span class="p">(</span><span class="n">sqrt_sum_pred</span> <span class="o">*</span> <span class="n">sqrt_sum_obs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">cosine</span><span class="p">):</span>
+                <span class="n">cosine</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cos_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cosine</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cos_values</span></div>
+
+<div class="viewcode-block" id="SimilarityMetrics.calc"><a class="viewcode-back" href="../../../spectrum_fundamentals.metrics.html#spectrum_fundamentals.metrics.similarity.SimilarityMetrics.calc">[docs]</a>    <span class="k">def</span> <span class="nf">calc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_features</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds columns with spectral angle feature to metrics_val dataframe.</span>
+
+<span class="sd">        :param all_features: if True, calculcate all metrics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spectral_angle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">spectral_angle</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;pearson_corr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;pearson&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;modified_cosine&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">modified_cosine</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mz</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">all_features</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spectral_entropy_similarity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">spectral_entropy_similarity</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spectral_angle_single_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">spectral_angle</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spectral_angle_double_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">spectral_angle</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">2</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spectral_angle_triple_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">spectral_angle</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">3</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spectral_angle_b_ions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">spectral_angle</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">4</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spectral_angle_y_ions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">spectral_angle</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">5</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;pearson_corr_single_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;pearson&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;pearson_corr_double_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;pearson&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;pearson_corr_triple_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;pearson&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;pearson_corr_b_ions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;pearson&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;pearson_corr_y_ions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;pearson&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;cos&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;mean_abs_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">abs_diff</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;std_abs_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">abs_diff</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;abs_diff_Q3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">abs_diff</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="s2">&quot;q3&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;abs_diff_Q2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">abs_diff</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="s2">&quot;q2&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;abs_diff_Q1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">abs_diff</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="s2">&quot;q1&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;min_abs_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">abs_diff</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;max_abs_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">abs_diff</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;mse&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">abs_diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="s2">&quot;mse&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spearman_corr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;spearman&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spearman_corr_single_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;spearman&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spearman_corr_double_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;spearman&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spearman_corr_triple_charge&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;spearman&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spearman_corr_b_ions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;spearman&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_val</span><span class="p">[</span><span class="s2">&quot;spearman_corr_y_ions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">SimilarityMetrics</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">true_intensities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_intensities</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;spearman&quot;</span>
+            <span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Victor-George Giurcoiu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
