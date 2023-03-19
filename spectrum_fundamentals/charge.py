@@ -27,7 +27,7 @@ def indices_to_one_hot(labels: Union[int, List[int], np.ndarray], classes: Optio
         classes = max_label
     if max_label > classes:
         raise ValueError(
-            f"All labels must be smaller to the number of classes. max_label: {max_label}, classes: {classes}"
+            f"All labels must be smaller or equal to the number of classes. max_label: {max_label}, classes: {classes}"
         )
 
     one_hot = np.zeros((labels.size, classes), dtype=int)
