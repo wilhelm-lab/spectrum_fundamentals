@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spectrum_fundamentals"
-version = "0.3.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
+version = "0.3.1"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Fundamentals public repo"
 authors = ["WassimG <wassim.gabriel@gmail.com>"]
 license = "MIT"
