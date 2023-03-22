@@ -1,8 +1,9 @@
 import logging
-from typing import Tuple
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from spectrum_fundamentals import constants
 from spectrum_fundamentals.fragments import initialize_peaks
@@ -11,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 def match_peaks(
-    fragments_meta_data: list,
-    peaks_intensity: np.ndarray,
-    peaks_masses: np.ndarray,
+    fragments_meta_data: List[Dict[str, Union[int, str, float]]],
+    peaks_intensity: NDArray[float],
+    peaks_masses: NDArray[float],
     tmt_n_term: int,
     unmod_sequence: str,
     charge: int,
-) -> list:
+) -> List[Dict[str, Union[str, int, float]]]:
     """
     Matching experimental peaks with theoretical fragment ions.
 
@@ -80,14 +81,25 @@ def match_peaks(
     return temp_list
 
 
-def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff") -> Tuple[list, int]:
+def handle_multiple_matches(
+    matched_peaks: List[Dict[str, Union[str, int, float]]], sort_by: str = "mass_diff"
+) -> Tuple[pd.DataFrame, int]:
     """
-    Handle if multiple peaks were matched to the same fragment ion.
+    Resolve cases where multiple peaks have been matched to the same fragment ion.
 
-    We will resolve this based on the sort_by parameter.
-    :param matched_peaks: all matched peaks we have for the spectrum
-    :param sort_by: choose how to sort peaks e.g. intensity, mass_diff
-    :return: tuple of matched peak dataframe and the difference between original length and the length after matches
+    This function takes a list of dictionaries representing matched peaks and resolves cases where multiple peaks have
+    been matched to the same fragment ion. The function sorts the peaks based on the provided `sort_by` parameter and
+    removes duplicate matches based on ion type, ion number, and charge state.
+
+    :param matched_peaks: A list of dictionaries, each representing a matched peak. Each dictionary must contain the
+                          following keys: 'ion_type', 'no', 'charge', 'exp_mass', 'theoretical_mass', and 'intensity'.
+    :param sort_by: A string indicating the criterion to use when sorting matched peaks. Valid options are:
+                    'mass_diff' (sort by absolute difference between experimental and theoretical mass, ascending order),
+                    'intensity' (sort by intensity, descending order), and 'exp_mass' (sort by experimental mass,
+                    descending order).
+    :raises ValueError: If an unsupported value is passed to `sort_by`.
+    :return: A tuple containing a DataFrame of matched peaks (with duplicates removed) and an integer indicating the
+             number of duplicate matches that were removed.
     """
     matched_peaks_df = pd.DataFrame(matched_peaks)
     if sort_by == "mass_diff":
@@ -95,8 +107,10 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff") -> 
         matched_peaks_df = matched_peaks_df.sort_values(by="mass_diff", ascending=True)
     elif sort_by == "intensity":
         matched_peaks_df = matched_peaks_df.sort_values(by="intensity", ascending=False)
-    else:
+    elif sort_by == "exp_mass":
         matched_peaks_df = matched_peaks_df.sort_values(by="exp_mass", ascending=False)
+    else:
+        raise ValueError(f"Unsupported value for sort_by supplied: {sort_by}")
 
     original_length = len(matched_peaks_df.index)
     matched_peaks_df = matched_peaks_df.drop_duplicates(subset=["ion_type", "no", "charge"], keep="first")
@@ -106,6 +120,23 @@ def handle_multiple_matches(matched_peaks: list, sort_by: str = "mass_diff") -> 
 
 
 def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
+    """
+    Annotate a set of spectra.
+
+    This function takes a DataFrame of raw peaks and metadata, and for each spectrum, it calls the `parallel_annotate` function
+    to annotate the spectrum and extract the necessary information. If there are any redundant peaks found in the annotation
+    process, the function removes them and logs the information. Finally, it returns a Pandas DataFrame containing the annotated
+    spectra with meta data.
+
+    The returned DataFrame has the following columns:
+    - INTENSITIES: a NumPy array containing the intensity values of each peak in the annotated spectrum
+    - MZ: a NumPy array containing the m/z values of each peak in the annotated spectrum
+    - CALCULATED_MASS: a float representing the calculated mass of the spectrum
+    - removed_peaks: a NumPy array containing the indices of any peaks that were removed during the annotation process
+
+    :param un_annot_spectra: a Pandas DataFrame containing the raw peaks and metadata to be annotated
+    :return: a Pandas DataFrame containing the annotated spectra with meta data
+    """
     """
     The base method for annotating spectra.
 
@@ -182,7 +213,21 @@ def generate_annotation_matrix(
     return intensity, mass
 
 
-def parallel_annotate(spectrum: pd.Series, index_columns: dict):
+def parallel_annotate(spectrum: pd.Series, index_columns: dict) -> Tuple[np.ndarray, np.ndarray, float, List[str]]:
+    """
+    Perform parallel annotation of a spectrum.
+
+    This function takes a spectrum and its index columns and performs parallel annotation of the spectrum. It starts by
+    initializing the peaks and extracting necessary data from the spectrum. It then matches the peaks to the spectrum and
+    generates an annotation matrix based on the matched peaks. If there are multiple matches found, it removes the redundant
+    matches. Finally, it returns annotated spectrum with meta data including intensity values, masses, calculated masses,
+    and any peaks that were removed. The function is designed to run in different threads to speed up the annotation pipeline.
+
+    :param spectrum: a Pandas series that contains the spectrum to be annotated
+    :param index_columns: a dictionary that contains the index columns of the spectrum
+    :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
+             and any removed peaks (List[str])
+    """
     """
     Parallelize the annotation pipeline, here it should annotate spectra in different threads.
 
@@ -212,7 +257,7 @@ def parallel_annotate(spectrum: pd.Series, index_columns: dict):
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)
-        return intensity, mass, calc_mass
+        return intensity, mass, calc_mass, []
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
         matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]
