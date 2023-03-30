@@ -191,16 +191,25 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
 
 
 def get_min_max_mass(mass_analyzer: str, mass: float) -> Tuple[float, float]:
-    """Helper function to get min and max mass based on mass analyzer."""
+    """Helper function to get min and max mass based on mass analyzer.
+
+    :param mass_analyzer: the type of mass analyzer used to determine the tolerance.
+    :param mass: the theoretical fragment mass
+    :raises ValueError: if mass_analyzer is other than one of FTMS, TOF, ITMS
+
+    :return: a tuple (min, max) denoting the mass tolerance range.
+    """
     if mass_analyzer == "FTMS":
         min_mass = (mass * -20 / 1000000) + mass
         max_mass = (mass * 20 / 1000000) + mass
     elif mass_analyzer == "TOF":
         min_mass = (mass * -40 / 1000000) + mass
         max_mass = (mass * 40 / 1000000) + mass
-    else:  # use ITMS otherwise
+    elif mass_analyzer == "ITMS":
         min_mass = mass - 0.35
         max_mass = mass + 0.35
+    else:
+        raise ValueError(f"Unsupported mass_analyzer: {mass_analyzer}")
     return (min_mass, max_mass)
 
 
