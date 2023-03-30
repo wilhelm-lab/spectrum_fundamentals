@@ -54,27 +54,26 @@ def match_peaks(
             if peak_mass < min_mass:
                 start_peak += 1
                 continue
-            if min_mass <= peak_mass <= max_mass:
-                if (
-                    not (fragment["ion_type"] == "b" and fragment_no == 1)
-                    or (unmod_sequence[0] == "R" or unmod_sequence[0] == "H" or unmod_sequence[0] == "K")
-                    and (tmt_n_term == 1)
-                ):
-                    row_list.append(
-                        {
-                            "ion_type": fragment["ion_type"],
-                            "no": fragment_no,
-                            "charge": fragment["charge"],
-                            "exp_mass": peak_mass,
-                            "theoretical_mass": fragment["mass"],
-                            "intensity": peak_intensity,
-                        }
-                    )
-                    if peak_intensity > max_intensity and fragment_no < seq_len:
-                        max_intensity = float(peak_intensity)
-                matched_peak = True
-                next_start_peak = start_peak
-                start_peak += 1
+            if (
+                not (fragment["ion_type"] == "b" and fragment_no == 1)
+                or (unmod_sequence[0] == "R" or unmod_sequence[0] == "H" or unmod_sequence[0] == "K")
+                and (tmt_n_term == 1)
+            ):
+                row_list.append(
+                    {
+                        "ion_type": fragment["ion_type"],
+                        "no": fragment_no,
+                        "charge": fragment["charge"],
+                        "exp_mass": peak_mass,
+                        "theoretical_mass": fragment["mass"],
+                        "intensity": peak_intensity,
+                    }
+                )
+                if peak_intensity > max_intensity and fragment_no < seq_len:
+                    max_intensity = float(peak_intensity)
+            matched_peak = True
+            next_start_peak = start_peak
+            start_peak += 1
     for row in row_list:
         row["intensity"] = float(row["intensity"]) / max_intensity
         temp_list.append(row)
