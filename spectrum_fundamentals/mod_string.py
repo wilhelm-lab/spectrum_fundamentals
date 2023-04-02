@@ -8,7 +8,7 @@ from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_NAMES, SPECTRONAUT_MOD
 
 def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     """
-    Function to translate a modstring from the interal format to the spectronaut format.
+    Function to translate a modstring from the internal format to the spectronaut format.
 
     :param sequences: List[str] of sequences
     :return: List[str] of modified sequences
@@ -22,9 +22,12 @@ def maxquant_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, st
     Function to translate a MaxQuant modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param fixed_mods: Optional dictionary of modifications with key aa and value mod, e.g. 'M': 'M(UNIMOD:35)'. Fixed \
-    modifications must be included in the variable modificatons dictionary throws Assertion error otherwise
-    :return: List[str] of modified sequences
+    :param fixed_mods: Optional dictionary of modifications with key aa and value mod, e.g. 'M': 'M(UNIMOD:35)'.
+        Fixed modifications must be included in the variable modificatons dictionary.
+        By default, i.e. if nothing is supplied to fixed_mods, carbamidomethylation on cystein will be included
+        in the fixed modifications. If you want to have no fixed modifictions at all, supply fixed_mods={}
+    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary.
+    :return: a list of modified sequences
     """
     if fixed_mods is None:
         fixed_mods = {"C": "C[UNIMOD:4]"}
@@ -155,7 +158,7 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
         if "".join(split_seq) == sequence:
             if translate:
                 return [alphabet[aa] for aa in split_seq]
-            elif not translate:
+            else:
                 return split_seq
         elif filter:
             return [0]
@@ -174,7 +177,7 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
     return map(split_modstring, sequences, repeat(regex_pattern))
 
 
-def proteomicsdb_to_internal(sequence: str, mods_variable: str, mods_fixed: str) -> str:
+def proteomicsdb_to_internal(sequence: str, mods_variable: str = "", mods_fixed: str = "") -> str:
     """
     Function to create a sequence with UNIMOD modifications from given sequence and it's varaible and fixed modifications.
 
@@ -203,10 +206,11 @@ def proteomicsdb_to_internal(sequence: str, mods_variable: str, mods_fixed: str)
 
         if len(mod_and_position[1]) > 1:
             position = int(mod_and_position[1][1:])
-            if not position == 0 and not position > len(sequence):
-                sequence = sequence[: position - 1] + mods_dict[amino_acid] + sequence[position:]
-            elif position == 0:
+            if position == 0:
                 mod_at_start = True
+            else:
+                if position <= len(sequence):
+                    sequence = sequence[: position - 1] + mods_dict[amino_acid] + sequence[position:]
 
         elif len(mod_and_position[1]) == 1:
             sequence = sequence.replace(amino_acid, mods_dict[amino_acid])
