@@ -282,112 +282,7 @@ class TestPercolator:
 
     def test_calc(self):
         """Test calc."""
-        cols = [
-            "RAW_FILE",
-            "SCAN_NUMBER",
-            "MODIFIED_SEQUENCE",
-            "SEQUENCE",
-            "PRECURSOR_CHARGE",
-            "MASS",
-            "CALCULATED_MASS",
-            "SCORE",
-            "REVERSE",
-            "FRAGMENTATION",
-            "MASS_ANALYZER",
-            "SCAN_EVENT_NUMBER",
-            "RETENTION_TIME",
-            "PREDICTED_IRT",
-            "COLLISION_ENERGY",
-        ]
-        perc_input = pd.DataFrame(columns=cols)
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,7978,AAIGEATRL,AAIGEATRL,2,900.50345678,900.50288029264,60.43600000000001,False,HCD,FTMS,1,0.5,0.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12304,AAVPRAAFL,AAVPRAAFL,2,914.53379,914.53379,34.006,True,HCD,FTMS,2,1,1.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12398,AAYFGVYDTAK,AAYFGVYDTAK,2,1204.5764,1204.5764,39.97399999999999,True,HCD,FTMS,3,1.5,2.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,11716,AAYYHPSYL,AAYYHPSYL,2,1083.5025,1083.5025,99.919,False,HCD,FTMS,4,2,3.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,87.802,False,HCD,FTMS,5,2.5,4.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,62.802,False,HCD,FTMS,6,3,5.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,79.802,False,HCD,FTMS,7,3.5,6.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,79.802,False,HCD,FTMS,8,4.0,7.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-
-        perc_input["SCAN_NUMBER"] = perc_input["SCAN_NUMBER"].astype(int)
-        perc_input["PRECURSOR_CHARGE"] = perc_input["PRECURSOR_CHARGE"].astype(int)
-        perc_input["MASS"] = perc_input["MASS"].astype(float)
-        perc_input["CALCULATED_MASS"] = perc_input["CALCULATED_MASS"].astype(float)
-        perc_input["REVERSE"] = perc_input["REVERSE"] == "True"
-        perc_input["COLLISION_ENERGY"] = perc_input["COLLISION_ENERGY"].astype(float)
-
-        # we need to add noise to the retention times to prevent 0 residuals in the lowess regression
-        perc_input["RETENTION_TIME"] = perc_input["RETENTION_TIME"].astype(float) + 1e-7 * np.random.random(
-            len(perc_input["RETENTION_TIME"])
-        )
-        perc_input["PREDICTED_IRT"] = perc_input["PREDICTED_IRT"].astype(float) + 1e-7 * np.random.random(
-            len(perc_input["RETENTION_TIME"])
-        )
-
+        perc_input = pd.read_csv(__file__.rsplit("/", 1)[0] + "/data/perc_input.csv")
         z = constants.EPSILON
         #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
         predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
@@ -458,10 +353,45 @@ class TestPercolator:
 
         # check lowess fit of second PSM
         np.testing.assert_almost_equal(percolator.metrics_val["abs_rt_diff"][1], 0.0, decimal=3)
-        # TODO: figure out why this test fails
-        # np.testing.assert_almost_equal(percolator.metrics_val['abs_rt_diff'][2], 0.0, decimal = 3)
+        np.testing.assert_almost_equal(percolator.metrics_val["abs_rt_diff"][2], 0.0, decimal=3)
         # TODO: only add this feature if they are not all zero
         # np.testing.assert_equal(percolator.metrics_val['spectral_angle_delta_score'][0], 0.0)
+
+    def test_calc_all_features(self):
+        """Test calc."""
+        perc_input = pd.read_csv(__file__.rsplit("/", 1)[0] + "/data/perc_input.csv")
+        z = constants.EPSILON
+        #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
+        predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
+        observed_intensities_target = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0])
+        mz_target = get_padded_array([100, 0, 150, 0, 0, 0, 300, 0, 0])
+
+        predicted_intensities_decoy = get_padded_array([z, 3.0, 4.0, z])
+        observed_intensities_decoy = get_padded_array([z, z, 3.0, 4.0])
+        mz_decoy = get_padded_array([0, 0, 100, 0])
+
+        predicted_intensities = scipy.sparse.vstack(np.repeat(predicted_intensities_target, len(perc_input)))
+        observed_intensities = scipy.sparse.vstack(np.repeat(observed_intensities_target, len(perc_input)))
+        mz = scipy.sparse.vstack(np.repeat(mz_target, len(perc_input)))
+
+        predicted_intensities[1, :] = predicted_intensities_decoy
+        predicted_intensities[2, :] = predicted_intensities_decoy
+        observed_intensities[1, :] = observed_intensities_decoy
+        observed_intensities[2, :] = observed_intensities_decoy
+        mz[1, :] = mz_decoy
+        mz[2, :] = mz_target
+
+        percolator = perc.Percolator(
+            metadata=perc_input,
+            input_type="rescore",
+            pred_intensities=predicted_intensities,
+            true_intensities=observed_intensities,
+            mz=mz,
+            fdr_cutoff=0.4,
+            regression_method="lowess",
+            all_features_flag=True,
+        )
+        percolator.calc()
 
 
 def get_padded_array(arr, padding_value=0):
