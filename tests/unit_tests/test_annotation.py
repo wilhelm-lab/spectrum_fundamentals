@@ -1,5 +1,6 @@
 import unittest
 from ast import literal_eval
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -13,12 +14,12 @@ class TestAnnotationPipeline(unittest.TestCase):
     def test_annotate_spectra(self):
         """Test annotate spectra."""
         spectrum_input = pd.read_csv(
-            __file__.rsplit("/", 1)[0] + "/data/spectrum_input.csv",
+            Path(__file__).parent / "data/spectrum_input.csv",
             index_col=0,
             converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
         )
         expected_result = pd.read_csv(
-            __file__.rsplit("/", 1)[0] + "/data/spectrum_output.csv",
+            Path(__file__).parent / "data/spectrum_output.csv",
             index_col=0,
             converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
         )

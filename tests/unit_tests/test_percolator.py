@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import scipy.sparse
@@ -282,7 +284,7 @@ class TestPercolator:
 
     def test_calc(self):
         """Test calc."""
-        perc_input = pd.read_csv(__file__.rsplit("/", 1)[0] + "/data/perc_input.csv")
+        perc_input = pd.read_csv(Path(__file__).parent / "data/perc_input.csv")
         z = constants.EPSILON
         #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
         predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
@@ -359,7 +361,7 @@ class TestPercolator:
 
     def test_calc_all_features(self):
         """Test calc."""
-        perc_input = pd.read_csv(__file__.rsplit("/", 1)[0] + "/data/perc_input.csv")
+        perc_input = pd.read_csv(Path(__file__).parent / "data/perc_input.csv")
         z = constants.EPSILON
         #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
         predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
