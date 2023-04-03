@@ -23,7 +23,6 @@ class TestAnnotationPipeline(unittest.TestCase):
         )
 
         result = annotation.annotate_spectra(spectrum_input)
-        result.to_csv(__file__.rsplit("/", 1)[0] + "/data/spectrum_output2.csv")
         pd.testing.assert_frame_equal(expected_result, result)
 
     def test_handle_multiple_matches(self):
