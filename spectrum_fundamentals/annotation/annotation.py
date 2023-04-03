@@ -142,8 +142,7 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
         if not results:
             continue
         raw_file_annotations.append(results)
-    results_df = pd.DataFrame()
-    results_df = results_df.append(raw_file_annotations)
+    results_df = pd.DataFrame(raw_file_annotations)
     results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
     logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
 
