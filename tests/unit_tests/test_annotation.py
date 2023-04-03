@@ -1,6 +1,7 @@
 import unittest
 from ast import literal_eval
 
+import numpy as np
 import pandas as pd
 
 from spectrum_fundamentals.annotation import annotation
@@ -19,8 +20,10 @@ class TestAnnotationPipeline(unittest.TestCase):
         expected_result = pd.read_csv(
             __file__.rsplit("/", 1)[0] + "/data/spectrum_output.csv",
             index_col=0,
-            converters={"INTENSITIES": literal_eval, "MZ": literal_eval, "removed_peaks": literal_eval},
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
         )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
 
         result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)
@@ -74,8 +77,8 @@ class TestAnnotationPipeline(unittest.TestCase):
         # Expected output with sorted by exp_mass, the third and first, i.e. index 2 and 0 should be returned.
         expected_df_exp_mass = pd.DataFrame(
             [
-                {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 200, "theoretical_mass": 198, "intensity": 0.05},
-                {"ion_type": "y", "no": 3, "charge": 1, "exp_mass": 300, "theoretical_mass": 303, "intensity": 0.1},
+                {"ion_type": "y", "no": 3, "charge": 1, "exp_mass": 303, "theoretical_mass": 303, "intensity": 0.05},
+                {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 205, "theoretical_mass": 198, "intensity": 0.01},
             ],
             index=[3, 1],
         )

@@ -332,9 +332,7 @@ class SimilarityMetrics(Metric):
         return diff_values
 
     @staticmethod
-    def calculate_quantiles(
-        observed: scipy.sparse.csr_matrix, predicted: scipy.sparse.csr_matrix, quantile: str
-    ) -> float:
+    def calculate_quantiles(observed: np.ndarray, predicted: np.ndarray, quantile: str) -> float:
         """
         Helper function to calculcate quantiles.
 

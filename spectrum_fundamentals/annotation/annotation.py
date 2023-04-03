@@ -1,9 +1,8 @@
 import logging
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
 
 from spectrum_fundamentals import constants
 from spectrum_fundamentals.fragments import initialize_peaks
@@ -12,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 def match_peaks(
-    fragments_meta_data: List[Dict[str, Union[int, str, float]]],
-    peaks_intensity: NDArray[float],
-    peaks_masses: NDArray[float],
+    fragments_meta_data: pd.DataFrame,
+    peaks_intensity: np.ndarray,
+    peaks_masses: np.ndarray,
     tmt_n_term: int,
     unmod_sequence: str,
     charge: int,
@@ -38,7 +37,7 @@ def match_peaks(
     next_start_peak = 0
     seq_len = len(unmod_sequence)
     matched_peak = False
-    for fragment in fragments_meta_data:
+    for _, fragment in fragments_meta_data.iterrows():
         min_mass = fragment["min_mass"]
         max_mass = fragment["max_mass"]
         fragment_no = fragment["no"]
@@ -136,12 +135,6 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
     :param un_annot_spectra: a Pandas DataFrame containing the raw peaks and metadata to be annotated
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
-    """
-    The base method for annotating spectra.
-
-    :param un_annot_spectra: dataframe of raw peaks and metadata
-    :return: annotated spectra
-    """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
@@ -212,7 +205,7 @@ def generate_annotation_matrix(
     return intensity, mass
 
 
-def parallel_annotate(spectrum: pd.Series, index_columns: dict) -> Tuple[np.ndarray, np.ndarray, float, List[str]]:
+def parallel_annotate(spectrum: np.ndarray, index_columns: dict) -> Optional[Tuple[np.ndarray, np.ndarray, float, int]]:
     """
     Perform parallel annotation of a spectrum.
 
@@ -222,17 +215,10 @@ def parallel_annotate(spectrum: pd.Series, index_columns: dict) -> Tuple[np.ndar
     matches. Finally, it returns annotated spectrum with meta data including intensity values, masses, calculated masses,
     and any peaks that were removed. The function is designed to run in different threads to speed up the annotation pipeline.
 
-    :param spectrum: a Pandas series that contains the spectrum to be annotated
+    :param spectrum: a np.ndarray that contains the spectrum to be annotated
     :param index_columns: a dictionary that contains the index columns of the spectrum
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
-    """
-    """
-    Parallelize the annotation pipeline, here it should annotate spectra in different threads.
-
-    :param spectrum: spectrum to be annotated
-    :param index_columns: TODO
-    :return: annotated spectrum with meta data
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
@@ -256,7 +242,7 @@ def parallel_annotate(spectrum: pd.Series, index_columns: dict) -> Tuple[np.ndar
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)
-        return intensity, mass, calc_mass, []
+        return intensity, mass, calc_mass, 0
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
         matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]

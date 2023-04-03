@@ -1,8 +1,8 @@
 import logging
-from operator import itemgetter
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+import pandas as pd
 
 from . import constants as constants
 
@@ -106,7 +106,7 @@ def compute_peptide_mass(sequence: str) -> float:
     return forward_sum + ion_type_offsets[0] + ion_type_offsets[1]
 
 
-def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[List[Dict[str, object]], int, str, float]:
+def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd.DataFrame, int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 
@@ -123,9 +123,13 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
     else:
         modification_deltas, tmt_n_term, peptide_sequence = modifications
 
+    col_dtypes = {"ion_type": str, "no": int, "charge": float, "mass": float, "min_mass": float, "max_mass": float}
     peptide_length = len(peptide_sequence)
+
     if peptide_length > 30:
-        return [], -1, "", 0.0
+        df_out = pd.DataFrame(columns=col_dtypes.keys())
+        df_out = df_out.astype(col_dtypes)
+        return df_out, -1, "", 0.0
 
     # initialize constants
     if int(round(charge)) <= 3:
@@ -177,17 +181,18 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
                 mass = (ion_type_masses[ion_type] + charge_delta) / charge
                 min_mass, max_mass = get_min_max_mass(mass_analyzer, mass)
                 fragments_meta_data.append(
-                    {
-                        "ion_type": ion_types[ion_type],
-                        "no": i + 1,
-                        "charge": charge,
-                        "mass": mass,
-                        "min_mass": min_mass,
-                        "max_mass": max_mass,
-                    }
+                    [
+                        ion_types[ion_type],  # ion type
+                        i + 1,  # no
+                        charge,  # charge
+                        mass,  # mass
+                        min_mass,  # min mass
+                        max_mass,  # max mass
+                    ]
                 )
-        fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
-    return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
+    df_out = pd.DataFrame(data=fragments_meta_data, columns=col_dtypes.keys())
+    df_out.sort_values(by="mass", inplace=True)
+    return df_out, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
 
 
 def get_min_max_mass(mass_analyzer: str, mass: float) -> Tuple[float, float]:
