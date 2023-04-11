@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <meta
             name="generator"
-            content="Docutils 0.17.1: http://docutils.sourceforge.net/"
+            content="Docutils 0.18.1: http://docutils.sourceforge.net/"
         />
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,9 +28,6 @@
             id="documentation_options"
             src="_static/documentation_options.js"
         ></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script src="_static/js/theme.js"></script>
@@ -64,6 +61,7 @@
                                     type="text"
                                     name="q"
                                     placeholder="Search docs"
+                                    aria-label="Search docs"
                                 />
                                 <input
                                     type="hidden"
@@ -447,19 +445,20 @@
                                     <a
                                         href="index.html"
                                         class="icon icon-home"
+                                        aria-label="Home"
                                     ></a>
-                                    &raquo;
                                 </li>
-                                <li>
+                                <li class="breadcrumb-item">
                                     <a href="modules.html"
                                         >spectrum_fundamentals</a
                                     >
-                                    &raquo;
                                 </li>
-                                <li>spectrum_fundamentals package</li>
+                                <li class="breadcrumb-item active">
+                                    spectrum_fundamentals package
+                                </li>
                                 <li class="wy-breadcrumbs-aside">
                                     <a
-                                        href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/development/spectrum_fundamentals/spectrum_fundamentals.rst"
+                                        href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/main/spectrum_fundamentals/spectrum_fundamentals.rst"
                                         class="fa fa-github"
                                     >
                                         Edit on GitHub</a
@@ -1724,7 +1723,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/charge.py#L6-L36"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/charge.py#L6-L36"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -1745,7 +1744,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <ul class="simple">
@@ -1754,22 +1756,18 @@
                                                                     <strong
                                                                         >labels</strong
                                                                     >
-                                                                    (<em
-                                                                        >Union</em
-                                                                    ><em>[</em
-                                                                    ><em>int</em
-                                                                    ><em>, </em
+                                                                    (<em>int</em
+                                                                    ><em> | </em
                                                                     ><em
                                                                         >List</em
                                                                     ><em>[</em
                                                                     ><em>int</em
-                                                                    ><em>]</em
-                                                                    ><em>, </em
+                                                                    ><em>] </em
+                                                                    ><em>| </em
                                                                     ><em
                                                                         >ndarray</em
-                                                                    ><em>]</em>)
-                                                                    – The labels
-                                                                    to be
+                                                                    >) – The
+                                                                    labels to be
                                                                     one-hot
                                                                     encoding.
                                                                     Must be
@@ -1781,13 +1779,13 @@
                                                                     <strong
                                                                         >classes</strong
                                                                     >
-                                                                    (<em
-                                                                        >Optional</em
-                                                                    ><em>[</em
-                                                                    ><em>int</em
-                                                                    ><em>]</em>)
-                                                                    – The number
-                                                                    of classes,
+                                                                    (<em>int</em
+                                                                    ><em> | </em
+                                                                    ><em
+                                                                        >None</em
+                                                                    >) – The
+                                                                    number of
+                                                                    classes,
                                                                     i.e. the
                                                                     length of
                                                                     the
@@ -1800,7 +1798,10 @@
                                                         </ul>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Raises
+                                                        Raises<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <ul class="simple">
@@ -1834,7 +1835,10 @@
                                                         </ul>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -1844,7 +1848,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p><em>ndarray</em></p>
@@ -1897,7 +1904,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/constants.py#L278-L282"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/constants.py#L278-L282"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2052,7 +2059,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/fragments.py#L207-L311"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L207-L311"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2078,7 +2085,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <ul class="simple">
@@ -2126,7 +2136,10 @@
                                                         </ul>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2135,12 +2148,15 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
-                                                            <em>Optional</em
-                                                            >[<em>ndarray</em>]
+                                                            <em>ndarray</em> |
+                                                            None
                                                         </p>
                                                     </dd>
                                                 </dl>
@@ -2171,7 +2187,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/fragments.py#L68-L106"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L68-L106"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2191,7 +2207,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2204,7 +2223,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Raises
+                                                        Raises<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2218,7 +2240,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2227,7 +2252,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>float</p>
@@ -2267,7 +2295,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/fragments.py#L193-L204"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L193-L204"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2288,7 +2316,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <ul class="simple">
@@ -2313,7 +2344,10 @@
                                                         </ul>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2363,7 +2397,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/fragments.py#L109-L190"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L109-L190"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2384,7 +2418,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <ul class="simple">
@@ -2425,7 +2462,10 @@
                                                         </ul>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Raises
+                                                        Raises<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2441,7 +2481,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2454,7 +2497,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2514,7 +2560,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/mod_string.py#L230-L237"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L230-L237"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2534,7 +2580,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <ul class="simple">
@@ -2586,7 +2635,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/mod_string.py#L79-L90"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L79-L90"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2608,7 +2657,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2624,7 +2676,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2633,7 +2688,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2668,7 +2726,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/mod_string.py#L93-L136"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L93-L136"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2689,7 +2747,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2705,7 +2766,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2715,7 +2779,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2752,7 +2819,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/mod_string.py#L9-L17"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L9-L17"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2774,7 +2841,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2790,7 +2860,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2799,7 +2872,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2834,7 +2910,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/mod_string.py#L68-L76"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L68-L76"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2855,7 +2931,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2871,7 +2950,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -2880,7 +2962,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -2930,7 +3015,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/mod_string.py#L20-L65"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L20-L65"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -2951,7 +3036,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <ul class="simple">
@@ -2975,17 +3063,17 @@
                                                                         >fixed_mods</strong
                                                                     >
                                                                     (<em
-                                                                        >Optional</em
-                                                                    ><em>[</em
-                                                                    ><em
                                                                         >Dict</em
                                                                     ><em>[</em
                                                                     ><em>str</em
                                                                     ><em>, </em
                                                                     ><em>str</em
-                                                                    ><em>]</em
-                                                                    ><em>]</em>)
-                                                                    – Optional
+                                                                    ><em>] </em
+                                                                    ><em>| </em
+                                                                    ><em
+                                                                        >None</em
+                                                                    >) –
+                                                                    Optional
                                                                     dictionary
                                                                     of
                                                                     modifications
@@ -3010,7 +3098,10 @@
                                                         </ul>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -3019,7 +3110,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>
@@ -3091,7 +3185,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/mod_string.py#L139-L174"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L139-L174"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -3108,7 +3202,10 @@
                                                 <p>Parse modstrings.</p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <ul class="simple">
@@ -3184,7 +3281,10 @@
                                                         </ul>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -3237,7 +3337,7 @@
                                                 ><span class="sig-paren">)</span
                                                 ><a
                                                     class="reference external"
-                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/0.3.0/spectrum_fundamentals/mod_string.py#L177-L227"
+                                                    href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L177-L227"
                                                     ><span class="viewcode-link"
                                                         ><span class="pre"
                                                             >[source]</span
@@ -3260,7 +3360,10 @@
                                                 </p>
                                                 <dl class="field-list simple">
                                                     <dt class="field-odd">
-                                                        Parameters
+                                                        Parameters<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <ul class="simple">
@@ -3306,7 +3409,10 @@
                                                         </ul>
                                                     </dd>
                                                     <dt class="field-even">
-                                                        Returns
+                                                        Returns<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-even">
                                                         <p>
@@ -3316,7 +3422,10 @@
                                                         </p>
                                                     </dd>
                                                     <dt class="field-odd">
-                                                        Return type
+                                                        Return type<span
+                                                            class="colon"
+                                                            >:</span
+                                                        >
                                                     </dt>
                                                     <dd class="field-odd">
                                                         <p>str</p>

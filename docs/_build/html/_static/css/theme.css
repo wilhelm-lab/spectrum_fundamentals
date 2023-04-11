@@ -320,14 +320,9 @@ small {
 .wy-inline-validate.wy-inline-validate-info .wy-input-context:before,
 .wy-inline-validate.wy-inline-validate-success .wy-input-context:before,
 .wy-inline-validate.wy-inline-validate-warning .wy-input-context:before,
-.wy-menu-vertical li.current > a,
 .wy-menu-vertical li.current > a button.toctree-expand:before,
-.wy-menu-vertical li.on a,
 .wy-menu-vertical li.on a button.toctree-expand:before,
 .wy-menu-vertical li button.toctree-expand:before,
-.wy-nav-top a,
-.wy-side-nav-search .wy-dropdown > a,
-.wy-side-nav-search > a,
 input[type="color"],
 input[type="date"],
 input[type="datetime-local"],
@@ -4772,30 +4767,25 @@ article ol li ul li {
 .wy-breadcrumbs:after {
     clear: both;
 }
-.wy-breadcrumbs li {
+.wy-breadcrumbs > li {
     display: inline-block;
+    padding-top: 5px;
 }
-.wy-breadcrumbs li.wy-breadcrumbs-aside {
+.wy-breadcrumbs > li.wy-breadcrumbs-aside {
     float: right;
 }
-.wy-breadcrumbs li a {
-    display: inline-block;
-    padding: 5px;
+.rst-content .wy-breadcrumbs > li code,
+.rst-content .wy-breadcrumbs > li tt,
+.wy-breadcrumbs > li .rst-content tt,
+.wy-breadcrumbs > li code {
+    all: inherit;
+    color: inherit;
 }
-.wy-breadcrumbs li a:first-child {
-    padding-left: 0;
-}
-.rst-content .wy-breadcrumbs li tt,
-.wy-breadcrumbs li .rst-content tt,
-.wy-breadcrumbs li code {
-    padding: 5px;
-    border: none;
-    background: none;
-}
-.rst-content .wy-breadcrumbs li tt.literal,
-.wy-breadcrumbs li .rst-content tt.literal,
-.wy-breadcrumbs li code.literal {
-    color: #404040;
+.breadcrumb-item:before {
+    content: "/";
+    color: #bbb;
+    font-size: 13px;
+    padding: 0 6px 0 3px;
 }
 .wy-breadcrumbs-extra {
     margin-bottom: 0;
@@ -5899,6 +5889,23 @@ footer span.commit code {
 .rst-content table > caption:hover .headerlink {
     opacity: 1;
 }
+.rst-content p a {
+    overflow-wrap: anywhere;
+}
+.rst-content .wy-table td p,
+.rst-content .wy-table td ul,
+.rst-content .wy-table th p,
+.rst-content .wy-table th ul,
+.rst-content table.docutils td p,
+.rst-content table.docutils td ul,
+.rst-content table.docutils th p,
+.rst-content table.docutils th ul,
+.rst-content table.field-list td p,
+.rst-content table.field-list td ul,
+.rst-content table.field-list th p,
+.rst-content table.field-list th ul {
+    font-size: inherit;
+}
 .rst-content .btn:focus {
     outline: 2px solid;
 }
@@ -5949,6 +5956,10 @@ footer span.commit code {
     line-height: 0;
     font-size: 90%;
 }
+.rst-content .citation-reference > span.fn-bracket,
+.rst-content .footnote-reference > span.fn-bracket {
+    display: none;
+}
 .rst-content .hlist {
     width: 100%;
 }
@@ -5977,56 +5988,183 @@ html.writer-html4 .rst-content table.docutils.footnote td.label {
     padding-right: 0;
     vertical-align: top;
 }
+html.writer-html5 .rst-content dl.citation,
 html.writer-html5 .rst-content dl.field-list,
 html.writer-html5 .rst-content dl.footnote {
     display: grid;
+    grid-template-columns: auto minmax(80%, 95%);
+}
+html.writer-html5 .rst-content dl.citation > dt,
+html.writer-html5 .rst-content dl.field-list > dt,
+html.writer-html5 .rst-content dl.footnote > dt {
+    display: inline-grid;
     grid-template-columns: max-content auto;
 }
+html.writer-html5 .rst-content aside.citation,
+html.writer-html5 .rst-content aside.footnote,
+html.writer-html5 .rst-content div.citation {
+    display: grid;
+    grid-template-columns: auto auto minmax(0.65rem, auto) minmax(40%, 95%);
+}
+html.writer-html5 .rst-content aside.citation > span.label,
+html.writer-html5 .rst-content aside.footnote > span.label,
+html.writer-html5 .rst-content div.citation > span.label {
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+html.writer-html5 .rst-content aside.citation > span.backrefs,
+html.writer-html5 .rst-content aside.footnote > span.backrefs,
+html.writer-html5 .rst-content div.citation > span.backrefs {
+    grid-column-start: 2;
+    grid-column-end: 3;
+    grid-row-start: 1;
+    grid-row-end: 3;
+}
+html.writer-html5 .rst-content aside.citation > p,
+html.writer-html5 .rst-content aside.footnote > p,
+html.writer-html5 .rst-content div.citation > p {
+    grid-column-start: 4;
+    grid-column-end: 5;
+}
+html.writer-html5 .rst-content dl.citation,
+html.writer-html5 .rst-content dl.field-list,
+html.writer-html5 .rst-content dl.footnote {
+    margin-bottom: 24px;
+}
+html.writer-html5 .rst-content dl.citation > dt,
 html.writer-html5 .rst-content dl.field-list > dt,
 html.writer-html5 .rst-content dl.footnote > dt {
     padding-left: 1rem;
 }
-html.writer-html5 .rst-content dl.field-list > dt:after,
-html.writer-html5 .rst-content dl.footnote > dt:after {
-    content: ":";
-}
+html.writer-html5 .rst-content dl.citation > dd,
+html.writer-html5 .rst-content dl.citation > dt,
 html.writer-html5 .rst-content dl.field-list > dd,
 html.writer-html5 .rst-content dl.field-list > dt,
 html.writer-html5 .rst-content dl.footnote > dd,
 html.writer-html5 .rst-content dl.footnote > dt {
     margin-bottom: 0;
 }
+html.writer-html5 .rst-content dl.citation,
 html.writer-html5 .rst-content dl.footnote {
     font-size: 0.9rem;
 }
+html.writer-html5 .rst-content dl.citation > dt,
 html.writer-html5 .rst-content dl.footnote > dt {
     margin: 0 0.5rem 0.5rem 0;
     line-height: 1.2rem;
     word-break: break-all;
     font-weight: 400;
 }
-html.writer-html5 .rst-content dl.footnote > dt > span.brackets {
-    margin-right: 0.5rem;
-}
+html.writer-html5 .rst-content dl.citation > dt > span.brackets:before,
 html.writer-html5 .rst-content dl.footnote > dt > span.brackets:before {
     content: "[";
 }
+html.writer-html5 .rst-content dl.citation > dt > span.brackets:after,
 html.writer-html5 .rst-content dl.footnote > dt > span.brackets:after {
     content: "]";
 }
+html.writer-html5 .rst-content dl.citation > dt > span.fn-backref,
 html.writer-html5 .rst-content dl.footnote > dt > span.fn-backref {
+    text-align: left;
     font-style: italic;
+    margin-left: 0.65rem;
+    word-break: break-word;
+    word-spacing: -0.1rem;
+    max-width: 5rem;
 }
+html.writer-html5 .rst-content dl.citation > dt > span.fn-backref > a,
+html.writer-html5 .rst-content dl.footnote > dt > span.fn-backref > a {
+    word-break: keep-all;
+}
+html.writer-html5
+    .rst-content
+    dl.citation
+    > dt
+    > span.fn-backref
+    > a:not(:first-child):before,
+html.writer-html5
+    .rst-content
+    dl.footnote
+    > dt
+    > span.fn-backref
+    > a:not(:first-child):before {
+    content: " ";
+}
+html.writer-html5 .rst-content dl.citation > dd,
 html.writer-html5 .rst-content dl.footnote > dd {
     margin: 0 0 0.5rem;
     line-height: 1.2rem;
 }
-html.writer-html5 .rst-content dl.footnote > dd p,
+html.writer-html5 .rst-content dl.citation > dd p,
+html.writer-html5 .rst-content dl.footnote > dd p {
+    font-size: 0.9rem;
+}
+html.writer-html5 .rst-content aside.citation,
+html.writer-html5 .rst-content aside.footnote,
+html.writer-html5 .rst-content div.citation {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.2rem;
+}
+html.writer-html5 .rst-content aside.citation p,
+html.writer-html5 .rst-content aside.footnote p,
+html.writer-html5 .rst-content div.citation p {
+    font-size: 0.9rem;
+    line-height: 1.2rem;
+    margin-bottom: 12px;
+}
+html.writer-html5 .rst-content aside.citation span.backrefs,
+html.writer-html5 .rst-content aside.footnote span.backrefs,
+html.writer-html5 .rst-content div.citation span.backrefs {
+    text-align: left;
+    font-style: italic;
+    margin-left: 0.65rem;
+    word-break: break-word;
+    word-spacing: -0.1rem;
+    max-width: 5rem;
+}
+html.writer-html5 .rst-content aside.citation span.backrefs > a,
+html.writer-html5 .rst-content aside.footnote span.backrefs > a,
+html.writer-html5 .rst-content div.citation span.backrefs > a {
+    word-break: keep-all;
+}
+html.writer-html5
+    .rst-content
+    aside.citation
+    span.backrefs
+    > a:not(:first-child):before,
+html.writer-html5
+    .rst-content
+    aside.footnote
+    span.backrefs
+    > a:not(:first-child):before,
+html.writer-html5
+    .rst-content
+    div.citation
+    span.backrefs
+    > a:not(:first-child):before {
+    content: " ";
+}
+html.writer-html5 .rst-content aside.citation span.label,
+html.writer-html5 .rst-content aside.footnote span.label,
+html.writer-html5 .rst-content div.citation span.label {
+    line-height: 1.2rem;
+}
+html.writer-html5 .rst-content aside.citation-list,
+html.writer-html5 .rst-content aside.footnote-list,
+html.writer-html5 .rst-content div.citation-list {
+    margin-bottom: 24px;
+}
 html.writer-html5 .rst-content dl.option-list kbd {
     font-size: 0.9rem;
 }
 .rst-content table.docutils.footnote,
 html.writer-html4 .rst-content table.docutils.citation,
+html.writer-html5 .rst-content aside.footnote,
+html.writer-html5 .rst-content aside.footnote-list aside.footnote,
+html.writer-html5 .rst-content div.citation-list > div.citation,
+html.writer-html5 .rst-content dl.citation,
 html.writer-html5 .rst-content dl.footnote {
     color: grey;
 }
@@ -6034,6 +6172,14 @@ html.writer-html5 .rst-content dl.footnote {
 .rst-content table.docutils.footnote tt,
 html.writer-html4 .rst-content table.docutils.citation code,
 html.writer-html4 .rst-content table.docutils.citation tt,
+html.writer-html5 .rst-content aside.footnote-list aside.footnote code,
+html.writer-html5 .rst-content aside.footnote-list aside.footnote tt,
+html.writer-html5 .rst-content aside.footnote code,
+html.writer-html5 .rst-content aside.footnote tt,
+html.writer-html5 .rst-content div.citation-list > div.citation code,
+html.writer-html5 .rst-content div.citation-list > div.citation tt,
+html.writer-html5 .rst-content dl.citation code,
+html.writer-html5 .rst-content dl.citation tt,
 html.writer-html5 .rst-content dl.footnote code,
 html.writer-html5 .rst-content dl.footnote tt {
     color: #555;
@@ -6071,7 +6217,6 @@ html.writer-html5 .rst-content table.docutils th > p {
     border: none;
 }
 .rst-content table.field-list td p {
-    font-size: inherit;
     line-height: inherit;
 }
 .rst-content table.field-list td > strong {
@@ -6110,6 +6255,7 @@ a .rst-content code,
 a .rst-content tt {
     font-weight: 700;
     color: #404040;
+    overflow-wrap: normal;
 }
 .rst-content kbd,
 .rst-content pre,
@@ -6138,16 +6284,22 @@ a .rst-content tt {
     margin: 0 0 12px 24px;
     line-height: 24px;
 }
+.rst-content dl dd > ol:last-child,
+.rst-content dl dd > p:last-child,
+.rst-content dl dd > table:last-child,
+.rst-content dl dd > ul:last-child {
+    margin-bottom: 0;
+}
 html.writer-html4 .rst-content dl:not(.docutils),
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) {
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple) {
     margin-bottom: 24px;
 }
 html.writer-html4 .rst-content dl:not(.docutils) > dt,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     > dt {
     display: table;
     margin: 6px 0;
@@ -6162,24 +6314,28 @@ html.writer-html5
 html.writer-html4 .rst-content dl:not(.docutils) > dt:before,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     > dt:before {
     color: #6ab0de;
 }
 html.writer-html4 .rst-content dl:not(.docutils) > dt .headerlink,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     > dt
     .headerlink {
     color: #404040;
     font-size: 100% !important;
 }
-html.writer-html4 .rst-content dl:not(.docutils) dl:not(.field-list) > dt,
+html.writer-html4
+    .rst-content
+    dl:not(.docutils)
+    dl:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
+    > dt,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
-    dl:not(.field-list)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
+    dl:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     > dt {
     margin-bottom: 6px;
     border: none;
@@ -6190,13 +6346,13 @@ html.writer-html5
 html.writer-html4
     .rst-content
     dl:not(.docutils)
-    dl:not(.field-list)
+    dl:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     > dt
     .headerlink,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
-    dl:not(.field-list)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
+    dl:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     > dt
     .headerlink {
     color: #404040;
@@ -6205,7 +6361,7 @@ html.writer-html5
 html.writer-html4 .rst-content dl:not(.docutils) > dt:first-child,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     > dt:first-child {
     margin-top: 0;
 }
@@ -6215,19 +6371,19 @@ html.writer-html4 .rst-content dl:not(.docutils) tt.descclassname,
 html.writer-html4 .rst-content dl:not(.docutils) tt.descname,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     code.descclassname,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     code.descname,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     tt.descclassname,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     tt.descname {
     background-color: transparent;
     border: none;
@@ -6238,18 +6394,18 @@ html.writer-html4 .rst-content dl:not(.docutils) code.descname,
 html.writer-html4 .rst-content dl:not(.docutils) tt.descname,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     code.descname,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     tt.descname {
     font-weight: 700;
 }
 html.writer-html4 .rst-content dl:not(.docutils) .optional,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     .optional {
     display: inline-block;
     padding: 0 4px;
@@ -6259,7 +6415,7 @@ html.writer-html5
 html.writer-html4 .rst-content dl:not(.docutils) .property,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     .property {
     display: inline-block;
     padding-right: 8px;
@@ -6268,7 +6424,7 @@ html.writer-html5
 html.writer-html4 .rst-content dl:not(.docutils) .k,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     .k {
     font-style: italic;
 }
@@ -6277,15 +6433,15 @@ html.writer-html4 .rst-content dl:not(.docutils) .descname,
 html.writer-html4 .rst-content dl:not(.docutils) .sig-name,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     .descclassname,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     .descname,
 html.writer-html5
     .rst-content
-    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)
     .sig-name {
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
         Courier New, Courier, monospace;
@@ -6333,6 +6489,17 @@ html.writer-html5
     border-radius: 4px;
     padding: 2.4px 6px;
     margin: auto 2px;
+}
+.rst-content :not(dl.option-list) > :not(dt):not(kbd):not(.kbd) > .kbd,
+.rst-content :not(dl.option-list) > :not(dt):not(kbd):not(.kbd) > kbd {
+    color: inherit;
+    font-size: 80%;
+    background-color: #fff;
+    border: 1px solid #a6a6a6;
+    border-radius: 4px;
+    box-shadow: 0 2px grey;
+    padding: 2.4px 6px;
+    margin: auto 0;
 }
 .rst-content .versionmodified {
     font-style: italic;

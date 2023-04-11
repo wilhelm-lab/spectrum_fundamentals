@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <meta
             name="generator"
-            content="Docutils 0.17.1: http://docutils.sourceforge.net/"
+            content="Docutils 0.18.1: http://docutils.sourceforge.net/"
         />
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,9 +28,6 @@
             id="documentation_options"
             src="_static/documentation_options.js"
         ></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script src="_static/js/theme.js"></script>
@@ -59,6 +56,7 @@
                                     type="text"
                                     name="q"
                                     placeholder="Search docs"
+                                    aria-label="Search docs"
                                 />
                                 <input
                                     type="hidden"
@@ -151,13 +149,18 @@
                         <div role="navigation" aria-label="Page navigation">
                             <ul class="wy-breadcrumbs">
                                 <li>
-                                    <a href="#" class="icon icon-home"></a>
-                                    &raquo;
+                                    <a
+                                        href="#"
+                                        class="icon icon-home"
+                                        aria-label="Home"
+                                    ></a>
                                 </li>
-                                <li>spectrum_fundamentals</li>
+                                <li class="breadcrumb-item active">
+                                    spectrum_fundamentals
+                                </li>
                                 <li class="wy-breadcrumbs-aside">
                                     <a
-                                        href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/development/spectrum_fundamentals/index.rst"
+                                        href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/main/spectrum_fundamentals/index.rst"
                                         class="fa fa-github"
                                     >
                                         Edit on GitHub</a
@@ -288,7 +291,7 @@
                                             class="highlight-console notranslate"
                                         >
                                             <div class="highlight">
-                                                <pre><span></span><span class="gp">$ </span>pip install spectrum_fundamentals
+                                                <pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>spectrum_fundamentals
 </pre>
                                             </div>
                                         </div>
