@@ -30,7 +30,6 @@ sys.path.insert(0, os.path.abspath(".."))
 # Add 'sphinx_automodapi.automodapi' if you want to build modules
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.linkcode",
     "sphinx_click",
