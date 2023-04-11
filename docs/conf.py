@@ -230,4 +230,5 @@ def linkcode_resolve(domain, info):
         return None
 
     path = f"{path}#L{lineno}-L{lineno + len(src) - 1}"
+    git_ref = "documentation"
     return f"{repository_url}/blob/{git_ref}/spectrum_fundamentals/{path}"
