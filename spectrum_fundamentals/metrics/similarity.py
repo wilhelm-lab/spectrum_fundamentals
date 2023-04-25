@@ -417,10 +417,10 @@ class SimilarityMetrics(Metric):
         self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
             self.true_intensities, self.pred_intensities, 0, "pearson"
         )
-        self.metrics_val["modified_cosine"] = SimilarityMetrics.modified_cosine(
-            self.true_intensities, self.pred_intensities, self.mz, self.mz
-        )
         if all_features:
+            self.metrics_val["modified_cosine"] = SimilarityMetrics.modified_cosine(
+                self.true_intensities, self.pred_intensities, self.mz, self.mz
+            )
             self.metrics_val["spectral_entropy_similarity"] = SimilarityMetrics.spectral_entropy_similarity(
                 self.true_intensities, self.pred_intensities
             )
