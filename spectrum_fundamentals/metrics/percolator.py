@@ -56,7 +56,7 @@ class Percolator(Metric):
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         all_features_flag: bool = False,
-        regression_method: str = lowess,
+        regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
     ):
         """Initialize a Percolator obj."""
@@ -100,7 +100,7 @@ class Percolator(Metric):
         observed_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_all: Union[np.ndarray, pd.Series],
-        curve_fitting_method: Optional[str] = "lowess",
+        curve_fitting_method: str = "lowess",
     ) -> np.ndarray:
         """
         Apply regression to find a mapping from predicted iRT values to experimental retention times.
@@ -120,11 +120,16 @@ class Percolator(Metric):
         # this result in NaNs
         discard_percentage = 0.1  # in percents, so 0.1 = 0.1% (not 10%!)
 
-        if curve_fitting_method == "lowess":
-            lowess_model = lowess.Lowess()
         if curve_fitting_method == "logistic":
             (a_, b_, c_, d_), _ = opt.curve_fit(f, predicted_rts, observed_rts, method="lm")
             return f(predicted_retention_times_all, a_, b_, c_, d_)
+        elif curve_fitting_method == "lowess":
+            lowess_model = lowess.Lowess()
+        elif curve_fitting_method == "spline":
+            pass
+        else:
+            raise TypeError("curve_fitting_method should be one of the following strings: lowess, spline, logistic.")
+
         while discard_percentage < 50.0:
             if curve_fitting_method == "spline":
                 aligned_rts_predicted, t, c, k = spline(2, predicted_rts, observed_rts, predicted_rts)
