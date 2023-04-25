@@ -153,7 +153,7 @@ class Percolator(Metric):
             aligned_rts_predicted = lowess_model.predict(np.array(predicted_retention_times_all))
         else:  # logistic
             aligned_rts_predicted = ll(
-                predicted_retention_times_all, opt.curve_fit(ll, predicted_rts, observed_rts, method="lm")
+                predicted_retention_times_all, *opt.curve_fit(ll, predicted_rts, observed_rts, method="lm")[0]
             )
 
         return aligned_rts_predicted
@@ -473,7 +473,7 @@ def get_fitting_func(curve_fitting_method: str):
         are the corresponding measures for which the fit should be done.
     """
     if curve_fitting_method == "logistic":
-        return lambda x, y: (ll(x, opt.curve_fit(ll, x, y, method="lm")),)
+        return lambda x, y: (ll(x, *opt.curve_fit(ll, x, y, method="lm")[0]),)
     elif curve_fitting_method == "lowess":
         return lambda x, y: (lowess.lowess_fit_and_predict(x, y, frac=0.5),)
     elif curve_fitting_method == "spline":
