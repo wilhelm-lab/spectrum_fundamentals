@@ -1,3 +1,4 @@
+import unittest
 from pathlib import Path
 
 import numpy as np
@@ -111,114 +112,98 @@ class TestLda:
         )
 
 
-class TestRetentionTimeAlignment:
+class TestRetentionTimeAlignment(unittest.TestCase):
     """Class to test RT alignment."""
 
-    def test_get_aligned_predicted_retention_times_linear_lowess(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = 2*(predicted - 1)
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(
-                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
-            ),
-            [1, 3, 5, 7],
-            decimal=3,
+    def _get_aligned_predicted_retention_times_noisy_logistic_error(self, x, y, correct_y, method: str):
+        """Test get_aligned_predicted_retention_times for a more realistic, similar to logistic case."""
+        aligned_predicted_rts = perc.Percolator.get_aligned_predicted_retention_times(
+            y, x, x, curve_fitting_method=method
         )
+        np.testing.assert_almost_equal(aligned_predicted_rts, correct_y, decimal=1)
 
-    def test_get_aligned_predicted_retention_times_linear_not_sorted_lowess(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 4.5, 3.5, 2.5])  # observed = 2*(predicted - 1)
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(
-                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
-            ),
-            [1, 7, 5, 3],
-            decimal=3,
-        )
+        errors = aligned_predicted_rts - correct_y
+        percentile_95 = np.percentile(np.abs(errors), 95)
 
-    def test_get_aligned_predicted_retention_times_noise_lowess(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2 + 0.001 * np.random.random(10)
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = (predicted - 1)^2
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(
-                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
-            ),
-            [1, 3, 5, 7],
-            decimal=3,
-        )
+        max_val = 0.05
+        self.assertLess(percentile_95, max_val)
 
-    def test_get_aligned_predicted_retention_times_linear_lowess_error(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])
+    def _get_aligned_predicted_retention_times_linear_error(
+        self, method: str, add_noise: bool = False, shuffle: bool = False
+    ):
+        """Test get_aligned_predicted_retention_times for linear case."""
+        fitting_idx = [0, 3, 5, 6, 9]
+        f = lambda x: x / 2 + 1
+        n = 10
+        dec = 12
+        max_score = 1e-12
+
+        observed_rts_all = np.linspace(0, 10, n) * 2
+        predicted_rts_all = f(observed_rts_all)
+
+        if add_noise:
+            np.random.seed(42)
+            observed_rts_all += 0.001 * np.random.random(n)
+            dec = 3
+            max_score = 1e-3
+
+        observed_rts = observed_rts_all[fitting_idx]
+        predicted_rts = predicted_rts_all[fitting_idx]
+
+        if shuffle:
+            shuffled_idx = [3, 9, 0, 5, 6]
+            predicted_rts_all = predicted_rts_all[shuffled_idx]
+            observed_rts_all = observed_rts_all[shuffled_idx]
+
         aligned_predicted_rts = perc.Percolator.get_aligned_predicted_retention_times(
             observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
         )
 
-        errors = aligned_predicted_rts - observed_rts[0:4]
+        np.testing.assert_almost_equal(aligned_predicted_rts, observed_rts_all, decimal=dec)
+
+        errors = aligned_predicted_rts - observed_rts_all
         percentile_95 = np.percentile(np.abs(errors), 95)
 
-        assert percentile_95 < 1
+        self.assertLess(percentile_95, max_score)  # , f"95 percentile is not lower than {max_val}")
 
-    def test_get_aligned_predicted_retention_times_linear_spline(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = 2*(predicted - 1)
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(
-                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="spline"
-            ),
-            [1, 3, 5, 7],
-            decimal=3,
+    def test_linear(self):
+        """Test get_aligned_predicted_retention_times for linear case."""
+        methods = ["lowess", "spline", "logistic"]
+        for method in methods:
+            self._get_aligned_predicted_retention_times_linear_error(method)
+
+    def test_linear_with_noise(self):
+        """Test get_aligned_predicted_retention_times for linear case with a bit of gaussian noise."""
+        methods = ["lowess", "spline", "logistic"]
+        for method in methods:
+            self._get_aligned_predicted_retention_times_linear_error(method, add_noise=True)
+
+    def test_linear_not_sorted(self):
+        """Test get_aligned_predicted_retention_times if idx are not sorted for the query after the fit."""
+        methods = ["lowess", "spline", "logistic"]
+        for method in methods:
+            self._get_aligned_predicted_retention_times_linear_error(method, shuffle=True)
+
+    def test_noisy_logistic(self):
+        """Test get_aligned_predicted_retention_times for a more realistic, similar to logistic case."""
+        methods = ["lowess", "spline", "logistic"]
+        x, y, correct_y = _create_noisy_logistic_data()
+        for method in methods:
+            self._get_aligned_predicted_retention_times_noisy_logistic_error(x, y, correct_y, method)
+
+    def test_get_aligned_predicted_retention_times_linear_spline_wrong_method(self):
+        """Negative test get_aligned_predicted_retention_times to check if it raises."""
+        observed_rts = np.array([])
+        predicted_rts = np.array([])
+        predicted_rts_all = np.array([])
+        self.assertRaises(
+            ValueError,
+            perc.Percolator.get_aligned_predicted_retention_times,
+            observed_rts,
+            predicted_rts,
+            predicted_rts_all,
+            curve_fitting_method="undefined",
         )
-
-    def test_get_aligned_predicted_retention_times_linear_not_sorted_spline(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 4.5, 3.5, 2.5])  # observed = 2*(predicted - 1)
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(
-                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="spline"
-            ),
-            [1, 7, 5, 3],
-            decimal=3,
-        )
-
-    def test_get_aligned_predicted_retention_times_noise_spline(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2 + 0.001 * np.random.random(10)
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = (predicted - 1)^2
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(
-                observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="spline"
-            ),
-            [1, 3, 5, 7],
-            decimal=3,
-        )
-
-    def test_get_aligned_predicted_retention_times_linear_spline_error(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])
-        aligned_predicted_rts = perc.Percolator.get_aligned_predicted_retention_times(
-            observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="spline"
-        )
-
-        errors = aligned_predicted_rts - observed_rts[0:4]
-        percentile_95 = np.percentile(np.abs(errors), 95)
-
-        assert percentile_95 < 1
 
     def test_sample_balanced_over_bins(self):
         """Test sample_balanced_over_bins."""
@@ -230,6 +215,60 @@ class TestRetentionTimeAlignment:
         sampled_index = perc.Percolator.sample_balanced_over_bins(retention_time_df, sample_size=3)
         np.testing.assert_equal(len(sampled_index), 3)
         np.testing.assert_equal(len(set(sampled_index)), 3)
+
+
+def _create_noisy_logistic_data():
+    """
+    Create artifical input to test the functions.
+
+    A logistic function is applied to a range of x values followed by adding noise.
+    Then, on the bottom and top of the logistical range, a cloud of noise values is
+    generated to make it harder to fit the logistical data manifold.
+    The result looks similar to this:
+
+                    . ..   . .   .       ........
+               .  .  .   .  ... .  .
+        .    .  .      . ..    .
+                            .
+                          .
+                         .
+                        .
+                       .
+                      .
+                     .
+                    .
+                  .
+               .     .    .  .. .
+          .  .  ... .. .   . .   .
+    . .  . .  . ...   .
+
+    The function uses the same seed to make sure the unit tests are reproducable.
+
+    :returns: a tuple of x, y (with noise) and correct_y values
+    """
+    x = np.linspace(0, 1100, 1100)  # Generate 1100 evenly spaced points between 0 and 1100
+    correct_y = 1 / (1 + np.exp(-(x - 500) / 100))  # Compute y using the logistic function
+    # Add random noise to y
+    np.random.seed(42)  # Set the random seed for reproducibility
+    noise = np.random.normal(scale=0.01, size=correct_y.shape)  # some gaussian noise to make it more realistic
+    y = correct_y + noise
+
+    # Generate linear data for bottom cloud
+    x_linear = np.random.choice(np.arange(700), size=100, replace=False)
+    np.random.seed(42)  # Set the random seed for reproducibility
+    y_linear = 0.00005 * x_linear + np.random.uniform(low=0, high=0.05, size=len(x_linear)) * 0.003 * x_linear
+
+    # Generate linear data for top cloud
+    x_linear2 = np.random.choice(np.arange(200, 900), size=100, replace=False)
+    np.random.seed(42)  # Set the random seed for reproducibility
+    y_linear2 = (
+        0.00005 * x_linear2 + 0.97 - np.random.uniform(low=0, high=0.05, size=len(x_linear2)) / (0.001 * x_linear2)
+    )
+
+    # Plot the data
+    y[x_linear] = y_linear
+    y[x_linear2] = y_linear2
+    return x, y, correct_y
 
 
 class TestPercolator:

@@ -125,7 +125,6 @@ class Percolator(Metric):
         median_abs_error = 1.0
 
         while discard_percentage < 50.0 and median_abs_error > 0.02:
-
             params = fit_func(predicted_rts, observed_rts)
             aligned_rts_predicted = params[0]
 
@@ -152,8 +151,8 @@ class Percolator(Metric):
             lowess_model.fit(predicted_rts, observed_rts, frac=frac, robust_iters=it)
             aligned_rts_predicted = lowess_model.predict(np.array(predicted_retention_times_all))
         else:  # logistic
-            aligned_rts_predicted = ll(
-                predicted_retention_times_all, *opt.curve_fit(ll, predicted_rts, observed_rts, method="lm")[0]
+            aligned_rts_predicted = logistic(
+                predicted_retention_times_all, *opt.curve_fit(logistic, predicted_rts, observed_rts, method="lm")[0]
             )
 
         return aligned_rts_predicted
@@ -473,7 +472,7 @@ def get_fitting_func(curve_fitting_method: str):
         are the corresponding measures for which the fit should be done.
     """
     if curve_fitting_method == "logistic":
-        return lambda x, y: (ll(x, *opt.curve_fit(ll, x, y, method="lm")[0]),)
+        return lambda x, y: (logistic(x, *opt.curve_fit(logistic, x, y, method="lm")[0]),)
     elif curve_fitting_method == "lowess":
         return lambda x, y: (lowess.lowess_fit_and_predict(x, y, frac=0.5),)
     elif curve_fitting_method == "spline":
@@ -491,6 +490,7 @@ def spline(knots: int, x: np.ndarray, y: np.ndarray):
     return yfit, t, c, k
 
 
-def ll(x: Union[pd.Series, np.ndarray], a: float, b: float, c: float, d: float):
+def logistic(x: Union[pd.Series, np.ndarray], a: float, b: float, c: float, d: float):
     """Calculates logistic regression function."""
-    return a / (1.0 + np.exp(-c * (x - d))) + b
+    exponent = np.clip(-c * (x - d), -700, 700)  # make this stable, i.e. avoid 0.0 or inf
+    return a / (1.0 + np.exp(exponent)) + b
