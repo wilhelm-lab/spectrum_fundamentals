@@ -56,7 +56,7 @@ class Percolator(Metric):
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         all_features_flag: bool = False,
-        regression_method: str = lowess,
+        regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
     ):
         """Initialize a Percolator obj."""
@@ -100,7 +100,7 @@ class Percolator(Metric):
         observed_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_all: Union[np.ndarray, pd.Series],
-        curve_fitting_method: Optional[str] = "lowess",
+        curve_fitting_method: str = "lowess",
     ) -> np.ndarray:
         """
         Apply regression to find a mapping from predicted iRT values to experimental retention times.
@@ -108,49 +108,52 @@ class Percolator(Metric):
         :param observed_retention_times_fdr_filtered: observed retention times after FDR filter
         :param predicted_retention_times_fdr_filtered: predicted retention times after FDR filter
         :param predicted_retention_times_all: all predicted retention times
-        :param curve_fitting_method: method for curve fitting (lowess, spline, or logistic regression)
+        :param curve_fitting_method: method for curve fitting (lowess, spline, or logistic)
         :return: aligned predicted retention times
         """
         observed_rts = np.array(observed_retention_times_fdr_filtered, dtype=np.float64)
         predicted_rts = np.array(predicted_retention_times_fdr_filtered, dtype=np.float64)
 
-        # TODO: use Akaike information criterion to choose a good value for frac
-        frac = 0.5  # Between 0 and 1. The fraction of the data used when estimating each y-value.
         it = 0  # The number of residual-based reweightings to perform. Don't use the iterative reweighting (it > 1),
         # this result in NaNs
-        discard_percentage = 0.1  # in percents, so 0.1 = 0.1% (not 10%!)
 
-        if curve_fitting_method == "lowess":
-            lowess_model = lowess.Lowess()
-        if curve_fitting_method == "logistic":
-            (a_, b_, c_, d_), _ = opt.curve_fit(f, predicted_rts, observed_rts, method="lm")
-            return f(predicted_retention_times_all, a_, b_, c_, d_)
-        while discard_percentage < 50.0:
-            if curve_fitting_method == "spline":
-                aligned_rts_predicted, t, c, k = spline(2, predicted_rts, observed_rts, predicted_rts)
-            else:
-                lowess_model.fit(predicted_rts, observed_rts, frac=frac, robust_iters=it)
-                aligned_rts_predicted = lowess_model.predict(predicted_rts)
+        # TODO: use Akaike information criterion to choose a good value for frac
+        frac = 0.5  # Between 0 and 1. The fraction of the data used when estimating each y-value.
+
+        fit_func = get_fitting_func(curve_fitting_method)
+        discard_percentage = 0.1  # in percents, so 0.1 = 0.1% (not 10%!)
+        median_abs_error = 1.0
+
+        while discard_percentage < 50.0 and median_abs_error > 0.02:
+            params = fit_func(predicted_rts, observed_rts)
+            aligned_rts_predicted = params[0]
+
             abs_errors = np.abs(aligned_rts_predicted - observed_rts)
             cut_off = np.percentile(abs_errors, 100 - discard_percentage)
             median_abs_error = np.median(np.abs(abs_errors))
+
             logger.debug(f"Median absolute error aligned rts: {median_abs_error}")
 
             if median_abs_error > 0.02:
                 keep_idxs = np.nonzero(abs_errors < cut_off)
                 observed_rts = observed_rts[keep_idxs[0]]
                 predicted_rts = predicted_rts[keep_idxs[0]]
-            else:
-                break
-            discard_percentage *= 1.5
+
+                discard_percentage *= 1.5
 
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
 
         if curve_fitting_method == "spline":
-            aligned_rts_predicted = interpolate.BSpline(t, c, k)(predicted_retention_times_all)
-        else:
+            aligned_rts_predicted = interpolate.BSpline(*params[1:])(predicted_retention_times_all)
+        elif curve_fitting_method == "lowess":
+            lowess_model = lowess.Lowess()
+            lowess_model.fit(predicted_rts, observed_rts, frac=frac, robust_iters=it)
             aligned_rts_predicted = lowess_model.predict(np.array(predicted_retention_times_all))
+        else:  # logistic
+            aligned_rts_predicted = logistic(
+                predicted_retention_times_all, *opt.curve_fit(logistic, predicted_rts, observed_rts, method="lm")[0]
+            )
 
         return aligned_rts_predicted
 
@@ -459,15 +462,35 @@ class Percolator(Metric):
         self._reorder_columns_for_percolator()
 
 
-def spline(knots: int, x: np.ndarray, y: np.ndarray, x_full: np.ndarray):
+def get_fitting_func(curve_fitting_method: str):
+    """
+    Retrieve the correct function given a curve fitting method.
+
+    :param curve_fitting_method: method for curve fitting (lowess, spline, or logistic)
+    :raises ValueError: if an invalid curve_fitting_method is supplied
+    :return: Callable that accepts x and y, i.e. fit_func(x,y) where x are the data points and y
+        are the corresponding measures for which the fit should be done.
+    """
+    if curve_fitting_method == "logistic":
+        return lambda x, y: (logistic(x, *opt.curve_fit(logistic, x, y, method="lm")[0]),)
+    elif curve_fitting_method == "lowess":
+        return lambda x, y: (lowess.lowess_fit_and_predict(x, y, frac=0.5),)
+    elif curve_fitting_method == "spline":
+        return lambda x, y: spline(2, x, y)
+    else:
+        raise ValueError("curve_fitting_method should be one of the following strings: lowess, spline, logistic.")
+
+
+def spline(knots: int, x: np.ndarray, y: np.ndarray):
     """Calculates spline fitting."""
     x_new = np.linspace(0, 1, knots + 2)[1:-1]
     q_knots = np.quantile(x, x_new)
     t, c, k = interpolate.splrep(x, y, t=q_knots, s=2)
-    yfit = interpolate.BSpline(t, c, k)(x_full)
+    yfit = interpolate.BSpline(t, c, k)(x)
     return yfit, t, c, k
 
 
-def f(x: Union[pd.Series, np.ndarray], a: float, b: float, c: float, d: float):
+def logistic(x: Union[pd.Series, np.ndarray], a: float, b: float, c: float, d: float):
     """Calculates logistic regression function."""
-    return a / (1.0 + np.exp(-c * (x - d))) + b
+    exponent = np.clip(-c * (x - d), -700, 700)  # make this stable, i.e. avoid 0.0 or inf
+    return a / (1.0 + np.exp(exponent)) + b
