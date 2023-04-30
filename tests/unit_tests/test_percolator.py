@@ -1,3 +1,6 @@
+import unittest
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import scipy.sparse
@@ -109,40 +112,97 @@ class TestLda:
         )
 
 
-class TestRetentionTimeAlignment:
+class TestRetentionTimeAlignment(unittest.TestCase):
     """Class to test RT alignment."""
 
-    def test_get_aligned_predicted_retention_times_linear(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = 2*(predicted - 1)
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all),
-            [1, 3, 5, 7],
-            decimal=3,
+    def _get_aligned_predicted_retention_times_noisy_logistic_error(self, x, y, correct_y, method: str):
+        """Test get_aligned_predicted_retention_times for a more realistic, similar to logistic case."""
+        aligned_predicted_rts = perc.Percolator.get_aligned_predicted_retention_times(
+            y, x, x, curve_fitting_method=method
+        )
+        np.testing.assert_almost_equal(aligned_predicted_rts, correct_y, decimal=1)
+
+        errors = aligned_predicted_rts - correct_y
+        percentile_95 = np.percentile(np.abs(errors), 95)
+
+        max_val = 0.05
+        self.assertLess(percentile_95, max_val)
+
+    def _get_aligned_predicted_retention_times_linear_error(
+        self, method: str, add_noise: bool = False, shuffle: bool = False
+    ):
+        """Test get_aligned_predicted_retention_times for linear case."""
+        fitting_idx = [0, 3, 5, 6, 9]
+        f = lambda x: x / 2 + 1
+        n = 10
+        dec = 12
+        max_score = 1e-12
+
+        observed_rts_all = np.linspace(0, 10, n) * 2
+        predicted_rts_all = f(observed_rts_all)
+
+        if add_noise:
+            np.random.seed(42)
+            observed_rts_all += 0.001 * np.random.random(n)
+            dec = 3
+            max_score = 1e-3
+
+        observed_rts = observed_rts_all[fitting_idx]
+        predicted_rts = predicted_rts_all[fitting_idx]
+
+        if shuffle:
+            shuffled_idx = [3, 9, 0, 5, 6]
+            predicted_rts_all = predicted_rts_all[shuffled_idx]
+            observed_rts_all = observed_rts_all[shuffled_idx]
+
+        aligned_predicted_rts = perc.Percolator.get_aligned_predicted_retention_times(
+            observed_rts, predicted_rts, predicted_rts_all, curve_fitting_method="lowess"
         )
 
-    def test_get_aligned_predicted_retention_times_linear_not_sorted(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 4.5, 3.5, 2.5])  # observed = 2*(predicted - 1)
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all),
-            [1, 7, 5, 3],
-            decimal=3,
-        )
+        np.testing.assert_almost_equal(aligned_predicted_rts, observed_rts_all, decimal=dec)
 
-    def test_get_aligned_predicted_retention_times_noise(self):
-        """Test get_aligned_predicted_retention_times."""
-        observed_rts = np.linspace(0, 10, 10) * 2 + 0.001 * np.random.random(10)
-        predicted_rts = np.linspace(1, 11, 10)
-        predicted_rts_all = np.array([1.5, 2.5, 3.5, 4.5])  # observed = (predicted - 1)^2
-        np.testing.assert_almost_equal(
-            perc.Percolator.get_aligned_predicted_retention_times(observed_rts, predicted_rts, predicted_rts_all),
-            [1, 3, 5, 7],
-            decimal=3,
+        errors = aligned_predicted_rts - observed_rts_all
+        percentile_95 = np.percentile(np.abs(errors), 95)
+
+        self.assertLess(percentile_95, max_score)  # , f"95 percentile is not lower than {max_val}")
+
+    def test_linear(self):
+        """Test get_aligned_predicted_retention_times for linear case."""
+        methods = ["lowess", "spline", "logistic"]
+        for method in methods:
+            self._get_aligned_predicted_retention_times_linear_error(method)
+
+    def test_linear_with_noise(self):
+        """Test get_aligned_predicted_retention_times for linear case with a bit of gaussian noise."""
+        methods = ["lowess", "spline", "logistic"]
+        for method in methods:
+            self._get_aligned_predicted_retention_times_linear_error(method, add_noise=True)
+
+    def test_linear_not_sorted(self):
+        """Test get_aligned_predicted_retention_times if idx are not sorted for the query after the fit."""
+        methods = ["lowess", "spline", "logistic"]
+        for method in methods:
+            self._get_aligned_predicted_retention_times_linear_error(method, shuffle=True)
+
+    def test_noisy_logistic(self):
+        """Test get_aligned_predicted_retention_times for a more realistic, similar to logistic case."""
+        methods = ["lowess", "spline", "logistic"]
+        x, y, correct_y = _create_noisy_logistic_data()
+        for method in methods:
+            self._get_aligned_predicted_retention_times_noisy_logistic_error(x, y, correct_y, method)
+
+    def test_get_aligned_predicted_retention_times_linear_spline_wrong_method(self):
+        """Negative test get_aligned_predicted_retention_times to check if it raises."""
+        observed_rts = np.array([])
+        predicted_rts = np.array([])
+        predicted_rts_all = np.array([])
+        self.assertRaises(
+            ValueError,
+            perc.Percolator.get_aligned_predicted_retention_times,
+            observed_rts,
+            predicted_rts,
+            predicted_rts_all,
+            curve_fitting_method="undefined",
         )
 
     def test_sample_balanced_over_bins(self):
@@ -155,6 +215,60 @@ class TestRetentionTimeAlignment:
         sampled_index = perc.Percolator.sample_balanced_over_bins(retention_time_df, sample_size=3)
         np.testing.assert_equal(len(sampled_index), 3)
         np.testing.assert_equal(len(set(sampled_index)), 3)
+
+
+def _create_noisy_logistic_data():
+    """
+    Create artifical input to test the functions.
+
+    A logistic function is applied to a range of x values followed by adding noise.
+    Then, on the bottom and top of the logistical range, a cloud of noise values is
+    generated to make it harder to fit the logistical data manifold.
+    The result looks similar to this:
+
+                    . ..   . .   .       ........
+               .  .  .   .  ... .  .
+        .    .  .      . ..    .
+                            .
+                          .
+                         .
+                        .
+                       .
+                      .
+                     .
+                    .
+                  .
+               .     .    .  .. .
+          .  .  ... .. .   . .   .
+    . .  . .  . ...   .
+
+    The function uses the same seed to make sure the unit tests are reproducable.
+
+    :returns: a tuple of x, y (with noise) and correct_y values
+    """
+    x = np.linspace(0, 1100, 1100)  # Generate 1100 evenly spaced points between 0 and 1100
+    correct_y = 1 / (1 + np.exp(-(x - 500) / 100))  # Compute y using the logistic function
+    # Add random noise to y
+    np.random.seed(42)  # Set the random seed for reproducibility
+    noise = np.random.normal(scale=0.01, size=correct_y.shape)  # some gaussian noise to make it more realistic
+    y = correct_y + noise
+
+    # Generate linear data for bottom cloud
+    x_linear = np.random.choice(np.arange(700), size=100, replace=False)
+    np.random.seed(42)  # Set the random seed for reproducibility
+    y_linear = 0.00005 * x_linear + np.random.uniform(low=0, high=0.05, size=len(x_linear)) * 0.003 * x_linear
+
+    # Generate linear data for top cloud
+    x_linear2 = np.random.choice(np.arange(200, 900), size=100, replace=False)
+    np.random.seed(42)  # Set the random seed for reproducibility
+    y_linear2 = (
+        0.00005 * x_linear2 + 0.97 - np.random.uniform(low=0, high=0.05, size=len(x_linear2)) / (0.001 * x_linear2)
+    )
+
+    # Plot the data
+    y[x_linear] = y_linear
+    y[x_linear2] = y_linear2
+    return x, y, correct_y
 
 
 class TestPercolator:
@@ -209,112 +323,7 @@ class TestPercolator:
 
     def test_calc(self):
         """Test calc."""
-        cols = [
-            "RAW_FILE",
-            "SCAN_NUMBER",
-            "MODIFIED_SEQUENCE",
-            "SEQUENCE",
-            "PRECURSOR_CHARGE",
-            "MASS",
-            "CALCULATED_MASS",
-            "SCORE",
-            "REVERSE",
-            "FRAGMENTATION",
-            "MASS_ANALYZER",
-            "SCAN_EVENT_NUMBER",
-            "RETENTION_TIME",
-            "PREDICTED_IRT",
-            "COLLISION_ENERGY",
-        ]
-        perc_input = pd.DataFrame(columns=cols)
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,7978,AAIGEATRL,AAIGEATRL,2,900.50345678,900.50288029264,60.43600000000001,False,HCD,FTMS,1,0.5,0.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12304,AAVPRAAFL,AAVPRAAFL,2,914.53379,914.53379,34.006,True,HCD,FTMS,2,1,1.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,12398,AAYFGVYDTAK,AAYFGVYDTAK,2,1204.5764,1204.5764,39.97399999999999,True,HCD,FTMS,3,1.5,2.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,11716,AAYYHPSYL,AAYYHPSYL,2,1083.5025,1083.5025,99.919,False,HCD,FTMS,4,2,3.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,87.802,False,HCD,FTMS,5,2.5,4.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,62.802,False,HCD,FTMS,6,3,5.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,79.802,False,HCD,FTMS,7,3.5,6.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-        perc_input = perc_input.append(
-            pd.Series(
-                "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02,5174,AEDLNTRVA,AEDLNTRVA,2,987.49852,987.49852,79.802,False,HCD,FTMS,8,4.0,7.5,30".split(
-                    ","
-                ),
-                index=cols,
-            ),
-            ignore_index=True,
-        )
-
-        perc_input["SCAN_NUMBER"] = perc_input["SCAN_NUMBER"].astype(int)
-        perc_input["PRECURSOR_CHARGE"] = perc_input["PRECURSOR_CHARGE"].astype(int)
-        perc_input["MASS"] = perc_input["MASS"].astype(float)
-        perc_input["CALCULATED_MASS"] = perc_input["CALCULATED_MASS"].astype(float)
-        perc_input["REVERSE"] = perc_input["REVERSE"] == "True"
-        perc_input["COLLISION_ENERGY"] = perc_input["COLLISION_ENERGY"].astype(float)
-
-        # we need to add noise to the retention times to prevent 0 residuals in the lowess regression
-        perc_input["RETENTION_TIME"] = perc_input["RETENTION_TIME"].astype(float) + 1e-7 * np.random.random(
-            len(perc_input["RETENTION_TIME"])
-        )
-        perc_input["PREDICTED_IRT"] = perc_input["PREDICTED_IRT"].astype(float) + 1e-7 * np.random.random(
-            len(perc_input["RETENTION_TIME"])
-        )
-
+        perc_input = pd.read_csv(Path(__file__).parent / "data/perc_input.csv")
         z = constants.EPSILON
         #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
         predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
@@ -385,10 +394,45 @@ class TestPercolator:
 
         # check lowess fit of second PSM
         np.testing.assert_almost_equal(percolator.metrics_val["abs_rt_diff"][1], 0.0, decimal=3)
-        # TODO: figure out why this test fails
-        # np.testing.assert_almost_equal(percolator.metrics_val['abs_rt_diff'][2], 0.0, decimal = 3)
+        np.testing.assert_almost_equal(percolator.metrics_val["abs_rt_diff"][2], 0.0, decimal=3)
         # TODO: only add this feature if they are not all zero
         # np.testing.assert_equal(percolator.metrics_val['spectral_angle_delta_score'][0], 0.0)
+
+    def test_calc_all_features(self):
+        """Test calc."""
+        perc_input = pd.read_csv(Path(__file__).parent / "data/perc_input.csv")
+        z = constants.EPSILON
+        #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
+        predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
+        observed_intensities_target = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0])
+        mz_target = get_padded_array([100, 0, 150, 0, 0, 0, 300, 0, 0])
+
+        predicted_intensities_decoy = get_padded_array([z, 3.0, 4.0, z])
+        observed_intensities_decoy = get_padded_array([z, z, 3.0, 4.0])
+        mz_decoy = get_padded_array([0, 0, 100, 0])
+
+        predicted_intensities = scipy.sparse.vstack(np.repeat(predicted_intensities_target, len(perc_input)))
+        observed_intensities = scipy.sparse.vstack(np.repeat(observed_intensities_target, len(perc_input)))
+        mz = scipy.sparse.vstack(np.repeat(mz_target, len(perc_input)))
+
+        predicted_intensities[1, :] = predicted_intensities_decoy
+        predicted_intensities[2, :] = predicted_intensities_decoy
+        observed_intensities[1, :] = observed_intensities_decoy
+        observed_intensities[2, :] = observed_intensities_decoy
+        mz[1, :] = mz_decoy
+        mz[2, :] = mz_target
+
+        percolator = perc.Percolator(
+            metadata=perc_input,
+            input_type="rescore",
+            pred_intensities=predicted_intensities,
+            true_intensities=observed_intensities,
+            mz=mz,
+            fdr_cutoff=0.4,
+            regression_method="lowess",
+            all_features_flag=True,
+        )
+        percolator.calc()
 
 
 def get_padded_array(arr, padding_value=0):
