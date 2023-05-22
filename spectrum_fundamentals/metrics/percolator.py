@@ -1,6 +1,8 @@
 import enum
 import hashlib
 import logging
+import re
+import subprocess
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -285,11 +287,20 @@ class Percolator(Metric):
         self.metrics_val["Label"] = self.target_decoy_labels
         self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_NUMBER"]].apply(Percolator.get_scannr, axis=1)
 
-        # self.metrics_val['ExpMass'] = self.metadata['MASS']
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
-        self.metrics_val["Protein"] = self.metadata[
-            "MODIFIED_SEQUENCE"
-        ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+        output = subprocess.check_output(["dpkg", "-s", "percolator"], stderr=subprocess.STDOUT)
+        output = output.decode("utf-8")  # Convert bytes to string
+        for line in output.split("\n"):
+            if line.startswith("Version:"):
+                version = line.split(":")[1].strip()
+                break
+        version_major = float(re.sub(r"\.[^.]+$", "", version))
+        if version_major >= 3.6:
+            self.metrics_val["Proteins"] = self.metadata[
+                "MODIFIED_SEQUENCE"
+            ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+        else:
+            self.metrics_val["Protein"] = self.metadata["MODIFIED_SEQUENCE"]
 
     def apply_lda_and_get_indices_below_fdr(
         self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
@@ -385,7 +396,7 @@ class Percolator(Metric):
     def _reorder_columns_for_percolator(self):
         all_columns = self.metrics_val.columns
         first_columns = ["SpecId", "Label", "ScanNr"]
-        last_columns = ["Peptide", "Protein"]
+        last_columns = ["Peptide", "Protein"] if "Protein" in all_columns else ["Peptide", "Proteins"]
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
