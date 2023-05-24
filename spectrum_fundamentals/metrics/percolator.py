@@ -288,14 +288,13 @@ class Percolator(Metric):
         self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_NUMBER"]].apply(Percolator.get_scannr, axis=1)
 
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
-        output = subprocess.check_output(["dpkg", "-s", "percolator"], stderr=subprocess.STDOUT)
-        output = output.decode("utf-8")  # Convert bytes to string
-        for line in output.split("\n"):
-            if line.startswith("Version:"):
-                version = line.split(":")[1].strip()
-                break
+
+        result = subprocess.run(["percolator", "-h"], capture_output=True, text=True)
+        output_lines = result.stderr.splitlines()
+        version_line = output_lines[0].strip()
+        version = version_line.split("version ")[1]
         version_major = float(re.sub(r"\.[^.]+$", "", version))
-        if version_major >= 3.6:
+        if version_major >= 3.06:
             self.metrics_val["Proteins"] = self.metadata[
                 "MODIFIED_SEQUENCE"
             ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
