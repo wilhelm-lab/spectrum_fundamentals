@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # mypy: ignore-errors
+# pre-commit: ignore-errors
 # spectrum_fundamentals documentation build configuration file
 #
 # If extensions (or modules to document with autodoc) are in another
@@ -7,8 +8,13 @@
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
+import importlib
+import inspect
 import os
+import re
+import subprocess
 import sys
+from typing import Any
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -24,14 +30,10 @@ sys.path.insert(0, os.path.abspath(".."))
 # Add 'sphinx_automodapi.automodapi' if you want to build modules
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.linkcode",
     "sphinx_click",
-    "sphinx_rtd_dark_mode",
 ]
-
-default_dark_mode = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -168,3 +170,65 @@ texinfo_documents = [
 html_css_files = [
     "custom_cookietemple.css",
 ]
+
+html_context = {
+    "display_github": True,  # Integrate GitHub
+    "github_user": "wilhelm-lab",  # Username
+    "github_repo": "spectrum_fundamentals",  # Repo name
+    "github_version": "main",  # Version
+    "conf_py_path": "/spectrum_fundamentals/",  # Path in the checkout to the docs root
+    "github_url": "https://github.com/wilhelm-lab/spectrum_fundamentals/",
+}
+
+repository_url = "https://github.com/wilhelm-lab/spectrum_fundamentals"
+
+# Linkcode config
+
+
+def git(*args):
+    """Gets git linkcode."""
+    return subprocess.check_output(["git", *args]).strip().decode()
+
+
+# https://github.com/DisnakeDev/disnake/blob/7853da70b13fcd2978c39c0b7efa59b34d298186/docs/conf.py#L192
+# Current git reference. Uses branch/tag name if found, otherwise uses commit hash
+git_ref = None
+try:
+    git_ref = git("name-rev", "--name-only", "--no-undefined", "HEAD")
+    git_ref = re.sub(r"^(remotes/[^/]+|tags)/", "", git_ref)
+except Exception:
+    print()
+
+# (if no name found or relative ref, use commit hash instead)
+if not git_ref or re.search(r"[\^~]", git_ref):
+    try:
+        git_ref = git("rev-parse", "HEAD")
+    except Exception:
+        git_ref = "main"
+
+# https://github.com/DisnakeDev/disnake/blob/7853da70b13fcd2978c39c0b7efa59b34d298186/docs/conf.py#L192
+_module_path = os.path.dirname(importlib.util.find_spec("spectrum_fundamentals").origin)  # type: ignore
+
+
+def linkcode_resolve(domain, info):
+    """Resolves linkcode."""
+    if domain != "py":
+        return None
+
+    try:
+        obj: Any = sys.modules[info["module"]]
+        for part in info["fullname"].split("."):
+            obj = getattr(obj, part)
+        obj = inspect.unwrap(obj)
+
+        if isinstance(obj, property):
+            obj = inspect.unwrap(obj.fget)  # type: ignore
+
+        path = os.path.relpath(inspect.getsourcefile(obj), start=_module_path)  # type: ignore
+        src, lineno = inspect.getsourcelines(obj)
+    except Exception:
+        return None
+
+    path = f"{path}#L{lineno}-L{lineno + len(src) - 1}"
+    git_ref = "documentation"
+    return f"{repository_url}/blob/{git_ref}/spectrum_fundamentals/{path}"

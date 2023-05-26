@@ -14,6 +14,7 @@ Welcome to spectrum_fundamentals's documentation!
    contributing
    authors
    code_of_conduct
+   modules
 
 Indices and tables
 ==================
