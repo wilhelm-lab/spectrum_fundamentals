@@ -52,6 +52,12 @@ ALPHABET_MODS = {
     "K[UNIMOD:2016]": 22,
     "K[UNIMOD:214]": 22,
     "K[UNIMOD:730]": 22,
+    "K[UNIMOD:1896]": 22,
+    "K[UNIMOD:1884]": 23,
+    "K[UNIMOD:1881]": 24,
+    "K[UNIMOD:1882]": 25,
+    "K[UNIMOD:1885]": 26,
+    "K[UNIMOD:1886]": 27,
     "S[UNIMOD:21]": 25,
     "T[UNIMOD:21]": 26,
     "Y[UNIMOD:21]": 27,
@@ -153,6 +159,12 @@ MOD_MASSES = {
     "[UNIMOD:4]": 57.02146,  # Carbamidomethyl
     "[UNIMOD:35]": 15.9949146,  # Oxidation
     "[UNIMOD:1]": 42.010565,  # Acetylation
+    "[UNIMOD:1896]": 158.003765,  # DSSO-crosslinker
+    "[UNIMOD:1881]": 54.010565,  # Alkene short fragment of DSSO-crosslinker
+    "[UNIMOD:1882]": 85.982635,  # Thiol long fragment of DSSO-crosslinker
+    "[UNIMOD:1884]": 196.084792,  # BuUrBu (DSBU)-crosslinker
+    "[UNIMOD:1885]": 111.032028,  # BuUr long fragment of BuUrBu (DSBU)-crosslinker
+    "[UNIMOD:1886]": 85.052764,  # Bu short fragment of BuUrBu (DSBU)-crosslinker
 }
 
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
@@ -169,6 +181,12 @@ AA_MOD_MASSES = {
     "S[UNIMOD:23]": AA_MASSES["S"],  # + MOD_MASSES['[UNIMOD:23]'],
     "T[UNIMOD:23]": AA_MASSES["T"],  # + MOD_MASSES['[UNIMOD:23]'],
     "Y[UNIMOD:23]": AA_MASSES["Y"],  # + MOD_MASSES['[UNIMOD:23]'],
+    "K[UNIMOD:1896]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1896]"],
+    "K[UNIMOD:1881]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1881]"],
+    "K[UNIMOD:1882]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1882]"],
+    "K[UNIMOD:1884]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1884]"],
+    "K[UNIMOD:1885]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1885]"],
+    "K[UNIMOD:1886]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1886]"],
     "[UNIMOD:1]-": MASSES["N_TERMINUS"] + MOD_MASSES["[UNIMOD:1]"],
     "K[UNIMOD:259]": AA_MASSES[
         "K"
