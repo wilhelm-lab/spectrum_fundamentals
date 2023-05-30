@@ -1,6 +1,8 @@
 import enum
 import hashlib
 import logging
+import re
+import subprocess
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -58,6 +60,7 @@ class Percolator(Metric):
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
+        percolator_version: Optional[float] = 3.05,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
@@ -65,7 +68,17 @@ class Percolator(Metric):
         self.all_features_flag = all_features_flag
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
+
+        self._resolve_percolator_compatibility(percolator_version)
         super().__init__(pred_intensities, true_intensities, mz)
+
+    def _resolve_percolator_compatibility(self, percolator_version: Optional[float] = None):
+        if percolator_version is None:
+            result = subprocess.run(["percolator", "-h"], capture_output=True, text=True)
+            version_line = result.stderr.splitlines()[0].strip()
+            version = version_line.split("version ")[1]
+            percolator_version = float(re.sub(r"\.[^.]+$", "", version))
+        self.prot_col_name = "Proteins" if percolator_version >= 3.06 else "Protein"
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -285,9 +298,9 @@ class Percolator(Metric):
         self.metrics_val["Label"] = self.target_decoy_labels
         self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_NUMBER"]].apply(Percolator.get_scannr, axis=1)
 
-        # self.metrics_val['ExpMass'] = self.metadata['MASS']
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
-        self.metrics_val["Protein"] = self.metadata[
+
+        self.metrics_val[self.prot_col_name] = self.metadata[
             "MODIFIED_SEQUENCE"
         ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
 
@@ -385,7 +398,7 @@ class Percolator(Metric):
     def _reorder_columns_for_percolator(self):
         all_columns = self.metrics_val.columns
         first_columns = ["SpecId", "Label", "ScanNr"]
-        last_columns = ["Peptide", "Protein"]
+        last_columns = ["Peptide", "Protein"] if "Protein" in all_columns else ["Peptide", "Proteins"]
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
