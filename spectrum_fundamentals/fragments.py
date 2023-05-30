@@ -161,7 +161,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
     # calculation:
     forward_sum = 0.0  # sum over all amino acids from left to right (neutral charge)
     backward_sum = 0.0  # sum over all amino acids from right to left (neutral charge)
-    for i in range(0, peptide_length):  # generate substrings
+    for i in range(0, peptide_length - 1):  # generate substrings
         forward_sum += constants.AA_MASSES[peptide_sequence[i]]  # sum left to right
         if i in modification_deltas:  # add mass of modification if present
             forward_sum += modification_deltas[i]
@@ -193,6 +193,55 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
     df_out = pd.DataFrame(data=fragments_meta_data, columns=col_dtypes.keys())
     df_out.sort_values(by="mass", inplace=True)
     return df_out, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
+
+
+def initialize_peaks_xl(
+    sequence: str, mass_analyzer: str, crosslinker_position: int, crosslinker_type: str
+) -> Tuple[pd.DataFrame, int, str, float]:
+    """Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
+
+    This function get only one modified peptide
+
+    :param sequence: Modified peptide sequence
+    :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
+    :param crosslinker_position: the position of crosslinker connected to lysine
+    :param crosslinker_type: Can be either DSSO, DSBU or BuUrBU
+    :raises ValueError: if crosslinker_type be unkown
+    :return: List of theoretical peaks
+    """
+    charge = 2  # generate only peaks with charge 1 and 2
+    crosslinker_type = crosslinker_type.upper()
+    if crosslinker_type == "DSSO":
+        dsso = "[UNIMOD:1896]"
+        dsso_s = "[UNIMOD:1881]"
+        dsso_l = "[UNIMOD:1882]"
+        sequence_s = sequence.replace(dsso, dsso_s)
+        sequence_l = sequence.replace(dsso, dsso_l)
+    elif crosslinker_type in ["DSBU", "BUURBU"]:
+        dsbu = "[UNIMOD:1884]"
+        dsbu_s = "[UNIMOD:1886]"
+        dsbu_l = "[UNIMOD:1885]"
+        sequence_s = sequence.replace(dsbu, dsbu_s)
+        sequence_l = sequence.replace(dsbu, dsbu_l)
+    else:
+        raise ValueError(f"Unkown crosslinker type: {crosslinker_type}")
+
+    df_out_s, tmt_n_term, peptide_sequence, calc_mass_s = initialize_peaks(sequence_s, mass_analyzer, charge)
+    df_out_l, tmt_n_term, peptide_sequence, calc_mass_l = initialize_peaks(sequence_l, mass_analyzer, charge)
+
+    threshold_b = crosslinker_position
+    threshold_y = len(peptide_sequence) - crosslinker_position + 1
+
+    df_out_s.loc[(df_out_s["no"] >= threshold_b) & (df_out_s["ion_type"] == "b"), "ion_type"] = "b-short"
+    df_out_s.loc[(df_out_s["no"] >= threshold_y) & (df_out_s["ion_type"] == "y"), "ion_type"] = "y-short"
+    df_out_l.loc[(df_out_l["no"] >= threshold_b) & (df_out_l["ion_type"] == "b"), "ion_type"] = "b-long"
+    df_out_l.loc[(df_out_l["no"] >= threshold_y) & (df_out_l["ion_type"] == "y"), "ion_type"] = "y-long"
+
+    concatenated_df = pd.concat([df_out_s, df_out_l])
+    unique_df = concatenated_df.drop_duplicates()
+    df_out = unique_df.sort_values("mass")
+
+    return df_out, tmt_n_term, peptide_sequence, calc_mass_s, calc_mass_l
 
 
 def get_min_max_mass(mass_analyzer: str, mass: float) -> Tuple[float, float]:
