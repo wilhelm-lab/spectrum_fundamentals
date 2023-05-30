@@ -60,6 +60,7 @@ class Percolator(Metric):
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
+        percolator_version: Optional[float] = 3.05,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
@@ -67,7 +68,17 @@ class Percolator(Metric):
         self.all_features_flag = all_features_flag
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
+
+        self._resolve_percolator_compatibility(percolator_version)
         super().__init__(pred_intensities, true_intensities, mz)
+
+    def _resolve_percolator_compatibility(self, percolator_version: Optional[float] = None):
+        if percolator_version is None:
+            result = subprocess.run(["percolator", "-h"], capture_output=True, text=True)
+            version_line = result.stderr.splitlines()[0].strip()
+            version = version_line.split("version ")[1]
+            percolator_version = float(re.sub(r"\.[^.]+$", "", version))
+        self.prot_col_name = "Proteins" if percolator_version >= 3.06 else "Protein"
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -289,17 +300,9 @@ class Percolator(Metric):
 
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
 
-        result = subprocess.run(["percolator", "-h"], capture_output=True, text=True)
-        output_lines = result.stderr.splitlines()
-        version_line = output_lines[0].strip()
-        version = version_line.split("version ")[1]
-        version_major = float(re.sub(r"\.[^.]+$", "", version))
-        if version_major >= 3.06:
-            self.metrics_val["Proteins"] = self.metadata[
-                "MODIFIED_SEQUENCE"
-            ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
-        else:
-            self.metrics_val["Protein"] = self.metadata["MODIFIED_SEQUENCE"]
+        self.metrics_val[self.prot_col_name] = self.metadata[
+            "MODIFIED_SEQUENCE"
+        ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
 
     def apply_lda_and_get_indices_below_fdr(
         self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
