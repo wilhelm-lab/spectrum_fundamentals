@@ -1,4 +1,5 @@
 import logging
+from operator import itemgetter
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -106,7 +107,7 @@ def compute_peptide_mass(sequence: str) -> float:
     return forward_sum + ion_type_offsets[0] + ion_type_offsets[1]
 
 
-def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd.DataFrame, int, str, float]:
+def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 
@@ -181,18 +182,17 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
                 mass = (ion_type_masses[ion_type] + charge_delta) / charge
                 min_mass, max_mass = get_min_max_mass(mass_analyzer, mass)
                 fragments_meta_data.append(
-                    [
-                        ion_types[ion_type],  # ion type
-                        i + 1,  # no
-                        charge,  # charge
-                        mass,  # mass
-                        min_mass,  # min mass
-                        max_mass,  # max mass
-                    ]
+                    {
+                        "ion_type": ion_types[ion_type],  # ion type
+                        "no": i + 1,  # no
+                        "charge": charge,  # charge
+                        "mass": mass,  # mass
+                        "min_mass": min_mass,  # min mass
+                        "max_mass": max_mass,  # max mass
+                    }
                 )
-    df_out = pd.DataFrame(data=fragments_meta_data, columns=col_dtypes.keys())
-    df_out.sort_values(by="mass", inplace=True)
-    return df_out, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
+    fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
+    return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
 
 
 def get_min_max_mass(mass_analyzer: str, mass: float) -> Tuple[float, float]:

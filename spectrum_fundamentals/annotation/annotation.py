@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def match_peaks(
-    fragments_meta_data: pd.DataFrame,
+    fragments_meta_data: List[dict],
     peaks_intensity: np.ndarray,
     peaks_masses: np.ndarray,
     tmt_n_term: int,
@@ -37,7 +37,8 @@ def match_peaks(
     next_start_peak = 0
     seq_len = len(unmod_sequence)
     matched_peak = False
-    for _, fragment in fragments_meta_data.iterrows():
+    fragment_no: float
+    for fragment in fragments_meta_data:
         min_mass = fragment["min_mass"]
         max_mass = fragment["max_mass"]
         fragment_no = fragment["no"]
