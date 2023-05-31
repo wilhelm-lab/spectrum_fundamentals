@@ -161,7 +161,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
     # calculation:
     forward_sum = 0.0  # sum over all amino acids from left to right (neutral charge)
     backward_sum = 0.0  # sum over all amino acids from right to left (neutral charge)
-    for i in range(0, peptide_length - 1):  # generate substrings
+    for i in range(0, peptide_length):  # generate substrings
         forward_sum += constants.AA_MASSES[peptide_sequence[i]]  # sum left to right
         if i in modification_deltas:  # add mass of modification if present
             forward_sum += modification_deltas[i]
@@ -197,7 +197,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
 
 def initialize_peaks_xl(
     sequence: str, mass_analyzer: str, crosslinker_position: int, crosslinker_type: str
-) -> Tuple[pd.DataFrame, int, str, float]:
+) -> Tuple[pd.DataFrame, int, str, float, float]:
     """Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
 
     This function get only one modified peptide
