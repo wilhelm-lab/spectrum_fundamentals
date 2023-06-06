@@ -195,7 +195,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
     return df_out, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
 
 
-def initialize_peaks_xl(
+def initialize_peaks_cms2(
     sequence: str, mass_analyzer: str, crosslinker_position: int, crosslinker_type: str
 ) -> Tuple[pd.DataFrame, int, str, float, float]:
     """Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
@@ -204,7 +204,7 @@ def initialize_peaks_xl(
 
     :param sequence: Modified peptide sequence
     :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
-    :param crosslinker_position: the position of crosslinker connected to lysine
+    :param crosslinker_position: The position of crosslinker
     :param crosslinker_type: Can be either DSSO, DSBU or BuUrBU
     :raises ValueError: if crosslinker_type be unkown
     :return: List of theoretical peaks

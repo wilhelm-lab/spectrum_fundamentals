@@ -14,7 +14,9 @@ BATCH_SIZE = 6000
 VEC_LENGTH = (
     (SEQ_LEN - 1) * 2 * 3
 )  # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+, for a total of 174 fragments
-
+VEC_LENGTH_CMS2 = (SEQ_LEN - 1) * 2 * 3 * 2
+# peptide of length 30 can have 29 b, y, b_short, y_short, b_long and y_long ions, each with charge 1+, 2+ and 3+
+# we do not annotate fragments wth charge 3+. All fragmets with charge 3+ convert to -1
 #############
 # ALPHABETS #
 #############
