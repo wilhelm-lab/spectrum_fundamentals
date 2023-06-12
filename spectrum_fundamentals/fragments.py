@@ -195,19 +195,19 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
     return df_out, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
 
 
-def initialize_peaks_cms2(
+def initialize_peaks_xl(
     sequence: str, mass_analyzer: str, crosslinker_position: int, crosslinker_type: str
-) -> Tuple[pd.DataFrame, int, str, float, float]:
+) -> Tuple[pd.DataFrame, int, str, float]:
     """Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
 
-    This function get only one modified peptide
+    This function get only one modified peptide (peptide a or b)) 
 
-    :param sequence: Modified peptide sequence
+    :param sequence: Modified peptide sequence (peptide a or b)
     :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
     :param crosslinker_position: The position of crosslinker
     :param crosslinker_type: Can be either DSSO, DSBU or BuUrBU
     :raises ValueError: if crosslinker_type be unkown
-    :return: List of theoretical peaks
+    :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence, Therotical mass of modified peptide (without considering mass of crosslinker)
     """
     charge = 2  # generate only peaks with charge 1 and 2
     crosslinker_type = crosslinker_type.upper()
@@ -217,17 +217,20 @@ def initialize_peaks_cms2(
         dsso_l = "[UNIMOD:1882]"
         sequence_s = sequence.replace(dsso, dsso_s)
         sequence_l = sequence.replace(dsso, dsso_l)
+        sequence_without_crosslinker = sequence.replace(dsso, "")
+
     elif crosslinker_type in ["DSBU", "BUURBU"]:
         dsbu = "[UNIMOD:1884]"
         dsbu_s = "[UNIMOD:1886]"
         dsbu_l = "[UNIMOD:1885]"
         sequence_s = sequence.replace(dsbu, dsbu_s)
         sequence_l = sequence.replace(dsbu, dsbu_l)
+        sequence_without_crosslinker = sequence.replace(dsbu, "")
     else:
         raise ValueError(f"Unkown crosslinker type: {crosslinker_type}")
 
-    df_out_s, tmt_n_term, peptide_sequence, calc_mass_s = initialize_peaks(sequence_s, mass_analyzer, charge)
-    df_out_l, tmt_n_term, peptide_sequence, calc_mass_l = initialize_peaks(sequence_l, mass_analyzer, charge)
+    df_out_s, tmt_n_term, peptide_sequence, mass_s = initialize_peaks(sequence_s, mass_analyzer, charge)
+    df_out_l, tmt_n_term, peptide_sequence, mass_l = initialize_peaks(sequence_l, mass_analyzer, charge)
 
     threshold_b = crosslinker_position
     threshold_y = len(peptide_sequence) - crosslinker_position + 1
@@ -240,8 +243,9 @@ def initialize_peaks_cms2(
     concatenated_df = pd.concat([df_out_s, df_out_l])
     unique_df = concatenated_df.drop_duplicates()
     df_out = unique_df.sort_values("mass")
+    mass = compute_peptide_mass(sequence_without_crosslinker)
 
-    return df_out, tmt_n_term, peptide_sequence, calc_mass_s, calc_mass_l
+    return df_out, tmt_n_term, peptide_sequence, mass 
 
 
 def get_min_max_mass(mass_analyzer: str, mass: float) -> Tuple[float, float]:
