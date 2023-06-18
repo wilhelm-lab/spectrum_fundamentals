@@ -3,7 +3,6 @@ from operator import itemgetter
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 
 from . import constants as constants
 
@@ -124,13 +123,9 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
     else:
         modification_deltas, tmt_n_term, peptide_sequence = modifications
 
-    col_dtypes = {"ion_type": str, "no": int, "charge": float, "mass": float, "min_mass": float, "max_mass": float}
     peptide_length = len(peptide_sequence)
-
     if peptide_length > 30:
-        df_out = pd.DataFrame(columns=col_dtypes.keys())
-        df_out = df_out.astype(col_dtypes)
-        return df_out, -1, "", 0.0
+        return [{}], -1, "", 0.0
 
     # initialize constants
     if int(round(charge)) <= 3:
