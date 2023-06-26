@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+from typeguard import typeguard_ignore
 
 import spectrum_fundamentals.charge as charge
 
@@ -38,6 +39,7 @@ class TestCharge(unittest.TestCase):
         expected_output = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]])
         np.testing.assert_equal(charge.indices_to_one_hot(labels, classes), expected_output)
 
+    @typeguard_ignore
     def test_indices_to_one_hot_with_wrong_input_type(self):
         """Test indices_to_one_hot correctly raises TypeError on wrong input type."""
         labels = None
