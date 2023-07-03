@@ -145,7 +145,7 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
     results_df = pd.DataFrame(raw_file_annotations)
     results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
     logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
-
+    
     return results_df
 
 def peak_pos_xl_cms2(unmod_seq: str, crosslinker_position: int) -> list:
@@ -335,7 +335,7 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
 
     if xl:
          fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks_xl(
-        spectrum[index_columns[mod_seq_column]],
+        spectrum[index_columns["MODIFIED_SEQUENCE"]],
         spectrum[index_columns["MASS_ANALYZER"]],
         spectrum[index_columns["CROSSLINKER_POSITION"]],
         spectrum[index_columns["CROSSLINKER_TYPE"]],
@@ -369,7 +369,7 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     if xl:
         intensities, mass = generate_annotation_matrix_xl(
-        matched_peaks, unmod_sequence, spectrum[index_columns["CROSSLINKER_POSITION"]]
+        matched_peaks, unmod_sequence, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
     )
     else:
         intensities, mass = generate_annotation_matrix(
