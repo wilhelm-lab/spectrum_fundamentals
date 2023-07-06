@@ -335,9 +335,9 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
 
     if xl:
          fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks_xl(
-        spectrum[index_columns["MODIFIED_SEQUENCE"]],
+        spectrum[index_columns["MODIFIED_SEQUENCE_A"]],
         spectrum[index_columns["MASS_ANALYZER"]],
-        spectrum[index_columns["CROSSLINKER_POSITION"]],
+        spectrum[index_columns["CROSSLINKER_POSITION_A"]],
         spectrum[index_columns["CROSSLINKER_TYPE"]],
         )
     else:
