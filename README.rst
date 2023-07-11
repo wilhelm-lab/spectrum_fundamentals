@@ -31,11 +31,17 @@ spectrum_fundamentals
    :target: https://github.com/psf/black
    :alt: Black
 
+Spectrum Fundamentals
+=====================
+
+Spectrum Fundamentals is a package we use in our rescoring pipeline. It was created to be able to handle spectra from different files.
 
 Features
 --------
 
-* TODO
+- Annotate Spectra.
+- Modify peptide sequence to follow one of the recommended notations of ProForma.
+- Generate features than can be used by percoltor for rescoring (spectral angle, cosine similarity, Pearson's correlation, Spearman's correlation, etc.).
 
 
 Installation
