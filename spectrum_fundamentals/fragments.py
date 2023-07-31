@@ -106,13 +106,16 @@ def compute_peptide_mass(sequence: str) -> float:
     return forward_sum + ion_type_offsets[0] + ion_type_offsets[1]
 
 
-def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[List[dict], int, str, float]:
+def initialize_peaks(
+    sequence: str, mass_analyzer: str, charge: int, mass_tolerance: Optional[float]
+) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 
     :param sequence: Modified peptide sequence
     :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
     :param charge: Precursor charge
+    :param mass_tolerance: mass tolerance from config to calculate min and max mass
     :raises AssertionError:  if peptide sequence contained an unknown modification. TODO do this within the get_mod func.
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
@@ -175,7 +178,11 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
                 # Check for neutral loss here
                 mass = (ion_type_masses[ion_type] + charge_delta) / charge
-                min_mass, max_mass = get_min_max_mass(mass_analyzer, mass)
+                if mass_tolerance is not None:
+                    min_mass = mass - mass_tolerance
+                    max_mass = mass + mass_tolerance
+                else:
+                    min_mass, max_mass = get_min_max_mass(mass_analyzer, mass)
                 fragments_meta_data.append(
                     {
                         "ion_type": ion_types[ion_type],  # ion type
