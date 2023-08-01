@@ -143,9 +143,18 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
             continue
         raw_file_annotations.append(results)
     results_df = pd.DataFrame(raw_file_annotations)
-    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
-    logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
-    
+    if results_df.shape[1] < 8:
+        results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
+        logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
+
+    else:
+        results_df.columns = ["INTENSITIES_A", "INTENSITIES_B",
+                              "MZ_A", "MZ_B",
+                              "CALCULATED_MASS_A", "CALCULATED_MASS_B",
+                              "removed_peaks_a", "removed_peaks_b"]
+        logger.info(f"Removed {results_df['removed_peaks_a'].describe()} redundant peaks")
+        logger.info(f"Removed {results_df['removed_peaks_b'].describe()} redundant peaks")
+    #results_df.to_csv("/cmnfs/home/m.kalhor/wilhelmlab/notebooks/notebooks/results_df.csv")
     return results_df
 
 def peak_pos_xl_cms2(unmod_seq: str, crosslinker_position: int) -> list:
@@ -334,12 +343,59 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
         xl = True
 
     if xl:
-         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks_xl(
+        fragments_meta_data_a, tmt_n_term_a, unmod_sequence_a, calc_mass_a = initialize_peaks_xl(
         spectrum[index_columns["MODIFIED_SEQUENCE_A"]],
         spectrum[index_columns["MASS_ANALYZER"]],
         spectrum[index_columns["CROSSLINKER_POSITION_A"]],
         spectrum[index_columns["CROSSLINKER_TYPE"]],
         )
+        fragments_meta_data_b, tmt_n_term_b, unmod_sequence_b, calc_mass_b = initialize_peaks_xl(
+        spectrum[index_columns["MODIFIED_SEQUENCE_B"]],
+        spectrum[index_columns["MASS_ANALYZER"]],
+        spectrum[index_columns["CROSSLINKER_POSITION_B"]],
+        spectrum[index_columns["CROSSLINKER_TYPE"]],
+        )
+        if not unmod_sequence_a:
+            return None
+        if not unmod_sequence_b:
+            return None
+
+        matched_peaks_a = match_peaks(
+        fragments_meta_data_a,
+        spectrum[index_columns["INTENSITIES"]],
+        spectrum[index_columns["MZ"]],
+        tmt_n_term_a,
+        unmod_sequence_a,
+        spectrum[index_columns["PRECURSOR_CHARGE"]],
+    )
+        matched_peaks_b = match_peaks(
+        fragments_meta_data_b,
+        spectrum[index_columns["INTENSITIES"]],
+        spectrum[index_columns["MZ"]],
+        tmt_n_term_b,
+        unmod_sequence_b,
+        spectrum[index_columns["PRECURSOR_CHARGE"]],
+    )
+
+        if len(matched_peaks_a) == 0:
+            intensity = np.full(348, 0.0)
+            mass = np.full(348, 0.0)
+            return intensity_a, mass_a, calc_mass_a, 0
+        if len(matched_peaks_b) == 0:
+            intensity = np.full(348, 0.0)
+            mass = np.full(348, 0.0)
+            return intensity_b, mass_b, calc_mass_b, 0
+        matched_peaks_a, removed_peaks_a = handle_multiple_matches(matched_peaks_a)
+        matched_peaks_b, removed_peaks_b = handle_multiple_matches(matched_peaks_b)
+        intensities_a, mass_a = generate_annotation_matrix_xl(
+        matched_peaks_a, unmod_sequence_a, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
+    )
+        intensities_b, mass_b = generate_annotation_matrix_xl(
+        matched_peaks_b, unmod_sequence_b, spectrum[index_columns["CROSSLINKER_POSITION_B"]]
+    )
+        return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, removed_peaks_a, removed_peaks_b
+
+
     else:
         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(
         spectrum[index_columns[mod_seq_column]],
@@ -347,9 +403,10 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
         spectrum[index_columns["PRECURSOR_CHARGE"]],
         )
 
-    if not unmod_sequence:
-        return None
-    matched_peaks = match_peaks(
+        if not unmod_sequence:
+            return None
+
+        matched_peaks = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
         spectrum[index_columns["MZ"]],
@@ -357,23 +414,15 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
         unmod_sequence,
         spectrum[index_columns["PRECURSOR_CHARGE"]],
     )
-    if len(matched_peaks) == 0:
-        if xl:
-            intensity = np.full(348, 0.0)
-            mass = np.full(348, 0.0)
-            return intensity, mass, calc_mass, 0
-        else:
+
+        if len(matched_peaks) == 0:
             intensity = np.full(174, 0.0)
             mass = np.full(174, 0.0)
             return intensity, mass, calc_mass, 0
-    matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
-    if xl:
-        intensities, mass = generate_annotation_matrix_xl(
-        matched_peaks, unmod_sequence, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
-    )
-    else:
+
+        matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
         intensities, mass = generate_annotation_matrix(
         matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]
     )
-        
-    return intensities, mass, calc_mass, removed_peaks
+        return intensities, mass, calc_mass, removed_peaks
+    
