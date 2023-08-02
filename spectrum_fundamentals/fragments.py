@@ -117,6 +117,7 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[Li
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
     peptide_sequence = sequence
+    peptide_sequence = peptide_sequence.replace('-','')
     modifications = _get_modifications(peptide_sequence)
     if modifications is None:
         raise AssertionError("Modification not found.")
