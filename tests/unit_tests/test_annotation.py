@@ -26,7 +26,7 @@ class TestAnnotationPipeline(unittest.TestCase):
         spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
         spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
 
-        result = annotation.annotate_spectra(spectrum_input, None)
+        result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)
 
     def test_handle_multiple_matches(self):
