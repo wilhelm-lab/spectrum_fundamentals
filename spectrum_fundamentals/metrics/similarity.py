@@ -216,8 +216,8 @@ class SimilarityMetrics(Metric):
         :param method: either pearson or spearman
         :return: calculated correlations
         """
-        obs_int_arr = observed_intensities.toarray()
-        pred_int_arr = predicted_intensities.toarray()
+        observed_intensities_array = observed_intensities.toarray()
+        predicted_intensities_array = predicted_intensities.toarray()
 
         if charge != 0:
             if charge == 1:
@@ -232,13 +232,11 @@ class SimilarityMetrics(Metric):
                 boolean_array = constants.Y_ION_MASK
 
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
-            obs_int_arr = scipy.sparse.csr_matrix(obs_int_arr)
-            pred_int_arr = scipy.sparse.csr_matrix(pred_int_arr)
-            obs_int_arr = obs_int_arr.multiply(boolean_array).toarray()
-            pred_int_arr = pred_int_arr.multiply(boolean_array).toarray()
+            observed_intensities_array = observed_intensities.multiply(boolean_array).toarray()
+            predicted_intensities_array = predicted_intensities.multiply(boolean_array).toarray()
 
         pear_corr = []
-        for obs, pred in zip(obs_int_arr, pred_int_arr):
+        for obs, pred in zip(observed_intensities_array, predicted_intensities_array):
             valid_ion_mask = pred > constants.EPSILON
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
