@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>spectrum_fundamentals package &mdash; spectrum_fundamentals 0.4.1 documentation</title>
+  <title>spectrum_fundamentals package &mdash; spectrum_fundamentals 0.4.2 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_cookietemple.css" type="text/css" />
@@ -36,7 +36,7 @@
             spectrum_fundamentals
           </a>
               <div class="version">
-                0.4.1
+                0.4.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -296,7 +296,7 @@
 <span id="spectrum-fundamentals-fragments-module"></span><h2>spectrum_fundamentals.fragments module<a class="headerlink" href="#module-spectrum_fundamentals.fragments" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.fragments.compute_ion_masses">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">compute_ion_masses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq_int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge_onehot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L216-L320"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.compute_ion_masses" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">compute_ion_masses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq_int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge_onehot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L247-L351"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.compute_ion_masses" title="Permalink to this definition"></a></dt>
 <dd><p>Collects an integer sequence e.g. [1,2,3] with charge 2 and returns array with 174 positions for ion masses.</p>
 <p>Invalid masses are set to -1.</p>
 <dl class="field-list simple">
@@ -338,17 +338,29 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.fragments.get_min_max_mass">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">get_min_max_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L193-L213"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.get_min_max_mass" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">get_min_max_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L201-L244"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.get_min_max_mass" title="Permalink to this definition"></a></dt>
 <dd><p>Helper function to get min and max mass based on mass analyzer.</p>
+<p>If both mass_tolerance and unit_mass_tolerance are provided, the function uses the provided tolerance
+to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cite>unit_mass_tolerance</cite> is missing
+(or both are None), the function falls back to the default tolerances based on the <cite>mass_analyzer</cite>.</p>
+<p>Default mass tolerances for different mass analyzers:
+- FTMS: +/- 20 ppm
+- TOF: +/- 40 ppm
+- ITMS: +/- 0.35 daltons</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>mass_tolerance</strong> (<em>float</em><em> | </em><em>None</em>) – mass tolerance to calculate min and max mass</p></li>
+<li><p><strong>unit_mass_tolerance</strong> (<em>str</em><em> | </em><em>None</em>) – unit for the mass tolerance (da or ppm)</p></li>
 <li><p><strong>mass_analyzer</strong> (<em>str</em>) – the type of mass analyzer used to determine the tolerance.</p></li>
 <li><p><strong>mass</strong> (<em>float</em>) – the theoretical fragment mass</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – if mass_analyzer is other than one of FTMS, TOF, ITMS</p>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – if mass_analyzer is other than one of FTMS, TOF, ITMS</p></li>
+<li><p><strong>ValueError</strong> – if unit_mass_tolerance is other than one of ppm, da</p></li>
+</ul>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>a tuple (min, max) denoting the mass tolerance range.</p>
@@ -361,7 +373,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.fragments.initialize_peaks">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">initialize_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L109-L190"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.initialize_peaks" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">initialize_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L109-L198"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.initialize_peaks" title="Permalink to this definition"></a></dt>
 <dd><p>Generate theoretical peaks for a modified peptide sequence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -369,6 +381,8 @@
 <li><p><strong>sequence</strong> (<em>str</em>) – Modified peptide sequence</p></li>
 <li><p><strong>mass_analyzer</strong> (<em>str</em>) – Type of mass analyzer used eg. FTMS, ITMS</p></li>
 <li><p><strong>charge</strong> (<em>int</em>) – Precursor charge</p></li>
+<li><p><strong>mass_tolerance</strong> (<em>float</em><em> | </em><em>None</em>) – mass tolerance to calculate min and max mass</p></li>
+<li><p><strong>unit_mass_tolerance</strong> (<em>str</em><em> | </em><em>None</em>) – unit for the mass tolerance (da or ppm)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
