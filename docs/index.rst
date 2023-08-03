@@ -1,23 +1,19 @@
 .. include:: ../README.rst
-===========================
-Welcome to spectrum_fundamentals's documentation!
-==========================================================
+   :end-line: 45
+
+.. include:: _key_contributors.rst
+
+.. role:: small
+
+.. role:: smaller
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   readme
    installation
    usage
-   reference
+   API
    contributing
-   authors
-   code_of_conduct
-   modules
-
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   contributors
+   reference
