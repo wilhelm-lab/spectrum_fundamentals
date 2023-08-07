@@ -218,6 +218,14 @@ SINGLE_CHARGED_MASK = np.tile([1, 0, 0, 1, 0, 0], SEQ_LEN - 1)
 DOUBLE_CHARGED_MASK = np.tile([0, 1, 0, 0, 1, 0], SEQ_LEN - 1)
 TRIPLE_CHARGED_MASK = np.tile([0, 0, 1, 0, 0, 1], SEQ_LEN - 1)
 
+B_ION_MASK_XL = np.tile([0, 0, 0, 1, 1, 1], (SEQ_LEN - 1)*2)
+Y_ION_MASK_XL = np.tile([1, 1, 1, 0, 0, 0], (SEQ_LEN - 1)*2)
+SINGLE_CHARGED_MASK_XL = np.tile([1, 0, 0, 1, 0, 0], (SEQ_LEN - 1)*2)
+DOUBLE_CHARGED_MASK_XL = np.tile([0, 1, 0, 0, 1, 0], (SEQ_LEN - 1)*2)
+TRIPLE_CHARGED_MASK_XL = np.tile([0, 0, 1, 0, 0, 1], (SEQ_LEN - 1)*2)
+
+
+
 
 SHARED_DATA_COLUMNS = ["RAW_FILE", "SCAN_NUMBER"]
 META_DATA_ONLY_COLUMNS = [
