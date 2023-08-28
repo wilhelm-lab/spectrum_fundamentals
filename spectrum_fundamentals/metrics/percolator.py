@@ -64,7 +64,7 @@ class Percolator(Metric):
         self.all_features_flag = all_features_flag
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
-        self.internal = True
+        self.internal = True # TODO: Get this parameter from the caller
 
         self._resolve_percolator_compatibility(percolator_version)
         super().__init__(pred_intensities, true_intensities, mz)
@@ -179,9 +179,9 @@ class Percolator(Metric):
         :param metadata_subset: tuple of (raw_file, scan_number)
         :return: hashed unique id
         """
-        raw_file, scan_event_number = metadata_subset
-        s = f"{raw_file}{scan_event_number}".encode()
-        return int(hashlib.sha224(s).hexdigest()[:6], 16)
+        scan_event_number = metadata_subset
+        s = f"{scan_event_number}".encode()
+        return int(hashlib.sha224(s).hexdigest(), 16) # This is a breaking point for Windows
 
     @staticmethod
     def get_delta_score(scores_df: pd.DataFrame, scoring_feature: str) -> np.ndarray:
@@ -299,7 +299,7 @@ class Percolator(Metric):
         self.metrics_val["Label"] = self.target_decoy_labels
         
         if self.internal:
-            self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_EVEMT_NUMBER"]].apply(Percolator.get_scannr_internal, axis=1)
+            self.metrics_val["ScanNr"] = self.metadata[["SCAN_EVENT_NUMBER"]].apply(Percolator.get_scannr_internal, axis=1)
         else:
             self.metrics_val["ScanNr"] = self.metadata["SCAN_NUMBER"]
         self.metrics_val["filename"] = self.metadata["RAW_FILE"]
