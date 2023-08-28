@@ -180,8 +180,7 @@ class Percolator(Metric):
         :return: hashed unique id
         """
         scan_event_number = metadata_subset
-        s = f"{scan_event_number}".encode()
-        return int(hashlib.sha224(s).hexdigest(), 16) # This is a breaking point for Windows
+        return int(scan_event_number)
 
     @staticmethod
     def get_delta_score(scores_df: pd.DataFrame, scoring_feature: str) -> np.ndarray:
