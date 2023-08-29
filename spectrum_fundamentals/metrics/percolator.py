@@ -296,8 +296,8 @@ class Percolator(Metric):
             spec_id_cols.append("SCAN_EVENT_NUMBER")
         self.metrics_val["SpecId"] = self.metadata[spec_id_cols].apply(Percolator.get_specid, axis=1)
         self.metrics_val["Label"] = self.target_decoy_labels
-        self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_NUMBER"]].apply(Percolator.get_scannr, axis=1)
-
+        self.metrics_val["ScanNr"] = self.metadata["SCAN_NUMBER"]
+        self.metrics_val["filename"] = self.metadata["RAW_FILE"]
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
 
         self.metrics_val[self.prot_col_name] = self.metadata[
