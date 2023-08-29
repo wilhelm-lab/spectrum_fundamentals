@@ -361,7 +361,8 @@ class TestPercolator:
             percolator.metrics_val["SpecId"][0], "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02-7978-AAIGEATRL-2-1"
         )
         np.testing.assert_equal(percolator.metrics_val["Label"][0], 1)
-        np.testing.assert_equal(percolator.metrics_val["ScanNr"][0], 10203379)
+        np.testing.assert_equal(percolator.metrics_val["ScanNr"][0], 7978)
+        np.testing.assert_equal(percolator.metrics_val["filename"][0], "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02")
         # np.testing.assert_almost_equal(percolator.metrics_val['ExpMass'][0], 900.50345678)
         np.testing.assert_string_equal(percolator.metrics_val["Peptide"][0], "_.AAIGEATRL._")
         np.testing.assert_string_equal(

@@ -60,7 +60,6 @@ class Percolator(Metric):
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
-        percolator_version: Optional[float] = 3.05,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
@@ -69,7 +68,7 @@ class Percolator(Metric):
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
 
-        self._resolve_percolator_compatibility(percolator_version)
+        self._resolve_percolator_compatibility()
         super().__init__(pred_intensities, true_intensities, mz)
 
     def _resolve_percolator_compatibility(self, percolator_version: Optional[float] = None):
