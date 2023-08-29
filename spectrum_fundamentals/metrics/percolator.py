@@ -371,7 +371,7 @@ class Percolator(Metric):
 
     def _reorder_columns_for_percolator(self):
         all_columns = self.metrics_val.columns
-        first_columns = ["SpecId", "Label", "ScanNr"]
+        first_columns = ["SpecId", "Label", "ScanNr", "filename"]
         last_columns = ["Peptide", "Proteins"]
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
