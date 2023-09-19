@@ -24,10 +24,11 @@ def _get_modifications(peptide_sequence: str) -> Optional[Tuple[Dict[int, float]
     modification_mass = constants.MOD_MASSES
     # Handle terminal modifications here
     for possible_tmt_mod in constants.TMT_MODS.values():
-        if peptide_sequence.startswith(possible_tmt_mod):  # TMT_6
+        n_term_tmt = possible_tmt_mod + "-"
+        if peptide_sequence.startswith(n_term_tmt):
             tmt_n_term = 2
             modification_deltas.update({0: constants.MOD_MASSES[possible_tmt_mod]})
-            peptide_sequence = peptide_sequence[len(possible_tmt_mod) :]
+            peptide_sequence = peptide_sequence[len(n_term_tmt) :]
             break
 
     if "(" in peptide_sequence:
@@ -183,7 +184,7 @@ def initialize_peaks(
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
                 # Check for neutral loss here
                 mass = (ion_type_masses[ion_type] + charge_delta) / charge
-                min_mass, max_mass = get_min_max_mass(mass_analyzer, mass)
+                min_mass, max_mass = get_min_max_mass(mass_analyzer, mass, mass_tolerance, unit_mass_tolerance)
                 fragments_meta_data.append(
                     {
                         "ion_type": ion_types[ion_type],  # ion type

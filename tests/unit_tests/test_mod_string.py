@@ -39,9 +39,9 @@ class TestMaxQuantToInternal(unittest.TestCase):
 
     def test_maxquant_to_internal_tmt(self):
         """Test maxquant_to_internal_tmt."""
-        fixed_mods = {"C": "C[UNIMOD:4]", "^_": "_[UNIMOD:737]", "K": "K[UNIMOD:737]"}
+        fixed_mods = {"C": "C[UNIMOD:4]", "^_": "_[UNIMOD:737]-", "K": "K[UNIMOD:737]"}
         self.assertEqual(
-            mod.maxquant_to_internal(["_ABCDEFGHK_"], fixed_mods), ["[UNIMOD:737]ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]
+            mod.maxquant_to_internal(["_ABCDEFGHK_"], fixed_mods), ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]
         )
 
     def test_maxquant_to_internal_silac(self):
