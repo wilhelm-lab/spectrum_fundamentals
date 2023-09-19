@@ -49,7 +49,6 @@ ALPHABET_MODS = {
     "C[UNIMOD:4]": 2,
     "K[UNIMOD:737]": 22,
     "K[UNIMOD:2016]": 22,
-    "K[UNIMOD:2016]": 22,
     "K[UNIMOD:214]": 22,
     "K[UNIMOD:730]": 22,
     "S[UNIMOD:21]": 25,
