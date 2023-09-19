@@ -18,11 +18,11 @@ class TestGetModifications:
 
     def test_get_modifications_tmt_tag(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("[UNIMOD:737]ABC[UNIMOD:4]") == ({0: 229.162932, 2: 57.02146}, 2, "ABC")
+        assert fragments._get_modifications("[UNIMOD:737]-ABC[UNIMOD:4]") == ({0: 229.162932, 2: 57.02146}, 2, "ABC")
 
     def test_get_modifications_tmtpro_tag(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("[UNIMOD:2016]ABC[UNIMOD:4]") == ({0: 304.207146, 2: 57.02146}, 2, "ABC")
+        assert fragments._get_modifications("[UNIMOD:2016]-ABC[UNIMOD:4]") == ({0: 304.207146, 2: 57.02146}, 2, "ABC")
 
 
 class TestComputeMasses(unittest.TestCase):
@@ -62,6 +62,11 @@ class TestComputeMasses(unittest.TestCase):
         """Test computation of peptide masses with valid input."""
         seq = "SEQUENC[UNIMOD:4]E"
         self.assertEqual(fragments.compute_peptide_mass(seq), 1045.2561516699998)
+
+    def test_compute_peptide_masses_tmtpro(self):
+        """Test computation of peptide masses with valid input and tmt tag."""
+        seq = "[UNIMOD:737]-SEQUENC[UNIMOD:4]E"
+        self.assertEqual(fragments.compute_peptide_mass(seq), 1274.41908367)
 
     def test_compute_peptide_masses_with_invalid_syntax(self):
         """Negative testing of comuptation of peptide mass with unsupported syntax of mod string."""

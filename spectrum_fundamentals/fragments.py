@@ -24,10 +24,11 @@ def _get_modifications(peptide_sequence: str) -> Optional[Tuple[Dict[int, float]
     modification_mass = constants.MOD_MASSES
     # Handle terminal modifications here
     for possible_tmt_mod in constants.TMT_MODS.values():
-        if peptide_sequence.startswith(possible_tmt_mod):  # TMT_6
+        n_term_tmt = possible_tmt_mod + "-"
+        if peptide_sequence.startswith(n_term_tmt):
             tmt_n_term = 2
             modification_deltas.update({0: constants.MOD_MASSES[possible_tmt_mod]})
-            peptide_sequence = peptide_sequence[len(possible_tmt_mod) :]
+            peptide_sequence = peptide_sequence[len(n_term_tmt) :]
             break
 
     if "(" in peptide_sequence:
