@@ -184,7 +184,7 @@ def initialize_peaks(
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
                 # Check for neutral loss here
                 mass = (ion_type_masses[ion_type] + charge_delta) / charge
-                min_mass, max_mass = get_min_max_mass(mass_analyzer, mass)
+                min_mass, max_mass = get_min_max_mass(mass_analyzer, mass, mass_tolerance, unit_mass_tolerance)
                 fragments_meta_data.append(
                     {
                         "ion_type": ion_types[ion_type],  # ion type
