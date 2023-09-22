@@ -79,12 +79,12 @@ class TestInternalTransformations(unittest.TestCase):
 
     def test_internal_without_mods(self):
         """Test internal with mods to internal without_mods."""
-        self.assertEqual(mod.internal_without_mods(["[UNIMOD:737]ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]), ["ABCDEFGHK"])
+        self.assertEqual(mod.internal_without_mods(["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]), ["ABCDEFGHK"])
 
     def test_internal_to_mod_masses(self):
         """Test internal with mods to internal without_mods."""
         self.assertEqual(
-            mod.internal_to_mod_mass(["[UNIMOD:737]ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]),
+            mod.internal_to_mod_mass(["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]),
             ["[+229.162932]ABC[+57.02146]DEFGHK[+229.162932]"],
         )
 
