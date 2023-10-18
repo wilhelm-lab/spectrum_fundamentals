@@ -17,7 +17,7 @@ def match_peaks(
     tmt_n_term: int,
     unmod_sequence: str,
     charge: int,
-) -> List[Dict[str, Union[str, int, float]]]:
+) -> Tuple[List[Dict[str, Union[str, int, float]]], float]:
     """
     Matching experimental peaks with theoretical fragment ions.
 
@@ -28,9 +28,11 @@ def match_peaks(
     :param unmod_sequence: Unmodified peptide sequence
     :param charge: Precursor charge
     :return: List of matched/annotated peaks
+    :return: float with sum of experimental peaks intensities
     """
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
+    sum_intensities = sum(peaks_intensity)
     max_intensity = 1.0
     row_list = []
     temp_list = []
@@ -77,7 +79,7 @@ def match_peaks(
     for row in row_list:
         row["intensity"] = float(row["intensity"]) / max_intensity
         temp_list.append(row)
-    return temp_list
+    return temp_list, sum_intensities
 
 
 def handle_multiple_matches(
@@ -134,6 +136,7 @@ def annotate_spectra(
     - MZ: a NumPy array containing the m/z values of each peak in the annotated spectrum
     - CALCULATED_MASS: a float representing the calculated mass of the spectrum
     - removed_peaks: a NumPy array containing the indices of any peaks that were removed during the annotation process
+    - sum_intensities: a float representing the sum of experimental peak intensities
 
     :param un_annot_spectra: a Pandas DataFrame containing the raw peaks and metadata to be annotated
     :param mass_tolerance: mass tolerance to calculate min and max mass
@@ -148,7 +151,7 @@ def annotate_spectra(
             continue
         raw_file_annotations.append(results)
     results_df = pd.DataFrame(raw_file_annotations)
-    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
+    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks", "sum_intensities"]
     logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
 
     return results_df
@@ -214,7 +217,7 @@ def parallel_annotate(
     index_columns: dict,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-) -> Optional[Tuple[np.ndarray, np.ndarray, float, int]]:
+) -> Optional[Tuple[np.ndarray, np.ndarray, float, int, float]]:
     """
     Perform parallel annotation of a spectrum.
 
@@ -244,7 +247,7 @@ def parallel_annotate(
     )
     if not unmod_sequence:
         return None
-    matched_peaks = match_peaks(
+    matched_peaks, sum_intensities = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
         spectrum[index_columns["MZ"]],
@@ -255,9 +258,9 @@ def parallel_annotate(
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)
-        return intensity, mass, calc_mass, 0
+        return intensity, mass, calc_mass, 0, sum_intensities
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
         matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]
     )
-    return intensities, mass, calc_mass, removed_peaks
+    return intensities, mass, calc_mass, removed_peaks, sum_intensities
