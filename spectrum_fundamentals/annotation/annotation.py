@@ -81,11 +81,10 @@ def match_peaks(
     for row in row_list:
         row["intensity"] = float(row["intensity"]) / max_intensity
         temp_list.append(row)
-    if sum_intensities == 0:
-        log_sum_intensities = 0 # todo check ists okay?
+    if sum_intensities == 0.0:
+        log_sum_intensities = 0.0 # todo check ists okay?
     else:
         log_sum_intensities = math.log(sum_intensities)
-
     return temp_list, log_sum_intensities
 
 
