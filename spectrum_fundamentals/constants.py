@@ -18,7 +18,17 @@ VEC_LENGTH = (
 #############
 # ALPHABETS #
 #############
-
+MOD_MASSES_SAGE = {+229.1629: '[UNIMOD:737]', 
+                       +304.2071: '[UNIMOD:2016]', 
+                       +144.1020: '[UNIMOD:214]', 
+                       +304.2053: '[UNIMOD:730]', 
+                       +8.0141: '[UNIMOD:259]', 
+                       +10.0082: '[UNIMOD:267]', 
+                       +79.9663: '[UNIMOD:21]', 
+                       -18.0105: '[UNIMOD:23]', 
+                       +57.0214: '[UNIMOD:4]', 
+                       +15.9949: '[UNIMOD:35]', 
+                       +42.0105: '[UNIMOD:1]'}
 AA_ALPHABET = {
     "A": 1,
     "C": 24,
@@ -276,3 +286,6 @@ class RescoreType(Enum):
 
     PROSIT = "prosit"
     ANDROMEDA = "andromeda"
+
+
+

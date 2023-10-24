@@ -239,3 +239,5 @@ def get_mods_list(mods_variable: str, mods_fixed: str):
         return mods_variable.split(";")
     else:
         return mods_variable.split(";") + mods_fixed.split(";")
+
+def 
