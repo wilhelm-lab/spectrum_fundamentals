@@ -3,9 +3,29 @@ import re
 from itertools import repeat
 from typing import Dict, List, Optional, Tuple
 
-from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_NAMES, SPECTRONAUT_MODS
+from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_NAMES, SPECTRONAUT_MODS , MOD_MASSES_SAGE
 
-def sage_to_internal():
+def sage_to_internal(sequences: List[str])->List[str]:
+    # Find the number within square brackets (as a float)
+    start_idx = sequences.find('[') + 1
+    end_idx = sequences.find(']')
+    
+    # Extract the number string
+    number_str = sequences[start_idx:end_idx]
+    
+    try:
+        # Attempt to convert the number to a float
+        number = float(number_str)
+    except ValueError:
+        # If conversion fails, keep the original text
+        return sequences
+
+    # Replace with the corresponding value from the dictionary
+    if number in MOD_MASSES_SAGE:
+        return sequences.replace(f'[{number_str}]', MOD_MASSES_SAGE[number])
+    else:
+        return sequences
+
     
 def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     """
