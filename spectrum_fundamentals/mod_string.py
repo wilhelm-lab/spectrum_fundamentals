@@ -5,7 +5,8 @@ from typing import Dict, List, Optional, Tuple
 
 from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_NAMES, SPECTRONAUT_MODS
 
-
+def sage_to_internal():
+    
 def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     """
     Function to translate a modstring from the internal format to the spectronaut format.
@@ -240,4 +241,3 @@ def get_mods_list(mods_variable: str, mods_fixed: str):
     else:
         return mods_variable.split(";") + mods_fixed.split(";")
 
-def 
