@@ -5,26 +5,36 @@ from typing import Dict, List, Optional, Tuple
 
 from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_NAMES, SPECTRONAUT_MODS , MOD_MASSES_SAGE
 
-def sage_to_internal(sequences: List[str])->List[str]:
-    # Find the number within square brackets (as a float)
-    start_idx = sequences.find('[') + 1
-    end_idx = sequences.find(']')
-    
-    # Extract the number string
-    number_str = sequences[start_idx:end_idx]
-    
-    try:
-        # Attempt to convert the number to a float
-        number = float(number_str)
-    except ValueError:
-        # If conversion fails, keep the original text
-        return sequences
+def sage_to_internal(strings: List[str]) -> List[str]:
+    modified_strings = []
 
-    # Replace with the corresponding value from the dictionary
-    if number in MOD_MASSES_SAGE:
-        return sequences.replace(f'[{number_str}]', MOD_MASSES_SAGE[number])
-    else:
-        return sequences
+    for string in strings:
+        # Find the number within square brackets (as a float)
+        start_idx = string.find('[') + 1
+        end_idx = string.find(']')
+
+        if start_idx > 0 and end_idx > start_idx:
+            # Extract the number string
+            number_str = string[start_idx:end_idx]
+
+            try:
+                # Attempt to convert the number to a float
+                number = float(number_str)
+            except ValueError:
+                # If conversion fails, keep the original text
+                modified_strings.append(string)
+                continue
+
+            # Replace with the corresponding value from the dictionary
+            if number in MOD_MASSES_SAGE:
+                modified_value = string.replace(f'[{number_str}]', MOD_MASSES_SAGE[number])
+                modified_strings.append(modified_value)
+            else:
+                modified_strings.append(string)
+        else:
+            modified_strings.append(string)
+
+    return modified_strings
 
     
 def internal_to_spectronaut(sequences: List[str]) -> List[str]:
