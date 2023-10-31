@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spectrum_fundamentals"
-version = "0.4.2"  # <<COOKIETEMPLE_FORCE_BUMP>>
+version = "0.4.3"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Fundamentals public repo"
 authors = ["WassimG <wassim.gabriel@gmail.com>"]
 license = "MIT"
@@ -20,7 +20,7 @@ classifiers = [
 
 
 [tool.poetry.dependencies]
-python = "^3.8.0"
+python = ">=3.8.0,<3.11.0"
 click = ">=8.0.0"
 rich = ">=10.3.0"
 PyYAML = ">=5.4.1"
