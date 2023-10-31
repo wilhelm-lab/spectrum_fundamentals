@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>spectrum_fundamentals.metrics package &mdash; spectrum_fundamentals 0.4.2 documentation</title>
+  <title>spectrum_fundamentals.metrics package &mdash; spectrum_fundamentals 0.4.3 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_cookietemple.css" type="text/css" />
@@ -12,11 +12,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=79807b79"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -35,7 +35,7 @@
             spectrum_fundamentals
           </a>
               <div class="version">
-                0.4.2
+                0.4.3
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -378,7 +378,7 @@
 <span id="spectrum-fundamentals-metrics-percolator-module"></span><h2>spectrum_fundamentals.metrics.percolator module<a class="headerlink" href="#module-spectrum_fundamentals.metrics.percolator" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">Percolator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_intensities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_intensities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_features_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regression_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowess'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdr_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percolator_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.05</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L30-L475"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">Percolator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_intensities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_intensities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_features_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regression_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowess'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdr_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L27-L449"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#spectrum_fundamentals.metrics.metric.Metric" title="spectrum_fundamentals.metrics.metric.Metric"><code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code></a></p>
 <p>Expects the following metadata columns.</p>
 <p>RAW_FILE
@@ -404,25 +404,24 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 <li><p><strong>all_features_flag</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>regression_method</strong> (<em>str</em>) – </p></li>
 <li><p><strong>fdr_cutoff</strong> (<em>float</em>) – </p></li>
-<li><p><strong>percolator_version</strong> (<em>float</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.add_common_features">
-<span class="sig-name descname"><span class="pre">add_common_features</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L272-L290"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.add_common_features" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">add_common_features</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L246-L264"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.add_common_features" title="Permalink to this definition"></a></dt>
 <dd><p>Add features used by both Andromeda and Prosit feature scoring sets.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.add_percolator_metadata_columns">
-<span class="sig-name descname"><span class="pre">add_percolator_metadata_columns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L292-L305"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.add_percolator_metadata_columns" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">add_percolator_metadata_columns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L266-L279"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.add_percolator_metadata_columns" title="Permalink to this definition"></a></dt>
 <dd><p>Add metadata columns needed by percolator, e.g. to identify a PSM.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.apply_lda_and_get_indices_below_fdr">
-<span class="sig-name descname"><span class="pre">apply_lda_and_get_indices_below_fdr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_scoring_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral_angle'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdr_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L307-L334"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.apply_lda_and_get_indices_below_fdr" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">apply_lda_and_get_indices_below_fdr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_scoring_feature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spectral_angle'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdr_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L281-L308"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.apply_lda_and_get_indices_below_fdr" title="Permalink to this definition"></a></dt>
 <dd><p>Applies a linear discriminant analysis on the features calculated so far (before retention time alignment)         to estimate false discovery rates (FDRs).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -439,13 +438,13 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.calc">
-<span class="sig-name descname"><span class="pre">calc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L406-L475"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.calc" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">calc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L380-L449"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.calc" title="Permalink to this definition"></a></dt>
 <dd><p>Adds percolator metadata and feature columns to metrics_val based on PSM metadata.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.calculate_fdrs">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calculate_fdrs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sorted_labels</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L369-L381"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.calculate_fdrs" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calculate_fdrs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sorted_labels</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L343-L355"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.calculate_fdrs" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate FDR.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -462,7 +461,7 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calculate_mass_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_subset</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L240-L249"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calculate_mass_difference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_subset</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L214-L223"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate mass difference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -479,7 +478,7 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference_ppm">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calculate_mass_difference_ppm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_subset</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L251-L260"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference_ppm" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calculate_mass_difference_ppm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_subset</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L225-L234"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.calculate_mass_difference_ppm" title="Permalink to this definition"></a></dt>
 <dd><p>Calculate mass difference in ppm.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -496,7 +495,7 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.count_arginines_and_lysines">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_arginines_and_lysines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L230-L238"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.count_arginines_and_lysines" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_arginines_and_lysines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L204-L212"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.count_arginines_and_lysines" title="Permalink to this definition"></a></dt>
 <dd><p>Count number of arginines and lysines.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -513,7 +512,7 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.count_missed_cleavages">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_missed_cleavages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L220-L228"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.count_missed_cleavages" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_missed_cleavages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L194-L202"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.count_missed_cleavages" title="Permalink to this definition"></a></dt>
 <dd><p>Count number of missed cleavages assuming Trypsin/P proteolysis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -535,7 +534,7 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.fdrs_to_qvals">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fdrs_to_qvals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fdrs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L383-L396"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.fdrs_to_qvals" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fdrs_to_qvals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fdrs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L357-L370"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.fdrs_to_qvals" title="Permalink to this definition"></a></dt>
 <dd><p>Converts FDRs to q-values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -552,7 +551,7 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.get_aligned_predicted_retention_times">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_aligned_predicted_retention_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed_retention_times_fdr_filtered</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted_retention_times_fdr_filtered</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted_retention_times_all</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve_fitting_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowess'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L111-L171"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_aligned_predicted_retention_times" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_aligned_predicted_retention_times</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed_retention_times_fdr_filtered</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted_retention_times_fdr_filtered</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predicted_retention_times_all</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve_fitting_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowess'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L97-L157"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_aligned_predicted_retention_times" title="Permalink to this definition"></a></dt>
 <dd><p>Apply regression to find a mapping from predicted iRT values to experimental retention times.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -574,7 +573,7 @@ PREDICTED_RETENTION_TIME: predicted retention time by Prosit</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.get_delta_score">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_delta_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_feature</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L185-L207"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_delta_score" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_delta_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_feature</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L159-L181"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_delta_score" title="Permalink to this definition"></a></dt>
 <dd><p>Calculates delta scores by sorting (from high to low) and grouping PSMs by scan number.</p>
 <p>Inside each group the delta scores are calculated per PSM to the next best of that group.
 The lowest scoring PSM of each group receives a delta score of 0.
@@ -597,7 +596,7 @@ The lowest scoring PSM of each group receives a delta score of 0.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.get_indices_below_fdr">
-<span class="sig-name descname"><span class="pre">get_indices_below_fdr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdr_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L336-L367"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_indices_below_fdr" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_indices_below_fdr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdr_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L310-L341"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_indices_below_fdr" title="Permalink to this definition"></a></dt>
 <dd><p>Get indices below FDR.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -616,25 +615,8 @@ The lowest scoring PSM of each group receives a delta score of 0.
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.get_scannr">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_scannr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_subset</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L173-L183"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_scannr" title="Permalink to this definition"></a></dt>
-<dd><p>Creates a hash of the raw_file and scan number to use as a unique scan number in percolator.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>metadata_subset</strong> (<em>Series</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>) – tuple of (raw_file, scan_number)</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>hashed unique id</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.get_specid">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_specid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_subset</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L209-L218"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_specid" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_specid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata_subset</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L183-L192"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_specid" title="Permalink to this definition"></a></dt>
 <dd><p>Create a unique identifier used as spectrum id in percolator, this is not parsed by percolator but functions         as a key to map percolator results back to our internal representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -651,7 +633,7 @@ The lowest scoring PSM of each group receives a delta score of 0.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.get_target_decoy_label">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_target_decoy_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reverse</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L262-L270"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_target_decoy_label" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_target_decoy_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reverse</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L236-L244"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.get_target_decoy_label" title="Permalink to this definition"></a></dt>
 <dd><p>Get target or decoy label.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -675,7 +657,7 @@ The lowest scoring PSM of each group receives a delta score of 0.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.Percolator.sample_balanced_over_bins">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sample_balanced_over_bins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">retention_time_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L83-L109"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.sample_balanced_over_bins" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sample_balanced_over_bins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">retention_time_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L69-L95"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.Percolator.sample_balanced_over_bins" title="Permalink to this definition"></a></dt>
 <dd><p>Sample balanced over bins.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -702,7 +684,7 @@ The lowest scoring PSM of each group receives a delta score of 0.
 
 <dl class="py class">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.TargetDecoyLabel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">TargetDecoyLabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L23-L27"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">TargetDecoyLabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L20-L24"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.TargetDecoyLabel" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IntEnum</span></code></p>
 <p>Target and decoy labels as used by Percolator.</p>
 <dl class="py attribute">
@@ -719,7 +701,7 @@ The lowest scoring PSM of each group receives a delta score of 0.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.get_fitting_func">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">get_fitting_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curve_fitting_method</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L478-L494"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.get_fitting_func" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">get_fitting_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">curve_fitting_method</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L452-L468"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.get_fitting_func" title="Permalink to this definition"></a></dt>
 <dd><p>Retrieve the correct function given a curve fitting method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -737,7 +719,7 @@ are the corresponding measures for which the fit should be done.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.logistic">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">logistic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L506-L509"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.logistic" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">logistic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L480-L483"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.logistic" title="Permalink to this definition"></a></dt>
 <dd><p>Calculates logistic regression function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -754,7 +736,7 @@ are the corresponding measures for which the fit should be done.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.metrics.percolator.spline">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">spline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">knots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L497-L503"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.spline" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.metrics.percolator.</span></span><span class="sig-name descname"><span class="pre">spline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">knots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/metrics/percolator.py#L471-L477"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.metrics.percolator.spline" title="Permalink to this definition"></a></dt>
 <dd><p>Calculates spline fitting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

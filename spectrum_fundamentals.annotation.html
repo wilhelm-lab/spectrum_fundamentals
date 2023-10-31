@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>spectrum_fundamentals.annotation package &mdash; spectrum_fundamentals 0.4.2 documentation</title>
+  <title>spectrum_fundamentals.annotation package &mdash; spectrum_fundamentals 0.4.3 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom_cookietemple.css" type="text/css" />
@@ -12,11 +12,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=79807b79"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -36,7 +36,7 @@
             spectrum_fundamentals
           </a>
               <div class="version">
-                0.4.2
+                0.4.3
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -123,7 +123,7 @@
 <span id="spectrum-fundamentals-annotation-annotation-module"></span><h2>spectrum_fundamentals.annotation.annotation module<a class="headerlink" href="#module-spectrum_fundamentals.annotation.annotation" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.annotation.annotation.annotate_spectra">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.annotation.annotation.</span></span><span class="sig-name descname"><span class="pre">annotate_spectra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">un_annot_spectra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/annotation/annotation.py#L121-L154"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.annotation.annotation.annotate_spectra" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.annotation.annotation.</span></span><span class="sig-name descname"><span class="pre">annotate_spectra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">un_annot_spectra</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/annotation/annotation.py#L121-L153"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.annotation.annotation.annotate_spectra" title="Permalink to this definition"></a></dt>
 <dd><p>Annotate a set of spectra.</p>
 <p>This function takes a DataFrame of raw peaks and metadata, and for each spectrum, it calls the <cite>parallel_annotate</cite> function
 to annotate the spectrum and extract the necessary information. If there are any redundant peaks found in the annotation
@@ -153,7 +153,7 @@ spectra with meta data.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.annotation.annotation.generate_annotation_matrix">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.annotation.annotation.</span></span><span class="sig-name descname"><span class="pre">generate_annotation_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matched_peaks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unmod_seq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/annotation/annotation.py#L157-L209"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.annotation.annotation.generate_annotation_matrix" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.annotation.annotation.</span></span><span class="sig-name descname"><span class="pre">generate_annotation_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">matched_peaks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unmod_seq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/annotation/annotation.py#L156-L208"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.annotation.annotation.generate_annotation_matrix" title="Permalink to this definition"></a></dt>
 <dd><p>Generate the annotation matrix in the prosit format from matched peaks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -229,7 +229,7 @@ number of duplicate matches that were removed.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.annotation.annotation.parallel_annotate">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.annotation.annotation.</span></span><span class="sig-name descname"><span class="pre">parallel_annotate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/annotation/annotation.py#L212-L263"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.annotation.annotation.parallel_annotate" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.annotation.annotation.</span></span><span class="sig-name descname"><span class="pre">parallel_annotate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/annotation/annotation.py#L211-L262"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.annotation.annotation.parallel_annotate" title="Permalink to this definition"></a></dt>
 <dd><p>Perform parallel annotation of a spectrum.</p>
 <p>This function takes a spectrum and its index columns and performs parallel annotation of the spectrum. It starts by
 initializing the peaks and extracting necessary data from the spectrum. It then matches the peaks to the spectrum and
