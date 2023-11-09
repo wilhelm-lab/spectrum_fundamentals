@@ -82,8 +82,8 @@ def msfragger_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, s
     """
     if fixed_mods is None:
         fixed_mods = {"C": "C[UNIMOD:4]"}
-    err_msg = f"Provided illegal fixed mod, supported modifications are {set(MAXQUANT_VAR_MODS.values())}."
-    assert all(x in MAXQUANT_VAR_MODS.values() for x in fixed_mods.values()), err_msg
+    err_msg = f"Provided illegal fixed mod, supported modifications are {set(MSFRAGGER_VAR_MODS.values())}."
+    assert all(x in MSFRAGGER_VAR_MODS.values() for x in fixed_mods.values()), err_msg
 
     replacements = {**MSFRAGGER_VAR_MODS, **fixed_mods}
 
