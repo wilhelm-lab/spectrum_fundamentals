@@ -31,7 +31,6 @@ class TestSageToInternal(unittest.TestCase):
 
     def test_sage_to_internal_tmt(self):
         """Test maxquant_to_internal_tmt."""
-        # fixed_mods = {"C": "C[UNIMOD:4]", "^_": "_[UNIMOD:737]-", "K": "K[UNIMOD:737]"}
         self.assertEqual(
             mod.sage_to_internal(["[+229.1629]-ABC[+57.0214]DEFGHK[+229.1629]"]),
             ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"],
