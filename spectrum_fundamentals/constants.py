@@ -153,17 +153,19 @@ MOD_MASSES = {
     "[UNIMOD:35]": 15.9949146,  # Oxidation
     "[UNIMOD:1]": 42.010565,  # Acetylation
 }
-MOD_MASSES_SAGE = {229.1629: '[UNIMOD:737]', 
-                       304.2071: '[UNIMOD:2016]', 
-                       144.1020: '[UNIMOD:214]', 
-                       304.2053: '[UNIMOD:730]', 
-                       8.0141: '[UNIMOD:259]', 
-                       10.0082: '[UNIMOD:267]', 
-                       79.9663: '[UNIMOD:21]', 
-                       -18.0105: '[UNIMOD:23]', 
-                       57.0214: '[UNIMOD:4]', 
-                       15.9949: '[UNIMOD:35]', 
-                       42.0105: '[UNIMOD:1]'}
+MOD_MASSES_SAGE = {
+    229.1629: "[UNIMOD:737]",
+    304.2071: "[UNIMOD:2016]",
+    144.1020: "[UNIMOD:214]",
+    304.2053: "[UNIMOD:730]",
+    8.0141: "[UNIMOD:259]",
+    10.0082: "[UNIMOD:267]",
+    79.9663: "[UNIMOD:21]",
+    -18.0105: "[UNIMOD:23]",
+    57.0214: "[UNIMOD:4]",
+    15.9949: "[UNIMOD:35]",
+    42.0105: "[UNIMOD:1]",
+}
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
 AA_MOD_MASSES = {
     "K[UNIMOD:737]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:737]"],
@@ -286,6 +288,3 @@ class RescoreType(Enum):
 
     PROSIT = "prosit"
     ANDROMEDA = "andromeda"
-
-
-
