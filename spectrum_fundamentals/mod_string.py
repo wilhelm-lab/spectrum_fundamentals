@@ -19,17 +19,24 @@ def sage_to_internal(sequences: List[str]) -> List[str]:
     :return: A list of modified sequences with values converted to internal format.
     """
     # Define a regular expression pattern to match values within square brackets, like [+1.0] or [-2.0].
-    pattern = r"\[([\+\-]\d+\.\d+)\]"
+    pattern = r"[A-Z]?\[([\+\-]\d+\.\d+)\]-?"
 
     # Define a function 'replace' that takes a regex match object.
     def replace(match):
         # Extract the value inside the square brackets as a float.
         value = float(match.group(1))
+        key = match.string[match.start() : match.end()]
+        if key.endswith("-"):
+            unimod_expression = f"{MOD_MASSES_SAGE.get(value, match.group(0))}-"
+        elif key.startswith("C"):
+            unimod_expression = f"C{MOD_MASSES_SAGE.get(value, match.group(0))}"
+        elif key.startswith("K"):
+            unimod_expression = f"K{MOD_MASSES_SAGE.get(value, match.group(0))}"
+        elif key.startswith("M"):
+            unimod_expression = f"M{MOD_MASSES_SAGE.get(value, match.group(0))}"
 
         # Check if the 'MOD_MASSES_SAGE' dictionary has a replacement value for the extracted value.
         # If it does, use the replacement value; otherwise, use the original value from the match.
-        unimod_expression = MOD_MASSES_SAGE.get(value, match.group(0))
-
         return unimod_expression
 
     # Create an empty list 'modified_strings' to store the modified sequences.
