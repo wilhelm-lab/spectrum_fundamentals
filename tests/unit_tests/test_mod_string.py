@@ -71,6 +71,25 @@ class TestMaxQuantToInternal(unittest.TestCase):
         )
 
 
+class TestMSFraggerToInternal(unittest.TestCase):
+    """Class to test MSFragger to internal."""
+
+    def test_msfragger_to_internal_carbamidomethylation(self):
+        """Test msfragger_to_internal_carbamidomethylation."""
+        self.assertEqual(mod.msfragger_to_internal(["ABCDEFGH"]), ["ABC[UNIMOD:4]DEFGH"])
+
+    def test_msfragger_to_internal_variable_oxidation(self):
+        """Test msfragger_to_internal_variable_oxidation."""
+        self.assertEqual(mod.msfragger_to_internal(["ABCDM[147]EFGH"]), ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"])
+
+    def test_msfragger_to_internal_tmt(self):
+        """Test msfragger_to_internal_tmt."""
+        fixed_mods = {"C": "C[UNIMOD:4]", r"n[\d+]": "[UNIMOD:737]-", "K": "K[UNIMOD:737]"}
+        self.assertEqual(
+            mod.msfragger_to_internal(["n[230]ABCDEFGHK"], fixed_mods), ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]
+        )
+
+
 class TestInternalToSpectronaut(unittest.TestCase):
     """Class to test Internal to Spectronaut."""
 
@@ -98,13 +117,13 @@ class TestInternalTransformations(unittest.TestCase):
 
     def test_internal_without_mods(self):
         """Test internal with mods to internal without_mods."""
-        self.assertEqual(mod.internal_without_mods(["[UNIMOD:737]ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]), ["ABCDEFGHK"])
+        self.assertEqual(mod.internal_without_mods(["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]), ["ABCDEFGHK"])
 
     def test_internal_to_mod_masses(self):
         """Test internal with mods to internal without_mods."""
         self.assertEqual(
-            mod.internal_to_mod_mass(["[UNIMOD:737]ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]),
-            ["[+229.162932]ABC[+57.02146]DEFGHK[+229.162932]"],
+            mod.internal_to_mod_mass(["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]),
+            ["[+229.162932]-ABC[+57.02146]DEFGHK[+229.162932]"],
         )
 
     def test_proteomicsdb_to_internal(self):
