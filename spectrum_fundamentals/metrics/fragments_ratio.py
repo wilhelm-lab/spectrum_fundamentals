@@ -50,7 +50,7 @@ class FragmentsRatio(Metric):
 
         config = Config()
         config.read(CONFIG_PATH)
-        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx"]):
+        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
             if len(ion_mask) == 0:
                 
                 ion_mask = scipy.sparse.csr_matrix(np.ones((348, 1)))
@@ -147,7 +147,7 @@ class FragmentsRatio(Metric):
         """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
         config = Config()
         config.read(CONFIG_PATH)
-        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx"]):
+        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
             true_intensities_a = self.true_intensities[:,0:348]
             true_intensities_b = self.true_intensities[:,348:]
             pred_intensities_a = self.pred_intensities[:,0:348]

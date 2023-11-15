@@ -291,7 +291,7 @@ class Percolator(Metric):
 
     def add_common_features(self):
         """Add features used by both Andromeda and Prosit feature scoring sets."""
-        if any(self.config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx"]):
+        if any(self.config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
             self.metrics_val["missedCleavages_A"] = self.metadata["SEQUENCE_A"].apply(Percolator.count_missed_cleavages)
             self.metrics_val["missedCleavages_B"] = self.metadata["SEQUENCE_B"].apply(Percolator.count_missed_cleavages)
             self.metrics_val["KR_A"] = self.metadata["SEQUENCE_A"].apply(Percolator.count_arginines_and_lysines)
@@ -319,12 +319,15 @@ class Percolator(Metric):
 
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
-        if any(self.config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx"]):
+        if any(self.config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE_A","MODIFIED_SEQUENCE_B", "PRECURSOR_CHARGE"]
             self.metrics_val["Peptide"] = (self.metadata["MODIFIED_SEQUENCE_A"]+ "_" + 
             self.metadata["MODIFIED_SEQUENCE_B"]).apply(lambda x: "_." + x + "._")
             self.metrics_val[self.prot_col_name] = (self.metadata["MODIFIED_SEQUENCE_A"]+ "_" + 
             self.metadata["MODIFIED_SEQUENCE_B"])
+            #self.metrics_val["label_pep_a"] = self.metadata["label_pep_a"]
+            #self.metrics_val["label_pep_b"] = self.metadata["label_pep_b"]
+            self.metrics_val["Label"] = self.target_decoy_labels
         else:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
             self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
@@ -380,9 +383,8 @@ class Percolator(Metric):
         # scores_df['Sequence'] = self.metadata['SEQUENCE']
         scores_df = scores_df.sort_values(feature_name, ascending=False)
         logger.debug(scores_df.head(100))
-
+        
         scores_df["fdr"] = Percolator.calculate_fdrs(scores_df["Label"])
-
         # filter for targets only
         scores_df = scores_df[scores_df["Label"] == TargetDecoyLabel.TARGET]
 
@@ -413,6 +415,22 @@ class Percolator(Metric):
         cumulative_decoy_count = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
         cumulative_target_count = np.cumsum(sorted_labels == TargetDecoyLabel.TARGET) + 1
         return Percolator.fdrs_to_qvals(cumulative_decoy_count / cumulative_target_count)
+    
+    #def calculate_fdrs_xl(sorted_labels: Union[pd.Series, np.ndarray]) -> np.ndarray:
+        """
+        Calculate FDR.
+
+        :param sorted_labels: array with labels sorted (target, decoy)
+        :return: array with calculated FDRs
+        """
+        #if isinstance(sorted_labels, pd.Series):
+            #sorted_labels = sorted_labels.to_numpy()
+        #cumulative_decoy_count_1 = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
+        #cumulative_decoy_count_2 = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
+        #cumulative_target_count = np.cumsum(sorted_labels == TargetDecoyLabel.TARGET) + 1
+        #return Percolator.fdrs_to_qvals(cumulative_decoy_count_1 - cumulative_decoy_count_2) / (cumulative_target_count)
+
+
 
     @staticmethod
     def fdrs_to_qvals(fdrs: np.ndarray) -> np.ndarray:
@@ -465,7 +483,7 @@ class Percolator(Metric):
                 if current_fdr >= 0.1:
                     lda_failed = True
                     break
-            if any(self.config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx"]):
+            if any(self.config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:
                 if lda_failed:

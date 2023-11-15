@@ -61,7 +61,7 @@ class SimilarityMetrics(Metric):
         """
         config = Config()
         config.read(CONFIG_PATH)
-        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx"]):
+        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx", "xisearch"]):
             if charge != 0:
                 if charge == 1:
                     boolean_array = constants.SINGLE_CHARGED_MASK_XL
@@ -435,7 +435,7 @@ class SimilarityMetrics(Metric):
         """
         config = Config()
         config.read(CONFIG_PATH)
-        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx"]):
+        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
             true_intensities_a = self.true_intensities[:,0:348]
             true_intensities_b = self.true_intensities[:,348:]
             pred_intensities_a = self.pred_intensities[:,0:348]
