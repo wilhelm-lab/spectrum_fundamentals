@@ -49,7 +49,6 @@ ALPHABET_MODS = {
     "C[UNIMOD:4]": 2,
     "K[UNIMOD:737]": 22,
     "K[UNIMOD:2016]": 22,
-    "K[UNIMOD:2016]": 22,
     "K[UNIMOD:214]": 22,
     "K[UNIMOD:730]": 22,
     "S[UNIMOD:21]": 25,
@@ -73,16 +72,16 @@ MAXQUANT_VAR_MODS = {
     "(ox)": "[UNIMOD:35]",
     "(Oxidation (M))": "[UNIMOD:35]",
     "(tm)": "[UNIMOD:737]",
-    "_(tm)": "_[UNIMOD:737]",
+    "_(tm)": "_[UNIMOD:737]-",
     "K(tm)": "K[UNIMOD:737]",
     "(i4)": "[UNIMOD:214]",
-    "_(i4)": "_[UNIMOD:214]",
+    "_(i4)": "_[UNIMOD:214]-",
     "K(i4)": "K[UNIMOD:214]",
     "(i8)": "[UNIMOD:730]",
-    "_(i8)": "_[UNIMOD:730]",
+    "_(i8)": "_[UNIMOD:730]-",
     "K(i8)": "K[UNIMOD:730]",
     "(tmp)": "[UNIMOD:2016]",
-    "_(tmp)": "_[UNIMOD:2016]",
+    "_(tmp)": "_[UNIMOD:2016]-",
     "K(tmp)": "K[UNIMOD:2016]",
     "(ph)": "[UNIMOD:21]",
     "(Phospho (STY))": "[UNIMOD:21]",
@@ -94,6 +93,21 @@ MAXQUANT_VAR_MODS = {
 }
 
 MAXQUANT_NC_TERM = {"^_": "", "_$": ""}
+
+#######################
+# MsFragger constants #
+#######################
+
+MSFRAGGER_VAR_MODS = {
+    "C[160]": "C[UNIMOD:4]",
+    "M[147]": "M[UNIMOD:35]",
+    "K[230]": "K[UNIMOD:737]",
+    "K[305]": "K[UNIMOD:2016]",
+    "K[214]": "K[UNIMOD:214]",
+    "n[230]": "[UNIMOD:737]-",
+    "n[305]": "[UNIMOD:2016]-",
+    "n[214]": "[UNIMOD:214]-",
+}
 
 ####################
 # MASS CALCULATION #
@@ -195,7 +209,19 @@ MOD_MASSES = {
             
     #
 }
-
+MOD_MASSES_SAGE = {
+    229.1629: "[UNIMOD:737]",
+    304.2071: "[UNIMOD:2016]",
+    144.1020: "[UNIMOD:214]",
+    304.2053: "[UNIMOD:730]",
+    8.0141: "[UNIMOD:259]",
+    10.0082: "[UNIMOD:267]",
+    79.9663: "[UNIMOD:21]",
+    -18.0105: "[UNIMOD:23]",
+    57.0214: "[UNIMOD:4]",
+    15.9949: "[UNIMOD:35]",
+    42.0105: "[UNIMOD:1]",
+}
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
 AA_MOD_MASSES = {
     "K[UNIMOD:737]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:737]"],
@@ -251,7 +277,15 @@ META_DATA_ONLY_COLUMNS = [
     "REVERSE",
 ]
 META_DATA_COLUMNS = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
-MZML_ONLY_DATA_COLUMNS = ["INTENSITIES", "MZ", "MZ_RANGE", "RETENTION_TIME", "MASS_ANALYZER", "FRAGMENTATION"]
+MZML_ONLY_DATA_COLUMNS = [
+    "INTENSITIES",
+    "MZ",
+    "MZ_RANGE",
+    "RETENTION_TIME",
+    "MASS_ANALYZER",
+    "FRAGMENTATION",
+    "COLLISION_ENERGY",
+]
 MZML_DATA_COLUMNS = SHARED_DATA_COLUMNS + MZML_ONLY_DATA_COLUMNS
 
 TMT_MODS = {
