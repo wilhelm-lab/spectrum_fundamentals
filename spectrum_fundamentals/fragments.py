@@ -1,69 +1,48 @@
 import logging
+import re
 from operator import itemgetter
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 from . import constants as constants
+from .mod_string import internal_without_mods
 
 logger = logging.getLogger(__name__)
 
 
-def _get_modifications(peptide_sequence: str) -> Optional[Tuple[Dict[int, float], int, str]]:
+def _get_modifications(peptide_sequence: str) -> Dict[int, float]:
     """
     Get modification masses and position in a peptide sequence.
 
+    This function expects a peptide sequence in unimod format, parses the modifications and stores
+    the mass deltas for each position off aa in a dictionary where keys are the position in the
+    unmodified sequence and values are the masses of the modifications attached to the aa at that
+    position. In case of an n-terminal modification, it is stored at position -2 (technical reasons)
+    The mass deltas along with the unmodified sequence and information about whether an n-terminal
+    modification was present are returned.
+
     :param peptide_sequence: Modified peptide sequence
-    :return: tuple with - dictionary of modification_position => mod_mass
-                        - 2 if there is an isobaric tag on the n-terminal, else 1
-                        - sequence without modifications
+    :return: modification_deltas
     """
     modification_deltas = {}
-    tmt_n_term = 1
-    modifications = constants.MOD_MASSES.keys()
-    modification_mass = constants.MOD_MASSES
-    # Handle terminal modifications here
-    for possible_tmt_mod in constants.TMT_MODS.values():
-        n_term_tmt = possible_tmt_mod + "-"
-        if peptide_sequence.startswith(n_term_tmt):
-            tmt_n_term = 2
-            modification_deltas.update({0: constants.MOD_MASSES[possible_tmt_mod]})
-            peptide_sequence = peptide_sequence[len(n_term_tmt) :]
-            break
+    offset = 1  # shift position of mod start in seq by one to the left to reflect position of aa
+    if peptide_sequence.startswith("["):  # n-term mod => seq must be [UNIMOD:xyz]-X...
+        offset = 2  # need to add one more offset, because of the dash '-', n_terminal stored at -1
 
-    if "(" in peptide_sequence:
-        logger.info(
-            "Error Modification "
-            + peptide_sequence[peptide_sequence.find("(") + 1 : peptide_sequence.find(")")]
-            + " not "
-            "found"
-        )
-        return None
+    # fastest regex for modification mathing without lookback, since we know it must be unimod syntax
+    # .{8} skips 8 positions entirely without checking greedily, that is len("UNIMOD:") + at least one digit
+    # [^\]*] matches anything but ] greedily till it finds the closing bracket, which is 1 step
+    pattern = re.compile(r"\[.{8}[^\]]*\]")
+    matches = pattern.finditer(peptide_sequence)
 
-    while "[" in peptide_sequence:
-        found_modification = False
-        modification_index = peptide_sequence.index("[")
-        for mod in modifications:
-            if peptide_sequence[modification_index : modification_index + len(mod)] == mod:
-                if modification_index - 1 in modification_deltas:
-                    modification_deltas.update(
-                        {modification_index - 1: modification_deltas[modification_index - 1] + modification_mass[mod]}
-                    )
-                else:
-                    modification_deltas.update({modification_index - 1: modification_mass[mod]})
-                peptide_sequence = (
-                    peptide_sequence[0:modification_index] + peptide_sequence[modification_index + len(mod) :]
-                )
-                found_modification = True
-        if not found_modification:
-            logger.info(
-                "Error Modification "
-                + peptide_sequence[modification_index : peptide_sequence.find("]") + 1]
-                + " not found"
-            )
-            return None
+    for match in matches:
+        start_pos = match.start()
+        end_pos = match.end()
+        modification_deltas[start_pos - offset] = constants.MOD_MASSES[peptide_sequence[start_pos:end_pos]]
+        offset += end_pos - start_pos
 
-    return modification_deltas, tmt_n_term, peptide_sequence
+    return modification_deltas
 
 
 def compute_peptide_mass(sequence: str) -> float:
@@ -71,40 +50,18 @@ def compute_peptide_mass(sequence: str) -> float:
     Compute the theoretical mass of the peptide sequence.
 
     :param sequence: Modified peptide sequence
-    :raises AssertionError: if an unknown modification has been found in the peptide sequence
     :return: Theoretical mass of the sequence
     """
-    peptide_sequence = sequence
-    modifications = _get_modifications(peptide_sequence)
-    if modifications is None:
-        raise AssertionError("Modification not found.")
-    else:
-        modification_deltas, tmt_n_term, peptide_sequence = modifications
+    terminal_masses = 2 * constants.ATOM_MASSES["H"] + constants.ATOM_MASSES["O"]  # add terminal masses HO- and H-
 
-    peptide_length = len(peptide_sequence)
-    if peptide_length > 30:
-        # return [], -1, ""
-        return -1.0
+    modification_deltas = _get_modifications(sequence)
+    if modification_deltas:  # there were modifictions
+        sequence = internal_without_mods([sequence])[0]
+        terminal_masses += modification_deltas.get(-2, 0.0)  # prime with n_term_mod delta if present
 
-    n_term_delta = 0.0
+    peptide_sum = sum([constants.AA_MASSES[c] + modification_deltas.get(i, 0.0) for i, c in enumerate(sequence)])
 
-    # get mass delta for the c-terminus
-    c_term_delta = 0.0
-
-    n_term = constants.ATOM_MASSES["H"] + n_term_delta  # n-terminal delta [N]
-    c_term = constants.ATOM_MASSES["O"] + constants.ATOM_MASSES["H"] + c_term_delta  # c-terminal delta [C]
-    h = constants.ATOM_MASSES["H"]
-
-    ion_type_offsets = [n_term - h, c_term + h]
-
-    # calculation:
-    forward_sum = 0.0  # sum over all amino acids from left to right (neutral charge)
-
-    for i in range(0, peptide_length):  # generate substrings
-        forward_sum += constants.AA_MASSES[peptide_sequence[i]]  # sum left to right
-        if i in modification_deltas:  # add mass of modification if present
-            forward_sum += modification_deltas[i]
-    return forward_sum + ion_type_offsets[0] + ion_type_offsets[1]
+    return terminal_masses + peptide_sum
 
 
 def initialize_peaks(
@@ -122,26 +79,9 @@ def initialize_peaks(
     :param charge: Precursor charge
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
-    :raises AssertionError:  if peptide sequence contained an unknown modification. TODO do this within the get_mod func.
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
-    peptide_sequence = sequence
-    # peptide_sequence = peptide_sequence.replace('-','')
-    modifications = _get_modifications(peptide_sequence)
-    if modifications is None:
-        raise AssertionError("Modification not found.")
-    else:
-        modification_deltas, tmt_n_term, peptide_sequence = modifications
-
-    peptide_length = len(peptide_sequence)
-    if peptide_length > 30:
-        return [{}], -1, "", 0.0
-
-    # initialize constants
-    if int(round(charge)) <= 3:
-        max_charge = int(round(charge))
-    else:
-        max_charge = 3
+    max_charge = min(3, charge)
 
     n_term_delta = 0.0
 
@@ -164,14 +104,27 @@ def initialize_peaks(
 
     number_of_ion_types = len(ion_type_offsets)
     fragments_meta_data = []
-    # calculation:
+
+    modification_deltas = _get_modifications(sequence)
     forward_sum = 0.0  # sum over all amino acids from left to right (neutral charge)
     backward_sum = 0.0  # sum over all amino acids from right to left (neutral charge)
-    for i in range(0, peptide_length):  # generate substrings
-        forward_sum += constants.AA_MASSES[peptide_sequence[i]]  # sum left to right
+    n_term_mod = 1
+    if modification_deltas:  # there were modifictions
+        sequence = internal_without_mods([sequence])[0]
+        n_term_delta = modification_deltas.get(-2, 0.0)
+        if n_term_delta != 0:
+            n_term_mod = 2
+            # add n_term mass to first aa for easy processing in the following calculation
+            modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
+
+    # calculation:
+
+    peptide_length = len(sequence)
+    for i in range(peptide_length):  # generate substrings
+        forward_sum += constants.AA_MASSES[sequence[i]]  # sum left to right
         if i in modification_deltas:  # add mass of modification if present
             forward_sum += modification_deltas[i]
-        backward_sum += constants.AA_MASSES[peptide_sequence[peptide_length - i - 1]]  # sum right to left
+        backward_sum += constants.AA_MASSES[sequence[peptide_length - i - 1]]  # sum right to left
         if peptide_length - i - 1 in modification_deltas:  # add mass of modification if present
             backward_sum += modification_deltas[peptide_length - i - 1]
 
@@ -182,7 +135,7 @@ def initialize_peaks(
         for charge in range(constants.MIN_CHARGE, max_charge + 1):  # generate ion in different charge states
             # positive charge is introduced by protons (or H - ELECTRON_MASS)
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
-            for ion_type in range(0, number_of_ion_types):  # generate all ion types
+            for ion_type in range(number_of_ion_types):  # generate all ion types
                 # Check for neutral loss here
                 mass = (ion_type_masses[ion_type] + charge_delta) / charge
                 min_mass, max_mass = get_min_max_mass(mass_analyzer, mass, mass_tolerance, unit_mass_tolerance)
@@ -197,7 +150,7 @@ def initialize_peaks(
                     }
                 )
     fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
-    return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
+    return fragments_meta_data, n_term_mod, sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
 
 
 def get_min_max_mass(
