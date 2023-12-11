@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def match_peaks(
-    fragments_meta_data: pd.DataFrame,
+    fragments_meta_data: List[dict],
     peaks_intensity: np.ndarray,
     peaks_masses: np.ndarray,
     tmt_n_term: int,
@@ -37,7 +37,8 @@ def match_peaks(
     next_start_peak = 0
     seq_len = len(unmod_sequence)
     matched_peak = False
-    for _, fragment in fragments_meta_data.iterrows():
+    fragment_no: float
+    for fragment in fragments_meta_data:
         min_mass = fragment["min_mass"]
         max_mass = fragment["max_mass"]
         fragment_no = fragment["no"]
@@ -117,7 +118,9 @@ def handle_multiple_matches(
     return matched_peaks_df, (original_length - length_after_matches)
 
 
-def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
+def annotate_spectra(
+    un_annot_spectra: pd.DataFrame, mass_tolerance: Optional[float] = None, unit_mass_tolerance: Optional[str] = None
+) -> pd.DataFrame:
     """
     Annotate a set of spectra.
 
@@ -133,29 +136,35 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
     - removed_peaks: a NumPy array containing the indices of any peaks that were removed during the annotation process
 
     :param un_annot_spectra: a Pandas DataFrame containing the raw peaks and metadata to be annotated
+    :param mass_tolerance: mass tolerance to calculate min and max mass
+    :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-        results = parallel_annotate(row, index_columns)
+        results = parallel_annotate(row, index_columns, mass_tolerance, unit_mass_tolerance)
         if not results:
             continue
         raw_file_annotations.append(results)
     results_df = pd.DataFrame(raw_file_annotations)
+
     if results_df.shape[1] < 8:
         results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
-        logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
 
     else:
-        results_df.columns = ["INTENSITIES_A", "INTENSITIES_B",
-                              "MZ_A", "MZ_B",
-                              "CALCULATED_MASS_A", "CALCULATED_MASS_B",
-                              "removed_peaks_a", "removed_peaks_b"]
-        logger.info(f"Removed {results_df['removed_peaks_a'].describe()} redundant peaks")
-        logger.info(f"Removed {results_df['removed_peaks_b'].describe()} redundant peaks")
-    #results_df.to_csv("/cmnfs/home/m.kalhor/wilhelmlab/notebooks/notebooks/results_df.csv")
+        results_df.columns = [
+            "INTENSITIES_A",
+            "INTENSITIES_B",
+            "MZ_A",
+            "MZ_B",
+            "CALCULATED_MASS_A",
+            "CALCULATED_MASS_B",
+            "removed_peaks_a",
+            "removed_peaks_b",
+        ]
     return results_df
+
 
 def peak_pos_xl_cms2(unmod_seq: str, crosslinker_position: int) -> list:
     """
@@ -321,7 +330,13 @@ def generate_annotation_matrix(
     return intensity, mass
 
 
-def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = False) -> Optional[Tuple[np.ndarray, np.ndarray, float, int]]:
+def parallel_annotate(
+    spectrum: np.ndarray,
+    index_columns: dict,
+    mass_tolerance: Optional[float] = None,
+    unit_mass_tolerance: Optional[str] = None,
+    xl: bool = False,
+) -> Optional[Tuple[np.ndarray, np.ndarray, float, int]]:
     """
     Perform parallel annotation of a spectrum.
 
@@ -333,6 +348,9 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
 
     :param spectrum: a np.ndarray that contains the spectrum to be annotated
     :param index_columns: a dictionary that contains the index columns of the spectrum
+    :param mass_tolerance: mass tolerance to calculate min and max mass
+    :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param xl: whether the function is called for crosslinking or linear peptide
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -341,20 +359,17 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
 
     if "CROSSLINKER_TYPE" in index_columns:
-        xl = True
-
-    if xl:
         fragments_meta_data_a, tmt_n_term_a, unmod_sequence_a, calc_mass_a = initialize_peaks_xl(
-        spectrum[index_columns["MODIFIED_SEQUENCE_A"]],
-        spectrum[index_columns["MASS_ANALYZER"]],
-        spectrum[index_columns["CROSSLINKER_POSITION_A"]],
-        spectrum[index_columns["CROSSLINKER_TYPE"]],
+            spectrum[index_columns["MODIFIED_SEQUENCE_A"]],
+            spectrum[index_columns["MASS_ANALYZER"]],
+            spectrum[index_columns["CROSSLINKER_POSITION_A"]],
+            spectrum[index_columns["CROSSLINKER_TYPE"]],
         )
         fragments_meta_data_b, tmt_n_term_b, unmod_sequence_b, calc_mass_b = initialize_peaks_xl(
-        spectrum[index_columns["MODIFIED_SEQUENCE_B"]],
-        spectrum[index_columns["MASS_ANALYZER"]],
-        spectrum[index_columns["CROSSLINKER_POSITION_B"]],
-        spectrum[index_columns["CROSSLINKER_TYPE"]],
+            spectrum[index_columns["MODIFIED_SEQUENCE_B"]],
+            spectrum[index_columns["MASS_ANALYZER"]],
+            spectrum[index_columns["CROSSLINKER_POSITION_B"]],
+            spectrum[index_columns["CROSSLINKER_TYPE"]],
         )
         if not unmod_sequence_a:
             return None
@@ -362,75 +377,83 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
             return None
 
         matched_peaks_a = match_peaks(
-        fragments_meta_data_a,
-        spectrum[index_columns["INTENSITIES"]],
-        spectrum[index_columns["MZ"]],
-        tmt_n_term_a,
-        unmod_sequence_a,
-        spectrum[index_columns["PRECURSOR_CHARGE"]],
-    )
-        
-        matched_peaks_b = match_peaks(
-        fragments_meta_data_b,
-        spectrum[index_columns["INTENSITIES"]],
-        spectrum[index_columns["MZ"]],
-        tmt_n_term_b,
-        unmod_sequence_b,
-        spectrum[index_columns["PRECURSOR_CHARGE"]],
-    )
+            fragments_meta_data_a,
+            spectrum[index_columns["INTENSITIES"]],
+            spectrum[index_columns["MZ"]],
+            tmt_n_term_a,
+            unmod_sequence_a,
+            spectrum[index_columns["PRECURSOR_CHARGE"]],
+        )
 
-        if len(matched_peaks_a) == 0 and len(matched_peaks_b)==0 :
+        matched_peaks_b = match_peaks(
+            fragments_meta_data_b,
+            spectrum[index_columns["INTENSITIES"]],
+            spectrum[index_columns["MZ"]],
+            tmt_n_term_b,
+            unmod_sequence_b,
+            spectrum[index_columns["PRECURSOR_CHARGE"]],
+        )
+
+        if len(matched_peaks_a) == 0 and len(matched_peaks_b) == 0:
             intensities_a = np.full(348, 0.0)
             mass_a = np.full(348, 0.0)
             intensities_b = np.full(348, 0.0)
             mass_b = np.full(348, 0.0)
             return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, 0, 0
-        elif len(matched_peaks_a) == 0 and len(matched_peaks_b)!=0 :
+        elif len(matched_peaks_a) == 0 and len(matched_peaks_b) != 0:
             intensities_a = np.full(348, 0.0)
             mass_a = np.full(348, 0.0)
             matched_peaks_b, removed_peaks_b = handle_multiple_matches(matched_peaks_b)
             intensities_b, mass_b = generate_annotation_matrix_xl(
-            matched_peaks_b, unmod_sequence_b, spectrum[index_columns["CROSSLINKER_POSITION_B"]]
-    )
+                matched_peaks_b, unmod_sequence_b, spectrum[index_columns["CROSSLINKER_POSITION_B"]]
+            )
             return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, 0, removed_peaks_b
-        elif len(matched_peaks_a) != 0 and len(matched_peaks_b)==0 :
+        elif len(matched_peaks_a) != 0 and len(matched_peaks_b) == 0:
             intensities_b = np.full(348, 0.0)
             mass_b = np.full(348, 0.0)
             matched_peaks_a, removed_peaks_a = handle_multiple_matches(matched_peaks_a)
             intensities_a, mass_a = generate_annotation_matrix_xl(
-            matched_peaks_a, unmod_sequence_a, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
-    )
+                matched_peaks_a, unmod_sequence_a, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
+            )
             return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, removed_peaks_a, 0
         else:
             matched_peaks_a, removed_peaks_a = handle_multiple_matches(matched_peaks_a)
             matched_peaks_b, removed_peaks_b = handle_multiple_matches(matched_peaks_b)
             intensities_a, mass_a = generate_annotation_matrix_xl(
-            matched_peaks_a, unmod_sequence_a, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
-        )
+                matched_peaks_a, unmod_sequence_a, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
+            )
             intensities_b, mass_b = generate_annotation_matrix_xl(
-            matched_peaks_b, unmod_sequence_b, spectrum[index_columns["CROSSLINKER_POSITION_B"]]
-        )
-            return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, removed_peaks_a, removed_peaks_b
-
+                matched_peaks_b, unmod_sequence_b, spectrum[index_columns["CROSSLINKER_POSITION_B"]]
+            )
+            return (
+                intensities_a,
+                intensities_b,
+                mass_a,
+                mass_b,
+                calc_mass_a,
+                calc_mass_b,
+                removed_peaks_a,
+                removed_peaks_b,
+            )
 
     else:
         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(
-        spectrum[index_columns[mod_seq_column]],
-        spectrum[index_columns["MASS_ANALYZER"]],
-        spectrum[index_columns["PRECURSOR_CHARGE"]],
+            spectrum[index_columns[mod_seq_column]],
+            spectrum[index_columns["MASS_ANALYZER"]],
+            spectrum[index_columns["PRECURSOR_CHARGE"]],
+            mass_tolerance,
+            unit_mass_tolerance,
         )
-
         if not unmod_sequence:
             return None
-
         matched_peaks = match_peaks(
-        fragments_meta_data,
-        spectrum[index_columns["INTENSITIES"]],
-        spectrum[index_columns["MZ"]],
-        tmt_n_term,
-        unmod_sequence,
-        spectrum[index_columns["PRECURSOR_CHARGE"]],
-    )
+            fragments_meta_data,
+            spectrum[index_columns["INTENSITIES"]],
+            spectrum[index_columns["MZ"]],
+            tmt_n_term,
+            unmod_sequence,
+            spectrum[index_columns["PRECURSOR_CHARGE"]],
+        )
 
         if len(matched_peaks) == 0:
             intensity = np.full(174, 0.0)
@@ -439,16 +462,6 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict,  xl:bool = Fals
 
         matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
         intensities, mass = generate_annotation_matrix(
-        matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]
-    )
+            matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]
+        )
         return intensities, mass, calc_mass, removed_peaks
-    
-
-
-
-
-
-
-
-
-

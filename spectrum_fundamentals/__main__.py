@@ -5,7 +5,7 @@ from rich import traceback
 
 
 @click.command()
-@click.version_option(version="0.3.2", message=click.style("spectrum_fundamentals Version: 0.3.2"))
+@click.version_option(version="0.4.4", message=click.style("spectrum_fundamentals Version: 0.4.4"))
 def main() -> None:
     """spectrum_fundamentals."""
 

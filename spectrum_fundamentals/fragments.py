@@ -1,4 +1,5 @@
 import logging
+from operator import itemgetter
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -24,10 +25,11 @@ def _get_modifications(peptide_sequence: str) -> Optional[Tuple[Dict[int, float]
     modification_mass = constants.MOD_MASSES
     # Handle terminal modifications here
     for possible_tmt_mod in constants.TMT_MODS.values():
-        if peptide_sequence.startswith(possible_tmt_mod):  # TMT_6
+        n_term_tmt = possible_tmt_mod + "-"
+        if peptide_sequence.startswith(n_term_tmt):
             tmt_n_term = 2
             modification_deltas.update({0: constants.MOD_MASSES[possible_tmt_mod]})
-            peptide_sequence = peptide_sequence[len(possible_tmt_mod) :]
+            peptide_sequence = peptide_sequence[len(n_term_tmt) :]
             break
 
     if "(" in peptide_sequence:
@@ -106,13 +108,21 @@ def compute_peptide_mass(sequence: str) -> float:
     return forward_sum + ion_type_offsets[0] + ion_type_offsets[1]
 
 
-def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd.DataFrame, int, str, float]:
+def initialize_peaks(
+    sequence: str,
+    mass_analyzer: str,
+    charge: int,
+    mass_tolerance: Optional[float] = None,
+    unit_mass_tolerance: Optional[str] = None,
+) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 
     :param sequence: Modified peptide sequence
     :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
     :param charge: Precursor charge
+    :param mass_tolerance: mass tolerance to calculate min and max mass
+    :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :raises AssertionError:  if peptide sequence contained an unknown modification. TODO do this within the get_mod func.
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
@@ -123,13 +133,9 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
     else:
         modification_deltas, tmt_n_term, peptide_sequence = modifications
 
-    col_dtypes = {"ion_type": str, "no": int, "charge": float, "mass": float, "min_mass": float, "max_mass": float}
     peptide_length = len(peptide_sequence)
-
     if peptide_length > 30:
-        df_out = pd.DataFrame(columns=col_dtypes.keys())
-        df_out = df_out.astype(col_dtypes)
-        return df_out, -1, "", 0.0
+        return [{}], -1, "", 0.0
 
     # initialize constants
     if int(round(charge)) <= 3:
@@ -179,35 +185,37 @@ def initialize_peaks(sequence: str, mass_analyzer: str, charge: int) -> Tuple[pd
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
                 # Check for neutral loss here
                 mass = (ion_type_masses[ion_type] + charge_delta) / charge
-                min_mass, max_mass = get_min_max_mass(mass_analyzer, mass)
+                min_mass, max_mass = get_min_max_mass(mass_analyzer, mass, mass_tolerance, unit_mass_tolerance)
                 fragments_meta_data.append(
-                    [
-                        ion_types[ion_type],  # ion type
-                        i + 1,  # no
-                        charge,  # charge
-                        mass,  # mass
-                        min_mass,  # min mass
-                        max_mass,  # max mass
-                    ]
+                    {
+                        "ion_type": ion_types[ion_type],  # ion type
+                        "no": i + 1,  # no
+                        "charge": charge,  # charge
+                        "mass": mass,  # mass
+                        "min_mass": min_mass,  # min mass
+                        "max_mass": max_mass,  # max mass
+                    }
                 )
-    df_out = pd.DataFrame(data=fragments_meta_data, columns=col_dtypes.keys())
-    df_out.sort_values(by="mass", inplace=True)
-    return df_out, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
+    fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
+    return fragments_meta_data, tmt_n_term, peptide_sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
 
 
 def initialize_peaks_xl(
     sequence: str, mass_analyzer: str, crosslinker_position: int, crosslinker_type: str
-) -> Tuple[pd.DataFrame, int, str, float]:
+) -> Tuple[List[dict], int, str, float]:
     """Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
 
-    This function get only one modified peptide (peptide a or b)) 
+    This function get only one modified peptide (peptide a or b))
 
     :param sequence: Modified peptide sequence (peptide a or b)
     :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
     :param crosslinker_position: The position of crosslinker
     :param crosslinker_type: Can be either DSSO, DSBU or BuUrBU
     :raises ValueError: if crosslinker_type be unkown
-    :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence, Therotical mass of modified peptide (without considering mass of crosslinker)
+    :raises AssertionError: if the short and long XL sequence (the one with the short / long crosslinker mod)
+        has a tmt n term while the other one does not
+    :return: List of theoretical peaks, flag to indicate if there is a tmt on n-terminus, unmodified peptide
+        sequence, therotical mass of modified peptide (without considering mass of crosslinker)
     """
     charge = 2  # generate only peaks with charge 1 and 2
     crosslinker_type = crosslinker_type.upper()
@@ -229,8 +237,22 @@ def initialize_peaks_xl(
     else:
         raise ValueError(f"Unkown crosslinker type: {crosslinker_type}")
 
-    df_out_s, tmt_n_term, peptide_sequence, mass_s = initialize_peaks(sequence_s, mass_analyzer, charge)
-    df_out_l, tmt_n_term, peptide_sequence, mass_l = initialize_peaks(sequence_l, mass_analyzer, charge)
+    # TODO: this needs to be done more efficiently:
+    # currently calculating the non-cleaved part until the xl_pos of the ions two times!
+    # also the peptide sequence, mass and modifications are called twice
+    # need to separate all of these functions better!
+    # for XL, we actually don't need mass_s / mass_l at the moment because only one mass, without
+    # the crosslinker is returned! This needs to be fixed, because mass is used as CALCULATED_MASS in
+    # percolator!
+
+    list_out_s, tmt_n_term_s, peptide_sequence, mass_s = initialize_peaks(sequence_s, mass_analyzer, charge)
+    list_out_l, tmt_n_term_l, peptide_sequence, mass_l = initialize_peaks(sequence_l, mass_analyzer, charge)
+
+    if tmt_n_term_s ^ tmt_n_term_l:
+        raise AssertionError("tmt_mod is {tmt_n_term_s} for short sequence but {tmt_n_term_l} for long sequence!")
+
+    df_out_s = pd.DataFrame(list_out_s)
+    df_out_l = pd.DataFrame(list_out_l)
 
     threshold_b = crosslinker_position
     threshold_y = len(peptide_sequence) - crosslinker_position + 1
@@ -241,23 +263,46 @@ def initialize_peaks_xl(
     df_out_l.loc[(df_out_l["no"] >= threshold_y) & (df_out_l["ion_type"] == "y"), "ion_type"] = "y-long"
 
     concatenated_df = pd.concat([df_out_s, df_out_l])
-    unique_df = concatenated_df.drop_duplicates()
+    unique_df = concatenated_df.drop_duplicates()  # TODO: this is where the duplicate calculations are removed
     df_out = unique_df.sort_values("mass")
     mass = compute_peptide_mass(sequence_without_crosslinker)
 
-    return df_out, tmt_n_term, peptide_sequence, mass 
+    return df_out.to_dict(orient="records"), tmt_n_term_s, peptide_sequence, mass
 
 
-def get_min_max_mass(mass_analyzer: str, mass: float) -> Tuple[float, float]:
+def get_min_max_mass(
+    mass_analyzer: str, mass: float, mass_tolerance: Optional[float] = None, unit_mass_tolerance: Optional[str] = None
+) -> Tuple[float, float]:
     """Helper function to get min and max mass based on mass analyzer.
 
+    If both mass_tolerance and unit_mass_tolerance are provided, the function uses the provided tolerance
+    to calculate the min and max mass. If either `mass_tolerance` or `unit_mass_tolerance` is missing
+    (or both are None), the function falls back to the default tolerances based on the `mass_analyzer`.
+
+    Default mass tolerances for different mass analyzers:
+    - FTMS: +/- 20 ppm
+    - TOF: +/- 40 ppm
+    - ITMS: +/- 0.35 daltons
+
+    :param mass_tolerance: mass tolerance to calculate min and max mass
+    :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param mass_analyzer: the type of mass analyzer used to determine the tolerance.
     :param mass: the theoretical fragment mass
     :raises ValueError: if mass_analyzer is other than one of FTMS, TOF, ITMS
+    :raises ValueError: if unit_mass_tolerance is other than one of ppm, da
 
     :return: a tuple (min, max) denoting the mass tolerance range.
     """
-    if mass_analyzer == "FTMS":
+    if mass_tolerance is not None and unit_mass_tolerance is not None:
+        if unit_mass_tolerance == "ppm":
+            min_mass = (mass * -mass_tolerance / 1000000) + mass
+            max_mass = (mass * mass_tolerance / 1000000) + mass
+        elif unit_mass_tolerance == "da":
+            min_mass = mass - mass_tolerance
+            max_mass = mass + mass_tolerance
+        else:
+            raise ValueError(f"Unsupported unit for the mass tolerance: {unit_mass_tolerance}")
+    elif mass_analyzer == "FTMS":
         min_mass = (mass * -20 / 1000000) + mass
         max_mass = (mass * 20 / 1000000) + mass
     elif mass_analyzer == "TOF":

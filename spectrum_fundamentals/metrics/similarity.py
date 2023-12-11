@@ -7,8 +7,7 @@ import scipy.stats
 from numpy import absolute, mean, std
 from scipy import spatial
 from sklearn.metrics import mean_squared_error
-from oktoberfest.utils.config import Config
-from oktoberfest.constants_dir import CONFIG_PATH
+
 from .. import constants
 from .metric import Metric
 
@@ -18,7 +17,6 @@ def get_metric_func(metric: str):
     Return a callable function for a given metric shortcut.
 
     :param metric: a shortcut for the desired metric.
-
     :raises ValueError: if the provided metric is not known
 
     :return: callable metric function
@@ -48,6 +46,7 @@ class SimilarityMetrics(Metric):
         observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
         predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
         charge: int = 0,
+        xl: bool = False,
     ) -> np.ndarray:
         """
         Calculate spectral angle.
@@ -57,46 +56,25 @@ class SimilarityMetrics(Metric):
                                      position >= peptide length), array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything
+        :param xl: whether operating on crosslinked or linear peptides
         :return: SA values
         """
-        config = Config()
-        config.read(CONFIG_PATH)
-        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx", "xisearch"]):
-            if charge != 0:
-                if charge == 1:
-                    boolean_array = constants.SINGLE_CHARGED_MASK_XL
-                elif charge == 2:
-                    boolean_array = constants.DOUBLE_CHARGED_MASK_XL
-                elif charge == 3:
-                    boolean_array = constants.TRIPLE_CHARGED_MASK_XL
-                elif charge == 4:
-                    boolean_array = constants.B_ION_MASK_XL
-                else:
-                    boolean_array = constants.Y_ION_MASK_XL
-
-                boolean_array = scipy.sparse.csr_matrix(boolean_array)
-                observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
-                predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
-                observed_intensities = observed_intensities.multiply(boolean_array).toarray()
-                predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
+        if xl:
+            masks = constants.MASK_DICT_XL
+            default_value = constants.B_ION_MASK_XL
         else:
-            if charge != 0:
-                if charge == 1:
-                    boolean_array = constants.SINGLE_CHARGED_MASK
-                elif charge == 2:
-                    boolean_array = constants.DOUBLE_CHARGED_MASK
-                elif charge == 3:
-                    boolean_array = constants.TRIPLE_CHARGED_MASK
-                elif charge == 4:
-                    boolean_array = constants.B_ION_MASK
-                else:
-                    boolean_array = constants.Y_ION_MASK
+            masks = constants.MASK_DICT
+            default_value = constants.B_ION_MASK
 
-                boolean_array = scipy.sparse.csr_matrix(boolean_array)
-                observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
-                predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
-                observed_intensities = observed_intensities.multiply(boolean_array).toarray()
-                predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
+        if charge != 0:
+
+            boolean_array = masks.get(charge, default_value)
+
+            boolean_array = scipy.sparse.csr_matrix(boolean_array)
+            observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
+            predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
+            observed_intensities = observed_intensities.multiply(boolean_array).toarray()
+            predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
 
         predicted_non_zero_mask = predicted_intensities > constants.EPSILON
 
@@ -238,8 +216,8 @@ class SimilarityMetrics(Metric):
         :param method: either pearson or spearman
         :return: calculated correlations
         """
-        observed_intensities = observed_intensities.toarray()
-        predicted_intensities = predicted_intensities.toarray()
+        observed_intensities_array = observed_intensities.toarray()
+        predicted_intensities_array = predicted_intensities.toarray()
 
         if charge != 0:
             if charge == 1:
@@ -254,13 +232,11 @@ class SimilarityMetrics(Metric):
                 boolean_array = constants.Y_ION_MASK
 
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
-            observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
-            predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
-            observed_intensities = observed_intensities.multiply(boolean_array).toarray()
-            predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
+            observed_intensities_array = observed_intensities.multiply(boolean_array).toarray()
+            predicted_intensities_array = predicted_intensities.multiply(boolean_array).toarray()
 
         pear_corr = []
-        for obs, pred in zip(observed_intensities, predicted_intensities):
+        for obs, pred in zip(observed_intensities_array, predicted_intensities_array):
             valid_ion_mask = pred > constants.EPSILON
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
@@ -427,151 +403,38 @@ class SimilarityMetrics(Metric):
 
         return cos_values
 
-    def calc(self, all_features: bool):
+    def calc(self, all_features: bool, xl: bool = False):
         """
         Adds columns with spectral angle feature to metrics_val dataframe.
 
         :param all_features: if True, calculcate all metrics
+        :param xl: whether calculating for crosslinked or linear peptides
         """
-        config = Config()
-        config.read(CONFIG_PATH)
-        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
-            true_intensities_a = self.true_intensities[:,0:348]
-            true_intensities_b = self.true_intensities[:,348:]
-            pred_intensities_a = self.pred_intensities[:,0:348]
-            pred_intensities_b = self.pred_intensities[:,348:]
+        if xl:
+            true_intensities_a = self.true_intensities[:, 0:348]
+            true_intensities_b = self.true_intensities[:, 348:]
+            pred_intensities_a = self.pred_intensities[:, 0:348]
+            pred_intensities_b = self.pred_intensities[:, 348:]
             self.metrics_val["spectral_angle_a"] = SimilarityMetrics.spectral_angle(
-            true_intensities_a, pred_intensities_a, 0
-        )
+                true_intensities_a, pred_intensities_a, 0
+            )
             self.metrics_val["spectral_angle_b"] = SimilarityMetrics.spectral_angle(
-            true_intensities_b, pred_intensities_b, 0
-        )
-            self.metrics_val["spectral_angle"] = (self.metrics_val["spectral_angle_a"] + self.metrics_val["spectral_angle_b"])/2
-        
-            self.metrics_val["pearson_corr_a"] = SimilarityMetrics.correlation(
-            true_intensities_a, pred_intensities_a, 0
-        )
-            self.metrics_val["pearson_corr_b"] = SimilarityMetrics.correlation(
-            true_intensities_b, pred_intensities_b, 0
-        )
-            if all_features:
-                self.metrics_val["modified_cosine_a"] = SimilarityMetrics.modified_cosine(
-                true_intensities_a, pred_intensities_a, 0
-            )
-                self.metrics_val["modified_cosine_b"] = SimilarityMetrics.modified_cosine(
                 true_intensities_b, pred_intensities_b, 0
             )
-                self.metrics_val["spectral_entropy_similarity_a"] = SimilarityMetrics.spectral_entropy_similarity(
-                true_intensities_a, pred_intensities_a, 0
-            )
-                self.metrics_val["spectral_entropy_similarity_b"] = SimilarityMetrics.spectral_entropy_similarity(
-                true_intensities_b, pred_intensities_b, 0
-            )
-                self.metrics_val["spectral_entropy_similarity_a"] = SimilarityMetrics.spectral_entropy_similarity(
-                true_intensities_a, pred_intensities_a, 0
-            )
-                self.metrics_val["spectral_entropy_similarity_b"] = SimilarityMetrics.spectral_entropy_similarity(
-                true_intensities_b, pred_intensities_b, 0
-            )
-                
-                col_names_spectral_angle_a = [
-                f"spectral_angle_{amount}_charge_a" for amount in ["single", "double", "triple"]
-                ] + ["spectral_angle_b_ions_a", "spectral_angle_y_ions_a"]
-                col_names_spectral_angle_b = [
-                f"spectral_angle_{amount}_charge_b" for amount in ["single", "double", "triple"]
-                ] + ["spectral_angle_b_ions_b", "spectral_angle_y_ions_b"]
-                col_names_pearson_corr_a = [f"pearson_corr_{amount}_charge_a" for amount in ["single", "double", "triple"]] + [
-                "pearson_corr_b_ions_a",
-                "pearson_corr_y_ions_a",
-                ]
-                col_names_pearson_corr_b = [f"pearson_corr_{amount}_charge_b" for amount in ["single", "double", "triple"]] + [
-                "pearson_corr_b_ions_b",
-                "pearson_corr_y_ions_b",
-                ]
-                col_names_spearman_corr_a = [
-                f"spearman_corr_{amount}_charge_a" for amount in ["single", "double", "triple"]
-                ] + ["spearman_corr_b_ions_a", "spearman_corr_y_ions_a"]
-                col_names_spearman_corr_b = [
-                f"spearman_corr_{amount}_charge" for amount in ["single", "double", "triple"]
-                ] + ["spearman_corr_b_ions_b", "spearman_corr_y_ions_b"]
+            self.metrics_val["spectral_angle"] = (
+                self.metrics_val["spectral_angle_a"] + self.metrics_val["spectral_angle_b"]
+            ) / 2
 
-                for i, col_name_spectral_angle_a in enumerate(col_names_spectral_angle_a):
-                    self.metrics_val[col_name_spectral_angle_a] = SimilarityMetrics.spectral_angle(
-                        self.true_intensities_a, self.pred_intensities_a, i + 1
-                    )
-                for i, col_name_spectral_angle_b in enumerate(col_names_spectral_angle_b):
-                    self.metrics_val[col_name_spectral_angle_b] = SimilarityMetrics.spectral_angle(
-                        self.true_intensities_b, self.pred_intensities_b, i + 1
-                    )
-                for i, col_name_pearson_corr_a in enumerate(col_names_pearson_corr_a):
-                    self.metrics_val[col_name_pearson_corr_a] = SimilarityMetrics.correlation(
-                        self.true_intensities_a, self.pred_intensities_a, i + 1, "pearson"
-                    )
-                for i, col_name_pearson_corr_b in enumerate(col_names_pearson_corr_b):
-                    self.metrics_val[col_name_pearson_corr_b] = SimilarityMetrics.correlation(
-                        self.true_intensities_b, self.pred_intensities_b, i + 1, "pearson"
-                    )
-                for i, col_name_spearman_corr_a in enumerate(col_names_spearman_corr_a):
-                    self.metrics_val[col_name_spearman_corr_a] = SimilarityMetrics.correlation(
-                        self.true_intensities_a, self.pred_intensities_a, i + 1, "spearman"
-                    )
-                for i, col_name_spearman_corr_b in enumerate(col_names_spearman_corr_b):
-                    self.metrics_val[col_name_spearman_corr_b] = SimilarityMetrics.correlation(
-                        self.true_intensities_b, self.pred_intensities_b, i + 1, "spearman"
-                    )
-                self.metrics_val["cos_a"] = SimilarityMetrics.cos(self.true_intensities_a, self.pred_intensities_a)
-                self.metrics_val["cos_b"] = SimilarityMetrics.cos(self.true_intensities_b, self.pred_intensities_b)
-                self.metrics_val["mean_abs_diff_a"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_a, self.pred_intensities_a, "mean"
-                )
-                self.metrics_val["mean_abs_diff_b"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_b, self.pred_intensities_b, "mean"
-                )
-                self.metrics_val["std_abs_diff_a"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_a, self.pred_intensities_a, "std"
-                )
-                self.metrics_val["std_abs_diff_b"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_b, self.pred_intensities_b, "std"
-                )
-                self.metrics_val["abs_diff_Q3_a"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_a, self.pred_intensities_a, "q3"
-                )
-                self.metrics_val["abs_diff_Q3_b"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_b, self.pred_intensities_b, "q3"
-                )
-                self.metrics_val["abs_diff_Q2_a"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_a, self.pred_intensities_a, "q2"
-                )
-                self.metrics_val["abs_diff_Q2_b"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_b, self.pred_intensities_b, "q2"
-                )
-                self.metrics_val["abs_diff_Q1_a"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_a, self.pred_intensities_a, "q1"
-                )
-                self.metrics_val["abs_diff_Q1_b"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_b, self.pred_intensities_b, "q1"
-                )
-                self.metrics_val["min_abs_diff_a"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_a, self.pred_intensities_a, "min"
-                )
-                self.metrics_val["min_abs_diff_b"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_b, self.pred_intensities_b, "min"
-                )
-                self.metrics_val["max_abs_diff_a"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_a, self.pred_intensities_a, "max"
-                )
-                self.metrics_val["max_abs_diff_b"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities_b, self.pred_intensities_b, "max"
-                )
-                self.metrics_val["mse_a"] = SimilarityMetrics.abs_diff(self.true_intensities_a, self.pred_intensities_a, "mse")
-                self.metrics_val["mse_b"] = SimilarityMetrics.abs_diff(self.true_intensities_b, self.pred_intensities_b, "mse")
-                
-                self.metrics_val["spearman_corr_a"] = SimilarityMetrics.correlation(
-                    self.true_intensities_a, self.pred_intensities_a, 0, "spearman"
-                )
-                self.metrics_val["spearman_corr_b"] = SimilarityMetrics.correlation(
-                    self.true_intensities_b, self.pred_intensities_b, 0, "spearman"
-                )
+            self.metrics_val["pearson_corr_a"] = SimilarityMetrics.correlation(
+                true_intensities_a, pred_intensities_a, 0
+            )
+            self.metrics_val["pearson_corr_b"] = SimilarityMetrics.correlation(
+                true_intensities_b, pred_intensities_b, 0
+            )
+            if all_features:
+                self._calc_additional_metrics(true_intensities_a, pred_intensities_a, key_suffix="_a")
+                self._calc_additional_metrics(true_intensities_b, pred_intensities_b, key_suffix="_b")
+
         else:
             self.metrics_val["spectral_angle"] = SimilarityMetrics.spectral_angle(
                 self.true_intensities, self.pred_intensities, 0
@@ -580,62 +443,72 @@ class SimilarityMetrics(Metric):
                 self.true_intensities, self.pred_intensities, 0, "pearson"
             )
             if all_features:
-                self.metrics_val["modified_cosine"] = SimilarityMetrics.modified_cosine(
-                    self.true_intensities, self.pred_intensities, self.mz, self.mz
-                )
-                self.metrics_val["spectral_entropy_similarity"] = SimilarityMetrics.spectral_entropy_similarity(
-                    self.true_intensities, self.pred_intensities
-                )
+                self._calc_additional_metrics(self.true_intensities, self.pred_intensities)
 
-                col_names_spectral_angle = [
-                    f"spectral_angle_{amount}_charge" for amount in ["single", "double", "triple"]
-                ] + ["spectral_angle_b_ions", "spectral_angle_y_ions"]
-                col_names_pearson_corr = [f"pearson_corr_{amount}_charge" for amount in ["single", "double", "triple"]] + [
-                    "pearson_corr_b_ions",
-                    "pearson_corr_y_ions",
-                ]
-                col_names_spearman_corr = [
-                    f"spearman_corr_{amount}_charge" for amount in ["single", "double", "triple"]
-                ] + ["spearman_corr_b_ions", "spearman_corr_y_ions"]
+    def _calc_additional_metrics(
+        self, true_intensities: np.ndarray, pred_intensities: np.ndarray, key_suffix: str = ""
+    ):
 
-                for i, col_name_spectral_angle in enumerate(col_names_spectral_angle):
-                    self.metrics_val[col_name_spectral_angle] = SimilarityMetrics.spectral_angle(
-                        self.true_intensities, self.pred_intensities, i + 1
-                    )
+        if key_suffix != "":
+            # dirty fix, if the key_suffix is not "", that means we have XL mode.
+            # TODO: fix self.mz for XL mode
+            self.metrics_val[f"modified_cosine{key_suffix}"] = SimilarityMetrics.modified_cosine(
+                true_intensities, pred_intensities, self.mz, self.mz
+            )
+        self.metrics_val[f"spectral_entropy_similarity{key_suffix}"] = SimilarityMetrics.spectral_entropy_similarity(
+            true_intensities, pred_intensities
+        )
+        col_names_spectral_angle = [
+            f"spectral_angle_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
+        ] + [f"spectral_angle_b_ions{key_suffix}", f"spectral_angle_y_ions{key_suffix}"]
+        col_names_pearson_corr = [
+            f"pearson_corr_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
+        ] + [
+            f"pearson_corr_b_ions{key_suffix}",
+            f"pearson_corr_y_ions{key_suffix}",
+        ]
+        col_names_spearman_corr = [
+            f"spearman_corr_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
+        ] + [f"spearman_corr_b_ions{key_suffix}", f"spearman_corr_y_ions{key_suffix}"]
 
-                for i, col_name_pearson_corr in enumerate(col_names_pearson_corr):
-                    self.metrics_val[col_name_pearson_corr] = SimilarityMetrics.correlation(
-                        self.true_intensities, self.pred_intensities, i + 1, "pearson"
-                    )
+        for i, col_name_spectral_angle in enumerate(col_names_spectral_angle):
+            self.metrics_val[col_name_spectral_angle] = SimilarityMetrics.spectral_angle(
+                true_intensities, pred_intensities, i + 1
+            )
 
-                self.metrics_val["cos"] = SimilarityMetrics.cos(self.true_intensities, self.pred_intensities)
-                self.metrics_val["mean_abs_diff"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities, self.pred_intensities, "mean"
-                )
-                self.metrics_val["std_abs_diff"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities, self.pred_intensities, "std"
-                )
-                self.metrics_val["abs_diff_Q3"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities, self.pred_intensities, "q3"
-                )
-                self.metrics_val["abs_diff_Q2"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities, self.pred_intensities, "q2"
-                )
-                self.metrics_val["abs_diff_Q1"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities, self.pred_intensities, "q1"
-                )
-                self.metrics_val["min_abs_diff"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities, self.pred_intensities, "min"
-                )
-                self.metrics_val["max_abs_diff"] = SimilarityMetrics.abs_diff(
-                    self.true_intensities, self.pred_intensities, "max"
-                )
-                self.metrics_val["mse"] = SimilarityMetrics.abs_diff(self.true_intensities, self.pred_intensities, "mse")
-                self.metrics_val["spearman_corr"] = SimilarityMetrics.correlation(
-                    self.true_intensities, self.pred_intensities, 0, "spearman"
-                )
+        for i, col_name_pearson_corr in enumerate(col_names_pearson_corr):
+            self.metrics_val[col_name_pearson_corr] = SimilarityMetrics.correlation(
+                true_intensities, pred_intensities, i + 1, "pearson"
+            )
 
-                for i, col_name_spearman_corr in enumerate(col_names_spearman_corr):
-                    self.metrics_val[col_name_spearman_corr] = SimilarityMetrics.correlation(
-                        self.true_intensities, self.pred_intensities, i + 1, "spearman"
-                    )
+        for i, col_name_spearman_corr in enumerate(col_names_spearman_corr):
+            self.metrics_val[col_name_spearman_corr] = SimilarityMetrics.correlation(
+                true_intensities, pred_intensities, i + 1, "spearman"
+            )
+
+        self.metrics_val[f"cos{key_suffix}"] = SimilarityMetrics.cos(true_intensities, pred_intensities)
+        self.metrics_val[f"mean_abs_diff{key_suffix}"] = SimilarityMetrics.abs_diff(
+            true_intensities, pred_intensities, "mean"
+        )
+        self.metrics_val[f"std_abs_diff{key_suffix}"] = SimilarityMetrics.abs_diff(
+            true_intensities, pred_intensities, "std"
+        )
+        self.metrics_val[f"abs_diff_Q3{key_suffix}"] = SimilarityMetrics.abs_diff(
+            true_intensities, pred_intensities, "q3"
+        )
+        self.metrics_val[f"abs_diff_Q2{key_suffix}"] = SimilarityMetrics.abs_diff(
+            true_intensities, pred_intensities, "q2"
+        )
+        self.metrics_val[f"abs_diff_Q1{key_suffix}"] = SimilarityMetrics.abs_diff(
+            true_intensities, pred_intensities, "q1"
+        )
+        self.metrics_val[f"min_abs_diff{key_suffix}"] = SimilarityMetrics.abs_diff(
+            true_intensities, pred_intensities, "min"
+        )
+        self.metrics_val[f"max_abs_diff{key_suffix}"] = SimilarityMetrics.abs_diff(
+            true_intensities, pred_intensities, "max"
+        )
+        self.metrics_val[f"mse{key_suffix}"] = SimilarityMetrics.abs_diff(true_intensities, pred_intensities, "mse")
+        self.metrics_val[f"spearman_corr{key_suffix}"] = SimilarityMetrics.correlation(
+            true_intensities, pred_intensities, 0, "spearman"
+        )

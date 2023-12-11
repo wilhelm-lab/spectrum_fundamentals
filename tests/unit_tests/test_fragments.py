@@ -18,11 +18,11 @@ class TestGetModifications:
 
     def test_get_modifications_tmt_tag(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("[UNIMOD:737]ABC[UNIMOD:4]") == ({0: 229.162932, 2: 57.02146}, 2, "ABC")
+        assert fragments._get_modifications("[UNIMOD:737]-ABC[UNIMOD:4]") == ({0: 229.162932, 2: 57.02146}, 2, "ABC")
 
     def test_get_modifications_tmtpro_tag(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("[UNIMOD:2016]ABC[UNIMOD:4]") == ({0: 304.207146, 2: 57.02146}, 2, "ABC")
+        assert fragments._get_modifications("[UNIMOD:2016]-ABC[UNIMOD:4]") == ({0: 304.207146, 2: 57.02146}, 2, "ABC")
 
 
 class TestComputeMasses(unittest.TestCase):
@@ -63,6 +63,11 @@ class TestComputeMasses(unittest.TestCase):
         seq = "SEQUENC[UNIMOD:4]E"
         self.assertEqual(fragments.compute_peptide_mass(seq), 1045.2561516699998)
 
+    def test_compute_peptide_masses_tmtpro(self):
+        """Test computation of peptide masses with valid input and tmt tag."""
+        seq = "[UNIMOD:737]-SEQUENC[UNIMOD:4]E"
+        self.assertEqual(fragments.compute_peptide_mass(seq), 1274.41908367)
+
     def test_compute_peptide_masses_with_invalid_syntax(self):
         """Negative testing of comuptation of peptide mass with unsupported syntax of mod string."""
         seq = "SEQUEM(Ox.)CE"
@@ -72,3 +77,31 @@ class TestComputeMasses(unittest.TestCase):
         """Negative testing of computation of peptide mass with unknown modification in mod string."""
         seq = "SEQUENC[UNIMOD:0]E"
         self.assertRaises(AssertionError, fragments.compute_peptide_mass, seq)
+
+
+class TestMassTolerances(unittest.TestCase):
+    """Testing the mass tolerance calculations in various scenarios."""
+
+    def test_mass_tol_with_ppm(self):
+        """Test get_min_max_mass with a user defined ppm measure."""
+        window = fragments.get_min_max_mass(
+            mass_analyzer="FTMS", mass=10.0, mass_tolerance=15, unit_mass_tolerance="ppm"
+        )
+        self.assertEqual(window, (9.99985, 10.00015))
+
+    def test_mass_tol_with_da(self):
+        """Test get_min_max_mass with a user defined da measure."""
+        window = fragments.get_min_max_mass(
+            mass_analyzer="FTMS", mass=10.0, mass_tolerance=0.3, unit_mass_tolerance="da"
+        )
+        self.assertEqual(window, (9.7, 10.3))
+
+    def test_mass_tol_with_defaults(self):
+        """Test get_min_max_mass with mass analyzer defaults."""
+        window_ftms = fragments.get_min_max_mass(mass_analyzer="FTMS", mass=10.0)
+        window_itms = fragments.get_min_max_mass(mass_analyzer="ITMS", mass=10.0)
+        window_tof = fragments.get_min_max_mass(mass_analyzer="TOF", mass=10.0)
+
+        self.assertEqual(window_ftms, (9.9998, 10.0002))
+        self.assertEqual(window_tof, (9.9996, 10.0004))
+        self.assertEqual(window_itms, (9.65, 10.35))
