@@ -6,9 +6,6 @@ import scipy.sparse
 
 from .. import constants
 from .metric import Metric
-from oktoberfest.utils.config import Config
-from oktoberfest.constants_dir import CONFIG_PATH
-
 
 
 class ObservationState(enum.IntEnum):
@@ -34,7 +31,9 @@ class FragmentsRatio(Metric):
 
     @staticmethod
     def count_with_ion_mask(
-        boolean_array: scipy.sparse.csr_matrix, ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None
+        boolean_array: scipy.sparse.csr_matrix,
+        ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        xl: bool = False,
     ) -> np.ndarray:
         """
         Count the number of ions.
@@ -42,27 +41,23 @@ class FragmentsRatio(Metric):
         :param boolean_array: boolean array with True for observed/predicted peaks and \
                               False for missing observed/predicted peaks, array of length 174
         :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
-                         integer array of length 174
+                         integer array of length 174 for linear and 348 for crosslinked peptides.
+        :param xl: whether to process with crosslinked or linear peptides
         :return: number of observed/predicted peaks not masked by ion_mask
         """
         if ion_mask is None:
             ion_mask = []
 
-        config = Config()
-        config.read(CONFIG_PATH)
-        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
-            if len(ion_mask) == 0:
-                
-                ion_mask = scipy.sparse.csr_matrix(np.ones((348, 1)))
-            else:
-                ion_mask = scipy.sparse.csr_matrix(ion_mask).T
-
+        if xl:
+            array_size = 348
         else:
-            if len(ion_mask) == 0:
-                ion_mask = scipy.sparse.csr_matrix(np.ones((174, 1)))
-            else:
-                ion_mask = scipy.sparse.csr_matrix(ion_mask).T
-       
+            array_size = 174
+
+        if len(ion_mask) == 0:
+            ion_mask = scipy.sparse.csr_matrix(np.ones((array_size, 1)))
+        else:
+            ion_mask = scipy.sparse.csr_matrix(ion_mask).T
+
         return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
 
     @staticmethod
@@ -145,13 +140,11 @@ class FragmentsRatio(Metric):
 
     def calc(self):
         """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
-        config = Config()
-        config.read(CONFIG_PATH)
-        if any(config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"]):
-            true_intensities_a = self.true_intensities[:,0:348]
-            true_intensities_b = self.true_intensities[:,348:]
-            pred_intensities_a = self.pred_intensities[:,0:348]
-            pred_intensities_b = self.pred_intensities[:,348:]
+        if self.xl:
+            true_intensities_a = self.true_intensities[:, 0:348]
+            true_intensities_b = self.true_intensities[:, 348:]
+            pred_intensities_a = self.pred_intensities[:, 0:348]
+            pred_intensities_b = self.pred_intensities[:, 348:]
             mask_observed_valid_a = FragmentsRatio.get_mask_observed_valid(true_intensities_a)
             mask_observed_valid_b = FragmentsRatio.get_mask_observed_valid(true_intensities_b)
             observed_boolean_a = FragmentsRatio.make_boolean(true_intensities_a, mask_observed_valid_a)
@@ -159,26 +152,34 @@ class FragmentsRatio(Metric):
             predicted_boolean_a = FragmentsRatio.make_boolean(pred_intensities_a, mask_observed_valid_a, cutoff=0.05)
             predicted_boolean_b = FragmentsRatio.make_boolean(pred_intensities_b, mask_observed_valid_b, cutoff=0.05)
             observation_state_a = FragmentsRatio.get_observation_state(
-            observed_boolean_a, predicted_boolean_a, mask_observed_valid_a
-        )
+                observed_boolean_a, predicted_boolean_a, mask_observed_valid_a
+            )
             observation_state_b = FragmentsRatio.get_observation_state(
-            observed_boolean_b, predicted_boolean_b, mask_observed_valid_b
-        )
+                observed_boolean_b, predicted_boolean_b, mask_observed_valid_b
+            )
             valid_ions_a = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a))
             valid_ions_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b))
-            valid_ions_b_a = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, constants.B_ION_MASK_XL))
-            valid_ions_b_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, constants.B_ION_MASK_XL))
-            valid_ions_y_a = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, constants.Y_ION_MASK_XL))
-            valid_ions_y_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, constants.Y_ION_MASK_XL))
+            valid_ions_b_a = np.maximum(
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, constants.B_ION_MASK_XL)
+            )
+            valid_ions_b_b = np.maximum(
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, constants.B_ION_MASK_XL)
+            )
+            valid_ions_y_a = np.maximum(
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, constants.Y_ION_MASK_XL)
+            )
+            valid_ions_y_b = np.maximum(
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, constants.Y_ION_MASK_XL)
+            )
             # counting metrics
             self.metrics_val["count_predicted_a"] = FragmentsRatio.count_with_ion_mask(predicted_boolean_a)
             self.metrics_val["count_predicted_b"] = FragmentsRatio.count_with_ion_mask(predicted_boolean_b)
             self.metrics_val["count_predicted_b_a"] = FragmentsRatio.count_with_ion_mask(
-            predicted_boolean_a, constants.B_ION_MASK_XL
-        )
+                predicted_boolean_a, constants.B_ION_MASK_XL
+            )
             self.metrics_val["count_predicted_b_b"] = FragmentsRatio.count_with_ion_mask(
-            predicted_boolean_b, constants.B_ION_MASK_XL
-        )
+                predicted_boolean_b, constants.B_ION_MASK_XL
+            )
             self.metrics_val["count_predicted_y_a"] = FragmentsRatio.count_with_ion_mask(
                 predicted_boolean_a, constants.Y_ION_MASK_XL
             )
@@ -441,8 +442,12 @@ class FragmentsRatio(Metric):
                 observed_boolean, predicted_boolean, mask_observed_valid
             )
             valid_ions = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid))
-            valid_ions_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.B_ION_MASK_XL))
-            valid_ions_y = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.Y_ION_MASK_XL))
+            valid_ions_b = np.maximum(
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.B_ION_MASK_XL)
+            )
+            valid_ions_y = np.maximum(
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.Y_ION_MASK_XL)
+            )
 
             # counting metrics
             self.metrics_val["count_predicted"] = FragmentsRatio.count_with_ion_mask(predicted_boolean)
@@ -595,8 +600,3 @@ class FragmentsRatio(Metric):
             self.metrics_val["fraction_not_observed_but_predicted_y_vs_predicted"] = (
                 self.metrics_val["count_not_observed_but_predicted_y"] / num_predicted_ions_y
             )
-
-
-
-
-
