@@ -29,7 +29,7 @@ def match_peaks(
     :param unmod_sequence: Unmodified peptide sequence
     :param charge: Precursor charge
     :return: List of matched/annotated peaks
-    :return: Float with log10 of sum of labeled experimental peaks intensities
+    :return: Float with log of sum of labeled experimental peaks intensities
     """
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
@@ -81,10 +81,12 @@ def match_peaks(
     for row in row_list:
         row["intensity"] = float(row["intensity"]) / max_intensity
         temp_list.append(row)
+
     if sum_intensities == 0.0:
-        log_sum_intensities = 0.0 # todo check ists okay?
+        log_sum_intensities = 0.0
     else:
         log_sum_intensities = math.log(sum_intensities)
+
     return temp_list, log_sum_intensities
 
 
