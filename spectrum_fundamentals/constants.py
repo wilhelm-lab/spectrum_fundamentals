@@ -51,9 +51,11 @@ ALPHABET_MODS = {
     "C[UNIMOD:4]": 2,
     "K[UNIMOD:737]": 22,
     "K[UNIMOD:2016]": 22,
+    "K[UNIMOD:2016]": 22,
     "K[UNIMOD:214]": 22,
     "K[UNIMOD:730]": 22,
     "K[UNIMOD:1896]": 22,
+    "K[UNIMOD:1898]": 22,
     "K[UNIMOD:1884]": 23,
     "K[UNIMOD:1881]": 24,
     "K[UNIMOD:1882]": 25,
@@ -181,7 +183,9 @@ MOD_MASSES = {
     "[UNIMOD:1884]": 196.084792,  # BuUrBu (DSBU)-crosslinker
     "[UNIMOD:1885]": 111.032028,  # BuUr long fragment of BuUrBu (DSBU)-crosslinker
     "[UNIMOD:1886]": 85.052764,  # Bu short fragment of BuUrBu (DSBU)-crosslinker
+    "[UNIMOD:1898]": 138.068080,  # DSS and BS3 non-cleavable crosslinker
 }
+
 MOD_MASSES_SAGE = {
     229.1629: "[UNIMOD:737]",
     304.2071: "[UNIMOD:2016]",
@@ -215,6 +219,7 @@ AA_MOD_MASSES = {
     "K[UNIMOD:1884]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1884]"],
     "K[UNIMOD:1885]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1885]"],
     "K[UNIMOD:1886]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1886]"],
+    "K[UNIMOD:1898]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1898]"],
     "[UNIMOD:1]-": MASSES["N_TERMINUS"] + MOD_MASSES["[UNIMOD:1]"],
     "K[UNIMOD:259]": AA_MASSES[
         "K"
