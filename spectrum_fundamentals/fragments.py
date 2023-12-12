@@ -114,6 +114,9 @@ def initialize_peaks(
     charge: int,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
+    noncl_xl: int = 0,
+    peptide_beta_mass: Optional[int] = None,
+    xl_pos: Optional[int] = None,
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
@@ -123,6 +126,9 @@ def initialize_peaks(
     :param charge: Precursor charge
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param noncl_xl: whether the function is called with a non-cleavable xl modification
+    :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
+    :param xl_pos: the position of the crosslinker for non-cleavable XL
     :raises AssertionError:  if peptide sequence contained an unknown modification. TODO do this within the get_mod func.
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
@@ -184,7 +190,14 @@ def initialize_peaks(
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
                 # Check for neutral loss here
-                mass = (ion_type_masses[ion_type] + charge_delta) / charge
+                if noncl_xl == 1 and ion_type == 0 and i + 1 >= xl_pos:  # for the b ions
+                    ion_mass_with_peptide_beta = ion_type_masses[ion_type] + peptide_beta_mass
+                    mass = (ion_mass_with_peptide_beta + charge_delta) / charge
+                elif noncl_xl == 1 and ion_type == 1 and i >= peptide_length - xl_pos:  # for the y-ions
+                    ion_mass_with_peptide_beta = ion_type_masses[ion_type] + peptide_beta_mass
+                    mass = (ion_mass_with_peptide_beta + charge_delta) / charge
+                else:
+                    mass = (ion_type_masses[ion_type] + charge_delta) / charge
                 min_mass, max_mass = get_min_max_mass(mass_analyzer, mass, mass_tolerance, unit_mass_tolerance)
                 fragments_meta_data.append(
                     {
@@ -201,9 +214,16 @@ def initialize_peaks(
 
 
 def initialize_peaks_xl(
-    sequence: str, mass_analyzer: str, crosslinker_position: int, crosslinker_type: str
+    sequence: str,
+    mass_analyzer: str,
+    crosslinker_position: int,
+    crosslinker_type: str,
+    mass_tolerance: Optional[float] = None,
+    unit_mass_tolerance: Optional[str] = None,
+    sequence_beta: Optional[str] = None,
 ) -> Tuple[List[dict], int, str, float]:
-    """Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
+    """
+    Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
 
     This function get only one modified peptide (peptide a or b))
 
@@ -211,63 +231,104 @@ def initialize_peaks_xl(
     :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
     :param crosslinker_position: The position of crosslinker
     :param crosslinker_type: Can be either DSSO, DSBU or BuUrBU
-    :raises ValueError: if crosslinker_type be unkown
+    :param mass_tolerance: mass tolerance to calculate min and max mass
+    :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param sequence_beta: optional second peptide to be considered for non-cleavable XL
+    :raises ValueError: if crosslinker_type is unkown
     :raises AssertionError: if the short and long XL sequence (the one with the short / long crosslinker mod)
         has a tmt n term while the other one does not
     :return: List of theoretical peaks, flag to indicate if there is a tmt on n-terminus, unmodified peptide
         sequence, therotical mass of modified peptide (without considering mass of crosslinker)
     """
-    charge = 2  # generate only peaks with charge 1 and 2
     crosslinker_type = crosslinker_type.upper()
-    if crosslinker_type == "DSSO":
-        dsso = "[UNIMOD:1896]"
-        dsso_s = "[UNIMOD:1881]"
-        dsso_l = "[UNIMOD:1882]"
-        sequence_s = sequence.replace(dsso, dsso_s)
-        sequence_l = sequence.replace(dsso, dsso_l)
-        sequence_without_crosslinker = sequence.replace(dsso, "")
 
-    elif crosslinker_type in ["DSBU", "BUURBU"]:
-        dsbu = "[UNIMOD:1884]"
-        dsbu_s = "[UNIMOD:1886]"
-        dsbu_l = "[UNIMOD:1885]"
-        sequence_s = sequence.replace(dsbu, dsbu_s)
-        sequence_l = sequence.replace(dsbu, dsbu_l)
-        sequence_without_crosslinker = sequence.replace(dsbu, "")
+    if crosslinker_type in ["DSSO", "DSBU", "BUURBU"]:  # cleavable XL
+        charge = 2  # generate only peaks with charge 1 and 2
+        if crosslinker_type == "DSSO":
+            dsso = "[UNIMOD:1896]"
+            dsso_s = "[UNIMOD:1881]"
+            dsso_l = "[UNIMOD:1882]"
+            sequence_s = sequence.replace(dsso, dsso_s)
+            sequence_l = sequence.replace(dsso, dsso_l)
+            sequence_without_crosslinker = sequence.replace(dsso, "")
+
+        elif crosslinker_type in ["DSBU", "BUURBU"]:
+            dsbu = "[UNIMOD:1884]"
+            dsbu_s = "[UNIMOD:1886]"
+            dsbu_l = "[UNIMOD:1885]"
+            sequence_s = sequence.replace(dsbu, dsbu_s)
+            sequence_l = sequence.replace(dsbu, dsbu_l)
+            sequence_without_crosslinker = sequence.replace(dsbu, "")
+
+        # TODO: this needs to be done more efficiently:
+        # currently calculating the non-cleaved part until the xl_pos of the ions two times!
+        # also the peptide sequence, mass and modifications are called twice
+        # need to separate all of these functions better!
+        # for XL, we actually don't need mass_s / mass_l at the moment because only one mass, without
+        # the crosslinker is returned! This needs to be fixed, because mass is used as CALCULATED_MASS in
+        # percolator!
+
+        list_out_s, tmt_n_term_s, peptide_sequence, mass_s = initialize_peaks(
+            sequence_s, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance
+        )
+        list_out_l, tmt_n_term_l, peptide_sequence, mass_l = initialize_peaks(
+            sequence_l, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance
+        )
+
+        tmt_n_term = tmt_n_term_s
+        if tmt_n_term_s ^ tmt_n_term_l:
+            raise AssertionError("tmt_mod is {tmt_n_term_s} for short sequence but {tmt_n_term_l} for long sequence!")
+
+        df_out_s = pd.DataFrame(list_out_s)
+        df_out_l = pd.DataFrame(list_out_l)
+
+        threshold_b = crosslinker_position
+        threshold_y = len(peptide_sequence) - crosslinker_position + 1
+
+        df_out_s.loc[(df_out_s["no"] >= threshold_b) & (df_out_s["ion_type"] == "b"), "ion_type"] = "b-short"
+        df_out_s.loc[(df_out_s["no"] >= threshold_y) & (df_out_s["ion_type"] == "y"), "ion_type"] = "y-short"
+        df_out_l.loc[(df_out_l["no"] >= threshold_b) & (df_out_l["ion_type"] == "b"), "ion_type"] = "b-long"
+        df_out_l.loc[(df_out_l["no"] >= threshold_y) & (df_out_l["ion_type"] == "y"), "ion_type"] = "y-long"
+
+        concatenated_df = pd.concat([df_out_s, df_out_l])
+        unique_df = concatenated_df.drop_duplicates()  # TODO: this is where the duplicate calculations are removed
+        df_out = unique_df.sort_values("mass")
+        mass = compute_peptide_mass(sequence_without_crosslinker)
+
+    elif crosslinker_type in ["BS3", "DSS"]:  # non-cleavable XL
+
+        sequence_without_crosslinker = sequence.replace("[UNIMOD:1898]", "")
+        sequence_beta_without_crosslinker = sequence_beta.replace("[UNIMOD:1898]", "")
+        sequence_mass = compute_peptide_mass(sequence_without_crosslinker)
+        sequence_beta_mass = compute_peptide_mass(sequence_beta_without_crosslinker)
+
+        list_out, tmt_n_term, peptide_sequence, calc_mass_s = initialize_peaks(
+            sequence,
+            mass_analyzer,
+            charge,
+            mass_tolerance,
+            unit_mass_tolerance,
+            1,
+            sequence_beta_mass,
+            crosslinker_position,
+        )
+        df_out = pd.DataFrame(list_out)
+
+        threshold_b_alpha = crosslinker_position
+        threshold_y_alpha = len(peptide_sequence) - crosslinker_position + 1
+
+        df_out.loc[(df_out["no"] >= threshold_b_alpha) & (df_out["ion_type"] == "b"), "ion_type"] = "b-xl"
+        df_out.loc[(df_out["no"] >= threshold_y_alpha) & (df_out["ion_type"] == "y"), "ion_type"] = "y-xl"
+
+        df_out = df_out.sort_index()
+        unique_df = df_out.drop_duplicates()
+        df_out = unique_df.sort_values("mass")
+        mass = sequence_mass
+
     else:
         raise ValueError(f"Unkown crosslinker type: {crosslinker_type}")
 
-    # TODO: this needs to be done more efficiently:
-    # currently calculating the non-cleaved part until the xl_pos of the ions two times!
-    # also the peptide sequence, mass and modifications are called twice
-    # need to separate all of these functions better!
-    # for XL, we actually don't need mass_s / mass_l at the moment because only one mass, without
-    # the crosslinker is returned! This needs to be fixed, because mass is used as CALCULATED_MASS in
-    # percolator!
-
-    list_out_s, tmt_n_term_s, peptide_sequence, mass_s = initialize_peaks(sequence_s, mass_analyzer, charge)
-    list_out_l, tmt_n_term_l, peptide_sequence, mass_l = initialize_peaks(sequence_l, mass_analyzer, charge)
-
-    if tmt_n_term_s ^ tmt_n_term_l:
-        raise AssertionError("tmt_mod is {tmt_n_term_s} for short sequence but {tmt_n_term_l} for long sequence!")
-
-    df_out_s = pd.DataFrame(list_out_s)
-    df_out_l = pd.DataFrame(list_out_l)
-
-    threshold_b = crosslinker_position
-    threshold_y = len(peptide_sequence) - crosslinker_position + 1
-
-    df_out_s.loc[(df_out_s["no"] >= threshold_b) & (df_out_s["ion_type"] == "b"), "ion_type"] = "b-short"
-    df_out_s.loc[(df_out_s["no"] >= threshold_y) & (df_out_s["ion_type"] == "y"), "ion_type"] = "y-short"
-    df_out_l.loc[(df_out_l["no"] >= threshold_b) & (df_out_l["ion_type"] == "b"), "ion_type"] = "b-long"
-    df_out_l.loc[(df_out_l["no"] >= threshold_y) & (df_out_l["ion_type"] == "y"), "ion_type"] = "y-long"
-
-    concatenated_df = pd.concat([df_out_s, df_out_l])
-    unique_df = concatenated_df.drop_duplicates()  # TODO: this is where the duplicate calculations are removed
-    df_out = unique_df.sort_values("mass")
-    mass = compute_peptide_mass(sequence_without_crosslinker)
-
-    return df_out.to_dict(orient="records"), tmt_n_term_s, peptide_sequence, mass
+    return df_out.to_dict(orient="records"), tmt_n_term, peptide_sequence, mass
 
 
 def get_min_max_mass(

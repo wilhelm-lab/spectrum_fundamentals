@@ -149,9 +149,8 @@ def annotate_spectra(
         raw_file_annotations.append(results)
     results_df = pd.DataFrame(raw_file_annotations)
 
-    if results_df.shape[1] < 8:
+    if "CROSSLINKER_TYPE" not in index_columns:
         results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
-
     else:
         results_df.columns = [
             "INTENSITIES_A",
@@ -312,7 +311,7 @@ def generate_annotation_matrix(
     exp_mass_col = matched_peaks.columns.get_loc("exp_mass")
 
     for peak in matched_peaks.values:
-        if peak[ion_type] == "y":
+        if peak[ion_type].startswith("y"):
             peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1)
         else:
             peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1) + 3
@@ -335,7 +334,6 @@ def parallel_annotate(
     index_columns: dict,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    xl: bool = False,
 ) -> Optional[Tuple[np.ndarray, np.ndarray, float, int]]:
     """
     Perform parallel annotation of a spectrum.
@@ -350,7 +348,7 @@ def parallel_annotate(
     :param index_columns: a dictionary that contains the index columns of the spectrum
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
-    :param xl: whether the function is called for crosslinking or linear peptide
+    :raises ValueError: if an unknown crosslinker type is used
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -359,18 +357,41 @@ def parallel_annotate(
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
 
     if "CROSSLINKER_TYPE" in index_columns:
-        fragments_meta_data_a, tmt_n_term_a, unmod_sequence_a, calc_mass_a = initialize_peaks_xl(
+        crosslinker_type = spectrum[index_columns["CROSSLINKER_TYPE"]]
+    else:
+        crosslinker_type = None
+
+    if crosslinker_type is not None:
+        inputs_a = [
             spectrum[index_columns["MODIFIED_SEQUENCE_A"]],
             spectrum[index_columns["MASS_ANALYZER"]],
             spectrum[index_columns["CROSSLINKER_POSITION_A"]],
             spectrum[index_columns["CROSSLINKER_TYPE"]],
-        )
-        fragments_meta_data_b, tmt_n_term_b, unmod_sequence_b, calc_mass_b = initialize_peaks_xl(
+            mass_tolerance,
+            unit_mass_tolerance,
+        ]
+        inputs_b = [
             spectrum[index_columns["MODIFIED_SEQUENCE_B"]],
             spectrum[index_columns["MASS_ANALYZER"]],
             spectrum[index_columns["CROSSLINKER_POSITION_B"]],
             spectrum[index_columns["CROSSLINKER_TYPE"]],
-        )
+            mass_tolerance,
+            unit_mass_tolerance,
+        ]
+        if crosslinker_type in ["BS3", "DSS"]:  # non cleavable XL
+            array_size = 174
+            inputs_a.append(spectrum[index_columns["MODIFIED_SEQUENCE_B"]])
+            inputs_b.append(spectrum[index_columns["MODIFIED_SEQUENCE_B"]])
+            matrix_func = generate_annotation_matrix
+        elif crosslinker_type in ["DSSO", "DSBU", "BUURBU"]:
+            array_size = 348
+            matrix_func = generate_annotation_matrix_xl
+        else:
+            raise ValueError(f"Unsupported crosslinker type provided: {crosslinker_type}")
+
+        fragments_meta_data_a, tmt_n_term_a, unmod_sequence_a, calc_mass_a = initialize_peaks_xl(inputs_a)
+        fragments_meta_data_b, tmt_n_term_b, unmod_sequence_b, calc_mass_b = initialize_peaks_xl(inputs_b)
+
         if not unmod_sequence_a:
             return None
         if not unmod_sequence_b:
@@ -394,47 +415,36 @@ def parallel_annotate(
             spectrum[index_columns["PRECURSOR_CHARGE"]],
         )
 
-        if len(matched_peaks_a) == 0 and len(matched_peaks_b) == 0:
-            intensities_a = np.full(348, 0.0)
-            mass_a = np.full(348, 0.0)
-            intensities_b = np.full(348, 0.0)
-            mass_b = np.full(348, 0.0)
-            return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, 0, 0
-        elif len(matched_peaks_a) == 0 and len(matched_peaks_b) != 0:
-            intensities_a = np.full(348, 0.0)
-            mass_a = np.full(348, 0.0)
-            matched_peaks_b, removed_peaks_b = handle_multiple_matches(matched_peaks_b)
-            intensities_b, mass_b = generate_annotation_matrix_xl(
-                matched_peaks_b, unmod_sequence_b, spectrum[index_columns["CROSSLINKER_POSITION_B"]]
-            )
-            return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, 0, removed_peaks_b
-        elif len(matched_peaks_a) != 0 and len(matched_peaks_b) == 0:
-            intensities_b = np.full(348, 0.0)
-            mass_b = np.full(348, 0.0)
-            matched_peaks_a, removed_peaks_a = handle_multiple_matches(matched_peaks_a)
-            intensities_a, mass_a = generate_annotation_matrix_xl(
-                matched_peaks_a, unmod_sequence_a, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
-            )
-            return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, removed_peaks_a, 0
+        if len(matched_peaks_a) == 0:
+            intensities_a = np.full(array_size, 0.0)
+            mass_a = np.full(array_size, 0.0)
+            removed_peaks_a = 0
         else:
             matched_peaks_a, removed_peaks_a = handle_multiple_matches(matched_peaks_a)
-            matched_peaks_b, removed_peaks_b = handle_multiple_matches(matched_peaks_b)
-            intensities_a, mass_a = generate_annotation_matrix_xl(
+            intensities_a, mass_a = matrix_func(
                 matched_peaks_a, unmod_sequence_a, spectrum[index_columns["CROSSLINKER_POSITION_A"]]
             )
-            intensities_b, mass_b = generate_annotation_matrix_xl(
+
+        if len(matched_peaks_b) == 0:
+            intensities_b = np.full(array_size, 0.0)
+            mass_b = np.full(array_size, 0.0)
+            removed_peaks_b = 0
+        else:
+            matched_peaks_b, removed_peaks_b = handle_multiple_matches(matched_peaks_b)
+            intensities_b, mass_b = matrix_func(
                 matched_peaks_b, unmod_sequence_b, spectrum[index_columns["CROSSLINKER_POSITION_B"]]
             )
-            return (
-                intensities_a,
-                intensities_b,
-                mass_a,
-                mass_b,
-                calc_mass_a,
-                calc_mass_b,
-                removed_peaks_a,
-                removed_peaks_b,
-            )
+
+        return (
+            intensities_a,
+            intensities_b,
+            mass_a,
+            mass_b,
+            calc_mass_a,
+            calc_mass_b,
+            removed_peaks_a,
+            removed_peaks_b,
+        )
 
     else:
         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(
