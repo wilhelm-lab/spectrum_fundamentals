@@ -1,8 +1,14 @@
 name: Run spectrum_fundamentals Tests
 
 on:
-    - push
-    - pull_request
+    push:
+        branches:
+            - development
+            - main
+            - "release/*"
+    pull_request:
+        branches:
+            - "*"
 
 jobs:
     tests:
