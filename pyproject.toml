@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "spectrum_fundamentals"
 version = "0.5.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
-description = "Fundamentals public repo"
-authors = ["WassimG <wassim.gabriel@gmail.com>"]
+description = "Fundamental functions, annotation pipeline and constants for oktoberfest"
+authors = ["Wilhelmlab at Technical University of Munich"]
 license = "MIT"
 readme = "README.rst"
 homepage = "https://github.com/wilhelm-lab/spectrum_fundamentals"
