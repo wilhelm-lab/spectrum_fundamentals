@@ -1,7 +1,7 @@
 """Initialize fundamentals."""
 __author__ = "Victor Giurcoiu"
 __email__ = "victor.giurcoiu@tum.de"
-__version__ = "0.4.4"
+__version__ = "0.4.5"
 
 import logging
 import logging.handlers
