@@ -296,6 +296,7 @@ def initialize_peaks_xl(
         mass = compute_peptide_mass(sequence_without_crosslinker)
 
     elif crosslinker_type in ["BS3", "DSS"]:  # non-cleavable XL
+        charge=3    # generate only peaks with charge 1, 2 and 3
 
         sequence_without_crosslinker = sequence.replace("[UNIMOD:1898]", "")
         sequence_beta_without_crosslinker = sequence_beta.replace("[UNIMOD:1898]", "")

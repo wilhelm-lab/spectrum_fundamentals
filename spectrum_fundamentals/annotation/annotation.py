@@ -352,6 +352,7 @@ def parallel_annotate(
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
+
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
@@ -389,8 +390,8 @@ def parallel_annotate(
         else:
             raise ValueError(f"Unsupported crosslinker type provided: {crosslinker_type}")
 
-        fragments_meta_data_a, tmt_n_term_a, unmod_sequence_a, calc_mass_a = initialize_peaks_xl(inputs_a)
-        fragments_meta_data_b, tmt_n_term_b, unmod_sequence_b, calc_mass_b = initialize_peaks_xl(inputs_b)
+        fragments_meta_data_a, tmt_n_term_a, unmod_sequence_a, calc_mass_a = initialize_peaks_xl(*inputs_a)
+        fragments_meta_data_b, tmt_n_term_b, unmod_sequence_b, calc_mass_b = initialize_peaks_xl(*inputs_b)
 
         if not unmod_sequence_a:
             return None

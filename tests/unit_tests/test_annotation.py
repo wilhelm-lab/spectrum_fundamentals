@@ -29,6 +29,15 @@ class TestAnnotationPipeline(unittest.TestCase):
         result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)
 
+    def test_annotate_spectra_noncl_xl(self):
+        """Test annotate spectra."""
+
+        spectrum_input = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_input.json", orient='records')
+        expected_result = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_output.json", orient='records')
+
+        result = annotation.annotate_spectra(spectrum_input)
+        pd.testing.assert_frame_equal(expected_result, result)
+
     def test_handle_multiple_matches(self):
         """Test handle_multiple_matches function."""
         # Example input data with multiple matches. They don't make biological sense but it tests the mathematical correctness.
@@ -112,3 +121,11 @@ class TestAnnotationPipeline(unittest.TestCase):
             matched_peaks,
             sort_by="illegal",
         )
+
+# Create a test suite containing only the test_sqrt test
+suite = unittest.TestSuite()
+suite.addTest(TestAnnotationPipeline('test_annotate_spectra_noncl_xl'))
+
+# Create a test runner that will run our suite
+runner = unittest.TextTestRunner()
+runner.run(suite)
