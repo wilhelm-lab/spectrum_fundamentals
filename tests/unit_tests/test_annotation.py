@@ -121,11 +121,3 @@ class TestAnnotationPipeline(unittest.TestCase):
             matched_peaks,
             sort_by="illegal",
         )
-
-# Create a test suite containing only the test_sqrt test
-suite = unittest.TestSuite()
-suite.addTest(TestAnnotationPipeline('test_annotate_spectra_noncl_xl'))
-
-# Create a test runner that will run our suite
-runner = unittest.TextTestRunner()
-runner.run(suite)
