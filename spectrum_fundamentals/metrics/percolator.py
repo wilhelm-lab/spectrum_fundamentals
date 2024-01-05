@@ -64,6 +64,9 @@ class Percolator(Metric):
         self.all_features_flag = all_features_flag
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
+        self.internal = True # TODO: Get this parameter from the caller
+
+        self._resolve_percolator_compatibility(percolator_version)
         super().__init__(pred_intensities, true_intensities, mz)
 
     @staticmethod
@@ -155,6 +158,29 @@ class Percolator(Metric):
             )
 
         return aligned_rts_predicted
+
+    @staticmethod
+    def get_scannr(metadata_subset: Union[pd.Series, Tuple[str, int]]) -> int:
+        """
+        Creates a hash of the raw_file and scan number to use as a unique scan number in percolator.
+
+        :param metadata_subset: tuple of (raw_file, scan_number)
+        :return: hashed unique id
+        """
+        raw_file, scan_number = metadata_subset
+        s = f"{raw_file}{scan_number}".encode()
+        return int(hashlib.sha224(s).hexdigest()[:6], 16)
+
+    @staticmethod
+    def get_scannr_internal(metadata_subset: Union[pd.Series, Tuple[str, int]]) -> int:
+        """
+        Creates a hash of the raw_file and scan number to use as a unique scan number in percolator.
+
+        :param metadata_subset: tuple of (raw_file, scan_number)
+        :return: hashed unique id
+        """
+        scan_event_number = metadata_subset
+        return int(scan_event_number)
 
     @staticmethod
     def get_delta_score(scores_df: pd.DataFrame, scoring_feature: str) -> np.ndarray:
@@ -270,7 +296,11 @@ class Percolator(Metric):
             spec_id_cols.append("SCAN_EVENT_NUMBER")
         self.metrics_val["SpecId"] = self.metadata[spec_id_cols].apply(Percolator.get_specid, axis=1)
         self.metrics_val["Label"] = self.target_decoy_labels
-        self.metrics_val["ScanNr"] = self.metadata["SCAN_NUMBER"]
+        
+        if self.internal:
+            self.metrics_val["ScanNr"] = self.metadata[["SCAN_EVENT_NUMBER"]].apply(Percolator.get_scannr_internal, axis=1)
+        else:
+            self.metrics_val["ScanNr"] = self.metadata["SCAN_NUMBER"]
         self.metrics_val["filename"] = self.metadata["RAW_FILE"]
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
 
