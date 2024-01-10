@@ -10,6 +10,8 @@ from moepy import lowess
 from scipy import interpolate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
+import spectrum_fundamentals.constants
+
 from . import fragments_ratio as fr
 from . import similarity as sim
 from .metric import Metric
@@ -66,6 +68,8 @@ class Percolator(Metric):
         self.fdr_cutoff = fdr_cutoff
         super().__init__(pred_intensities, true_intensities, mz)
 
+    # proton_mass = spectrum_fundamentals.constants.PARTICLE_MASSES['PROTON']
+    # df_prosit['ExpMass'] = df_prosit['Mass'] + proton_mass * df_prosit['CHARGE'] / df_prosit['CHARGE']
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
         """
@@ -85,8 +89,8 @@ class Percolator(Metric):
             / len(retention_time_df["RETENTION_TIME"]) ** (1 / 3)
         )  # Freedman–Diaconis rule
         break_points = np.arange(min_rt, max_rt, bin_width)
-        retention_time_df["rt_bin_index"] = np.digitize(retention_time_df["RETENTION_TIME"], break_points)
-
+        # retention_time_df["rt_bin_index"] = np.digitize(retention_time_df["RETENTION_TIME"], break_points)
+        retention_time_df.loc[:, "rt_bin_index"] = np.digitize(retention_time_df["RETENTION_TIME"], break_points)
         # sample a subset in each bin. Arbitrary target is 5000 datapoints spread over the bin counts
         points_per_bin = int(np.floor(sample_size / len(break_points)))
         retention_time_df = retention_time_df.groupby("rt_bin_index").apply(
@@ -265,7 +269,7 @@ class Percolator(Metric):
 
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
-        spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
+        spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE", "PROTEINS"]
         if "SCAN_EVENT_NUMBER" in self.metadata.columns:
             spec_id_cols.append("SCAN_EVENT_NUMBER")
         self.metrics_val["SpecId"] = self.metadata[spec_id_cols].apply(Percolator.get_specid, axis=1)
@@ -275,8 +279,15 @@ class Percolator(Metric):
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
 
         self.metrics_val["Proteins"] = self.metadata[
-            "MODIFIED_SEQUENCE"
+            "PROTEINS"
         ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+        # added a variable for proton mass
+        proton_mass = spectrum_fundamentals.constants.PARTICLE_MASSES["PROTON"]
+        # added theorictical/expected (mass/charge) column including the charge
+
+        self.metrics_val["ExpMass"] = self.metadata["CALCULATED_MASS"] + (
+            proton_mass * self.metadata["PRECURSOR_CHARGE"] / self.metadata["PRECURSOR_CHARGE"]
+        )
 
     def apply_lda_and_get_indices_below_fdr(
         self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
@@ -445,7 +456,6 @@ class Percolator(Metric):
             self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
                 self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
             )
-
         self._reorder_columns_for_percolator()
 
 
