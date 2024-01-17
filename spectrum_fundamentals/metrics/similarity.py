@@ -76,7 +76,7 @@ class SimilarityMetrics(Metric):
             observed_intensities = observed_intensities.multiply(boolean_array).toarray()
             predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
 
-        predicted_non_zero_mask = predicted_intensities > constants.EPSILON
+        predicted_non_zero_mask = predicted_intensities > 0.04
 
         if isinstance(observed_intensities, scipy.sparse.csr_matrix):
             observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
@@ -91,7 +91,7 @@ class SimilarityMetrics(Metric):
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
-        observed_non_zero_mask = observed_intensities > constants.EPSILON
+        observed_non_zero_mask = observed_intensities > 0.04
         fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, predicted_non_zero_mask)
 
         dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized) * (
