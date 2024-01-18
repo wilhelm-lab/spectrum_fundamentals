@@ -118,7 +118,9 @@ def handle_multiple_matches(
     return matched_peaks_df, (original_length - length_after_matches)
 
 
-def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
+def annotate_spectra(
+    un_annot_spectra: pd.DataFrame, mass_tolerance: Optional[float] = None, unit_mass_tolerance: Optional[str] = None
+) -> pd.DataFrame:
     """
     Annotate a set of spectra.
 
@@ -134,18 +136,19 @@ def annotate_spectra(un_annot_spectra: pd.DataFrame) -> pd.DataFrame:
     - removed_peaks: a NumPy array containing the indices of any peaks that were removed during the annotation process
 
     :param un_annot_spectra: a Pandas DataFrame containing the raw peaks and metadata to be annotated
+    :param mass_tolerance: mass tolerance to calculate min and max mass
+    :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-        results = parallel_annotate(row, index_columns)
+        results = parallel_annotate(row, index_columns, mass_tolerance, unit_mass_tolerance)
         if not results:
             continue
         raw_file_annotations.append(results)
     results_df = pd.DataFrame(raw_file_annotations)
     results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
-    logger.info(f"Removed {results_df['removed_peaks'].describe()} redundant peaks")
 
     return results_df
 
@@ -205,7 +208,12 @@ def generate_annotation_matrix(
     return intensity, mass
 
 
-def parallel_annotate(spectrum: np.ndarray, index_columns: dict) -> Optional[Tuple[np.ndarray, np.ndarray, float, int]]:
+def parallel_annotate(
+    spectrum: np.ndarray,
+    index_columns: dict,
+    mass_tolerance: Optional[float] = None,
+    unit_mass_tolerance: Optional[str] = None,
+) -> Optional[Tuple[np.ndarray, np.ndarray, float, int]]:
     """
     Perform parallel annotation of a spectrum.
 
@@ -217,6 +225,8 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict) -> Optional[Tup
 
     :param spectrum: a np.ndarray that contains the spectrum to be annotated
     :param index_columns: a dictionary that contains the index columns of the spectrum
+    :param mass_tolerance: mass tolerance to calculate min and max mass
+    :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -228,6 +238,8 @@ def parallel_annotate(spectrum: np.ndarray, index_columns: dict) -> Optional[Tup
         spectrum[index_columns[mod_seq_column]],
         spectrum[index_columns["MASS_ANALYZER"]],
         spectrum[index_columns["PRECURSOR_CHARGE"]],
+        mass_tolerance,
+        unit_mass_tolerance,
     )
     if not unmod_sequence:
         return None

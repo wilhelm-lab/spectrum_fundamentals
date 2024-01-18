@@ -274,12 +274,6 @@ def _create_noisy_logistic_data():
 class TestPercolator:
     """Class to test percolator."""
 
-    def test_get_scannr(self):
-        """Test get_scannr."""
-        np.testing.assert_equal(
-            perc.Percolator.get_scannr(("20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02", 7978)), 10203379
-        )
-
     def test_get_specid(self):
         """Test get_specid."""
         np.testing.assert_string_equal(
@@ -361,11 +355,12 @@ class TestPercolator:
             percolator.metrics_val["SpecId"][0], "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02-7978-AAIGEATRL-2-1"
         )
         np.testing.assert_equal(percolator.metrics_val["Label"][0], 1)
-        np.testing.assert_equal(percolator.metrics_val["ScanNr"][0], 10203379)
+        np.testing.assert_equal(percolator.metrics_val["ScanNr"][0], 7978)
+        np.testing.assert_equal(percolator.metrics_val["filename"][0], "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02")
         # np.testing.assert_almost_equal(percolator.metrics_val['ExpMass'][0], 900.50345678)
         np.testing.assert_string_equal(percolator.metrics_val["Peptide"][0], "_.AAIGEATRL._")
         np.testing.assert_string_equal(
-            percolator.metrics_val["Protein"][0], "AAIGEATRL"
+            percolator.metrics_val["Proteins"][0], "AAIGEATRL"
         )  # we don't need the protein ID to get PSM / peptide results
 
         # features
