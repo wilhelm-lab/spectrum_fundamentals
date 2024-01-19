@@ -1,6 +1,6 @@
 import difflib
 import re
-from itertools import repeat
+from itertools import repeat, combinations
 from typing import Dict, List, Optional, Tuple
 
 from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_MASSES_SAGE, MOD_NAMES, MSFRAGGER_VAR_MODS, SPECTRONAUT_MODS
@@ -268,6 +268,32 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
     pattern = [re.escape(i) for i in pattern]
     regex_pattern = re.compile("|".join(pattern))
     return map(split_modstring, sequences, repeat(regex_pattern))
+
+
+def add_permutations(modified_sequence: str, unimod_id: int, residues: List[str]):
+    """
+    Generate different peptide sequences with moving the modification to all possible residues
+
+    :param modified_sequence: Peptide sequence
+    :param mod_id: modification unimod id to be used for generating different permutations.
+    :param residues: possible amino acids where this mod can exist
+    :return: list of possible sequence permutations
+    """
+    sequence = modified_sequence.replace('[UNIMOD:'+ str(unimod_id) + ']', '')
+    modifications = len(re.findall("UNIMOD:"+ str(unimod_id), mod_seq))
+    if modifications == 0:
+        return mod_seq
+    possible_positions = [i for i, ltr in enumerate(sequence) if ltr in residues]
+    possible_positions.sort(reverse=True)
+    all_combinations = [list(each_permutation) for each_permutation in
+                        combinations(possible_positions, modifications)]
+    modified_sequences_comb = []
+    for comb in all_combinations:
+        mod_seq = sequence
+        for index in comb:
+            mod_seq = mod_seq[:index + 1] + '[unimod:'+ str(unimod_id) + ']' + mod_seq[index + 1:]
+        modified_sequences_comb.append(mod_seq)
+    return modified_sequences_comb
 
 
 def proteomicsdb_to_internal(sequence: str, mods_variable: str = "", mods_fixed: str = "") -> str:
