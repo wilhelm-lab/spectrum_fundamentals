@@ -230,6 +230,8 @@ def parallel_annotate(
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
+    if spectrum[index_columns["PEPTIDE_LENGTH"]] > 30:  # this was in initialize peaks but can be checked prior
+        return None
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
@@ -241,8 +243,6 @@ def parallel_annotate(
         mass_tolerance,
         unit_mass_tolerance,
     )
-    if not unmod_sequence:
-        return None
     matched_peaks = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
