@@ -10,6 +10,9 @@ from moepy import lowess
 from scipy import interpolate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
+import spectrum_fundamentals
+from spectrum_fundamentals import constants
+
 from . import fragments_ratio as fr
 from . import similarity as sim
 from .metric import Metric
@@ -273,6 +276,14 @@ class Percolator(Metric):
         self.metrics_val["Label"] = self.target_decoy_labels
         self.metrics_val["ScanNr"] = self.metadata["SCAN_NUMBER"]
         self.metrics_val["filename"] = self.metadata["RAW_FILE"]
+        # added a variable for proton mass
+        proton_mass = spectrum_fundamentals.constants.PARTICLE_MASSES["PROTON"]
+        # added theorictical/expected (mass/charge) column including the charge
+
+        self.metrics_val["ExpMass"] = (
+            self.metadata["CALCULATED_MASS"] + proton_mass * self.metadata["PRECURSOR_CHARGE"]
+        ) / self.metadata["PRECURSOR_CHARGE"]
+
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
         self.metrics_val["Proteins"] = self.metadata["PROTEINS"]  # added proteins column for de-duplication purposes
 
