@@ -10,8 +10,7 @@ from moepy import lowess
 from scipy import interpolate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-import spectrum_fundamentals
-from spectrum_fundamentals import constants
+import spectrum_fundamentals.constants as cs
 
 from . import fragments_ratio as fr
 from . import similarity as sim
@@ -277,13 +276,13 @@ class Percolator(Metric):
         self.metrics_val["ScanNr"] = self.metadata["SCAN_NUMBER"]
         self.metrics_val["filename"] = self.metadata["RAW_FILE"]
         # added a variable for proton mass
-        proton_mass = spectrum_fundamentals.constants.PARTICLE_MASSES["PROTON"]
+        proton_mass = cs.PARTICLE_MASSES["PROTON"]
         # added theorictical/expected (mass/charge) column including the charge
 
         self.metrics_val["ExpMass"] = (
             self.metadata["CALCULATED_MASS"] + proton_mass * self.metadata["PRECURSOR_CHARGE"]
         ) / self.metadata["PRECURSOR_CHARGE"]
-
+        # self.metrics_val.insert(self.metrics_val.columns.get_loc("filename") + 1, "ExpMass", self.metrics_val.pop("ExpMass"))
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
         self.metrics_val["Proteins"] = self.metadata["PROTEINS"]  # added proteins column for de-duplication purposes
 
@@ -380,7 +379,7 @@ class Percolator(Metric):
 
     def _reorder_columns_for_percolator(self):
         all_columns = self.metrics_val.columns
-        first_columns = ["SpecId", "Label", "ScanNr", "filename"]
+        first_columns = ["SpecId", "Label", "ScanNr", "filename", "ExpMass"]
         last_columns = ["Peptide", "Proteins"]
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
