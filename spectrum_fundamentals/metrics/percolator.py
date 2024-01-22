@@ -273,13 +273,8 @@ class Percolator(Metric):
         self.metrics_val["Label"] = self.target_decoy_labels
         self.metrics_val["ScanNr"] = self.metadata["SCAN_NUMBER"]
         self.metrics_val["filename"] = self.metadata["RAW_FILE"]
-        # here you should ExpMass
-        self.metrics_val["ExpMass"] = 
         self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
-
-        self.metrics_val["Proteins"] = self.metadata[
-            "PROTEINS"
-        ]  # added proteins column for de-duplication purposes
+        self.metrics_val["Proteins"] = self.metadata["PROTEINS"]  # added proteins column for de-duplication purposes
 
     def apply_lda_and_get_indices_below_fdr(
         self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
