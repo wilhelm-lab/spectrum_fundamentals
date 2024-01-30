@@ -284,7 +284,7 @@ class Percolator(Metric):
         self.metrics_val["ExpMass"] = (
             self.metadata["CALCULATED_MASS"] + proton_mass * self.metadata["PRECURSOR_CHARGE"]
         ) / self.metadata["PRECURSOR_CHARGE"]
-        self.metrics_val["Proteins"] = self.metadata["MODIFIED_SEQUENCE"]
+        self.metrics_val["Proteins"] = self.metadata["PROTEINS"]
 
     def apply_lda_and_get_indices_below_fdr(
         self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
@@ -379,7 +379,7 @@ class Percolator(Metric):
 
     def _reorder_columns_for_percolator(self):
         all_columns = self.metrics_val.columns
-        first_columns = ["SpecId", "Label", "ScanNr", "filename", "CID", "ExpMass"]
+        first_columns = ["SpecId", "Label", "ScanNr", "filename", "ExpMass"]
         last_columns = ["Peptide", "Proteins"]
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
