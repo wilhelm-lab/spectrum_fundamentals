@@ -52,14 +52,8 @@ class Percolator(Metric):
         metadata: pd.DataFrame,
         input_type: str,
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        # pred_intensities_a: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        # pred_intensities_b: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        # true_intensities_a: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        # true_intensities_b: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        # mz_a: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        # mz_b: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
@@ -73,11 +67,7 @@ class Percolator(Metric):
         self.fdr_cutoff = fdr_cutoff
         self.xl = xl
 
-        # any(self.config.search_type.lower() == s.lower() for s in ["plink2", "xlinkx","xisearch"])
         super().__init__(pred_intensities, true_intensities, mz)
-        # super().__init__(pred_intensities,pred_intensities_a,pred_intensities_b,
-        # true_intensities, true_intensities_a, true_intensities_b,
-        # mz, mz_a, mz_b)
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -258,6 +248,7 @@ class Percolator(Metric):
 
     def add_common_features(self):
         """Add features used by both Andromeda and Prosit feature scoring sets."""
+        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
         if self.xl:
             self.metrics_val["missedCleavages_A"] = self.metadata["SEQUENCE_A"].apply(Percolator.count_missed_cleavages)
             self.metrics_val["missedCleavages_B"] = self.metadata["SEQUENCE_B"].apply(Percolator.count_missed_cleavages)
@@ -265,12 +256,8 @@ class Percolator(Metric):
             self.metrics_val["KR_B"] = self.metadata["SEQUENCE_B"].apply(Percolator.count_arginines_and_lysines)
             self.metrics_val["sequence_length_a"] = self.metadata["SEQUENCE_A"].apply(lambda x: len(x))
             self.metrics_val["sequence_length_b"] = self.metadata["SEQUENCE_B"].apply(lambda x: len(x))
-            self.metrics_val["Mass_A"] = self.metadata[
-                "CALCULATED_MASS_A"
-            ]  # this is the calculated mass of cross-linked peptide used as a feature
-            self.metrics_val["Mass_B"] = self.metadata[
-                "CALCULATED_MASS_B"
-            ]  # this is the calculated mass of cross-linked peptide used as a feature
+            for column_name in self.metadata.columns:
+                self.metrics_val[column_name] = self.metadata[column_name]
         else:
             self.metrics_val["missedCleavages"] = self.metadata["SEQUENCE"].apply(Percolator.count_missed_cleavages)
             self.metrics_val["KR"] = self.metadata["SEQUENCE"].apply(Percolator.count_arginines_and_lysines)
@@ -299,8 +286,6 @@ class Percolator(Metric):
             self.metrics_val["Proteins"] = (
                 self.metadata["MODIFIED_SEQUENCE_A"] + "_" + self.metadata["MODIFIED_SEQUENCE_B"]
             )
-            # self.metrics_val["label_pep_a"] = self.metadata["label_pep_a"]
-            # self.metrics_val["label_pep_b"] = self.metadata["label_pep_b"]
             self.metrics_val["Label"] = self.target_decoy_labels
         else:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
@@ -391,20 +376,6 @@ class Percolator(Metric):
         cumulative_target_count = np.cumsum(sorted_labels == TargetDecoyLabel.TARGET) + 1
         return Percolator.fdrs_to_qvals(cumulative_decoy_count / cumulative_target_count)
 
-        # def calculate_fdrs_xl(sorted_labels: Union[pd.Series, np.ndarray]) -> np.ndarray:
-        """
-        Calculate FDR.
-
-        :param sorted_labels: array with labels sorted (target, decoy)
-        :return: array with calculated FDRs
-        """
-        # if isinstance(sorted_labels, pd.Series):
-        # sorted_labels = sorted_labels.to_numpy()
-        # cumulative_decoy_count_1 = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
-        # cumulative_decoy_count_2 = np.cumsum(sorted_labels == TargetDecoyLabel.DECOY) + 1
-        # cumulative_target_count = np.cumsum(sorted_labels == TargetDecoyLabel.TARGET) + 1
-        # return Percolator.fdrs_to_qvals(cumulative_decoy_count_1 - cumulative_decoy_count_2) / (cumulative_target_count)
-
     @staticmethod
     def fdrs_to_qvals(fdrs: np.ndarray) -> np.ndarray:
         """
@@ -446,50 +417,50 @@ class Percolator(Metric):
             self.metrics_val = pd.concat(
                 [self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1
             )
-
-            lda_failed = False
-            idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
-            current_fdr = self.fdr_cutoff
-            while len(idxs_below_lda_fdr) == 0:
-                current_fdr += 0.01
-                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
-                if current_fdr >= 0.1:
-                    lda_failed = True
-                    break
             if self.xl:
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:
-                if lda_failed:
-                    sampled_idxs = Percolator.sample_balanced_over_bins(
-                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
-                    )
+                lda_failed = False
+                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+                current_fdr = self.fdr_cutoff
+                while len(idxs_below_lda_fdr) == 0:
+                    current_fdr += 0.01
+                    idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
+                    if current_fdr >= 0.1:
+                        lda_failed = True
+                        break
                 else:
-                    sampled_idxs = Percolator.sample_balanced_over_bins(
-                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
+                    if lda_failed:
+                        sampled_idxs = Percolator.sample_balanced_over_bins(
+                            self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
+                        )
+                    else:
+                        sampled_idxs = Percolator.sample_balanced_over_bins(
+                            self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
+                        )
+
+                    file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
+                    aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
+                        file_sample["RETENTION_TIME"],
+                        file_sample["PREDICTED_IRT"],
+                        self.metadata["PREDICTED_IRT"],
+                        self.regression_method,
                     )
 
-                file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
-                aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
-                    file_sample["RETENTION_TIME"],
-                    file_sample["PREDICTED_IRT"],
-                    self.metadata["PREDICTED_IRT"],
-                    self.regression_method,
-                )
+                    self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
+                    self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
+                    self.metrics_val["iRT"] = aligned_predicted_rts
+                    self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
+                    self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
 
-                self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
-                self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
-                self.metrics_val["iRT"] = aligned_predicted_rts
-                self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
-                self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
-
-                median_abs_error_lda_targets = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
-                logger.info(
-                    "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
-                    f"{median_abs_error_lda_targets}"
-                )
-                logger.debug(
-                    self.metrics_val[["RT", "pred_RT", "abs_rt_diff", "lda_scores"]].iloc[idxs_below_lda_fdr, :]
-                )
+                    median_abs_error_lda_targets = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
+                    logger.info(
+                        "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
+                        f"{median_abs_error_lda_targets}"
+                    )
+                    logger.debug(
+                        self.metrics_val[["RT", "pred_RT", "abs_rt_diff", "lda_scores"]].iloc[idxs_below_lda_fdr, :]
+                    )
 
         else:
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
