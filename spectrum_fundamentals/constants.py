@@ -107,6 +107,49 @@ MSFRAGGER_VAR_MODS = {
     "n[230]": "[UNIMOD:737]-",
     "n[305]": "[UNIMOD:2016]-",
     "n[214]": "[UNIMOD:214]-",
+    "A[87]": "A[UNIMOD:35]",
+    "D[131]": "D[UNIMOD:35]",
+    "E[145]": "E[UNIMOD:35]",
+    "F[163]": "F[UNIMOD:35]",
+    "H[153]": "H[UNIMOD:35]",
+    "I[129]": "I[UNIMOD:35]",
+    "K[144]": "K[UNIMOD:35]",
+    "L[129]": "L[UNIMOD:35]",
+    "N[130]": "N[UNIMOD:35]",
+    "P[113]": "P[UNIMOD:35]",
+    "Q[144]": "Q[UNIMOD:35]",
+    "R[172]": "R[UNIMOD:35]",
+    "V[115]": "V[UNIMOD:35]",
+    "W[202]": "W[UNIMOD:35]",
+    "Y[179]": "Y[UNIMOD:35]",
+    "C[192]": "C[UNIMOD:425]",
+    "F[179]": "F[UNIMOD:425]",
+    "M[163]": "M[UNIMOD:425]",
+    "W[218]": "W[UNIMOD:425]",
+    "Y[195]": "Y[UNIMOD:425]",
+    "C[208]": "C[UNIMOD:345]",
+    "F[195]": "F[UNIMOD:345]",
+    "W[234]": "W[UNIMOD:345]",
+    "Y[211]": "Y[UNIMOD:345]",
+    "E[143]": "E[UNIMOD:1918]",
+    "I[127]": "I[UNIMOD:1918]",
+    "K[142]": "K[UNIMOD:1918]",
+    "L[127]": "L[UNIMOD:1918]",
+    "P[111]": "P[UNIMOD:1918]",
+    "Q[142]": "Q[UNIMOD:1918]",
+    "R[170]": "R[UNIMOD:1918]",
+    "V[113]": "V[UNIMOD:1918]",
+    "R[113]": "R[UNIMOD:344]",
+    "H[115]": "H[UNIMOD:349]",
+    "H[114]": "H[UNIMOD:348]",
+    "H[127]": "H[UNIMOD:1916]",
+    "H[142]": "H[UNIMOD:1917]",
+    "D[85]": "D[UNIMOD:1915]",
+    "E[99]": "E[UNIMOD:1915]",
+    "D[87]": "D[UNIMOD:369]",
+    "E[101]": "E[UNIMOD:369]",
+    "D[71]": "D[UNIMOD:553]",
+    "E[85]": "E[UNIMOD:553]",
 }
 
 ####################
@@ -167,6 +210,17 @@ MOD_MASSES = {
     "[UNIMOD:4]": 57.02146,  # Carbamidomethyl
     "[UNIMOD:35]": 15.9949146,  # Oxidation
     "[UNIMOD:1]": 42.010565,  # Acetylation
+    "[UNIMOD:425]": 31.989829, # Dioxidation #NR
+    "[UNIMOD:345]": 47.984744, # Trioxidation #NR
+    "[UNIMOD:1918]": 13.979265, # aldehyde and ketone modifications #NR #unsecure (according to paper carbonylation for EIKLPQRV, but in unimod just AEILQRSV)
+    "[UNIMOD:1915]": -30.010565, # Decarboxylation #NR
+    "[UNIMOD:344]": -43.053433, # Arginine oxidation to glutamic semialdehyde #NR #unsecure (according to paper Arg deguanidation, but searching for ass in unimod gives Arginine oxidation to glutamic semialdehyde)
+    "[UNIMOD:349]": -22.031969, # His->Asp substitution #NR #unsecure (according to paper H to D, but searching for mass in unimod gives His->Asp as result)
+    "[UNIMOD:348]": -23.015984, # His->Asn or Trp->Tyr substitution #NR #unsecure (according to paper H to N, but searching for mass in unimod gives His->Asn or Trp->Tyr as result)
+    "[UNIMOD:1916]": -10.031969, # Aspartylurea #NR #unsecure (according to paper H -10, but searching for mass in unimod gives Aspartylurea as result)
+    "[UNIMOD:1917]": 4.9735, # Formylasparagine #NR #unsecure (according to paper H +5, but searching for mass in unimod gives Formylasparagine as result)
+    "[UNIMOD:369]": -27.994915, # Pyrrolidone from Proline #NR #unsecure (according to paper CO loss for D and E; other unimod possibilities: 1075 (Asp->Ser Substitution), 1087(Glu->Thr substitution)); 
+    "[UNIMOD:553]": -43.989829, # Asp->Ala substitution #NR #unsecure (according to fragpipe paper CO2 loss on D and E, but unimod:553 = Asp->Ala (D->A)
 }
 MOD_MASSES_SAGE = {
     229.1629: "[UNIMOD:737]",
