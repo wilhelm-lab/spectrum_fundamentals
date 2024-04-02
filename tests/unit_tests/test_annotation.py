@@ -18,6 +18,7 @@ class TestAnnotationPipeline(unittest.TestCase):
             index_col=0,
             converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
         )
+
         expected_result = pd.read_csv(
             Path(__file__).parent / "data/spectrum_output.csv",
             index_col=0,
@@ -31,9 +32,8 @@ class TestAnnotationPipeline(unittest.TestCase):
 
     def test_annotate_spectra_noncl_xl(self):
         """Test annotate spectra."""
-
-        spectrum_input = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_input.json", orient='records')
-        expected_result = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_output.json", orient='records')
+        spectrum_input = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_input.json", orient="records")
+        expected_result = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_output.json", orient="records")
 
         result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)

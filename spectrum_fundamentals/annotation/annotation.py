@@ -352,7 +352,6 @@ def parallel_annotate(
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
-
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"

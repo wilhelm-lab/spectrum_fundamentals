@@ -190,12 +190,18 @@ def initialize_peaks(
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
             for ion_type in range(0, number_of_ion_types):  # generate all ion types
                 # Check for neutral loss here
-                if noncl_xl == 1 and ion_type == 0 and i + 1 >= xl_pos:  # for the b ions
-                    ion_mass_with_peptide_beta = ion_type_masses[ion_type] + peptide_beta_mass
-                    mass = (ion_mass_with_peptide_beta + charge_delta) / charge
-                elif noncl_xl == 1 and ion_type == 1 and i >= peptide_length - xl_pos:  # for the y-ions
-                    ion_mass_with_peptide_beta = ion_type_masses[ion_type] + peptide_beta_mass
-                    mass = (ion_mass_with_peptide_beta + charge_delta) / charge
+                if noncl_xl == 1 and ion_type == 0 and xl_pos is not None and i + 1 >= xl_pos:  # for the b ions
+                    if peptide_beta_mass is not None:
+                        ion_mass_with_peptide_beta = ion_type_masses[ion_type] + peptide_beta_mass
+                        mass = (ion_mass_with_peptide_beta + charge_delta) / charge
+                    else:
+                        raise ValueError("peptide_beta_mass cannot be None. Please check your input data.")
+                elif noncl_xl == 1 and ion_type == 1 and xl_pos is not None and i >= peptide_length - xl_pos:  # for the y-ions
+                    if peptide_beta_mass is not None:
+                        ion_mass_with_peptide_beta = ion_type_masses[ion_type] + peptide_beta_mass
+                        mass = (ion_mass_with_peptide_beta + charge_delta) / charge
+                    else:
+                        raise ValueError("peptide_beta_mass cannot be None. Please check your input data.")
                 else:
                     mass = (ion_type_masses[ion_type] + charge_delta) / charge
                 min_mass, max_mass = get_min_max_mass(mass_analyzer, mass, mass_tolerance, unit_mass_tolerance)
@@ -296,7 +302,7 @@ def initialize_peaks_xl(
         mass = compute_peptide_mass(sequence_without_crosslinker)
 
     elif crosslinker_type in ["BS3", "DSS"]:  # non-cleavable XL
-        charge=3    # generate only peaks with charge 1, 2 and 3
+        charge = 3  # generate only peaks with charge 1, 2 and 3
 
         sequence_without_crosslinker = sequence.replace("[UNIMOD:1898]", "")
         sequence_beta_without_crosslinker = sequence_beta.replace("[UNIMOD:1898]", "")

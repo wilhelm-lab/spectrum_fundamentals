@@ -1,7 +1,7 @@
+import json
 import unittest
 from pathlib import Path
-import pandas as pd
-import json
+
 from numpy.testing import assert_almost_equal
 
 import spectrum_fundamentals.fragments as fragments
@@ -114,19 +114,17 @@ class TestInitializePeaks(unittest.TestCase):
 
     def test_initialize_peaks(self):
         """Test initialize_peaks with basic input."""
-        fragments_input = {"sequence": "AAAA",                          
-                           "mass_analyzer": "FTMS",
-                           "charge": 3,
-                           "noncl_xl": 0
-                           }
-        
-        with open(Path(__file__).parent / "data/fragments_meta_data.json", 'r') as file:
+        fragments_input = {"sequence": "AAAA", "mass_analyzer": "FTMS", "charge": 3, "noncl_xl": 0}
+
+        with open(Path(__file__).parent / "data/fragments_meta_data.json") as file:
             expected_list_out = json.load(file)
         expected_tmt_nt_term = 1
         expected_peptide_sequence = "AAAA"
         expected_mass_s = 302.15902
-        
-        actual_list_out, actual_tmt_n_term, actual_peptide_sequence, actual_calc_mass_s = fragments.initialize_peaks(**fragments_input)
+
+        actual_list_out, actual_tmt_n_term, actual_peptide_sequence, actual_calc_mass_s = fragments.initialize_peaks(
+            **fragments_input
+        )
 
         self.assertEqual(actual_list_out, expected_list_out)
         self.assertEqual(actual_tmt_n_term, expected_tmt_nt_term)
@@ -135,21 +133,26 @@ class TestInitializePeaks(unittest.TestCase):
 
     def test_initialize_peaks_non_cl_xl(self):
         """Test initialize_peaks_xl with basic input for non-cleavable crosslinked peptides."""
-        
-        initialize_peaks_xl_input = {"sequence": "AKC",
-                           "mass_analyzer": "FTMS",
-                           "crosslinker_position": 2,
-                           "crosslinker_type": "BS3",
-                           "sequence_beta": "AKA"
-                           }
-        
-        with open(Path(__file__).parent / "data/fragments_meta_data_non_cl_xl.json", 'r') as file:
+        initialize_peaks_xl_input = {
+            "sequence": "AKC",
+            "mass_analyzer": "FTMS",
+            "crosslinker_position": 2,
+            "crosslinker_type": "BS3",
+            "sequence_beta": "AKA",
+        }
+
+        with open(Path(__file__).parent / "data/fragments_meta_data_non_cl_xl.json") as file:
             expected_fragments_meta_data = json.load(file)
         expected_tmt_nt_term = 1
         expected_peptide_sequence = "AKC"
         expected_mass = 320.15182
 
-        actual_fragments_meta_data, actual_tmt_n_term, actual_peptide_sequence, actual_mass = fragments.initialize_peaks_xl(**initialize_peaks_xl_input)
+        (
+            actual_fragments_meta_data,
+            actual_tmt_n_term,
+            actual_peptide_sequence,
+            actual_mass,
+        ) = fragments.initialize_peaks_xl(**initialize_peaks_xl_input)
         self.assertEqual(actual_fragments_meta_data, expected_fragments_meta_data)
         self.assertEqual(actual_tmt_n_term, expected_tmt_nt_term)
         self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
@@ -157,21 +160,26 @@ class TestInitializePeaks(unittest.TestCase):
 
     def test_initialize_peaks_cl_xl(self):
         """Test initialize_peaks_xl with basic input for cleavable crosslinked peptides."""
-        
-        initialize_peaks_xl_input = {"sequence": "AKC",
-                           "mass_analyzer": "FTMS",
-                           "crosslinker_position": 2,
-                           "crosslinker_type": "DSSO",
-                           "sequence_beta": "AKA"
-                           }
-        
-        with open(Path(__file__).parent / "data/fragments_meta_data_cl_xl.json", 'r') as file:
+        initialize_peaks_xl_input = {
+            "sequence": "AKC",
+            "mass_analyzer": "FTMS",
+            "crosslinker_position": 2,
+            "crosslinker_type": "DSSO",
+            "sequence_beta": "AKA",
+        }
+
+        with open(Path(__file__).parent / "data/fragments_meta_data_cl_xl.json") as file:
             expected_fragments_meta_data = json.load(file)
         expected_tmt_nt_term = 1
         expected_peptide_sequence = "AKC"
         expected_mass = 320.15182
 
-        actual_fragments_meta_data, actual_tmt_n_term, actual_peptide_sequence, actual_mass = fragments.initialize_peaks_xl(**initialize_peaks_xl_input)
+        (
+            actual_fragments_meta_data,
+            actual_tmt_n_term,
+            actual_peptide_sequence,
+            actual_mass,
+        ) = fragments.initialize_peaks_xl(**initialize_peaks_xl_input)
         self.assertEqual(actual_fragments_meta_data, expected_fragments_meta_data)
         self.assertEqual(actual_tmt_n_term, expected_tmt_nt_term)
         self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)

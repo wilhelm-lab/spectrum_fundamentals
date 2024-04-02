@@ -67,7 +67,6 @@ class SimilarityMetrics(Metric):
             default_value = constants.B_ION_MASK
 
         if charge != 0:
-
             boolean_array = masks.get(charge, default_value)
 
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
@@ -448,7 +447,6 @@ class SimilarityMetrics(Metric):
     def _calc_additional_metrics(
         self, true_intensities: np.ndarray, pred_intensities: np.ndarray, key_suffix: str = ""
     ):
-
         if key_suffix != "":
             # dirty fix, if the key_suffix is not "", that means we have XL mode.
             # TODO: fix self.mz for XL mode

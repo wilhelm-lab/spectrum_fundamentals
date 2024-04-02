@@ -1,9 +1,9 @@
 import enum
 from typing import Optional, Union
-import pandas as pd
+
 import numpy as np
 import scipy.sparse
-from . import percolator
+
 from .. import constants
 from .metric import Metric
 
@@ -25,9 +25,10 @@ class ObservationState(enum.IntEnum):
     OBS_BUT_NOT_PRED = 1
     INVALID_ION = 0
 
+
 class FragmentsRatio(Metric):
     """Main to initialize a FragmentsRatio obj."""
-    
+
     @staticmethod
     def count_with_ion_mask(
         boolean_array: scipy.sparse.csr_matrix,
@@ -44,7 +45,6 @@ class FragmentsRatio(Metric):
         :param xl: whether to process with crosslinked or linear peptides
         :return: number of observed/predicted peaks not masked by ion_mask
         """
-        
         if ion_mask is None:
             ion_mask = []
 
@@ -78,7 +78,7 @@ class FragmentsRatio(Metric):
         """
         state_boolean = observation_state == test_state
         if xl:
-            return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask, xl = True)
+            return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask, xl=True)
         else:
             return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask)
 
@@ -145,7 +145,6 @@ class FragmentsRatio(Metric):
     def calc(self):
         """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
         if self.true_intensities.shape[1] == 696:
-            true_intensities = self.true_intensities 
             self.xl = True
         if self.xl:
             true_intensities_a = self.true_intensities[:, 0:348]
@@ -164,120 +163,120 @@ class FragmentsRatio(Metric):
             observation_state_b = FragmentsRatio.get_observation_state(
                 observed_boolean_b, predicted_boolean_b, mask_observed_valid_b
             )
-            valid_ions_a = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, xl = True))
-            valid_ions_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, xl = True))
+            valid_ions_a = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, xl=True))
+            valid_ions_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, xl=True))
             valid_ions_b_a = np.maximum(
-                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, constants.B_ION_MASK_XL, xl = True)
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, constants.B_ION_MASK_XL, xl=True)
             )
             valid_ions_b_b = np.maximum(
-                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, constants.B_ION_MASK_XL, xl = True)
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, constants.B_ION_MASK_XL, xl=True)
             )
             valid_ions_y_a = np.maximum(
-                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, constants.Y_ION_MASK_XL, xl = True)
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_a, constants.Y_ION_MASK_XL, xl=True)
             )
             valid_ions_y_b = np.maximum(
-                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, constants.Y_ION_MASK_XL, xl = True)
+                1, FragmentsRatio.count_with_ion_mask(mask_observed_valid_b, constants.Y_ION_MASK_XL, xl=True)
             )
             # counting metrics
-            self.metrics_val["count_predicted_a"] = FragmentsRatio.count_with_ion_mask(predicted_boolean_a, xl = True)
-            self.metrics_val["count_predicted_b"] = FragmentsRatio.count_with_ion_mask(predicted_boolean_b, xl = True)
+            self.metrics_val["count_predicted_a"] = FragmentsRatio.count_with_ion_mask(predicted_boolean_a, xl=True)
+            self.metrics_val["count_predicted_b"] = FragmentsRatio.count_with_ion_mask(predicted_boolean_b, xl=True)
             self.metrics_val["count_predicted_b_a"] = FragmentsRatio.count_with_ion_mask(
-                predicted_boolean_a, constants.B_ION_MASK_XL, xl = True
+                predicted_boolean_a, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_predicted_b_b"] = FragmentsRatio.count_with_ion_mask(
-                predicted_boolean_b, constants.B_ION_MASK_XL, xl = True
+                predicted_boolean_b, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_predicted_y_a"] = FragmentsRatio.count_with_ion_mask(
-                predicted_boolean_a, constants.Y_ION_MASK_XL, xl = True
+                predicted_boolean_a, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_predicted_y_b"] = FragmentsRatio.count_with_ion_mask(
-                predicted_boolean_b, constants.Y_ION_MASK_XL, xl = True
+                predicted_boolean_b, constants.Y_ION_MASK_XL, xl=True
             )
-            self.metrics_val["count_observed_a"] = FragmentsRatio.count_with_ion_mask(observed_boolean_a, xl = True)
-            self.metrics_val["count_observed_b"] = FragmentsRatio.count_with_ion_mask(observed_boolean_b, xl = True)
+            self.metrics_val["count_observed_a"] = FragmentsRatio.count_with_ion_mask(observed_boolean_a, xl=True)
+            self.metrics_val["count_observed_b"] = FragmentsRatio.count_with_ion_mask(observed_boolean_b, xl=True)
             self.metrics_val["count_observed_b_a"] = FragmentsRatio.count_with_ion_mask(
-                observed_boolean_a, constants.B_ION_MASK_XL, xl = True
+                observed_boolean_a, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_b_b"] = FragmentsRatio.count_with_ion_mask(
-                observed_boolean_b, constants.B_ION_MASK_XL, xl = True
+                observed_boolean_b, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_y_a"] = FragmentsRatio.count_with_ion_mask(
-                observed_boolean_a, constants.Y_ION_MASK_XL, xl = True
+                observed_boolean_a, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_y_b"] = FragmentsRatio.count_with_ion_mask(
-                observed_boolean_b, constants.Y_ION_MASK_XL, xl = True
+                observed_boolean_b, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_and_predicted_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.OBS_AND_PRED, xl = True
+                observation_state_a, ObservationState.OBS_AND_PRED, xl=True
             )
             self.metrics_val["count_observed_and_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.OBS_AND_PRED, xl = True
+                observation_state_b, ObservationState.OBS_AND_PRED, xl=True
             )
             self.metrics_val["count_observed_and_predicted_b_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.OBS_AND_PRED, constants.B_ION_MASK_XL, xl = True
+                observation_state_a, ObservationState.OBS_AND_PRED, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_and_predicted_b_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.OBS_AND_PRED, constants.B_ION_MASK_XL, xl = True
+                observation_state_b, ObservationState.OBS_AND_PRED, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_and_predicted_y_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.OBS_AND_PRED, constants.Y_ION_MASK_XL, xl = True
+                observation_state_a, ObservationState.OBS_AND_PRED, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_and_predicted_y_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.OBS_AND_PRED, constants.Y_ION_MASK_XL, xl = True
+                observation_state_b, ObservationState.OBS_AND_PRED, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_not_observed_and_not_predicted_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.NOT_OBS_AND_NOT_PRED, xl = True
+                observation_state_a, ObservationState.NOT_OBS_AND_NOT_PRED, xl=True
             )
             self.metrics_val["count_not_observed_and_not_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.NOT_OBS_AND_NOT_PRED, xl = True
+                observation_state_b, ObservationState.NOT_OBS_AND_NOT_PRED, xl=True
             )
             self.metrics_val["count_not_observed_and_not_predicted_b_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.NOT_OBS_AND_NOT_PRED, constants.B_ION_MASK_XL, xl = True
+                observation_state_a, ObservationState.NOT_OBS_AND_NOT_PRED, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_not_observed_and_not_predicted_b_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.NOT_OBS_AND_NOT_PRED, constants.B_ION_MASK_XL, xl = True
+                observation_state_b, ObservationState.NOT_OBS_AND_NOT_PRED, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_not_observed_and_not_predicted_y_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.NOT_OBS_AND_NOT_PRED, constants.Y_ION_MASK_XL, xl = True
+                observation_state_a, ObservationState.NOT_OBS_AND_NOT_PRED, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_not_observed_and_not_predicted_y_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.NOT_OBS_AND_NOT_PRED, constants.Y_ION_MASK_XL, xl = True
+                observation_state_b, ObservationState.NOT_OBS_AND_NOT_PRED, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_but_not_predicted_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.OBS_BUT_NOT_PRED, xl = True
+                observation_state_a, ObservationState.OBS_BUT_NOT_PRED, xl=True
             )
             self.metrics_val["count_observed_but_not_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.OBS_BUT_NOT_PRED, xl = True
+                observation_state_b, ObservationState.OBS_BUT_NOT_PRED, xl=True
             )
             self.metrics_val["count_observed_but_not_predicted_b_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.OBS_BUT_NOT_PRED, constants.B_ION_MASK_XL, xl = True
+                observation_state_a, ObservationState.OBS_BUT_NOT_PRED, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_but_not_predicted_b_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.OBS_BUT_NOT_PRED, constants.B_ION_MASK_XL, xl = True
+                observation_state_b, ObservationState.OBS_BUT_NOT_PRED, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_but_not_predicted_y_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK_XL, xl = True
+                observation_state_a, ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_observed_but_not_predicted_y_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK_XL, xl = True
+                observation_state_b, ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_not_observed_but_predicted_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.NOT_OBS_BUT_PRED, xl = True
+                observation_state_a, ObservationState.NOT_OBS_BUT_PRED, xl=True
             )
             self.metrics_val["count_not_observed_but_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.NOT_OBS_BUT_PRED, xl = True
+                observation_state_b, ObservationState.NOT_OBS_BUT_PRED, xl=True
             )
             self.metrics_val["count_not_observed_but_predicted_b_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.NOT_OBS_BUT_PRED, constants.B_ION_MASK_XL, xl = True
+                observation_state_a, ObservationState.NOT_OBS_BUT_PRED, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_not_observed_but_predicted_b_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.NOT_OBS_BUT_PRED, constants.B_ION_MASK_XL, xl = True
+                observation_state_b, ObservationState.NOT_OBS_BUT_PRED, constants.B_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_not_observed_but_predicted_y_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.NOT_OBS_BUT_PRED, constants.Y_ION_MASK_XL, xl = True
+                observation_state_a, ObservationState.NOT_OBS_BUT_PRED, constants.Y_ION_MASK_XL, xl=True
             )
             self.metrics_val["count_not_observed_but_predicted_y_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.NOT_OBS_BUT_PRED, constants.Y_ION_MASK_XL, xl = True
+                observation_state_b, ObservationState.NOT_OBS_BUT_PRED, constants.Y_ION_MASK_XL, xl=True
             )
             # fractional count metrics
             self.metrics_val["fraction_predicted_a"] = self.metrics_val["count_predicted_a"].values / valid_ions_a
