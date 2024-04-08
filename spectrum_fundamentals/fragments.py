@@ -115,7 +115,7 @@ def initialize_peaks(
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
     noncl_xl: int = 0,
-    peptide_beta_mass: Optional[int] = None,
+    peptide_beta_mass: Optional[float] = None,
     xl_pos: Optional[int] = None,
 ) -> Tuple[List[dict], int, str, float]:
     """
@@ -196,7 +196,9 @@ def initialize_peaks(
                         mass = (ion_mass_with_peptide_beta + charge_delta) / charge
                     else:
                         raise ValueError("peptide_beta_mass cannot be None. Please check your input data.")
-                elif noncl_xl == 1 and ion_type == 1 and xl_pos is not None and i >= peptide_length - xl_pos:  # for the y-ions
+                elif (
+                    noncl_xl == 1 and ion_type == 1 and xl_pos is not None and i >= peptide_length - xl_pos
+                ):  # for the y-ions
                     if peptide_beta_mass is not None:
                         ion_mass_with_peptide_beta = ion_type_masses[ion_type] + peptide_beta_mass
                         mass = (ion_mass_with_peptide_beta + charge_delta) / charge
@@ -305,7 +307,10 @@ def initialize_peaks_xl(
         charge = 3  # generate only peaks with charge 1, 2 and 3
 
         sequence_without_crosslinker = sequence.replace("[UNIMOD:1898]", "")
-        sequence_beta_without_crosslinker = sequence_beta.replace("[UNIMOD:1898]", "")
+        if sequence_beta is not None:
+            sequence_beta_without_crosslinker = sequence_beta.replace("[UNIMOD:1898]", "")
+        else:
+            raise ValueError("sequence_beta cannot be None. Please check your input data.")
         sequence_mass = compute_peptide_mass(sequence_without_crosslinker)
         sequence_beta_mass = compute_peptide_mass(sequence_beta_without_crosslinker)
 
@@ -316,7 +321,7 @@ def initialize_peaks_xl(
             mass_tolerance,
             unit_mass_tolerance,
             1,
-            sequence_beta_mass,
+            sequence_beta_mass if sequence_beta_mass is not None else None,
             crosslinker_position,
         )
         df_out = pd.DataFrame(list_out)

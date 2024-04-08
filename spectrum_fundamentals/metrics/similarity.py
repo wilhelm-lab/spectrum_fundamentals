@@ -406,43 +406,55 @@ class SimilarityMetrics(Metric):
         """
         Adds columns with spectral angle feature to metrics_val dataframe.
 
-        :param all_features: if True, calculcate all metrics
+        :param all_features: if True, calculate all metrics
         :param xl: whether calculating for crosslinked or linear peptides
         """
         if xl:
-            true_intensities_a = self.true_intensities[:, 0:348]
-            true_intensities_b = self.true_intensities[:, 348:]
-            pred_intensities_a = self.pred_intensities[:, 0:348]
-            pred_intensities_b = self.pred_intensities[:, 348:]
-            self.metrics_val["spectral_angle_a"] = SimilarityMetrics.spectral_angle(
-                true_intensities_a, pred_intensities_a, 0
-            )
-            self.metrics_val["spectral_angle_b"] = SimilarityMetrics.spectral_angle(
-                true_intensities_b, pred_intensities_b, 0
-            )
-            self.metrics_val["spectral_angle"] = (
-                self.metrics_val["spectral_angle_a"] + self.metrics_val["spectral_angle_b"]
-            ) / 2
+            if self.true_intensities is not None and self.pred_intensities is not None:
+                true_intensities_a = (
+                    self.true_intensities[:, :348] if self.true_intensities.shape[1] >= 348 else self.true_intensities
+                )
+                true_intensities_b = self.true_intensities[:, 348:] if self.true_intensities.shape[1] >= 348 else None
+                pred_intensities_a = (
+                    self.pred_intensities[:, :348] if self.pred_intensities.shape[1] >= 348 else self.pred_intensities
+                )
+                pred_intensities_b = self.pred_intensities[:, 348:] if self.pred_intensities.shape[1] >= 348 else None
 
-            self.metrics_val["pearson_corr_a"] = SimilarityMetrics.correlation(
-                true_intensities_a, pred_intensities_a, 0
-            )
-            self.metrics_val["pearson_corr_b"] = SimilarityMetrics.correlation(
-                true_intensities_b, pred_intensities_b, 0
-            )
-            if all_features:
-                self._calc_additional_metrics(true_intensities_a, pred_intensities_a, key_suffix="_a")
-                self._calc_additional_metrics(true_intensities_b, pred_intensities_b, key_suffix="_b")
+                if true_intensities_a is not None and pred_intensities_a is not None:
+                    self.metrics_val["spectral_angle_a"] = SimilarityMetrics.spectral_angle(
+                        true_intensities_a, pred_intensities_a, 0
+                    )
+                    self.metrics_val["pearson_corr_a"] = SimilarityMetrics.correlation(
+                        true_intensities_a, pred_intensities_a, 0
+                    )
+                    if all_features:
+                        self._calc_additional_metrics(true_intensities_a, pred_intensities_a, key_suffix="_a")
+
+                if true_intensities_b is not None and pred_intensities_b is not None:
+                    self.metrics_val["spectral_angle_b"] = SimilarityMetrics.spectral_angle(
+                        true_intensities_b, pred_intensities_b, 0
+                    )
+                    self.metrics_val["pearson_corr_b"] = SimilarityMetrics.correlation(
+                        true_intensities_b, pred_intensities_b, 0
+                    )
+                    if all_features:
+                        self._calc_additional_metrics(true_intensities_b, pred_intensities_b, key_suffix="_b")
+
+                if true_intensities_a is not None and true_intensities_b is not None:
+                    self.metrics_val["spectral_angle"] = (
+                        self.metrics_val["spectral_angle_a"] + self.metrics_val["spectral_angle_b"]
+                    ) / 2
 
         else:
-            self.metrics_val["spectral_angle"] = SimilarityMetrics.spectral_angle(
-                self.true_intensities, self.pred_intensities, 0
-            )
-            self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
-                self.true_intensities, self.pred_intensities, 0, "pearson"
-            )
-            if all_features:
-                self._calc_additional_metrics(self.true_intensities, self.pred_intensities)
+            if self.true_intensities is not None and self.pred_intensities is not None:
+                self.metrics_val["spectral_angle"] = SimilarityMetrics.spectral_angle(
+                    self.true_intensities, self.pred_intensities, 0
+                )
+                self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
+                    self.true_intensities, self.pred_intensities, 0, "pearson"
+                )
+                if all_features:
+                    self._calc_additional_metrics(self.true_intensities, self.pred_intensities)
 
     def _calc_additional_metrics(
         self, true_intensities: np.ndarray, pred_intensities: np.ndarray, key_suffix: str = ""
