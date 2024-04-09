@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def match_peaks(
     fragments_meta_data: List[dict],
-    peaks_intensity: np.ndarray,
+    peaks_intensity: Union[List[float], np.ndarray],
     peaks_masses: np.ndarray,
     tmt_n_term: int,
     unmod_sequence: str,
@@ -29,6 +29,10 @@ def match_peaks(
     :param charge: Precursor charge
     :return: List of matched/annotated peaks
     """
+    # Convert peaks_intensity to numpy array if it's a list
+    if isinstance(peaks_intensity, list):
+        peaks_intensity = np.array(peaks_intensity)
+
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
     max_intensity = 1.0
@@ -473,7 +477,7 @@ def _annotate_crosslinked_spectrum(
     matched_peaks_a = match_peaks(
         fragments_meta_data_a,
         spectrum[index_columns["INTENSITIES"]],
-        spectrum[index_columns["MZ"]],
+        np.array(spectrum[index_columns["MZ"]]),  # Convert to numpy array
         tmt_n_term_a,
         unmod_sequence_a,
         spectrum[index_columns["PRECURSOR_CHARGE"]],
@@ -482,7 +486,7 @@ def _annotate_crosslinked_spectrum(
     matched_peaks_b = match_peaks(
         fragments_meta_data_b,
         spectrum[index_columns["INTENSITIES"]],
-        spectrum[index_columns["MZ"]],
+        np.array(spectrum[index_columns["MZ"]]),  # Convert to numpy array
         tmt_n_term_b,
         unmod_sequence_b,
         spectrum[index_columns["PRECURSOR_CHARGE"]],

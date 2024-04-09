@@ -1,5 +1,5 @@
 import enum
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import scipy.sparse
@@ -32,7 +32,7 @@ class FragmentsRatio(Metric):
     @staticmethod
     def count_with_ion_mask(
         boolean_array: scipy.sparse.csr_matrix,
-        ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        ion_mask: Optional[Union[List[int], np.ndarray, scipy.sparse.csr_matrix, scipy.sparse._csc.csc_matrix]] = None,
         xl: bool = False,
     ) -> np.ndarray:
         """
@@ -41,12 +41,20 @@ class FragmentsRatio(Metric):
         :param boolean_array: boolean array with True for observed/predicted peaks and \
                               False for missing observed/predicted peaks, array of length 174
         :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
-                         integer array of length 174 for linear and 348 for crosslinked peptides.
+                         integer array of length 174 for linear and 348 for crosslinked peptides, or a list of integers,
+                         or a scipy.sparse.csr_matrix or scipy.sparse._csc.csc_matrix.
         :param xl: whether to process with crosslinked or linear peptides
         :return: number of observed/predicted peaks not masked by ion_mask
         """
         if ion_mask is None:
             ion_mask = []
+
+        if isinstance(ion_mask, (list, np.ndarray)):
+            ion_mask = np.asarray(ion_mask)
+        elif not isinstance(ion_mask, (scipy.sparse.csr_matrix, scipy.sparse._csc.csc_matrix)):
+            raise TypeError(
+                "ion_mask must be a list, numpy array, or scipy.sparse.csr_matrix or scipy.sparse._csc.csc_matrix"
+            )
 
         if xl:
             array_size = 348
@@ -55,12 +63,12 @@ class FragmentsRatio(Metric):
 
         if len(ion_mask) == 0:
             ion_mask = scipy.sparse.csr_matrix(np.ones((array_size, 1)))
-        else:
+        elif isinstance(ion_mask, np.ndarray):
             ion_mask = scipy.sparse.csr_matrix(ion_mask).T
 
         return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
 
-    @staticmethod
+    # flake8: noqa B902
     def count_observation_states(
         observation_state: scipy.sparse.csr_matrix,
         test_state: int,

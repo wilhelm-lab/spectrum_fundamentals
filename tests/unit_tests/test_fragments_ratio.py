@@ -309,6 +309,7 @@ class TestCountObservedButNotPredicted:
             ],
             fr.ObservationState.INVALID_ION,
         )
+
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
                 observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK

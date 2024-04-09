@@ -457,7 +457,10 @@ class SimilarityMetrics(Metric):
                     self._calc_additional_metrics(self.true_intensities, self.pred_intensities)
 
     def _calc_additional_metrics(
-        self, true_intensities: np.ndarray, pred_intensities: np.ndarray, key_suffix: str = ""
+        self,
+        true_intensities: Union[np.ndarray, scipy.sparse.spmatrix],
+        pred_intensities: Union[np.ndarray, scipy.sparse.spmatrix],
+        key_suffix: str = "",
     ):
         if key_suffix != "":
             # dirty fix, if the key_suffix is not "", that means we have XL mode.
