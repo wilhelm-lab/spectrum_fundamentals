@@ -53,6 +53,32 @@ def sage_to_internal(sequences: List[str]) -> List[str]:
     # Return the list of modified sequences.
     return modified_strings
 
+def xisearch_to_internal(split_seq: list, mods: str, mod_positions: str):
+    """
+    Apply modifications to the peptide sequence.
+
+    :param split_seq: List containing the sequence characters
+    :param mods: String containing modifications
+    :param mod_positions: String containing positions of modifications
+    """
+    mod_positions = str(mod_positions)
+
+    if mod_positions in ["nan", "null"]:
+        return
+
+    split_mod = mods.split(";")
+    for idx, mod in enumerate(split_mod):
+        modification = ""
+        if mod == "ox":
+            modification = "M[UNIMOD:35]"
+        elif mod == "cm":
+            modification = "C[UNIMOD:4]"
+        if modification:
+            try:
+                pos_mod = int(mod_positions.split(";")[idx])
+                split_seq[pos_mod - 1] = modification
+            except (IndexError, ValueError):
+                print(f"Error occurred with mod_positions value: {mod_positions}")
 
 def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     """
