@@ -36,6 +36,28 @@ class TestSageToInternal(unittest.TestCase):
             ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"],
         )
 
+class TestXisearchToInternal(unittest.TestCase):
+    """Class to test Internal to Xisearch."""
+
+    def test_internal_to_xisearch_carbamidomethylation_oxidation_DSSO(self):
+        """Test internal_to_xisearch_carbamidomethylation and oxidation along with DSSO as crosslinker ."""
+        self.assertEqual(mod.xisearch_to_internal("DSSO", "SNVPALEACPQKR", "IDGHMKK", "cm", "ox", "12", "6", "9", "5"), ("SNVPALEAC[UNIMOD:4]PQK[UNIMOD:1896]R", "IDGHM[UNIMOD:35]K[UNIMOD:1896]K"))
+
+    def test_internal_to_xisearch_no_modification_DSSO(self):
+        """Test internal_to_xisearch_no_variable along with DSSO as crosslinker."""
+        self.assertEqual(
+            mod.xisearch_to_internal("DSSO", "SNVPALEACPQKR", "IDGHMKK", "NAN", "NAN", "12", "6", "NaN", "NaN"),
+            ("SNVPALEACPQK[UNIMOD:1896]R", "IDGHMK[UNIMOD:1896]K"))
+
+    def test_internal_to_xisearch_carbamidomethylation_oxidation_DSBU(self):
+        """Test internal_to_xisearch_carbamidomethylation and oxidation along with DSBU as crosslinker."""
+        self.assertEqual(mod.xisearch_to_internal("DSBU", "SNVPALEACPQKR", "IDGHMKK", "cm", "ox", "12", "6", "9", "5"), ("SNVPALEAC[UNIMOD:4]PQK[UNIMOD:1884]R", "IDGHM[UNIMOD:35]K[UNIMOD:1884]K"))
+
+    def test_internal_to_xisearch_no_modification_DSBU(self):
+        """Test internal_to_xisearch_no_variable along with DSBU as crosslinker."""
+        self.assertEqual(
+            mod.xisearch_to_internal("DSBU", "SNVPALEACPQKR", "IDGHMKK", "NAN", "NAN", "12", "6", "NaN", "NaN"),
+            ("SNVPALEACPQK[UNIMOD:1884]R", "IDGHMK[UNIMOD:1884]K"))
 
 class TestMaxQuantToInternal(unittest.TestCase):
     """Class to test MaxQuant to internal."""
@@ -187,3 +209,4 @@ class TestParsing(unittest.TestCase):
         """Test correct behaviour of parse_modstrings when invalid sequence is handled."""
         invalid_seq = "testing"
         self.assertEqual(next(mod.parse_modstrings([invalid_seq], alphabet=ALPHABET, filter=True)), [0])
+
