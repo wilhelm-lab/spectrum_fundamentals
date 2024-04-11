@@ -68,8 +68,8 @@ def xisearch_to_internal(
     seq_b: str,
     mod_a: str,
     mod_b: str,
-    crosslinker_position_a: int,
-    crosslinker_position_b: int,
+    crosslinker_position_a: str,
+    crosslinker_position_b: str,
     mod_a_positions: Union[str, float],
     mod_b_positions: Union[str, float],
 ):
