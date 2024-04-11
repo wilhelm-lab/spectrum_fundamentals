@@ -1,9 +1,9 @@
 import difflib
 import re
 from itertools import repeat
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
-from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_MASSES_SAGE, MOD_NAMES, MSFRAGGER_VAR_MODS, SPECTRONAUT_MODS
+from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_MASSES_SAGE, MOD_NAMES, MSFRAGGER_VAR_MODS, SPECTRONAUT_MODS, XISEARCH_VAR_MODS
 
 
 def sage_to_internal(sequences: List[str]) -> List[str]:
@@ -53,6 +53,72 @@ def sage_to_internal(sequences: List[str]) -> List[str]:
     # Return the list of modified sequences.
     return modified_strings
 
+def xisearch_to_internal(
+    xl: str, 
+    seq_a: str,
+    seq_b: str,
+    mod_a: str,
+    mod_b: str,
+    crosslinker_position_a: int,
+    crosslinker_position_b: int,
+    mod_a_positions: Union[str, float],
+    mod_b_positions: Union[str, float]  
+    ):
+    """
+    Function to translate a xisearch modstring to the XL-Prosit format.
+    
+    :param xl: type of crosslinker used. Can be 'DSSO' or 'DSBU'.
+    :param seq_a: unmodified peptide a
+    :param seq_b: unmodified peptide b
+    :param mod_a: all modifications of pep a
+    :param mod_b: all modifications of pep b
+    :param crosslinker_position_a: crosslinker position of peptide a
+    :param crosslinker_position_b: crosslinker position of peptide b
+    :param mod_a_positions: position of all modifications of peptide a
+    :param mod_b_positions: position of all modifications of peptide b
+    :return: modified sequence a and b
+    """
+    def add_mod_sequence(split_seq: list, mods: str, mod_positions: Union[str, float]):
+        """
+        Apply modifications.
+
+        :param split_seq: List containing the sequence characters
+        :param mods: String containing modifications
+        :param mod_positions: String containing positions of modifications
+        """
+        mod_positions = str(mod_positions)
+
+        if mod_positions in ["nan", "null"]:
+            return
+
+        split_mod = mods.split(";")
+        split_mod_positions = mod_positions.split(";")
+        
+        for mod, pos in zip(split_mod, split_mod_positions):
+            modification = XISEARCH_VAR_MODS.get(mod)
+            if modification:
+                try:
+                    pos_mod = int(pos)
+                    split_seq[pos_mod - 1] = modification
+                except (IndexError, ValueError):
+                    print(f"Error occurred with mod_positions value: {mod_positions}")
+
+    # Check the crosslinker type and apply modification accordingly
+    modification = XISEARCH_VAR_MODS.get(xl.lower())
+    if modification is None:
+        raise ValueError(f"Unknown crosslinker type provided: {xl}. Only 'DSSO' and 'DSBU' are supported.")
+
+    mod_a_positions = str(mod_a_positions)  
+    mod_b_positions = str(mod_b_positions)
+    split_seq_a = [x for x in seq_a]
+    split_seq_b = [x for x in seq_b] 
+    add_mod_sequence(split_seq_a, mod_a, mod_a_positions)
+    add_mod_sequence(split_seq_b, mod_b, mod_b_positions)
+    split_seq_a[int(crosslinker_position_a) - 1] = modification
+    split_seq_b[int(crosslinker_position_b) - 1] = modification
+    seq_mod_a = "".join(split_seq_a)
+    seq_mod_b = "".join(split_seq_b)
+    return seq_mod_a, seq_mod_b
 
 def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     """
