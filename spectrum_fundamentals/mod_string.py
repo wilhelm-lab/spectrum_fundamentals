@@ -74,9 +74,9 @@ def xisearch_to_internal(
 
     :param xl: type of crosslinker used. Can be 'DSSO' or 'DSBU'.
     :param seq: unmodified peptide sequence
-    :param mod: all modifications of pep 
+    :param mod: all modifications of pep
     :param crosslinker_position: crosslinker position of peptide
-    :param mod_positions: position of all modifications of peptide 
+    :param mod_positions: position of all modifications of peptide
     :return: modified sequence
     """
 
