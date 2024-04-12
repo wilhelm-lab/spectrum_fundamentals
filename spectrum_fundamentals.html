@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>spectrum_fundamentals package &mdash; spectrum_fundamentals 0.5.0 documentation</title>
+  <title>spectrum_fundamentals package &mdash; spectrum_fundamentals 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="_static/custom_cookietemple.css?v=057798b9" />
@@ -16,7 +16,7 @@
   
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=3fadbb4a"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=9bd53f53"></script>
         <script src="_static/doctools.js?v=888ff710"></script>
         <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
@@ -38,7 +38,7 @@
             spectrum_fundamentals
           </a>
               <div class="version">
-                0.5.0
+                0.5.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -91,6 +91,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.mod_string.parse_modstrings"><code class="docutils literal notranslate"><span class="pre">parse_modstrings()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.mod_string.proteomicsdb_to_internal"><code class="docutils literal notranslate"><span class="pre">proteomicsdb_to_internal()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.mod_string.sage_to_internal"><code class="docutils literal notranslate"><span class="pre">sage_to_internal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.mod_string.xisearch_to_internal"><code class="docutils literal notranslate"><span class="pre">xisearch_to_internal()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-spectrum_fundamentals">Module contents</a></li>
@@ -279,7 +280,7 @@
 <span id="spectrum-fundamentals-constants-module"></span><h2>spectrum_fundamentals.constants module<a class="headerlink" href="#module-spectrum_fundamentals.constants" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="spectrum_fundamentals.constants.RescoreType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.constants.</span></span><span class="sig-name descname"><span class="pre">RescoreType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/constants.py#L310-L314"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.constants.RescoreType" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.constants.</span></span><span class="sig-name descname"><span class="pre">RescoreType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/constants.py#L321-L325"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.constants.RescoreType" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
 <p>Class for rescoring types.</p>
 <dl class="py attribute">
@@ -405,7 +406,7 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 <span id="spectrum-fundamentals-mod-string-module"></span><h2>spectrum_fundamentals.mod_string module<a class="headerlink" href="#module-spectrum_fundamentals.mod_string" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.get_mods_list">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">get_mods_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mods_variable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_fixed</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L327-L334"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.get_mods_list" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">get_mods_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mods_variable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_fixed</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L395-L402"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.get_mods_list" title="Permalink to this definition"></a></dt>
 <dd><p>Helper function to get mods list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -419,7 +420,7 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.internal_to_mod_mass">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">internal_to_mod_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L175-L186"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.internal_to_mod_mass" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">internal_to_mod_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L243-L254"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.internal_to_mod_mass" title="Permalink to this definition"></a></dt>
 <dd><p>Function to exchange the internal mod identifiers with the masses of the specific modifiction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -436,7 +437,7 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.internal_to_mod_names">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">internal_to_mod_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L189-L232"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.internal_to_mod_names" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">internal_to_mod_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L257-L300"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.internal_to_mod_names" title="Permalink to this definition"></a></dt>
 <dd><p>Function to translate an internal modstring to MSP format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -453,11 +454,11 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.internal_to_spectronaut">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">internal_to_spectronaut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L57-L65"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.internal_to_spectronaut" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">internal_to_spectronaut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L121-L129"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.internal_to_spectronaut" title="Permalink to this definition"></a></dt>
 <dd><p>Function to translate a modstring from the internal format to the spectronaut format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sequences</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List[str] of sequences</p>
+<dd class="field-odd"><p><strong>sequences</strong> (<em>ndarray</em><em> | </em><em>Series</em><em> | </em><em>List</em><em>[</em><em>str</em><em>]</em>) – List[str] of sequences</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>List[str] of modified sequences</p>
@@ -470,7 +471,7 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.internal_without_mods">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">internal_without_mods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L164-L172"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.internal_without_mods" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">internal_without_mods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L232-L240"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.internal_without_mods" title="Permalink to this definition"></a></dt>
 <dd><p>Function to remove any mod identifiers and return the plain AA sequence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -487,12 +488,12 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.maxquant_to_internal">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">maxquant_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_mods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L68-L116"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.maxquant_to_internal" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">maxquant_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_mods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L132-L182"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.maxquant_to_internal" title="Permalink to this definition"></a></dt>
 <dd><p>Function to translate a MaxQuant modstring to the Prosit format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sequences</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List[str] of sequences</p></li>
+<li><p><strong>sequences</strong> (<em>ndarray</em><em> | </em><em>Series</em><em> | </em><em>List</em><em>[</em><em>str</em><em>]</em>) – List[str] of sequences</p></li>
 <li><p><strong>fixed_mods</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional dictionary of modifications with key aa and value mod, e.g. ‘M’: ‘M(UNIMOD:35)’.
 Fixed modifications must be included in the variable modificatons dictionary.
 By default, i.e. if nothing is supplied to fixed_mods, carbamidomethylation on cystein will be included
@@ -513,12 +514,12 @@ in the fixed modifications. If you want to have no fixed modifictions at all, su
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.msfragger_to_internal">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">msfragger_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_mods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L119-L161"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.msfragger_to_internal" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">msfragger_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_mods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L185-L229"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.msfragger_to_internal" title="Permalink to this definition"></a></dt>
 <dd><p>Function to translate a MSFragger modstring to the Prosit format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sequences</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List[str] of sequences</p></li>
+<li><p><strong>sequences</strong> (<em>ndarray</em><em> | </em><em>Series</em><em> | </em><em>List</em><em>[</em><em>str</em><em>]</em>) – List[str] of sequences</p></li>
 <li><p><strong>fixed_mods</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Optional dictionary of modifications with key aa and value mod, e.g. ‘M[147]’: ‘M(UNIMOD:35)’.
 Fixed modifications must be included in the variable modificatons dictionary.
 By default, i.e. if nothing is supplied to fixed_mods, carbamidomethylation on cystein will be included
@@ -539,7 +540,7 @@ in the fixed modifications. If you want to have no fixed modifictions at all, su
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.parse_modstrings">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">parse_modstrings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alphabet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">translate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L235-L270"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.parse_modstrings" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">parse_modstrings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alphabet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">translate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L303-L338"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.parse_modstrings" title="Permalink to this definition"></a></dt>
 <dd><p>Parse modstrings.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -558,7 +559,7 @@ in the fixed modifications. If you want to have no fixed modifictions at all, su
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.proteomicsdb_to_internal">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">proteomicsdb_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_variable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L273-L324"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.proteomicsdb_to_internal" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">proteomicsdb_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_variable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L341-L392"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.proteomicsdb_to_internal" title="Permalink to this definition"></a></dt>
 <dd><p>Function to create a sequence with UNIMOD modifications from given sequence and it’s varaible and fixed modifications.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -579,7 +580,7 @@ in the fixed modifications. If you want to have no fixed modifictions at all, su
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.sage_to_internal">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">sage_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L9-L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.sage_to_internal" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">sage_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequences</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L20-L65"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.sage_to_internal" title="Permalink to this definition"></a></dt>
 <dd><p>Convert mod string from sage to the internal format.</p>
 <p>This function converts sequences using the mass change of a modification in
 square brackets as done by Sage to the internal format by replacing the mass
@@ -594,6 +595,29 @@ modifications defined in the constants.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>List</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.xisearch_to_internal">
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">xisearch_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mod</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crosslinker_position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mod_positions</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L68-L118"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.xisearch_to_internal" title="Permalink to this definition"></a></dt>
+<dd><p>Function to translate a xisearch modstring to the XL-Prosit format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xl</strong> (<em>str</em>) – type of crosslinker used. Can be ‘DSSO’ or ‘DSBU’.</p></li>
+<li><p><strong>seq</strong> (<em>str</em>) – unmodified peptide sequence</p></li>
+<li><p><strong>mod</strong> (<em>str</em>) – all modifications of pep</p></li>
+<li><p><strong>crosslinker_position</strong> (<em>int</em>) – crosslinker position of peptide</p></li>
+<li><p><strong>mod_positions</strong> (<em>str</em>) – position of all modifications of peptide</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if suplied type of crosslinker is unknown</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>modified sequence</p>
 </dd>
 </dl>
 </dd></dl>
