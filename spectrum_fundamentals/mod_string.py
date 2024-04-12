@@ -1,7 +1,10 @@
 import difflib
 import re
 from itertools import repeat
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import pandas as pd
 
 from .constants import (
     MAXQUANT_VAR_MODS,
@@ -115,7 +118,7 @@ def xisearch_to_internal(
     return "".join(split_seq)
 
 
-def internal_to_spectronaut(sequences: List[str]) -> List[str]:
+def internal_to_spectronaut(sequences: Union[np.ndarray, pd.Series, List[str]]) -> List[str]:
     """
     Function to translate a modstring from the internal format to the spectronaut format.
 
@@ -126,7 +129,9 @@ def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     return [regex.sub(lambda mo: SPECTRONAUT_MODS[mo.string[mo.start() : mo.end()]], seq) for seq in sequences]
 
 
-def maxquant_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
+def maxquant_to_internal(
+    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
+) -> List[str]:
     """
     Function to translate a MaxQuant modstring to the Prosit format.
 
@@ -177,7 +182,9 @@ def maxquant_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, st
     return [regex.sub(find_replacement, seq).replace("_", "") for seq in sequences]
 
 
-def msfragger_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
+def msfragger_to_internal(
+    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
+) -> List[str]:
     """
     Function to translate a MSFragger modstring to the Prosit format.
 
