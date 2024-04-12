@@ -31,7 +31,7 @@ class FragmentsRatio(Metric):
 
     @staticmethod
     def count_with_ion_mask(
-        boolean_array: scipy.sparse.csr_matrix, ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None
+        boolean_array: scipy.sparse.csr_matrix, ion_mask: Optional[Union[np.ndarray, scipy.sparse.spmatrix]] = None
     ) -> np.ndarray:
         """
         Count the number of ions.
@@ -43,8 +43,6 @@ class FragmentsRatio(Metric):
         :return: number of observed/predicted peaks not masked by ion_mask
         """
         if ion_mask is None:
-            ion_mask = []
-        if len(ion_mask) == 0:
             ion_mask = scipy.sparse.csr_matrix(np.ones((174, 1)))
         else:
             ion_mask = scipy.sparse.csr_matrix(ion_mask).T
