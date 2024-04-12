@@ -43,36 +43,36 @@ class TestXisearchToInternal(unittest.TestCase):
     def test_internal_to_xisearch_carbamidomethylation_oxidation_dsso(self):
         """Test internal_to_xisearch_carbamidomethylation and oxidation along with DSSO as crosslinker ."""
         self.assertEqual(
-            mod.xisearch_to_internal("DSSO", "SNVPALEACPQKR", "IDGHMKK", "cm", "ox", "12", "6", "9", "5"),
-            ("SNVPALEAC[UNIMOD:4]PQK[UNIMOD:1896]R", "IDGHM[UNIMOD:35]K[UNIMOD:1896]K"),
+            mod.xisearch_to_internal("DSSO", "SNVPALEACPQKR", "cm", "12", "9"),
+            ("SNVPALEAC[UNIMOD:4]PQK[UNIMOD:1896]R"),
         )
 
     def test_internal_to_xisearch_no_modification_dsso(self):
         """Test internal_to_xisearch_no_variable along with DSSO as crosslinker."""
         self.assertEqual(
-            mod.xisearch_to_internal("DSSO", "SNVPALEACPQKR", "IDGHMKK", "NaN", "NaN", "12", "6", "NaN", "NaN"),
-            ("SNVPALEACPQK[UNIMOD:1896]R", "IDGHMK[UNIMOD:1896]K"),
+            mod.xisearch_to_internal("DSSO", "SNVPALEACPQKR", "NaN", "12", "NaN"),
+            ("SNVPALEACPQK[UNIMOD:1896]R"),
         )
 
     def test_internal_to_xisearch_carbamidomethylation_oxidation_dsbu(self):
         """Test internal_to_xisearch_carbamidomethylation and oxidation along with DSBU as crosslinker."""
         self.assertEqual(
-            mod.xisearch_to_internal("DSBU", "SNVPALEACPQKR", "IDGHMKK", "cm", "ox", "12", "6", "9", "5"),
-            ("SNVPALEAC[UNIMOD:4]PQK[UNIMOD:1884]R", "IDGHM[UNIMOD:35]K[UNIMOD:1884]K"),
+            mod.xisearch_to_internal("DSBU", "SNVPALEACPQKR", "cm", "12", "9"),
+            ("SNVPALEAC[UNIMOD:4]PQK[UNIMOD:1884]R"),
         )
 
     def test_internal_to_xisearch_no_modification_dsbu(self):
         """Test internal_to_xisearch_no_variable along with DSBU as crosslinker."""
         self.assertEqual(
-            mod.xisearch_to_internal("DSBU", "SNVPALEACPQKR", "IDGHMKK", "NaN", "NaN", "12", "6", "NaN", "NaN"),
-            ("SNVPALEACPQK[UNIMOD:1884]R", "IDGHMK[UNIMOD:1884]K"),
+            mod.xisearch_to_internal("DSBU", "SNVPALEACPQKR", "NaN", "12", "NaN"),
+            ("SNVPALEACPQK[UNIMOD:1884]R"),
         )
 
     def test_internal_to_xisearch_double_modifications(self):
         """Test internal_to_xisearch_double_variable."""
         self.assertEqual(
-            mod.xisearch_to_internal("DSSO", "MKRM", "CKRC", "ox;ox", "cm;cm", "2", "2", "1;4", "1;4"),
-            ("M[UNIMOD:35]K[UNIMOD:1896]RM[UNIMOD:35]", "C[UNIMOD:4]K[UNIMOD:1896]RC[UNIMOD:4]"),
+            mod.xisearch_to_internal("DSSO", "MKRM", "ox;ox", "2", "1;4"),
+            ("M[UNIMOD:35]K[UNIMOD:1896]RM[UNIMOD:35]"),
         )
 
 
