@@ -114,10 +114,10 @@ MSFRAGGER_VAR_MODS = {
 #######################
 
 XISEARCH_VAR_MODS = {
-    "ox": "M[UNIMOD:35]",
-    "cm": "C[UNIMOD:4]",
-    "dsso": "K[UNIMOD:1896]",
-    "dsbu": "K[UNIMOD:1884]",
+    "ox": "[UNIMOD:35]",
+    "cm": "[UNIMOD:4]",
+    "dsso": "[UNIMOD:1896]",
+    "dsbu": "[UNIMOD:1884]",
 }
 
 ####################
