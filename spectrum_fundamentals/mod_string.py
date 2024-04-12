@@ -1,9 +1,20 @@
 import difflib
 import re
 from itertools import repeat
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
-from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_MASSES_SAGE, MOD_NAMES, MSFRAGGER_VAR_MODS, SPECTRONAUT_MODS
+import numpy as np
+import pandas as pd
+
+from .constants import (
+    MAXQUANT_VAR_MODS,
+    MOD_MASSES,
+    MOD_MASSES_SAGE,
+    MOD_NAMES,
+    MSFRAGGER_VAR_MODS,
+    SPECTRONAUT_MODS,
+    XISEARCH_VAR_MODS,
+)
 
 
 def sage_to_internal(sequences: List[str]) -> List[str]:
@@ -53,34 +64,61 @@ def sage_to_internal(sequences: List[str]) -> List[str]:
     # Return the list of modified sequences.
     return modified_strings
 
-def xisearch_to_internal(split_seq: list, mods: str, mod_positions: str):
+
+def xisearch_to_internal(
+    xl: str,
+    seq: str,
+    mod: str,
+    crosslinker_position: int,
+    mod_positions: str,
+):
     """
-    Apply modifications to the peptide sequence.
+    Function to translate a xisearch modstring to the XL-Prosit format.
 
-    :param split_seq: List containing the sequence characters
-    :param mods: String containing modifications
-    :param mod_positions: String containing positions of modifications
+    :param xl: type of crosslinker used. Can be 'DSSO' or 'DSBU'.
+    :param seq: unmodified peptide sequence
+    :param mod: all modifications of pep
+    :param crosslinker_position: crosslinker position of peptide
+    :param mod_positions: position of all modifications of peptide
+    :raises ValueError: if suplied type of crosslinker is unknown
+
+    :return: modified sequence
     """
-    mod_positions = str(mod_positions)
 
-    if mod_positions in ["nan", "null"]:
-        return
+    def add_mod_sequence(split_seq: List[str], mods: str, mod_positions: str):
+        """
+        Apply modifications.
 
-    split_mod = mods.split(";")
-    for idx, mod in enumerate(split_mod):
-        modification = ""
-        if mod == "ox":
-            modification = "M[UNIMOD:35]"
-        elif mod == "cm":
-            modification = "C[UNIMOD:4]"
-        if modification:
-            try:
-                pos_mod = int(mod_positions.split(";")[idx])
-                split_seq[pos_mod - 1] = modification
-            except (IndexError, ValueError):
-                print(f"Error occurred with mod_positions value: {mod_positions}")
+        :param split_seq: List containing the sequence characters
+        :param mods: String containing modifications
+        :param mod_positions: String containing positions of modifications
+        """
+        if mod_positions.lower() in ["", "nan", "null"]:
+            return
 
-def internal_to_spectronaut(sequences: List[str]) -> List[str]:
+        split_mod = mods.split(";")
+        split_mod_positions = mod_positions.split(";")
+
+        for mod, pos in zip(split_mod, split_mod_positions):
+            modification = XISEARCH_VAR_MODS.get(mod)
+            pos_mod = int(pos)
+            if modification:
+                split_seq[pos_mod - 1] += modification
+            else:
+                split_seq[pos_mod - 1] += f"({mod})"
+
+    # Check the crosslinker type and apply modification accordingly
+    modification = XISEARCH_VAR_MODS.get(xl.lower())
+    if modification is None:
+        raise ValueError(f"Unknown crosslinker type provided: {xl}. Only 'DSSO' and 'DSBU' are supported.")
+
+    split_seq = [x for x in seq]
+    add_mod_sequence(split_seq, mod, mod_positions)
+    split_seq[crosslinker_position - 1] += modification
+    return "".join(split_seq)
+
+
+def internal_to_spectronaut(sequences: Union[np.ndarray, pd.Series, List[str]]) -> List[str]:
     """
     Function to translate a modstring from the internal format to the spectronaut format.
 
@@ -91,7 +129,9 @@ def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     return [regex.sub(lambda mo: SPECTRONAUT_MODS[mo.string[mo.start() : mo.end()]], seq) for seq in sequences]
 
 
-def maxquant_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
+def maxquant_to_internal(
+    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
+) -> List[str]:
     """
     Function to translate a MaxQuant modstring to the Prosit format.
 
@@ -142,7 +182,9 @@ def maxquant_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, st
     return [regex.sub(find_replacement, seq).replace("_", "") for seq in sequences]
 
 
-def msfragger_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
+def msfragger_to_internal(
+    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
+) -> List[str]:
     """
     Function to translate a MSFragger modstring to the Prosit format.
 

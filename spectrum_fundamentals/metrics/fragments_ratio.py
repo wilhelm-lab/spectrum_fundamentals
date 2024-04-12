@@ -31,9 +31,7 @@ class FragmentsRatio(Metric):
 
     @staticmethod
     def count_with_ion_mask(
-        boolean_array: scipy.sparse.csr_matrix,
-        ion_mask: Optional[Union[List[int], np.ndarray, scipy.sparse.csr_matrix, scipy.sparse._csc.csc_matrix]] = None,
-        xl: bool = False,
+        boolean_array: scipy.sparse.csr_matrix, ion_mask: Optional[Union[np.ndarray, scipy.sparse.spmatrix]] = None
     ) -> np.ndarray:
         """
         Count the number of ions.
@@ -47,11 +45,8 @@ class FragmentsRatio(Metric):
         :return: number of observed/predicted peaks not masked by ion_mask
         """
         if ion_mask is None:
-            ion_mask = []
-
-        if isinstance(ion_mask, (list, np.ndarray)):
-            ion_mask = np.asarray(ion_mask)
-        elif not isinstance(ion_mask, (scipy.sparse.csr_matrix, scipy.sparse._csc.csc_matrix)):
+            ion_mask = scipy.sparse.csr_matrix(np.ones((174, 1)))
+        elif not isinstance(ion_mask, scipy.sparse.pmatrix):
             raise TypeError(
                 "ion_mask must be a list, numpy array, or scipy.sparse.csr_matrix or scipy.sparse._csc.csc_matrix"
             )
