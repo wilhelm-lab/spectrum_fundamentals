@@ -37,6 +37,53 @@ class TestSageToInternal(unittest.TestCase):
         )
 
 
+class TestXisearchToInternal(unittest.TestCase):
+    """Class to test Internal to Xisearch."""
+
+    def test_internal_to_xisearch_carbamidomethylation_oxidation_dsso(self):
+        """Test internal_to_xisearch_carbamidomethylation and oxidation along with DSSO as crosslinker ."""
+        self.assertEqual(
+            mod.xisearch_to_internal(
+                xl="DSSO", seq="SNVPALEACPQKR", mod="cm", crosslinker_position=12, mod_positions="9"
+            ),
+            ("SNVPALEAC[UNIMOD:4]PQK[UNIMOD:1896]R"),
+        )
+
+    def test_internal_to_xisearch_no_modification_dsso(self):
+        """Test internal_to_xisearch_no_variable along with DSSO as crosslinker."""
+        self.assertEqual(
+            mod.xisearch_to_internal(
+                xl="DSSO", seq="SNVPALEACPQKR", mod="NaN", crosslinker_position=12, mod_positions="NaN"
+            ),
+            ("SNVPALEACPQK[UNIMOD:1896]R"),
+        )
+
+    def test_internal_to_xisearch_carbamidomethylation_oxidation_dsbu(self):
+        """Test internal_to_xisearch_carbamidomethylation and oxidation along with DSBU as crosslinker."""
+        self.assertEqual(
+            mod.xisearch_to_internal(
+                xl="DSBU", seq="SNVPALEACPQKR", mod="cm", crosslinker_position=12, mod_positions="9"
+            ),
+            ("SNVPALEAC[UNIMOD:4]PQK[UNIMOD:1884]R"),
+        )
+
+    def test_internal_to_xisearch_no_modification_dsbu(self):
+        """Test internal_to_xisearch_no_variable along with DSBU as crosslinker."""
+        self.assertEqual(
+            mod.xisearch_to_internal(
+                xl="DSBU", seq="SNVPALEACPQKR", mod="NaN", crosslinker_position=12, mod_positions="NaN"
+            ),
+            ("SNVPALEACPQK[UNIMOD:1884]R"),
+        )
+
+    def test_internal_to_xisearch_double_modifications(self):
+        """Test internal_to_xisearch_double_variable."""
+        self.assertEqual(
+            mod.xisearch_to_internal(xl="DSSO", seq="MKRM", mod="ox;ox", crosslinker_position=2, mod_positions="1;4"),
+            ("M[UNIMOD:35]K[UNIMOD:1896]RM[UNIMOD:35]"),
+        )
+
+
 class TestMaxQuantToInternal(unittest.TestCase):
     """Class to test MaxQuant to internal."""
 

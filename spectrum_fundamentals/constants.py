@@ -109,6 +109,17 @@ MSFRAGGER_VAR_MODS = {
     "n[214]": "[UNIMOD:214]-",
 }
 
+#######################
+# Xisearch constants #
+#######################
+
+XISEARCH_VAR_MODS = {
+    "ox": "[UNIMOD:35]",
+    "cm": "[UNIMOD:4]",
+    "dsso": "[UNIMOD:1896]",
+    "dsbu": "[UNIMOD:1884]",
+}
+
 ####################
 # MASS CALCULATION #
 ####################
