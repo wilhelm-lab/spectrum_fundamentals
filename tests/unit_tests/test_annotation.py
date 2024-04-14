@@ -31,9 +31,23 @@ class TestAnnotationPipeline(unittest.TestCase):
         pd.testing.assert_frame_equal(expected_result, result)
 
     def test_annotate_spectra_noncl_xl(self):
-        """Test annotate spectra."""
-        spectrum_input = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_input.json", orient="records")
-        expected_result = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_output.json", orient="records")
+        """Test annotate spectra non cleavable crosslinked peptides."""
+        spectrum_input = pd.read_json(
+            Path(__file__).parent / "data" / "annotation_xl_noncl_input.json", orient="records"
+        )
+        expected_result = pd.read_json(
+            Path(__file__).parent / "data" / "annotation_xl_noncl_output.json", orient="records"
+        )
+
+        result = annotation.annotate_spectra(spectrum_input)
+        pd.testing.assert_frame_equal(expected_result, result)
+
+    def test_annotate_spectra_cl_xl(self):
+        """Test annotate spectra cleavable crosslinked peptides."""
+        spectrum_input = pd.read_json(Path(__file__).parent / "data" / "annotation_xl_cl_input.json", orient="records")
+        expected_result = pd.read_json(
+            Path(__file__).parent / "data" / "annotation_xl_cl_output.json", orient="records"
+        )
 
         result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)

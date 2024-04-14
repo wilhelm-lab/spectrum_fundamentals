@@ -46,23 +46,15 @@ class FragmentsRatio(Metric):
         :param xl: whether to process with crosslinked or linear peptides
         :return: number of observed/predicted peaks not masked by ion_mask
         """
-        if ion_mask is None:
-            ion_mask = scipy.sparse.csr_matrix(np.ones((174, 1)))
-        elif not isinstance(ion_mask, scipy.sparse.spmatrix):
-            raise TypeError(
-                "ion_mask must be a list, numpy array, or scipy.sparse.csr_matrix or scipy.sparse._csc.csc_matrix"
-            )
-
         if xl:
             array_size = 348
         else:
             array_size = 174
 
-        if len(ion_mask) == 0:
+        if ion_mask is None:
             ion_mask = scipy.sparse.csr_matrix(np.ones((array_size, 1)))
-        elif isinstance(ion_mask, np.ndarray):
+        else:
             ion_mask = scipy.sparse.csr_matrix(ion_mask).T
-
         return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
 
     # flake8: noqa B902
@@ -136,7 +128,6 @@ class FragmentsRatio(Metric):
         """
         if scipy.sparse.issparse(observed_boolean):
             observation_state = scipy.sparse.csr_matrix(observed_boolean.shape, dtype=int)
-            print(observation_state)
         else:
             observation_state = np.zeros_like(observed_boolean, dtype=int)
         observation_state += observed_boolean.multiply(predicted_boolean) * int(ObservationState.OBS_AND_PRED)
