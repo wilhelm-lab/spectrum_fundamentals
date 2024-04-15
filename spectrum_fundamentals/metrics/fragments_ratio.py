@@ -57,7 +57,7 @@ class FragmentsRatio(Metric):
             ion_mask = scipy.sparse.csr_matrix(ion_mask).T
         return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
 
-    # flake8: noqa B902
+    
     def count_observation_states(
         observation_state: scipy.sparse.csr_matrix,
         test_state: int,
@@ -138,11 +138,9 @@ class FragmentsRatio(Metric):
         )
         return observation_state
 
-    def calc(self):
+    def calc(self, xl: bool = False):
         """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
-        if self.true_intensities.shape[1] == 696:
-            self.xl = True
-        if self.xl:
+        if xl:
             true_intensities_a = self.true_intensities[:, 0:348]
             true_intensities_b = self.true_intensities[:, 348:]
             pred_intensities_a = self.pred_intensities[:, 0:348]
@@ -408,34 +406,19 @@ class FragmentsRatio(Metric):
             self.metrics_val["fraction_observed_but_not_predicted_vs_predicted_b"] = (
                 self.metrics_val["count_observed_but_not_predicted_b"] / num_predicted_ions_b
             )
-            self.metrics_val["fraction_observed_but_not_predicted_b_vs_predicted_b"] = (
-                self.metrics_val["count_observed_but_not_predicted_b"] / num_predicted_ions_b
-            )
-            self.metrics_val["fraction_observed_but_not_predicted_b_a_vs_predicted_b_a"] = (
+            self.metrics_val["fraction_observed_but_not_predicted_b_vs_predicted_b_a"] = (
                 self.metrics_val["count_observed_but_not_predicted_b_a"] / num_predicted_ions_b_a
             )
-            self.metrics_val["fraction_observed_but_not_predicted_y_b_vs_predicted_y_b"] = (
+            self.metrics_val["fraction_observed_but_not_predicted_b_vs_predicted_b_b"] = (
+                self.metrics_val["count_observed_but_not_predicted_b_b"] / num_predicted_ions_b_b
+            )
+            self.metrics_val["fraction_observed_but_not_predicted_y_vs_predicted_y_a"] = (
+                self.metrics_val["count_observed_but_not_predicted_y_a"] / num_predicted_ions_y_a
+            )
+            self.metrics_val["fraction_observed_but_not_predicted_y_vs_predicted_y_b"] = (
                 self.metrics_val["count_observed_but_not_predicted_y_b"] / num_predicted_ions_y_b
             )
-            # not needed, as these are simply (1 - fraction_observed_and_predicted_vs_predicted)
-            self.metrics_val["fraction_not_observed_but_predicted_vs_predicted_a"] = (
-                self.metrics_val["count_not_observed_but_predicted_a"] / num_predicted_ions_a
-            )
-            self.metrics_val["fraction_not_observed_but_predicted_vs_predicted_b"] = (
-                self.metrics_val["count_not_observed_but_predicted_b"] / num_predicted_ions_b
-            )
-            self.metrics_val["fraction_not_observed_but_predicted_b_a_vs_predicted_a"] = (
-                self.metrics_val["count_not_observed_but_predicted_b_a"] / num_predicted_ions_b_a
-            )
-            self.metrics_val["fraction_not_observed_but_predicted_b_b_vs_predicted_b"] = (
-                self.metrics_val["count_not_observed_but_predicted_b_b"] / num_predicted_ions_b_b
-            )
-            self.metrics_val["fraction_not_observed_but_predicted_y_a_vs_predicted"] = (
-                self.metrics_val["count_not_observed_but_predicted_y_a"] / num_predicted_ions_y_a
-            )
-            self.metrics_val["fraction_not_observed_but_predicted_y_b_vs_predicted"] = (
-                self.metrics_val["count_not_observed_but_predicted_y_b"] / num_predicted_ions_y_b
-            )
+
         else:
             mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
             observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)

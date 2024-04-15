@@ -56,19 +56,18 @@ class SimilarityMetrics(Metric):
                                      position >= peptide length), array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything
-        :param xl: whether operating on crosslinked or linear peptides
+        :param xl: whether operating on cleavable crosslinked or linear peptides
         :return: SA values
         """
-        if xl:
-            masks = constants.MASK_DICT_XL
-            default_value = constants.B_ION_MASK_XL
-        else:
-            masks = constants.MASK_DICT
-            default_value = constants.B_ION_MASK
-
         if charge != 0:
+            if xl:
+                masks = constants.MASK_DICT_XL
+                default_value = constants.B_ION_MASK_XL
+            else:
+                masks = constants.MASK_DICT
+                default_value = constants.B_ION_MASK
             boolean_array = masks.get(charge, default_value)
-
+            
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
             predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
@@ -203,6 +202,7 @@ class SimilarityMetrics(Metric):
         predicted_intensities: scipy.sparse.csr_matrix,
         charge: int = 0,
         method: str = "pearson",
+        xl: bool = False,
     ) -> List[float]:
         """
         Calculate correlation between observed and predicted.
@@ -219,16 +219,13 @@ class SimilarityMetrics(Metric):
         predicted_intensities_array = predicted_intensities.toarray()
 
         if charge != 0:
-            if charge == 1:
-                boolean_array = constants.SINGLE_CHARGED_MASK
-            elif charge == 2:
-                boolean_array = constants.DOUBLE_CHARGED_MASK
-            elif charge == 3:
-                boolean_array = constants.TRIPLE_CHARGED_MASK
-            elif charge == 4:
-                boolean_array = constants.B_ION_MASK
+            if xl:
+                masks = constants.MASK_DICT_XL
+                default_value = constants.B_ION_MASK_XL
             else:
-                boolean_array = constants.Y_ION_MASK
+                masks = constants.MASK_DICT
+                default_value = constants.B_ION_MASK
+            boolean_array = masks.get(charge, default_value)
 
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities_array = observed_intensities.multiply(boolean_array).toarray()

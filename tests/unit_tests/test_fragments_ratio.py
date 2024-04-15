@@ -321,6 +321,177 @@ class TestCountObservedButNotPredicted:
 class TestCalc:
     """Class to test calc."""
 
+    def test_calc_xl(self):
+        """Test calc crosslinked-peptides."""
+        z = constants.EPSILON
+        #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
+        predicted_intensities_a = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0], shape=(1, 348))
+        observed_intensities_a = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0], shape=(1, 348))
+        fragments_ratio_a = fr.FragmentsRatio(predicted_intensities_a, observed_intensities_a)
+        fragments_ratio_a.calc(xl=True)
+
+        # counting metrics - peptide_a
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_predicted_a"][0], 4)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_predicted_b_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_predicted_y_a"][0], 2)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_a"][0], 4)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_b_a"][0], 1)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_y_a"][0], 3)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_and_predicted_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_and_predicted_b_a"][0], 1)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_and_predicted_y_a"][0], 1)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_not_observed_and_not_predicted_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_not_observed_and_not_predicted_b_a"][0], 1)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_not_observed_and_not_predicted_y_a"][0], 1)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_but_not_predicted_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_but_not_predicted_b_a"][0], 0)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_observed_but_not_predicted_y_a"][0], 2)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_not_observed_but_predicted_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_not_observed_but_predicted_b_a"][0], 1)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["count_not_observed_but_predicted_y_a"][0], 1)
+
+        # fractional count metrics - peptide a
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_predicted_a"][0], 4 / 8)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_predicted_b_a"][0], 2 / 3)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_predicted_y_a"][0], 2 / 5)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_a"][0], 4 / 8)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_b_a"][0], 1 / 3)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_y_a"][0], 3 / 5)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_and_predicted_a"][0], 2 / 8)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_and_predicted_b_a"][0], 1 / 3)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_and_predicted_y_a"][0], 1 / 5)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_not_observed_and_not_predicted_a"][0], 2 / 8)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_not_observed_and_not_predicted_b_a"][0], 1 / 3)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_not_observed_and_not_predicted_y_a"][0], 1 / 5)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_but_not_predicted_a"][0], 2 / 8)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_but_not_predicted_b_a"][0], 0 / 3)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_but_not_predicted_y_a"][0], 2 / 5)
+
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_not_observed_but_predicted_a"][0], 2 / 8)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_not_observed_but_predicted_b_a"][0], 1 / 3)
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_not_observed_but_predicted_y_a"][0], 1 / 5)
+
+        # fractional count metrics relative to predictions - peptide a
+        np.testing.assert_equal(fragments_ratio_a.metrics_val["fraction_observed_and_predicted_vs_predicted_a"][0], 2 / 4)
+        np.testing.assert_equal(
+            fragments_ratio_a.metrics_val["fraction_observed_and_predicted_b_vs_predicted_b_a"][0], 1 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_a.metrics_val["fraction_observed_and_predicted_y_vs_predicted_y_a"][0], 1 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_a.metrics_val["fraction_not_observed_and_not_predicted_vs_predicted_a"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio_a.metrics_val["fraction_not_observed_and_not_predicted_b_vs_predicted_b_a"][0], 1 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_a.metrics_val["fraction_not_observed_and_not_predicted_y_vs_predicted_y_a"][0], 1 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_a.metrics_val["fraction_observed_but_not_predicted_vs_predicted_a"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio_a.metrics_val["fraction_observed_but_not_predicted_b_vs_predicted_b_a"][0], 0 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_a.metrics_val["fraction_observed_but_not_predicted_y_vs_predicted_y_a"][0], 2 / 2
+        )
+
+
+        # counting metrics - peptide_b
+        predicted_intensities_b = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0], shape=(1, 348))
+        observed_intensities_b = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0], shape=(1, 348))
+        predicted_intensities_b = predicted_intensities_b.transpose()
+        observed_intensities_b = observed_intensities_b.transpose()
+        fragments_ratio_b = fr.FragmentsRatio(predicted_intensities_b, observed_intensities_b)
+        fragments_ratio_b.calc(xl=True)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_predicted_b"][0], 4)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_predicted_b_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_predicted_y_b"][0], 2)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_b"][0], 4)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_b_b"][0], 1)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_y_b"][0], 3)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_and_predicted_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_and_predicted_b_b"][0], 1)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_and_predicted_y_b"][0], 1)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_not_observed_and_not_predicted_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_not_observed_and_not_predicted_b_b"][0], 1)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_not_observed_and_not_predicted_y_b"][0], 1)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_but_not_predicted_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_but_not_predicted_b_b"][0], 0)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_observed_but_not_predicted_y_b"][0], 2)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_not_observed_but_predicted_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_not_observed_but_predicted_b_b"][0], 1)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["count_not_observed_but_predicted_y_b"][0], 1)
+
+        # fractional count metrics - peptide b
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_predicted_b"][0], 4 / 8)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_predicted_b_b"][0], 2 / 3)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_predicted_y_b"][0], 2 / 5)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_b"][0], 4 / 8)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_b_b"][0], 1 / 3)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_y_b"][0], 3 / 5)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_and_predicted_b"][0], 2 / 8)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_and_predicted_b_b"][0], 1 / 3)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_and_predicted_y_b"][0], 1 / 5)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_not_observed_and_not_predicted_b"][0], 2 / 8)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_not_observed_and_not_predicted_b_b"][0], 1 / 3)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_not_observed_and_not_predicted_y_b"][0], 1 / 5)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_but_not_predicted_b"][0], 2 / 8)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_but_not_predicted_b_b"][0], 0 / 3)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_but_not_predicted_y_b"][0], 2 / 5)
+
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_not_observed_but_predicted_b"][0], 2 / 8)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_not_observed_but_predicted_b_b"][0], 1 / 3)
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_not_observed_but_predicted_y_b"][0], 1 / 5)
+
+        # fractional count metrics relative to predictions - peptide b
+        np.testing.assert_equal(fragments_ratio_b.metrics_val["fraction_observed_and_predicted_vs_predicted_b"][0], 2 / 4)
+        np.testing.assert_equal(
+            fragments_ratio_b.metrics_val["fraction_observed_and_predicted_b_vs_predicted_b_b"][0], 1 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_b.metrics_val["fraction_observed_and_predicted_y_vs_predicted_y_b"][0], 1 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_b.metrics_val["fraction_not_observed_and_not_predicted_vs_predicted_b"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio_b.metrics_val["fraction_not_observed_and_not_predicted_b_vs_predicted_b_b"][0], 1 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_b.metrics_val["fraction_not_observed_and_not_predicted_y_vs_predicted_y_b"][0], 1 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_b.metrics_val["fraction_observed_but_not_predicted_vs_predicted_b"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio_b.metrics_val["fraction_observed_but_not_predicted_b_vs_predicted_b_b"][0], 0 / 2
+        )
+        np.testing.assert_equal(
+            fragments_ratio_b.metrics_val["fraction_observed_but_not_predicted_y_vs_predicted_y_b"][0], 2 / 2
+        )
+
     def test_calc(self):
         """Test calc."""
         z = constants.EPSILON
@@ -419,8 +590,11 @@ def assert_equal_sparse(a, b):
     assert (a != b).nnz == 0  # checks that there are 0 elements for which a != b
 
 
-def get_padded_array(arr, padding_value=0):
+def get_padded_array(arr, padding_value=0, shape=None):
     """Get padded array."""
-    return scipy.sparse.csr_matrix(
-        np.array([np.pad(arr, (0, constants.VEC_LENGTH - len(arr)), "constant", constant_values=padding_value)])
-    )
+    if shape is None:
+        shape = (1, constants.VEC_LENGTH)
+
+    padded_arr = np.pad(arr, (0, shape[1] - len(arr)), "constant", constant_values=padding_value)
+    return scipy.sparse.csr_matrix(np.array([padded_arr]))
+

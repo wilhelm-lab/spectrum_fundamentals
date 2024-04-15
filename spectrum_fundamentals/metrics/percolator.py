@@ -278,6 +278,7 @@ class Percolator(Metric):
 
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
+        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
         if self.xl:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE_A", "MODIFIED_SEQUENCE_B", "PRECURSOR_CHARGE"]
             self.metrics_val["Peptide"] = (
@@ -402,15 +403,17 @@ class Percolator(Metric):
     def calc(self):
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
-
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
-
+        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
         np.random.seed(1)
         # add Prosit or Andromeda features
         if self.input_type == "rescore":
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
-            fragments_ratio.calc()
-
+            if self.xl:
+                fragments_ratio.calc(xl=True)
+            else:
+                fragments_ratio.calc()
+            
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
             similarity.calc(self.all_features_flag, xl=self.xl)
 
