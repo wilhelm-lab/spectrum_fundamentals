@@ -67,7 +67,7 @@ class SimilarityMetrics(Metric):
                 masks = constants.MASK_DICT
                 default_value = constants.B_ION_MASK
             boolean_array = masks.get(charge, default_value)
-            
+
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
             predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)

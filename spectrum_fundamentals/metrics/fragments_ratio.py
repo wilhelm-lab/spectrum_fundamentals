@@ -1,5 +1,5 @@
 import enum
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import scipy.sparse
@@ -57,7 +57,7 @@ class FragmentsRatio(Metric):
             ion_mask = scipy.sparse.csr_matrix(ion_mask).T
         return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
 
-    
+    @staticmethod
     def count_observation_states(
         observation_state: scipy.sparse.csr_matrix,
         test_state: int,
@@ -140,6 +140,8 @@ class FragmentsRatio(Metric):
 
     def calc(self, xl: bool = False):
         """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
+        if self.true_intensities is None or self.pred_intensities is None:
+            return None
         if xl:
             true_intensities_a = self.true_intensities[:, 0:348]
             true_intensities_b = self.true_intensities[:, 348:]

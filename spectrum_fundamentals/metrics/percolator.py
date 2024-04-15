@@ -413,7 +413,7 @@ class Percolator(Metric):
                 fragments_ratio.calc(xl=True)
             else:
                 fragments_ratio.calc()
-            
+
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
             similarity.calc(self.all_features_flag, xl=self.xl)
 
