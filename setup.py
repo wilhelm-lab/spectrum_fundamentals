@@ -4,7 +4,7 @@ packages = ["fundamentals", "fundamentals.annotation", "fundamentals.metrics"]
 
 package_data = {"": ["*"]}
 
-install_requires = ["numpy>=1.21.0,<2.0.0", "pandas>=1.3.0,<2.0.0", "statsmodels>=0.12.2,<0.13.0"]
+install_requires = ["numpy>=1.21.0,<2.0.0", "pandas>=1.3.0,<2.0.0", "statsmodels>=0.12.2,<0.15.0"]
 
 setup_kwargs = {
     "name": "fundamentals",
