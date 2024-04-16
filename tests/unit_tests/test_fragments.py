@@ -114,7 +114,7 @@ class TestInitializePeaks(unittest.TestCase):
 
     def test_initialize_peaks(self):
         """Test initialize_peaks with basic input."""
-        fragments_input = {"sequence": "AAAA", "mass_analyzer": "FTMS", "charge": 3, "noncl_xl": 0}
+        fragments_input = {"sequence": "AAAA", "mass_analyzer": "FTMS", "charge": 3, "noncl_xl": False}
 
         with open(Path(__file__).parent / "data/fragments_meta_data.json") as file:
             expected_list_out = json.load(file)

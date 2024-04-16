@@ -65,7 +65,7 @@ def compute_peptide_mass(sequence: str) -> float:
     return terminal_masses + peptide_sum
 
 
-def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: Optional[float] = None, xl_pos: Optional[float] = None):
+def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
     """
     Checks input validity for initialize_peacks when used with xl mode.
 
@@ -75,10 +75,10 @@ def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: Optional[float] = None, x
     :raises ValueError: if non_cl_xl is 1 but no xl_pos and peptide_beta_mass has been supplied.
     """
     if noncl_xl == 1:
-        if peptide_beta_mass is None:
-            raise ValueError("Peptide_beta_mass cannot be None. Please check your input data.")
-        if xl_pos is None:
-            raise ValueError("Crosslinker position needs to be provided if using non cleavable XL mode.")
+        if peptide_beta_mass == 0.0:
+            raise ValueError("Peptide_beta_mass must be provided. Please check your input data.")
+        if xl_pos == -1:
+            raise ValueError("Crosslinker position must be provided if using non cleavable XL mode.")
 
 
 def initialize_peaks(
@@ -87,9 +87,9 @@ def initialize_peaks(
     charge: int,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    noncl_xl: int = 0,
-    peptide_beta_mass: Optional[float] = None,
-    xl_pos: Optional[int] = None,
+    noncl_xl: bool = False,
+    peptide_beta_mass: float = 0.0,
+    xl_pos: int = -1,
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
@@ -148,11 +148,11 @@ def initialize_peaks(
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
             for ion_type in range(number_of_ion_types):  # generate all ion types
                 mass = _compute_ion_mass(
+                    ion_mass=ion_type_masses[ion_type],
                     noncl_xl=noncl_xl,
                     ion_type=ion_type,
                     xl_pos=xl_pos,
                     peptide_beta_mass=peptide_beta_mass,
-                    ion_mass=ion_type_masses[ion_type],
                     peptide_length=peptide_length,
                     i=i,
                 )
@@ -174,13 +174,12 @@ def initialize_peaks(
 
 
 def _compute_ion_mass(
-    noncl_xl: int, ion_type: int, xl_pos: int, peptide_beta_mass: float, ion_mass: float, peptide_length: int, i: int
+    ion_mass: float, noncl_xl: bool, ion_type: int, xl_pos: int, peptide_beta_mass: float, peptide_length: int, i: int
 ) -> float:
     # Check for neutral loss here
 
-    if (noncl_xl == 1) and ((ion_type == 0 and i + 1 >= xl_pos) or (ion_type == 1 and i >= peptide_length - xl_pos)):
-        ion_mass_with_peptide_beta = ion_mass + peptide_beta_mass
-        mass = ion_mass_with_peptide_beta
+    if noncl_xl and ((ion_type == 0 and i + 1 >= xl_pos) or (ion_type == 1 and i >= peptide_length - xl_pos)):
+        mass = ion_mass + peptide_beta_mass
     else:
         mass = ion_mass
 
@@ -280,13 +279,13 @@ def initialize_peaks_xl(
         sequence_mass = compute_peptide_mass(sequence_without_crosslinker)
         sequence_beta_mass = compute_peptide_mass(sequence_beta_without_crosslinker)
 
-        list_out, tmt_n_term, peptide_sequence, calc_mass_s = initialize_peaks(
+        list_out, tmt_n_term, peptide_sequence, _ = initialize_peaks(
             sequence,
             mass_analyzer,
             charge,
             mass_tolerance,
             unit_mass_tolerance,
-            1,
+            True,
             sequence_beta_mass if sequence_beta_mass is not None else None,
             crosslinker_position,
         )
