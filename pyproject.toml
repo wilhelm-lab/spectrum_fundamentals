@@ -32,7 +32,7 @@ moepy = "^1.1.4"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.2.4"
-pytest-cov = "^4.0.0"
+pytest-cov = "^5.0.0"
 coverage = {extras = ["toml"], version = ">=5.3"}
 safety = ">=1.9.0"
 typeguard = ">=2.12.0"
