@@ -1,9 +1,20 @@
 import difflib
 import re
-from itertools import repeat, combinations
-from typing import Dict, List, Optional, Tuple
+from itertools import combinations, repeat
+from typing import Dict, List, Optional, Tuple, Union
 
-from .constants import MAXQUANT_VAR_MODS, MOD_MASSES, MOD_MASSES_SAGE, MOD_NAMES, MSFRAGGER_VAR_MODS, SPECTRONAUT_MODS
+import numpy as np
+import pandas as pd
+
+from .constants import (
+    MAXQUANT_VAR_MODS,
+    MOD_MASSES,
+    MOD_MASSES_SAGE,
+    MOD_NAMES,
+    MSFRAGGER_VAR_MODS,
+    SPECTRONAUT_MODS,
+    XISEARCH_VAR_MODS,
+)
 
 
 def sage_to_internal(sequences: List[str]) -> List[str]:
@@ -54,7 +65,60 @@ def sage_to_internal(sequences: List[str]) -> List[str]:
     return modified_strings
 
 
-def internal_to_spectronaut(sequences: List[str]) -> List[str]:
+def xisearch_to_internal(
+    xl: str,
+    seq: str,
+    mod: str,
+    crosslinker_position: int,
+    mod_positions: str,
+):
+    """
+    Function to translate a xisearch modstring to the XL-Prosit format.
+
+    :param xl: type of crosslinker used. Can be 'DSSO' or 'DSBU'.
+    :param seq: unmodified peptide sequence
+    :param mod: all modifications of pep
+    :param crosslinker_position: crosslinker position of peptide
+    :param mod_positions: position of all modifications of peptide
+    :raises ValueError: if suplied type of crosslinker is unknown
+
+    :return: modified sequence
+    """
+
+    def add_mod_sequence(split_seq: List[str], mods: str, mod_positions: str):
+        """
+        Apply modifications.
+
+        :param split_seq: List containing the sequence characters
+        :param mods: String containing modifications
+        :param mod_positions: String containing positions of modifications
+        """
+        if mod_positions.lower() in ["", "nan", "null"]:
+            return
+
+        split_mod = mods.split(";")
+        split_mod_positions = mod_positions.split(";")
+
+        for mod, pos in zip(split_mod, split_mod_positions):
+            modification = XISEARCH_VAR_MODS.get(mod)
+            pos_mod = int(pos)
+            if modification:
+                split_seq[pos_mod - 1] += modification
+            else:
+                split_seq[pos_mod - 1] += f"({mod})"
+
+    # Check the crosslinker type and apply modification accordingly
+    modification = XISEARCH_VAR_MODS.get(xl.lower())
+    if modification is None:
+        raise ValueError(f"Unknown crosslinker type provided: {xl}. Only 'DSSO' and 'DSBU' are supported.")
+
+    split_seq = [x for x in seq]
+    add_mod_sequence(split_seq, mod, mod_positions)
+    split_seq[crosslinker_position - 1] += modification
+    return "".join(split_seq)
+
+
+def internal_to_spectronaut(sequences: Union[np.ndarray, pd.Series, List[str]]) -> List[str]:
     """
     Function to translate a modstring from the internal format to the spectronaut format.
 
@@ -65,7 +129,9 @@ def internal_to_spectronaut(sequences: List[str]) -> List[str]:
     return [regex.sub(lambda mo: SPECTRONAUT_MODS[mo.string[mo.start() : mo.end()]], seq) for seq in sequences]
 
 
-def maxquant_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
+def maxquant_to_internal(
+    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
+) -> List[str]:
     """
     Function to translate a MaxQuant modstring to the Prosit format.
 
@@ -116,7 +182,9 @@ def maxquant_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, st
     return [regex.sub(find_replacement, seq).replace("_", "") for seq in sequences]
 
 
-def msfragger_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
+def msfragger_to_internal(
+    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
+) -> List[str]:
     """
     Function to translate a MSFragger modstring to the Prosit format.
 
@@ -272,27 +340,28 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
 
 def add_permutations(modified_sequence: str, unimod_id: int, residues: List[str]):
     """
-    Generate different peptide sequences with moving the modification to all possible residues
+    Generate different peptide sequences with moving the modification to all possible residues.
 
     :param modified_sequence: Peptide sequence
-    :param mod_id: modification unimod id to be used for generating different permutations.
+    :param unimod_id: modification unimod id to be used for generating different permutations.
     :param residues: possible amino acids where this mod can exist
     :return: list of possible sequence permutations
     """
-    sequence = modified_sequence.replace('[UNIMOD:'+ str(unimod_id) + ']', '')
-    modifications = len(re.findall("UNIMOD:"+ str(unimod_id), mod_seq))
+    sequence = modified_sequence.replace("[UNIMOD:" + str(unimod_id) + "]", "")
+    modifications = len(re.findall("UNIMOD:" + str(unimod_id), modified_sequence))
     if modifications == 0:
-        return mod_seq
+        return modified_sequence
     possible_positions = [i for i, ltr in enumerate(sequence) if ltr in residues]
     possible_positions.sort(reverse=True)
-    all_combinations = [list(each_permutation) for each_permutation in
-                        combinations(possible_positions, modifications)]
+    all_combinations = [list(each_permutation) for each_permutation in combinations(possible_positions, modifications)]
     modified_sequences_comb = []
     for comb in all_combinations:
-        mod_seq = sequence
+        modified_sequence = sequence
         for index in comb:
-            mod_seq = mod_seq[:index + 1] + '[unimod:'+ str(unimod_id) + ']' + mod_seq[index + 1:]
-        modified_sequences_comb.append(mod_seq)
+            modified_sequence = (
+                modified_sequence[: index + 1] + "[unimod:" + str(unimod_id) + "]" + modified_sequence[index + 1 :]
+            )
+        modified_sequences_comb.append(modified_sequence)
     return modified_sequences_comb
 
 
