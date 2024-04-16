@@ -170,7 +170,7 @@ class TestInternalTransformations(unittest.TestCase):
         """Test internal with mods to internal without_mods."""
         self.assertEqual(
             mod.internal_to_mod_mass(["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]),
-            ["[+229.162932]-ABC[+57.02146]DEFGHK[+229.162932]"],
+            ["[+229.162932]-ABC[+57.021464]DEFGHK[+229.162932]"],
         )
 
     def test_proteomicsdb_to_internal(self):

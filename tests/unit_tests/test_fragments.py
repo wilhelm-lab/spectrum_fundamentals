@@ -12,19 +12,19 @@ class TestGetModifications:
 
     def test_get_modifications(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("ABC") == ({}, 1, "ABC")
+        assert fragments._get_modifications("ABC") == {}
 
     def test_get_modifications_carbamidomethylation(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("ABC[UNIMOD:4]") == ({2: 57.02146}, 1, "ABC")
+        assert fragments._get_modifications("ABC[UNIMOD:4]") == {2: 57.021464}
 
     def test_get_modifications_tmt_tag(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("[UNIMOD:737]-ABC[UNIMOD:4]") == ({0: 229.162932, 2: 57.02146}, 2, "ABC")
+        assert fragments._get_modifications("[UNIMOD:737]-ABC[UNIMOD:4]") == {-2: 229.162932, 2: 57.021464}
 
     def test_get_modifications_tmtpro_tag(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("[UNIMOD:2016]-ABC[UNIMOD:4]") == ({0: 304.207146, 2: 57.02146}, 2, "ABC")
+        assert fragments._get_modifications("[UNIMOD:2016]-ABC[UNIMOD:4]") == {-2: 304.207146, 2: 57.021464}
 
 
 class TestComputeMasses(unittest.TestCase):
@@ -63,22 +63,22 @@ class TestComputeMasses(unittest.TestCase):
     def test_compute_peptide_masses(self):
         """Test computation of peptide masses with valid input."""
         seq = "SEQUENC[UNIMOD:4]E"
-        self.assertEqual(fragments.compute_peptide_mass(seq), 1045.2561516699998)
+        self.assertEqual(fragments.compute_peptide_mass(seq), 1045.2561556699998)
 
     def test_compute_peptide_masses_tmtpro(self):
         """Test computation of peptide masses with valid input and tmt tag."""
         seq = "[UNIMOD:737]-SEQUENC[UNIMOD:4]E"
-        self.assertEqual(fragments.compute_peptide_mass(seq), 1274.41908367)
+        self.assertEqual(fragments.compute_peptide_mass(seq), 1274.41908767)
 
     def test_compute_peptide_masses_with_invalid_syntax(self):
         """Negative testing of comuptation of peptide mass with unsupported syntax of mod string."""
         seq = "SEQUEM(Ox.)CE"
-        self.assertRaises(AssertionError, fragments.compute_peptide_mass, seq)
+        self.assertRaises(KeyError, fragments.compute_peptide_mass, seq)
 
     def test_compute_peptide_masses_with_invalid_mod(self):
         """Negative testing of computation of peptide mass with unknown modification in mod string."""
         seq = "SEQUENC[UNIMOD:0]E"
-        self.assertRaises(AssertionError, fragments.compute_peptide_mass, seq)
+        self.assertRaises(KeyError, fragments.compute_peptide_mass, seq)
 
 
 class TestMassTolerances(unittest.TestCase):

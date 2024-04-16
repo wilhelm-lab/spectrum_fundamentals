@@ -340,7 +340,7 @@ def generate_annotation_matrix(
 
 def parallel_annotate(
     spectrum: np.ndarray,
-    index_columns: dict,
+    index_columns: Dict[str, int],
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
 ) -> Optional[
@@ -363,34 +363,37 @@ def parallel_annotate(
     :param index_columns: a dictionary that contains the index columns of the spectrum
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
-    :raises ValueError: if an unknown crosslinker type is used
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
-    mod_seq_column = "MODIFIED_SEQUENCE"
-    if "MODIFIED_SEQUENCE_MSA" in index_columns:
-        mod_seq_column = "MODIFIED_SEQUENCE_MSA"
+    xl_type_col = index_columns.get("CROSSLINKER_TYPE")
+    if xl_type_col is None:
+        if spectrum[index_columns["PEPTIDE_LENGTH"]] > 30:  # this was in initialize peaks but can be checked prior
+            return None
+        return _annotate_linear_spectrum(spectrum, index_columns, mass_tolerance, unit_mass_tolerance)
 
-    crosslinker_type = index_columns.get("CROSSLINKER_TYPE")
-    if crosslinker_type is None:
-        return _annotate_linear_spectrum(spectrum, index_columns, mod_seq_column, mass_tolerance, unit_mass_tolerance)
-
+    if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
+        return None
     return _annotate_crosslinked_spectrum(
-        spectrum, index_columns, crosslinker_type, mod_seq_column, mass_tolerance, unit_mass_tolerance
+        spectrum, index_columns, spectrum[xl_type_col], mass_tolerance, unit_mass_tolerance
     )
 
 
-def _annotate_linear_spectrum(spectrum, index_columns, mod_seq_column, mass_tolerance, unit_mass_tolerance):
+def _annotate_linear_spectrum(
+    spectrum: np.ndarray, index_columns: Dict[str, int], mass_tolerance: float, unit_mass_tolerance: str
+):
     """
     Annotate a linear peptide spectrum.
 
     :param spectrum: Spectrum to be annotated
     :param index_columns: Index columns of the spectrum
-    :param mod_seq_column: Modified sequence column
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
     :return: Annotated spectrum
     """
+    mod_seq_column = "MODIFIED_SEQUENCE"
+    if "MODIFIED_SEQUENCE_MSA" in index_columns:
+        mod_seq_column = "MODIFIED_SEQUENCE_MSA"
     fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(
         spectrum[index_columns[mod_seq_column]],
         spectrum[index_columns["MASS_ANALYZER"]],
@@ -398,8 +401,6 @@ def _annotate_linear_spectrum(spectrum, index_columns, mod_seq_column, mass_tole
         mass_tolerance,
         unit_mass_tolerance,
     )
-    if not unmod_sequence:
-        return None
     matched_peaks = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
@@ -422,7 +423,11 @@ def _annotate_linear_spectrum(spectrum, index_columns, mod_seq_column, mass_tole
 
 
 def _annotate_crosslinked_spectrum(
-    spectrum, index_columns, crosslinker_type, mod_seq_column, mass_tolerance, unit_mass_tolerance
+    spectrum: np.ndarray,
+    index_columns: Dict[str, int],
+    crosslinker_type: str,
+    mass_tolerance: float,
+    unit_mass_tolerance: str,
 ):
     """
     Annotate a crosslinked peptide spectrum.
@@ -430,22 +435,17 @@ def _annotate_crosslinked_spectrum(
     :param spectrum: Spectrum to be annotated
     :param index_columns: Index columns of the spectrum
     :param crosslinker_type: Type of crosslinker used
-    :param mod_seq_column: Modified sequence column
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
+    :raises ValueError: if unsupported crosslinker type was supplied.
+
     :return: Annotated spectrum
     """
-    crosslinker_type_index = index_columns.get("CROSSLINKER_TYPE")
-    if crosslinker_type_index is not None:
-        crosslinker_type = spectrum[crosslinker_type_index]
-    else:
-        raise ValueError("Crosslinker type column not found in index_columns.")
-
     inputs_a = [
         spectrum[index_columns["MODIFIED_SEQUENCE_A"]],
         spectrum[index_columns["MASS_ANALYZER"]],
         spectrum[index_columns["CROSSLINKER_POSITION_A"]],
-        spectrum[index_columns["CROSSLINKER_TYPE"]],
+        crosslinker_type,
         mass_tolerance,
         unit_mass_tolerance,
     ]
@@ -453,7 +453,7 @@ def _annotate_crosslinked_spectrum(
         spectrum[index_columns["MODIFIED_SEQUENCE_B"]],
         spectrum[index_columns["MASS_ANALYZER"]],
         spectrum[index_columns["CROSSLINKER_POSITION_B"]],
-        spectrum[index_columns["CROSSLINKER_TYPE"]],
+        crosslinker_type,
         mass_tolerance,
         unit_mass_tolerance,
     ]

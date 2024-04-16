@@ -182,10 +182,7 @@ MOD_MASSES = {
     "[UNIMOD:730]": 304.205360,  # iTRAQ8
     "[UNIMOD:259]": 8.014199,  # SILAC Lysine
     "[UNIMOD:267]": 10.008269,  # SILAC Arginine
-    "[UNIMOD:21]": 79.966331,  # Phospho
-    "[UNIMOD:23]": -18.010565,  # Dehydration after phospho loss
-    "[UNIMOD:4]": 57.02146,  # Carbamidomethyl
-    "[UNIMOD:35]": 15.9949146,  # Oxidation
+    "[]": 0.0,
     "[UNIMOD:1]": 42.010565,  # Acetylation
     "[UNIMOD:1896]": 158.003765,  # DSSO-crosslinker
     "[UNIMOD:1881]": 54.010565,  # Alkene short fragment of DSSO-crosslinker
@@ -194,6 +191,46 @@ MOD_MASSES = {
     "[UNIMOD:1885]": 111.032028,  # BuUr long fragment of BuUrBu (DSBU)-crosslinker
     "[UNIMOD:1886]": 85.052764,  # Bu short fragment of BuUrBu (DSBU)-crosslinker
     "[UNIMOD:1898]": 138.068080,  # DSS and BS3 non-cleavable crosslinker
+    "[UNIMOD:122]": 27.994915,  # Formylation
+    "[UNIMOD:1289]": 70.041865,  # Butyrylation
+    "[UNIMOD:1363]": 68.026215,  # Crotonylation
+    "[UNIMOD:1848]": 114.031694,  # Glutarylation
+    "[UNIMOD:1914]": -32.008456,  # Oxidation and then loss of oxidized M side chain
+    "[UNIMOD:2]": -0.984016,  # Amidation
+    "[UNIMOD:21]": 79.966331,  # Phosphorylation
+    "[UNIMOD:213]": 541.06111,  # ADP-ribosylation
+    "[UNIMOD:23]": -18.010565,  # Water Loss
+    "[UNIMOD:24]": 71.037114,  # Propionamidation
+    "[UNIMOD:354]": 44.985078,  # Nitrosylation
+    "[UNIMOD:28]": -17.026549,  # Glu to PyroGlu
+    "[UNIMOD:280]": 28.0313,  # Ethylation
+    "[UNIMOD:299]": 43.989829,  # Carboxylation
+    "[UNIMOD:3]": 226.077598,  # Biotinylation
+    "[UNIMOD:34]": 14.01565,  # Methylation
+    "[UNIMOD:345]": 47.984744,  # Trioxidation
+    "[UNIMOD:35]": 15.994915,  # Hydroxylation
+    "[UNIMOD:351]": 3.994915,  # Oxidation to Kynurenine
+    "[UNIMOD:36]": 28.0313,  # Dimethylation
+    "[UNIMOD:360]": -30.010565,  # Pyrrolidinone
+    "[UNIMOD:368]": -33.987721,  # Dehydroalanine
+    "[UNIMOD:37]": 42.04695,  # Trimethylation
+    "[UNIMOD:385]": -17.026549,  # Ammonia loss
+    "[UNIMOD:392]": 29.974179,  # Quinone
+    "[UNIMOD:4]": 57.021464,  # Carbamidomethyl
+    "[UNIMOD:40]": 79.956815,  # Sulfonation
+    "[UNIMOD:401]": -2.01565,  # Didehydro
+    "[UNIMOD:425]": 31.989829,  # Dioxidation
+    "[UNIMOD:43]": 203.079373,  # HexNAc
+    "[UNIMOD:44]": 204.187801,  # Farnesylation
+    "[UNIMOD:447]": -15.994915,  # Reduction
+    "[UNIMOD:46]": 229.014009,  # Pyridoxal phosphate
+    "[UNIMOD:47]": 238.229666,  # Palmitoylation
+    "[UNIMOD:5]": 43.005814,  # Carbamyl
+    "[UNIMOD:58]": 56.026215,  # Propionylation
+    "[UNIMOD:6]": 58.005479,  # Carboxymethylation
+    "[UNIMOD:64]": 100.016044,  # Succinylation
+    "[UNIMOD:7]": 0.984016,  # Deamidation
+    "[UNIMOD:747]": 86.000394,  # Malonylation
 }
 
 MOD_MASSES_SAGE = {
