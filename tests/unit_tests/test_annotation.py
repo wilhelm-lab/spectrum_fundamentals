@@ -36,12 +36,11 @@ class TestAnnotationPipeline(unittest.TestCase):
             Path(__file__).parent / "data" / "annotation_xl_noncl_input.json", orient="records"
         )
 
-        result = annotation.annotate_spectra(spectrum_input)
-
-        result.to_json(Path(__file__).parent / "data" / "annotation_xl_noncl_output.json", orient="records", indent=4)
         expected_result = pd.read_json(
             Path(__file__).parent / "data" / "annotation_xl_noncl_output.json", orient="records"
         )
+
+        result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)
 
     def test_annotate_spectra_cl_xl(self):
