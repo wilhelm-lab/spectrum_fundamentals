@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spectrum_fundamentals"
-version = "0.5.1"  # <<COOKIETEMPLE_FORCE_BUMP>>
+version = "0.5.2"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Fundamental functions, annotation pipeline and constants for oktoberfest"
 authors = ["Wilhelmlab at Technical University of Munich"]
 license = "MIT"
