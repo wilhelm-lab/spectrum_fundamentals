@@ -36,8 +36,7 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
     session's virtual environment. This allows pre-commit to locate hooks in
     that environment when invoked from git.
 
-    Args:
-        session: The Session object.
+    :param session: The Session object.
     """
     assert session.bin is not None  # noqa: S101
 
@@ -111,6 +110,7 @@ def precommit(session: Session) -> None:
         "flake8-docstrings",
         "flake8-rst-docstrings",
         "isort",
+        "darglint",
         "pep8-naming",
         "pre-commit",
         "pre-commit-hooks",

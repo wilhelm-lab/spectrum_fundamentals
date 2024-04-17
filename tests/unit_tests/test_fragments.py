@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 
 from numpy.testing import assert_almost_equal
 
@@ -10,19 +12,19 @@ class TestGetModifications:
 
     def test_get_modifications(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("ABC") == ({}, 1, "ABC")
+        assert fragments._get_modifications("ABC") == {}
 
     def test_get_modifications_carbamidomethylation(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("ABC[UNIMOD:4]") == ({2: 57.02146}, 1, "ABC")
+        assert fragments._get_modifications("ABC[UNIMOD:4]") == {2: 57.021464}
 
     def test_get_modifications_tmt_tag(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("[UNIMOD:737]-ABC[UNIMOD:4]") == ({0: 229.162932, 2: 57.02146}, 2, "ABC")
+        assert fragments._get_modifications("[UNIMOD:737]-ABC[UNIMOD:4]") == {-2: 229.162932, 2: 57.021464}
 
     def test_get_modifications_tmtpro_tag(self):
         """Test get_modifications."""
-        assert fragments._get_modifications("[UNIMOD:2016]-ABC[UNIMOD:4]") == ({0: 304.207146, 2: 57.02146}, 2, "ABC")
+        assert fragments._get_modifications("[UNIMOD:2016]-ABC[UNIMOD:4]") == {-2: 304.207146, 2: 57.021464}
 
 
 class TestComputeMasses(unittest.TestCase):
@@ -61,22 +63,22 @@ class TestComputeMasses(unittest.TestCase):
     def test_compute_peptide_masses(self):
         """Test computation of peptide masses with valid input."""
         seq = "SEQUENC[UNIMOD:4]E"
-        self.assertEqual(fragments.compute_peptide_mass(seq), 1045.2561516699998)
+        self.assertEqual(fragments.compute_peptide_mass(seq), 1045.2561556699998)
 
     def test_compute_peptide_masses_tmtpro(self):
         """Test computation of peptide masses with valid input and tmt tag."""
         seq = "[UNIMOD:737]-SEQUENC[UNIMOD:4]E"
-        self.assertEqual(fragments.compute_peptide_mass(seq), 1274.41908367)
+        self.assertEqual(fragments.compute_peptide_mass(seq), 1274.41908767)
 
     def test_compute_peptide_masses_with_invalid_syntax(self):
         """Negative testing of comuptation of peptide mass with unsupported syntax of mod string."""
         seq = "SEQUEM(Ox.)CE"
-        self.assertRaises(AssertionError, fragments.compute_peptide_mass, seq)
+        self.assertRaises(KeyError, fragments.compute_peptide_mass, seq)
 
     def test_compute_peptide_masses_with_invalid_mod(self):
         """Negative testing of computation of peptide mass with unknown modification in mod string."""
         seq = "SEQUENC[UNIMOD:0]E"
-        self.assertRaises(AssertionError, fragments.compute_peptide_mass, seq)
+        self.assertRaises(KeyError, fragments.compute_peptide_mass, seq)
 
 
 class TestMassTolerances(unittest.TestCase):
@@ -105,3 +107,80 @@ class TestMassTolerances(unittest.TestCase):
         self.assertEqual(window_ftms, (9.9998, 10.0002))
         self.assertEqual(window_tof, (9.9996, 10.0004))
         self.assertEqual(window_itms, (9.65, 10.35))
+
+
+class TestInitializePeaks(unittest.TestCase):
+    """Class to test initialize_peaks function."""
+
+    def test_initialize_peaks(self):
+        """Test initialize_peaks with basic input."""
+        fragments_input = {"sequence": "AAAA", "mass_analyzer": "FTMS", "charge": 3, "noncl_xl": False}
+
+        with open(Path(__file__).parent / "data/fragments_meta_data.json") as file:
+            expected_list_out = json.load(file)
+        expected_tmt_nt_term = 1
+        expected_peptide_sequence = "AAAA"
+        expected_mass_s = 302.15902
+
+        actual_list_out, actual_tmt_n_term, actual_peptide_sequence, actual_calc_mass_s = fragments.initialize_peaks(
+            **fragments_input
+        )
+
+        self.assertEqual(actual_list_out, expected_list_out)
+        self.assertEqual(actual_tmt_n_term, expected_tmt_nt_term)
+        self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
+        assert_almost_equal(actual_calc_mass_s, expected_mass_s, decimal=5)
+
+    def test_initialize_peaks_non_cl_xl(self):
+        """Test initialize_peaks_xl with basic input for non-cleavable crosslinked peptides."""
+        initialize_peaks_xl_input = {
+            "sequence": "AKC",
+            "mass_analyzer": "FTMS",
+            "crosslinker_position": 2,
+            "crosslinker_type": "BS3",
+            "sequence_beta": "AKA",
+        }
+
+        with open(Path(__file__).parent / "data/fragments_meta_data_non_cl_xl.json") as file:
+            expected_fragments_meta_data = json.load(file)
+        expected_tmt_nt_term = 1
+        expected_peptide_sequence = "AKC"
+        expected_mass = 320.15182
+
+        (
+            actual_fragments_meta_data,
+            actual_tmt_n_term,
+            actual_peptide_sequence,
+            actual_mass,
+        ) = fragments.initialize_peaks_xl(**initialize_peaks_xl_input)
+        self.assertEqual(actual_fragments_meta_data, expected_fragments_meta_data)
+        self.assertEqual(actual_tmt_n_term, expected_tmt_nt_term)
+        self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
+        assert_almost_equal(actual_mass, expected_mass, decimal=5)
+
+    def test_initialize_peaks_cl_xl(self):
+        """Test initialize_peaks_xl with basic input for cleavable crosslinked peptides."""
+        initialize_peaks_xl_input = {
+            "sequence": "AKC",
+            "mass_analyzer": "FTMS",
+            "crosslinker_position": 2,
+            "crosslinker_type": "DSSO",
+            "sequence_beta": "AKA",
+        }
+
+        with open(Path(__file__).parent / "data/fragments_meta_data_cl_xl.json") as file:
+            expected_fragments_meta_data = json.load(file)
+        expected_tmt_nt_term = 1
+        expected_peptide_sequence = "AKC"
+        expected_mass = 320.15182
+
+        (
+            actual_fragments_meta_data,
+            actual_tmt_n_term,
+            actual_peptide_sequence,
+            actual_mass,
+        ) = fragments.initialize_peaks_xl(**initialize_peaks_xl_input)
+        self.assertEqual(actual_fragments_meta_data, expected_fragments_meta_data)
+        self.assertEqual(actual_tmt_n_term, expected_tmt_nt_term)
+        self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
+        assert_almost_equal(actual_mass, expected_mass, decimal=5)
