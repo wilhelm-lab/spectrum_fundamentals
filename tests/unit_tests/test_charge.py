@@ -15,7 +15,11 @@ class TestCharge(unittest.TestCase):
         expected_output = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]])
         np.testing.assert_equal(charge.indices_to_one_hot(labels, classes), expected_output)
 
-    # Inside charge.py
+    def test_indices_to_one_hot_without_classes(self):
+        """Test indices_to_one_hot."""
+        labels = np.array([1, 2, 3, 4])
+        expected_output = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+        np.testing.assert_equal(charge.indices_to_one_hot(labels), expected_output)
 
     def test_indices_to_one_hot_with_int_and_class(self):
         """Test indices_to_one_hot with a single integer and given number of classes."""
