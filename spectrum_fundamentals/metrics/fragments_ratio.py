@@ -71,13 +71,11 @@ class FragmentsRatio(Metric):
         :param test_state: integer for the test observation state
         :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
                          integer array of length 174
+        :param xl: whether or not the function is executed with xl mode
         :return: number of observation states equal to test_state per row
         """
         state_boolean = observation_state == test_state
-        if xl:
-            return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask, xl=True)
-        else:
-            return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask)
+        return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask, xl=xl)
 
     @staticmethod
     def get_mask_observed_valid(observed_mz: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:

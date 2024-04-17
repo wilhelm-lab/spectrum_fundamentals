@@ -57,6 +57,7 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything
         :param xl: whether operating on cleavable crosslinked or linear peptides
+        :raises ValueError: if charge is smaller than 1 or larger than 5
         :return: SA values
         """
         if charge != 0:
@@ -209,6 +210,9 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything
         :param method: either pearson or spearman
+        :param xl: wheter or not to use xl mode
+        :raises ValueError: if charge is smaller than 1 or larger than 5
+
         :return: calculated correlations
         """
         observed_intensities_array = observed_intensities.toarray()

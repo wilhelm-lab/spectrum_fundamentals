@@ -57,7 +57,6 @@ class Percolator(Metric):
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
-        xl: bool = False,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
@@ -65,7 +64,7 @@ class Percolator(Metric):
         self.all_features_flag = all_features_flag
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
-        self.xl = xl
+        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
 
         super().__init__(pred_intensities, true_intensities, mz)
 
@@ -248,7 +247,6 @@ class Percolator(Metric):
 
     def add_common_features(self):
         """Add features used by both Andromeda and Prosit feature scoring sets."""
-        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
         if self.xl:
             self.metrics_val["missedCleavages_A"] = self.metadata["SEQUENCE_A"].apply(Percolator.count_missed_cleavages)
             self.metrics_val["missedCleavages_B"] = self.metadata["SEQUENCE_B"].apply(Percolator.count_missed_cleavages)
@@ -278,7 +276,6 @@ class Percolator(Metric):
 
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
-        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
         if self.xl:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE_A", "MODIFIED_SEQUENCE_B", "PRECURSOR_CHARGE"]
             self.metrics_val["Peptide"] = (

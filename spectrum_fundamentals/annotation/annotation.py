@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def match_peaks(
     fragments_meta_data: List[dict],
-    peaks_intensity: Union[List[float], np.ndarray],
+    peaks_intensity: np.ndarray,
     peaks_masses: np.ndarray,
     tmt_n_term: int,
     unmod_sequence: str,
@@ -29,10 +29,6 @@ def match_peaks(
     :param charge: Precursor charge
     :return: List of matched/annotated peaks
     """
-    # Convert peaks_intensity to numpy array if it's a list
-    if isinstance(peaks_intensity, list):
-        peaks_intensity = np.array(peaks_intensity)
-
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
     max_intensity = 1.0
