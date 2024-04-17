@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>spectrum_fundamentals package &mdash; spectrum_fundamentals 0.5.1 documentation</title>
+  <title>spectrum_fundamentals package &mdash; spectrum_fundamentals 0.5.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="_static/custom_cookietemple.css?v=057798b9" />
@@ -16,7 +16,7 @@
   
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=9bd53f53"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=ac2db539"></script>
         <script src="_static/doctools.js?v=888ff710"></script>
         <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
@@ -38,7 +38,7 @@
             spectrum_fundamentals
           </a>
               <div class="version">
-                0.5.1
+                0.5.2
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -78,9 +78,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.fragments.compute_peptide_mass"><code class="docutils literal notranslate"><span class="pre">compute_peptide_mass()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.fragments.get_min_max_mass"><code class="docutils literal notranslate"><span class="pre">get_min_max_mass()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.fragments.initialize_peaks"><code class="docutils literal notranslate"><span class="pre">initialize_peaks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.fragments.initialize_peaks_xl"><code class="docutils literal notranslate"><span class="pre">initialize_peaks_xl()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-spectrum_fundamentals.mod_string">spectrum_fundamentals.mod_string module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.mod_string.add_permutations"><code class="docutils literal notranslate"><span class="pre">add_permutations()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.mod_string.get_mods_list"><code class="docutils literal notranslate"><span class="pre">get_mods_list()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.mod_string.internal_to_mod_mass"><code class="docutils literal notranslate"><span class="pre">internal_to_mod_mass()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#spectrum_fundamentals.mod_string.internal_to_mod_names"><code class="docutils literal notranslate"><span class="pre">internal_to_mod_names()</span></code></a></li>
@@ -139,9 +141,11 @@
 <li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation.annotation">spectrum_fundamentals.annotation.annotation module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.annotate_spectra"><code class="docutils literal notranslate"><span class="pre">annotate_spectra()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.generate_annotation_matrix"><code class="docutils literal notranslate"><span class="pre">generate_annotation_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.generate_annotation_matrix_xl"><code class="docutils literal notranslate"><span class="pre">generate_annotation_matrix_xl()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.handle_multiple_matches"><code class="docutils literal notranslate"><span class="pre">handle_multiple_matches()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.match_peaks"><code class="docutils literal notranslate"><span class="pre">match_peaks()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.parallel_annotate"><code class="docutils literal notranslate"><span class="pre">parallel_annotate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="spectrum_fundamentals.annotation.html#spectrum_fundamentals.annotation.annotation.peak_pos_xl_cms2"><code class="docutils literal notranslate"><span class="pre">peak_pos_xl_cms2()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.annotation.html#module-spectrum_fundamentals.annotation">Module contents</a></li>
@@ -280,7 +284,7 @@
 <span id="spectrum-fundamentals-constants-module"></span><h2>spectrum_fundamentals.constants module<a class="headerlink" href="#module-spectrum_fundamentals.constants" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="spectrum_fundamentals.constants.RescoreType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.constants.</span></span><span class="sig-name descname"><span class="pre">RescoreType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/constants.py#L321-L325"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.constants.RescoreType" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.constants.</span></span><span class="sig-name descname"><span class="pre">RescoreType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/constants.py#L406-L410"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.constants.RescoreType" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
 <p>Class for rescoring types.</p>
 <dl class="py attribute">
@@ -300,7 +304,7 @@
 <span id="spectrum-fundamentals-fragments-module"></span><h2>spectrum_fundamentals.fragments module<a class="headerlink" href="#module-spectrum_fundamentals.fragments" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.fragments.compute_ion_masses">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">compute_ion_masses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq_int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge_onehot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L248-L352"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.compute_ion_masses" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">compute_ion_masses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq_int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge_onehot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L357-L461"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.compute_ion_masses" title="Permalink to this definition"></a></dt>
 <dd><p>Collects an integer sequence e.g. [1,2,3] with charge 2 and returns array with 174 positions for ion masses.</p>
 <p>Invalid masses are set to -1.</p>
 <dl class="field-list simple">
@@ -322,27 +326,24 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.fragments.compute_peptide_mass">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">compute_peptide_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L69-L107"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.compute_peptide_mass" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">compute_peptide_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L49-L65"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.compute_peptide_mass" title="Permalink to this definition"></a></dt>
 <dd><p>Compute the theoretical mass of the peptide sequence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>sequence</strong> (<em>str</em>) – Modified peptide sequence</p>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>AssertionError</strong> – if an unknown modification has been found in the peptide sequence</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Theoretical mass of the sequence</p>
 </dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Theoretical mass of the sequence</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.fragments.get_min_max_mass">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">get_min_max_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L202-L245"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.get_min_max_mass" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">get_min_max_mass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L311-L354"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.get_min_max_mass" title="Permalink to this definition"></a></dt>
 <dd><p>Helper function to get min and max mass based on mass analyzer.</p>
 <p>If both mass_tolerance and unit_mass_tolerance are provided, the function uses the provided tolerance
 to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cite>unit_mass_tolerance</cite> is missing
@@ -377,7 +378,7 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.fragments.initialize_peaks">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">initialize_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L110-L199"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.initialize_peaks" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">initialize_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noncl_xl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peptide_beta_mass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xl_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L84-L173"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.initialize_peaks" title="Permalink to this definition"></a></dt>
 <dd><p>Generate theoretical peaks for a modified peptide sequence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -387,13 +388,47 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 <li><p><strong>charge</strong> (<em>int</em>) – Precursor charge</p></li>
 <li><p><strong>mass_tolerance</strong> (<em>float</em><em> | </em><em>None</em>) – mass tolerance to calculate min and max mass</p></li>
 <li><p><strong>unit_mass_tolerance</strong> (<em>str</em><em> | </em><em>None</em>) – unit for the mass tolerance (da or ppm)</p></li>
+<li><p><strong>noncl_xl</strong> (<em>bool</em>) – whether the function is called with a non-cleavable xl modification</p></li>
+<li><p><strong>peptide_beta_mass</strong> (<em>float</em>) – the mass of the second peptide to be considered for non-cleavable XL</p></li>
+<li><p><strong>xl_pos</strong> (<em>int</em>) – the position of the crosslinker for non-cleavable XL</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>List</em>[dict], int, str, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="spectrum_fundamentals.fragments.initialize_peaks_xl">
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.fragments.</span></span><span class="sig-name descname"><span class="pre">initialize_peaks_xl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_analyzer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crosslinker_position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crosslinker_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_mass_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequence_beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/fragments.py#L189-L308"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.fragments.initialize_peaks_xl" title="Permalink to this definition"></a></dt>
+<dd><p>Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.</p>
+<p>This function get only one modified peptide (peptide a or b))</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sequence</strong> (<em>str</em>) – Modified peptide sequence (peptide a or b)</p></li>
+<li><p><strong>mass_analyzer</strong> (<em>str</em>) – Type of mass analyzer used eg. FTMS, ITMS</p></li>
+<li><p><strong>crosslinker_position</strong> (<em>int</em>) – The position of crosslinker</p></li>
+<li><p><strong>crosslinker_type</strong> (<em>str</em>) – Can be either DSSO, DSBU or BuUrBU</p></li>
+<li><p><strong>mass_tolerance</strong> (<em>float</em><em> | </em><em>None</em>) – mass tolerance to calculate min and max mass</p></li>
+<li><p><strong>unit_mass_tolerance</strong> (<em>str</em><em> | </em><em>None</em>) – unit for the mass tolerance (da or ppm)</p></li>
+<li><p><strong>sequence_beta</strong> (<em>str</em><em> | </em><em>None</em>) – optional second peptide to be considered for non-cleavable XL</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>AssertionError</strong> – if peptide sequence contained an unknown modification. TODO do this within the get_mod func.</p>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – if crosslinker_type is unkown</p></li>
+<li><p><strong>AssertionError</strong> – if the short and long XL sequence (the one with the short / long crosslinker mod)
+has a tmt n term while the other one does not</p></li>
+</ul>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence</p>
+<dd class="field-odd"><p>List of theoretical peaks, flag to indicate if there is a tmt on n-terminus, unmodified peptide
+sequence, therotical mass of modified peptide (without considering mass of crosslinker)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tuple</em>[<em>List</em>[dict], int, str, float]</p>
@@ -405,8 +440,26 @@ to calculate the min and max mass. If either <cite>mass_tolerance</cite> or <cit
 <section id="module-spectrum_fundamentals.mod_string">
 <span id="spectrum-fundamentals-mod-string-module"></span><h2>spectrum_fundamentals.mod_string module<a class="headerlink" href="#module-spectrum_fundamentals.mod_string" title="Permalink to this heading"></a></h2>
 <dl class="py function">
+<dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.add_permutations">
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">add_permutations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modified_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unimod_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residues</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L341-L365"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.add_permutations" title="Permalink to this definition"></a></dt>
+<dd><p>Generate different peptide sequences with moving the modification to all possible residues.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modified_sequence</strong> (<em>str</em>) – Peptide sequence</p></li>
+<li><p><strong>unimod_id</strong> (<em>int</em>) – modification unimod id to be used for generating different permutations.</p></li>
+<li><p><strong>residues</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – possible amino acids where this mod can exist</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of possible sequence permutations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.get_mods_list">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">get_mods_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mods_variable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_fixed</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L395-L402"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.get_mods_list" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">get_mods_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mods_variable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_fixed</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L422-L429"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.get_mods_list" title="Permalink to this definition"></a></dt>
 <dd><p>Helper function to get mods list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -559,7 +612,7 @@ in the fixed modifications. If you want to have no fixed modifictions at all, su
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spectrum_fundamentals.mod_string.proteomicsdb_to_internal">
-<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">proteomicsdb_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_variable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L341-L392"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.proteomicsdb_to_internal" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spectrum_fundamentals.mod_string.</span></span><span class="sig-name descname"><span class="pre">proteomicsdb_to_internal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_variable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods_fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/documentation/spectrum_fundamentals/mod_string.py#L368-L419"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spectrum_fundamentals.mod_string.proteomicsdb_to_internal" title="Permalink to this definition"></a></dt>
 <dd><p>Function to create a sequence with UNIMOD modifications from given sequence and it’s varaible and fixed modifications.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
