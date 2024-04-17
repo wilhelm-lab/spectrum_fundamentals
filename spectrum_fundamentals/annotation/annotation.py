@@ -454,7 +454,7 @@ def _annotate_crosslinked_spectrum(
         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks_xl(*inputs)
         matched_peaks = match_peaks(
             fragments_meta_data,
-            spectrum[index_columns["INTENSITIES"]],
+            np.array(spectrum[index_columns["INTENSITIES"]]),
             np.array(spectrum[index_columns["MZ"]]),  # Convert to numpy array
             tmt_n_term,
             unmod_sequence,
