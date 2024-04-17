@@ -14,7 +14,9 @@ BATCH_SIZE = 6000
 VEC_LENGTH = (
     (SEQ_LEN - 1) * 2 * 3
 )  # peptide of length 30 has 29 b and y-ions, each with charge 1+, 2+ and 3+, for a total of 174 fragments
-
+VEC_LENGTH_CMS2 = (SEQ_LEN - 1) * 2 * 3 * 2
+# peptide of length 30 can have 29 b, y, b_short, y_short, b_long and y_long ions, each with charge 1+, 2+ and 3+
+# we do not annotate fragments wth charge 3+. All fragmets with charge 3+ convert to -1
 #############
 # ALPHABETS #
 #############
@@ -51,6 +53,13 @@ ALPHABET_MODS = {
     "K[UNIMOD:2016]": 22,
     "K[UNIMOD:214]": 22,
     "K[UNIMOD:730]": 22,
+    "K[UNIMOD:1896]": 22,
+    "K[UNIMOD:1898]": 22,
+    "K[UNIMOD:1884]": 23,
+    "K[UNIMOD:1881]": 24,
+    "K[UNIMOD:1882]": 25,
+    "K[UNIMOD:1885]": 26,
+    "K[UNIMOD:1886]": 27,
     "S[UNIMOD:21]": 25,
     "T[UNIMOD:21]": 26,
     "Y[UNIMOD:21]": 27,
@@ -173,12 +182,57 @@ MOD_MASSES = {
     "[UNIMOD:730]": 304.205360,  # iTRAQ8
     "[UNIMOD:259]": 8.014199,  # SILAC Lysine
     "[UNIMOD:267]": 10.008269,  # SILAC Arginine
-    "[UNIMOD:21]": 79.966331,  # Phospho
-    "[UNIMOD:23]": -18.010565,  # Dehydration after phospho loss
-    "[UNIMOD:4]": 57.02146,  # Carbamidomethyl
-    "[UNIMOD:35]": 15.9949146,  # Oxidation
+    "[]": 0.0,
     "[UNIMOD:1]": 42.010565,  # Acetylation
+    "[UNIMOD:1896]": 158.003765,  # DSSO-crosslinker
+    "[UNIMOD:1881]": 54.010565,  # Alkene short fragment of DSSO-crosslinker
+    "[UNIMOD:1882]": 85.982635,  # Thiol long fragment of DSSO-crosslinker
+    "[UNIMOD:1884]": 196.084792,  # BuUrBu (DSBU)-crosslinker
+    "[UNIMOD:1885]": 111.032028,  # BuUr long fragment of BuUrBu (DSBU)-crosslinker
+    "[UNIMOD:1886]": 85.052764,  # Bu short fragment of BuUrBu (DSBU)-crosslinker
+    "[UNIMOD:1898]": 138.068080,  # DSS and BS3 non-cleavable crosslinker
+    "[UNIMOD:122]": 27.994915,  # Formylation
+    "[UNIMOD:1289]": 70.041865,  # Butyrylation
+    "[UNIMOD:1363]": 68.026215,  # Crotonylation
+    "[UNIMOD:1848]": 114.031694,  # Glutarylation
+    "[UNIMOD:1914]": -32.008456,  # Oxidation and then loss of oxidized M side chain
+    "[UNIMOD:2]": -0.984016,  # Amidation
+    "[UNIMOD:21]": 79.966331,  # Phosphorylation
+    "[UNIMOD:213]": 541.06111,  # ADP-ribosylation
+    "[UNIMOD:23]": -18.010565,  # Water Loss
+    "[UNIMOD:24]": 71.037114,  # Propionamidation
+    "[UNIMOD:354]": 44.985078,  # Nitrosylation
+    "[UNIMOD:28]": -17.026549,  # Glu to PyroGlu
+    "[UNIMOD:280]": 28.0313,  # Ethylation
+    "[UNIMOD:299]": 43.989829,  # Carboxylation
+    "[UNIMOD:3]": 226.077598,  # Biotinylation
+    "[UNIMOD:34]": 14.01565,  # Methylation
+    "[UNIMOD:345]": 47.984744,  # Trioxidation
+    "[UNIMOD:35]": 15.994915,  # Hydroxylation
+    "[UNIMOD:351]": 3.994915,  # Oxidation to Kynurenine
+    "[UNIMOD:36]": 28.0313,  # Dimethylation
+    "[UNIMOD:360]": -30.010565,  # Pyrrolidinone
+    "[UNIMOD:368]": -33.987721,  # Dehydroalanine
+    "[UNIMOD:37]": 42.04695,  # Trimethylation
+    "[UNIMOD:385]": -17.026549,  # Ammonia loss
+    "[UNIMOD:392]": 29.974179,  # Quinone
+    "[UNIMOD:4]": 57.021464,  # Carbamidomethyl
+    "[UNIMOD:40]": 79.956815,  # Sulfonation
+    "[UNIMOD:401]": -2.01565,  # Didehydro
+    "[UNIMOD:425]": 31.989829,  # Dioxidation
+    "[UNIMOD:43]": 203.079373,  # HexNAc
+    "[UNIMOD:44]": 204.187801,  # Farnesylation
+    "[UNIMOD:447]": -15.994915,  # Reduction
+    "[UNIMOD:46]": 229.014009,  # Pyridoxal phosphate
+    "[UNIMOD:47]": 238.229666,  # Palmitoylation
+    "[UNIMOD:5]": 43.005814,  # Carbamyl
+    "[UNIMOD:58]": 56.026215,  # Propionylation
+    "[UNIMOD:6]": 58.005479,  # Carboxymethylation
+    "[UNIMOD:64]": 100.016044,  # Succinylation
+    "[UNIMOD:7]": 0.984016,  # Deamidation
+    "[UNIMOD:747]": 86.000394,  # Malonylation
 }
+
 MOD_MASSES_SAGE = {
     229.1629: "[UNIMOD:737]",
     304.2071: "[UNIMOD:2016]",
@@ -206,6 +260,13 @@ AA_MOD_MASSES = {
     "S[UNIMOD:23]": AA_MASSES["S"],  # + MOD_MASSES['[UNIMOD:23]'],
     "T[UNIMOD:23]": AA_MASSES["T"],  # + MOD_MASSES['[UNIMOD:23]'],
     "Y[UNIMOD:23]": AA_MASSES["Y"],  # + MOD_MASSES['[UNIMOD:23]'],
+    "K[UNIMOD:1896]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1896]"],
+    "K[UNIMOD:1881]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1881]"],
+    "K[UNIMOD:1882]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1882]"],
+    "K[UNIMOD:1884]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1884]"],
+    "K[UNIMOD:1885]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1885]"],
+    "K[UNIMOD:1886]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1886]"],
+    "K[UNIMOD:1898]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1898]"],
     "[UNIMOD:1]-": MASSES["N_TERMINUS"] + MOD_MASSES["[UNIMOD:1]"],
     "K[UNIMOD:259]": AA_MASSES[
         "K"
@@ -234,6 +295,30 @@ Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], SEQ_LEN - 1)
 SINGLE_CHARGED_MASK = np.tile([1, 0, 0, 1, 0, 0], SEQ_LEN - 1)
 DOUBLE_CHARGED_MASK = np.tile([0, 1, 0, 0, 1, 0], SEQ_LEN - 1)
 TRIPLE_CHARGED_MASK = np.tile([0, 0, 1, 0, 0, 1], SEQ_LEN - 1)
+
+B_ION_MASK_XL = np.tile([0, 0, 0, 1, 1, 1], (SEQ_LEN - 1) * 2)
+Y_ION_MASK_XL = np.tile([1, 1, 1, 0, 0, 0], (SEQ_LEN - 1) * 2)
+SINGLE_CHARGED_MASK_XL = np.tile([1, 0, 0, 1, 0, 0], (SEQ_LEN - 1) * 2)
+DOUBLE_CHARGED_MASK_XL = np.tile([0, 1, 0, 0, 1, 0], (SEQ_LEN - 1) * 2)
+TRIPLE_CHARGED_MASK_XL = np.tile([0, 0, 1, 0, 0, 1], (SEQ_LEN - 1) * 2)
+
+
+MASK_DICT = {
+    1: SINGLE_CHARGED_MASK,
+    2: DOUBLE_CHARGED_MASK,
+    3: TRIPLE_CHARGED_MASK,
+    4: B_ION_MASK,
+    5: Y_ION_MASK,
+}
+
+
+MASK_DICT_XL = {
+    1: SINGLE_CHARGED_MASK_XL,
+    2: DOUBLE_CHARGED_MASK_XL,
+    3: TRIPLE_CHARGED_MASK_XL,
+    4: B_ION_MASK_XL,
+    5: Y_ION_MASK_XL,
+}
 
 
 SHARED_DATA_COLUMNS = ["RAW_FILE", "SCAN_NUMBER"]
