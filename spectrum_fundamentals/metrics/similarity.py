@@ -60,14 +60,10 @@ class SimilarityMetrics(Metric):
         :return: SA values
         """
         if charge != 0:
-            if xl:
-                masks = constants.MASK_DICT_XL
-                default_value = constants.B_ION_MASK_XL
-            else:
-                masks = constants.MASK_DICT
-                default_value = constants.B_ION_MASK
-            boolean_array = masks.get(charge, default_value)
-
+            if not 1 <= charge <= 5:
+                raise ValueError("Charge must be between 1 to 5.")
+            masks = constants.MASK_DICT_XL if xl else constants.MASK_DICT  
+            boolean_array = masks[charge]
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
             predicted_intensities = scipy.sparse.csr_matrix(predicted_intensities)
@@ -219,14 +215,10 @@ class SimilarityMetrics(Metric):
         predicted_intensities_array = predicted_intensities.toarray()
 
         if charge != 0:
-            if xl:
-                masks = constants.MASK_DICT_XL
-                default_value = constants.B_ION_MASK_XL
-            else:
-                masks = constants.MASK_DICT
-                default_value = constants.B_ION_MASK
-            boolean_array = masks.get(charge, default_value)
-
+            if not 1 <= charge <= 5:
+                raise ValueError("Charge must be between 1 to 5.")
+            masks = constants.MASK_DICT_XL if xl else constants.MASK_DICT  
+            boolean_array = masks[charge]
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities_array = observed_intensities.multiply(boolean_array).toarray()
             predicted_intensities_array = predicted_intensities.multiply(boolean_array).toarray()
@@ -459,43 +451,9 @@ class SimilarityMetrics(Metric):
         pred_intensities: Union[np.ndarray, scipy.sparse.spmatrix],
         key_suffix: str = "",
     ):
-        if key_suffix != "":
-            # dirty fix, if the key_suffix is not "", that means we have XL mode.
-            # TODO: fix self.mz for XL mode
-            self.metrics_val[f"modified_cosine{key_suffix}"] = SimilarityMetrics.modified_cosine(
-                true_intensities, pred_intensities, self.mz, self.mz
-            )
         self.metrics_val[f"spectral_entropy_similarity{key_suffix}"] = SimilarityMetrics.spectral_entropy_similarity(
             true_intensities, pred_intensities
         )
-        col_names_spectral_angle = [
-            f"spectral_angle_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
-        ] + [f"spectral_angle_b_ions{key_suffix}", f"spectral_angle_y_ions{key_suffix}"]
-        col_names_pearson_corr = [
-            f"pearson_corr_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
-        ] + [
-            f"pearson_corr_b_ions{key_suffix}",
-            f"pearson_corr_y_ions{key_suffix}",
-        ]
-        col_names_spearman_corr = [
-            f"spearman_corr_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
-        ] + [f"spearman_corr_b_ions{key_suffix}", f"spearman_corr_y_ions{key_suffix}"]
-
-        for i, col_name_spectral_angle in enumerate(col_names_spectral_angle):
-            self.metrics_val[col_name_spectral_angle] = SimilarityMetrics.spectral_angle(
-                true_intensities, pred_intensities, i + 1
-            )
-
-        for i, col_name_pearson_corr in enumerate(col_names_pearson_corr):
-            self.metrics_val[col_name_pearson_corr] = SimilarityMetrics.correlation(
-                true_intensities, pred_intensities, i + 1, "pearson"
-            )
-
-        for i, col_name_spearman_corr in enumerate(col_names_spearman_corr):
-            self.metrics_val[col_name_spearman_corr] = SimilarityMetrics.correlation(
-                true_intensities, pred_intensities, i + 1, "spearman"
-            )
-
         self.metrics_val[f"cos{key_suffix}"] = SimilarityMetrics.cos(true_intensities, pred_intensities)
         self.metrics_val[f"mean_abs_diff{key_suffix}"] = SimilarityMetrics.abs_diff(
             true_intensities, pred_intensities, "mean"
@@ -519,6 +477,69 @@ class SimilarityMetrics(Metric):
             true_intensities, pred_intensities, "max"
         )
         self.metrics_val[f"mse{key_suffix}"] = SimilarityMetrics.abs_diff(true_intensities, pred_intensities, "mse")
-        self.metrics_val[f"spearman_corr{key_suffix}"] = SimilarityMetrics.correlation(
-            true_intensities, pred_intensities, 0, "spearman"
-        )
+        self.metrics_val[f"modified_cosine{key_suffix}"] = SimilarityMetrics.modified_cosine(
+                true_intensities, pred_intensities, self.mz, self.mz
+            )
+
+        col_names_spectral_angle = [
+            f"spectral_angle_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
+        ] + [f"spectral_angle_b_ions{key_suffix}", f"spectral_angle_y_ions{key_suffix}"]
+        col_names_pearson_corr = [
+            f"pearson_corr_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
+        ] + [
+            f"pearson_corr_b_ions{key_suffix}",
+            f"pearson_corr_y_ions{key_suffix}",
+        ]
+        col_names_spearman_corr = [
+            f"spearman_corr_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
+        ] + [f"spearman_corr_b_ions{key_suffix}", f"spearman_corr_y_ions{key_suffix}"]
+
+
+        if key_suffix != "":
+            # dirty fix, if the key_suffix is not "", that means we have XL mode.
+            # TODO: fix self.mz for XL mode
+            
+            self.metrics_val[f"spearman_corr{key_suffix}"] = SimilarityMetrics.correlation(
+                true_intensities, pred_intensities, 0, "spearman", xl=True
+                )
+
+            for i, col_name_spectral_angle in enumerate(col_names_spectral_angle):
+                self.metrics_val[col_name_spectral_angle] = SimilarityMetrics.spectral_angle(
+                    true_intensities, pred_intensities, i + 1, xl=True
+                )
+
+            for i, col_name_pearson_corr in enumerate(col_names_pearson_corr):
+                self.metrics_val[col_name_pearson_corr] = SimilarityMetrics.correlation(
+                    true_intensities, pred_intensities, i + 1, "pearson", xl=True
+                )
+                
+            for i, col_name_spearman_corr in enumerate(col_names_spearman_corr):
+                self.metrics_val[col_name_spearman_corr] = SimilarityMetrics.correlation(
+                    true_intensities, pred_intensities, i + 1, "spearman", xl=True
+                )
+        else:
+            self.metrics_val[f"spearman_corr{key_suffix}"] = SimilarityMetrics.correlation(
+                true_intensities, pred_intensities, 0, "spearman"
+            )
+
+            for i, col_name_spectral_angle in enumerate(col_names_spectral_angle):
+                self.metrics_val[col_name_spectral_angle] = SimilarityMetrics.spectral_angle(
+                    true_intensities, pred_intensities, i + 1
+                )
+
+            for i, col_name_pearson_corr in enumerate(col_names_pearson_corr):
+                self.metrics_val[col_name_pearson_corr] = SimilarityMetrics.correlation(
+                    true_intensities, pred_intensities, i + 1, "pearson"
+                )
+                
+            for i, col_name_spearman_corr in enumerate(col_names_spearman_corr):
+                self.metrics_val[col_name_spearman_corr] = SimilarityMetrics.correlation(
+                    true_intensities, pred_intensities, i + 1, "spearman"
+                )
+
+
+            
+        
+        
+
+        
