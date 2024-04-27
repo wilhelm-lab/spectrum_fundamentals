@@ -333,19 +333,22 @@ def get_min_max_mass(
     """
     if mass_tolerance is not None and unit_mass_tolerance is not None:
         if unit_mass_tolerance == "ppm":
-            min_mass = (mass * -mass_tolerance / 1000000) + mass
-            max_mass = (mass * mass_tolerance / 1000000) + mass
+            delta = mass * mass_tolerance
+            min_mass = mass - delta
+            max_mass = mass + delta
         elif unit_mass_tolerance == "da":
             min_mass = mass - mass_tolerance
             max_mass = mass + mass_tolerance
         else:
             raise ValueError(f"Unsupported unit for the mass tolerance: {unit_mass_tolerance}")
-    elif mass_analyzer == "FTMS":
-        min_mass = (mass * -20 / 1000000) + mass
-        max_mass = (mass * 20 / 1000000) + mass
-    elif mass_analyzer == "TOF":
-        min_mass = (mass * -40 / 1000000) + mass
-        max_mass = (mass * 40 / 1000000) + mass
+    elif mass_analyzer == "FTMS":  # 20 ppm = 20 / 1000000 = 2e-5
+        delta = mass * 2e-5
+        min_mass = mass - delta
+        max_mass = mass + delta
+    elif mass_analyzer == "TOF":  # 40 ppm = 40 / 1000000 = 4e-5
+        delta = mass * 4e-5
+        min_mass = mass - delta
+        max_mass = mass + delta
     elif mass_analyzer == "ITMS":
         min_mass = mass - 0.35
         max_mass = mass + 0.35

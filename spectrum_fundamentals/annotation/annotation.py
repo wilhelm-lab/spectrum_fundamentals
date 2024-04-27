@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from tqdm.auto import tqdm
 
 from spectrum_fundamentals import constants
 from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl
@@ -142,7 +143,9 @@ def annotate_spectra(
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
-    for row in un_annot_spectra.values:
+    if unit_mass_tolerance is not None and unit_mass_tolerance == "ppm":
+        mass_tolerance /= 1e6
+    for row in tqdm(un_annot_spectra.values):
         results = parallel_annotate(row, index_columns, mass_tolerance, unit_mass_tolerance)
         if not results:
             continue

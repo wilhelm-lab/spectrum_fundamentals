@@ -87,7 +87,7 @@ class TestMassTolerances(unittest.TestCase):
     def test_mass_tol_with_ppm(self):
         """Test get_min_max_mass with a user defined ppm measure."""
         window = fragments.get_min_max_mass(
-            mass_analyzer="FTMS", mass=10.0, mass_tolerance=15, unit_mass_tolerance="ppm"
+            mass_analyzer="FTMS", mass=10.0, mass_tolerance=15e-6, unit_mass_tolerance="ppm"
         )
         self.assertEqual(window, (9.99985, 10.00015))
 
