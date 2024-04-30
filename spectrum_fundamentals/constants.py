@@ -129,6 +129,15 @@ XISEARCH_VAR_MODS = {
     "dsbu": "[UNIMOD:1884]",
 }
 
+#######################
+# OpenMS constants #
+#######################
+
+OPENMS_VAR_MODS = {
+    "M(Oxidation)": "M[UNIMOD:35]",
+    "C(Carbamidomethyl)": "C[UNIMOD:4]"
+}
+
 ####################
 # MASS CALCULATION #
 ####################
