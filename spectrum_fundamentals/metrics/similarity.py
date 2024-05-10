@@ -47,6 +47,7 @@ class SimilarityMetrics(Metric):
         observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
         predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
         charge: int = 0,
+        filter_on: float = constants.EPSILON,
     ) -> np.ndarray:
         """
         Calculate spectral angle.
@@ -76,7 +77,7 @@ class SimilarityMetrics(Metric):
             observed_intensities = observed_intensities.multiply(boolean_array).toarray()
             predicted_intensities = predicted_intensities.multiply(boolean_array).toarray()
 
-        predicted_non_zero_mask = predicted_intensities > 0.04
+        predicted_non_zero_mask = predicted_intensities > filter_on #default constants.EPSILON
 
         if isinstance(observed_intensities, scipy.sparse.csr_matrix):
             observed_masked = observed_intensities.multiply(predicted_non_zero_mask)
@@ -91,7 +92,7 @@ class SimilarityMetrics(Metric):
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
-        observed_non_zero_mask = observed_intensities > 0.04
+        observed_non_zero_mask = observed_intensities > filter_on #default constants.EPSILON
         fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, predicted_non_zero_mask)
 
         dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized) * (

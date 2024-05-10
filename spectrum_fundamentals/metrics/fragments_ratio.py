@@ -81,7 +81,7 @@ class FragmentsRatio(Metric):
 
     @staticmethod
     def make_boolean(
-        intensities: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix, cutoff: float = 2e-7
+        intensities: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix, cutoff: float = 0.04
     ) -> scipy.sparse.csr_matrix:
         """
         Transform array of intensities into boolean array with True if > cutoff and False otherwise.

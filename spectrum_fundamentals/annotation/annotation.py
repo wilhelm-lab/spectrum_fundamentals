@@ -29,11 +29,11 @@ def match_peaks(
     :param unmod_sequence: Unmodified peptide sequence
     :param charge: Precursor charge
     :return: List of matched/annotated peaks
-    :return: Float with log of sum of labeled experimental peaks intensities
+    :return: Float with max_intensity == base_intensity
     """
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
-    sum_intensities = 0.0
+    #sum_intensities = 0.0
     max_intensity = 1.0
     row_list = []
     temp_list = []
@@ -72,7 +72,7 @@ def match_peaks(
                         "intensity": peak_intensity,
                     }
                 )
-                sum_intensities += peak_intensity
+                #sum_intensities += peak_intensity
                 if peak_intensity > max_intensity and fragment_no < seq_len:
                     max_intensity = float(peak_intensity)
             matched_peak = True
@@ -82,12 +82,12 @@ def match_peaks(
         row["intensity"] = float(row["intensity"]) / max_intensity
         temp_list.append(row)
 
-    if sum_intensities == 0.0:
+    """if sum_intensities == 0.0:
         log_sum_intensities = 0.0
     else:
-        log_sum_intensities = math.log(sum_intensities)
+        log_sum_intensities = math.log(sum_intensities)"""
 
-    return temp_list, log_sum_intensities
+    return temp_list, max_intensity # pass just max_intensity == base intensity instead of log_sum
 
 
 def handle_multiple_matches(
@@ -144,7 +144,8 @@ def annotate_spectra(
     - MZ: a NumPy array containing the m/z values of each peak in the annotated spectrum
     - CALCULATED_MASS: a float representing the calculated mass of the spectrum
     - removed_peaks: a NumPy array containing the indices of any peaks that were removed during the annotation process
-    - sum_intensities: a float representing the sum of experimental peak intensities
+    - LOG_SUM_INTENSITIES: a float representing the sum of experimental peak intensities
+    - FRAGMENTATION: a string representing the fragmentation type (HCD or CID)
 
     :param un_annot_spectra: a Pandas DataFrame containing the raw peaks and metadata to be annotated
     :param mass_tolerance: mass tolerance to calculate min and max mass
@@ -159,7 +160,7 @@ def annotate_spectra(
             continue
         raw_file_annotations.append(results)
     results_df = pd.DataFrame(raw_file_annotations)
-    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks", "LOG_SUM_INTENSITIES"]
+    results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks", "LOG_SUM_INTENSITIES","FRAGMENTATION"]
 
     return results_df
 
@@ -218,13 +219,22 @@ def generate_annotation_matrix(
 
     return intensity, mass
 
+def calculate_log_sum_intensity(intensities:np.ndarray, base_peak: float) -> float:
+    sum_intensities = 0.0
+    for intensity in np.nditer(intensities):
+        if intensity > 0.0:
+            sum_intensities += intensity*base_peak
+    
+    if sum_intensities != 0.0:
+        return math.log(sum_intensities)
+    return sum_intensities
 
 def parallel_annotate(
     spectrum: np.ndarray,
     index_columns: dict,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-) -> Optional[Tuple[np.ndarray, np.ndarray, float, int, float]]:
+) -> Optional[Tuple[np.ndarray, np.ndarray, float, int, float, str]]:
     """
     Perform parallel annotation of a spectrum.
 
@@ -254,7 +264,7 @@ def parallel_annotate(
     )
     if not unmod_sequence:
         return None
-    matched_peaks, log_sum_intensities = match_peaks(
+    matched_peaks, base_peak = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
         spectrum[index_columns["MZ"]],
@@ -265,9 +275,13 @@ def parallel_annotate(
     if len(matched_peaks) == 0:
         intensity = np.full(174, 0.0)
         mass = np.full(174, 0.0)
-        return intensity, mass, calc_mass, 0, log_sum_intensities
+        return intensity, mass, calc_mass, 0, 0.0, "UnknownFragmentationMethod"
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
+
     intensities, mass = generate_annotation_matrix(
         matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]
     )
-    return intensities, mass, calc_mass, removed_peaks, log_sum_intensities
+    
+    log_sum_intensities = calculate_log_sum_intensity(intensities, base_peak)
+
+    return intensities, mass, calc_mass, removed_peaks, log_sum_intensities, spectrum[index_columns["FRAGMENTATION"]]
