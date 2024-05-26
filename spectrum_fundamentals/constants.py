@@ -244,6 +244,7 @@ MOD_MASSES_SAGE = {
     -18.0105: "[UNIMOD:23]",
     57.0215: "[UNIMOD:4]",
     15.9949: "[UNIMOD:35]",
+    15.994: "[UNIMOD:35]",
     42.0105: "[UNIMOD:1]",
 }
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
