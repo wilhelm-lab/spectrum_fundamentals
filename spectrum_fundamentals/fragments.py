@@ -87,6 +87,7 @@ def initialize_peaks(
     charge: int,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
+    ion_types: Optional[List[str]] = ["b", "y"],
     noncl_xl: bool = False,
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
