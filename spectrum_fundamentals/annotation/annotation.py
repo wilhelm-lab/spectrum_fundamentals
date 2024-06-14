@@ -119,7 +119,10 @@ def handle_multiple_matches(
 
 
 def annotate_spectra(
-    un_annot_spectra: pd.DataFrame, mass_tolerance: Optional[float] = None, unit_mass_tolerance: Optional[str] = None
+    un_annot_spectra: pd.DataFrame, 
+    mass_tolerance: Optional[float] = None, 
+    unit_mass_tolerance: Optional[str] = None,
+    ion_types: Optional[List[str]] = ["b", "y"]
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -138,12 +141,13 @@ def annotate_spectra(
     :param un_annot_spectra: a Pandas DataFrame containing the raw peaks and metadata to be annotated
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param ion_types: list of ion_types that can be present in the spectra
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-        results = parallel_annotate(row, index_columns, mass_tolerance, unit_mass_tolerance)
+        results = parallel_annotate(row, index_columns, mass_tolerance, unit_mass_tolerance, ion_types)
         if not results:
             continue
         raw_file_annotations.append(results)
@@ -328,6 +332,7 @@ def parallel_annotate(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
+    ion_types: Optional[List[str]] = ["b", "y"]
 ) -> Optional[
     Union[
         Tuple[np.ndarray, np.ndarray, float, int],
@@ -348,6 +353,7 @@ def parallel_annotate(
     :param index_columns: a dictionary that contains the index columns of the spectrum
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param ion_types: list of ion_types that can be present in the spectra
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -355,7 +361,7 @@ def parallel_annotate(
     if xl_type_col is None:
         if spectrum[index_columns["PEPTIDE_LENGTH"]] > 30:  # this was in initialize peaks but can be checked prior
             return None
-        return _annotate_linear_spectrum(spectrum, index_columns, mass_tolerance, unit_mass_tolerance)
+        return _annotate_linear_spectrum(spectrum, index_columns, mass_tolerance, unit_mass_tolerance, ion_types)
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
         return None
@@ -369,6 +375,7 @@ def _annotate_linear_spectrum(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float],
     unit_mass_tolerance: Optional[str],
+    ion_types: Optional[List[str]] = ["b", "y"]
 ):
     """
     Annotate a linear peptide spectrum.
@@ -377,6 +384,7 @@ def _annotate_linear_spectrum(
     :param index_columns: Index columns of the spectrum
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
+    :param ion_types: list of ion_types that can be present in the spectra
     :return: Annotated spectrum
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
@@ -388,6 +396,7 @@ def _annotate_linear_spectrum(
         spectrum[index_columns["PRECURSOR_CHARGE"]],
         mass_tolerance,
         unit_mass_tolerance,
+        ion_types
     )
     matched_peaks = match_peaks(
         fragments_meta_data,
