@@ -127,10 +127,10 @@ def initialize_peaks(
     charge: int,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    fragmentation_method: Optional[str] = "HCD",
     noncl_xl: bool = False,
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
+    fragmentation_method: Optional[str] = "HCD"
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
