@@ -127,7 +127,7 @@ def initialize_peaks(
     charge: int,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    ion_types: Optional[List] = ["b", "y"],
+    fragmentation_method: Optional[str] = "HCD",
     noncl_xl: bool = False,
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
@@ -140,7 +140,7 @@ def initialize_peaks(
     :param charge: Precursor charge
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
-    :param ion_types: list of ion_types that can be present in the spectra
+    :param fragmentation_method: fragmentation method that was used
     :param noncl_xl: whether the function is called with a non-cleavable xl modification
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
     :param xl_pos: the position of the crosslinker for non-cleavable XL
@@ -152,6 +152,7 @@ def initialize_peaks(
     ion_type_offsets = [0.0, constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"]]
     
     # tmp place holder ???
+    ion_types = retrieve_ion_types(fragmentation_method)
     ion_type_masses = [0.0 for i in range (len(ion_types))]
 
     number_of_ion_types = len(ion_types)
