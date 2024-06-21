@@ -105,7 +105,7 @@ def calculate_ion_mass(residual_mass: int, ion_type: str) -> int:
     """
     Calculate the mass of an ion.
 
-    :param residual_mass: cumulative mass of the neutral residual masses
+    :param residual_mass: cumulative sum of the neutral residual masses
     :param ion_type: type of ion for which mass should be calculated
     :return mass of the ion
 
@@ -140,10 +140,10 @@ def initialize_peaks(
     :param charge: Precursor charge
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
-    :param fragmentation_method: fragmentation method that was used
     :param noncl_xl: whether the function is called with a non-cleavable xl modification
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
     :param xl_pos: the position of the crosslinker for non-cleavable XL
+    :param fragmentation_method: fragmentation method that was used
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
@@ -192,7 +192,16 @@ def initialize_peaks(
             # positive charge is introduced by protons (or H - ELECTRON_MASS)
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
             for ion_type in range(number_of_ion_types):  # generate all ion types
-                mass = ion_type_masses[ion_type]
+                mass = _compute_ion_mass(
+                    ion_mass=ion_type_masses[ion_type],
+                    noncl_xl=noncl_xl,
+                    ion_type=ion_type,
+                    xl_pos=xl_pos,
+                    peptide_beta_mass=peptide_beta_mass,
+                    peptide_length=peptide_length,
+                    i=i,
+                )
+                #mass = ion_type_masses[ion_type]
                 mz = (mass + charge_delta) / charge
                 min_mz, max_mz = get_min_max_mass(mass_analyzer, mz, mass_tolerance, unit_mass_tolerance)
                 fragments_meta_data.append(
@@ -207,6 +216,18 @@ def initialize_peaks(
                 )
     fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
     return fragments_meta_data, n_term_mod, sequence, (forward_sum + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"])
+
+def _compute_ion_mass(
+    ion_mass: float, noncl_xl: bool, ion_type: int, xl_pos: int, peptide_beta_mass: float, peptide_length: int, i: int
+) -> float:
+    # Check for neutral loss here
+
+    if noncl_xl and ((ion_type == 0 and i + 1 >= xl_pos) or (ion_type == 1 and i >= peptide_length - xl_pos)):
+        mass = ion_mass + peptide_beta_mass
+    else:
+        mass = ion_mass
+
+    return mass
 
 def initialize_peaks_xl(
     sequence: str,
