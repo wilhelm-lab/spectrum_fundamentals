@@ -84,10 +84,10 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     """
     Retrieve the ion types resulting from a fragmentation method.
 
-    Given the fragmentation method the function return all ion types that can result from it.
+    Given the fragmentation method the function returns all ion types that can result from it.
 
     : param fragmentation_method: fragmentation method used during the MS
-    : return: list of the possible ion types
+    : return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
     if fragmentation_method == 'HCD' or fragmentation_method == 'CID':
@@ -192,6 +192,7 @@ def initialize_peaks(
             # positive charge is introduced by protons (or H - ELECTRON_MASS)
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
             for ion_type in range(number_of_ion_types):  # generate all ion types
+            
                 mass = _compute_ion_mass(
                     ion_mass=ion_type_masses[ion_type],
                     noncl_xl=noncl_xl,
@@ -201,6 +202,8 @@ def initialize_peaks(
                     peptide_length=peptide_length,
                     i=i,
                 )
+                
+                
                 #mass = ion_type_masses[ion_type]
                 mz = (mass + charge_delta) / charge
                 min_mz, max_mz = get_min_max_mass(mass_analyzer, mz, mass_tolerance, unit_mass_tolerance)
