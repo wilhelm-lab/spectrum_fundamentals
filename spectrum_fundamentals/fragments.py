@@ -107,8 +107,7 @@ def calculate_ion_mass(residual_mass: int, ion_type: str) -> int:
 
     :param residual_mass: cumulative sum of the neutral residual masses
     :param ion_type: type of ion for which mass should be calculated
-    :return mass of the ion
-
+    :return: mass of the ion
     """
     
     ion_type_offsets = {
@@ -149,7 +148,6 @@ def initialize_peaks(
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
-    ion_type_offsets = [0.0, constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"]]
     
     # tmp place holder ???
     ion_types = retrieve_ion_types(fragmentation_method)
