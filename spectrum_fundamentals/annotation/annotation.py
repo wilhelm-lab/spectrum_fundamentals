@@ -119,8 +119,8 @@ def handle_multiple_matches(
 
 
 def annotate_spectra(
-    un_annot_spectra: pd.DataFrame, 
-    mass_tolerance: Optional[float] = None, 
+    un_annot_spectra: pd.DataFrame,
+    mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
     fragmentation_method: Optional[str] = "HCD",
 ) -> pd.DataFrame:
@@ -285,7 +285,7 @@ def generate_annotation_matrix(
     """
     ion_types = retrieve_ion_types(fragmentation_method)
     charge_const = 3
-    VEC_LENGTH = (constants.SEQ_LEN-1) * charge_const * len(ion_types)
+    VEC_LENGTH = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
 
     intensity = np.full(VEC_LENGTH, -1.0)
     mass = np.full(VEC_LENGTH, -1.0)
@@ -322,7 +322,9 @@ def generate_annotation_matrix(
         mass[peak_pos] = peak[exp_mass_col]
 
     if len(unmod_seq) < constants.SEQ_LEN:
-        mask_peaks = range((len(unmod_seq) - 1) * charge_const * len(ion_types), ((len(unmod_seq)) * charge_const * len(ion_types)))
+        mask_peaks = range(
+            (len(unmod_seq) - 1) * charge_const * len(ion_types), ((len(unmod_seq)) * charge_const * len(ion_types))
+        )
         intensity[mask_peaks] = -1.0
         mass[mask_peaks] = -1.0
 
@@ -363,7 +365,9 @@ def parallel_annotate(
     if xl_type_col is None:
         if spectrum[index_columns["PEPTIDE_LENGTH"]] > 30:  # this was in initialize peaks but can be checked prior
             return None
-        return _annotate_linear_spectrum(spectrum, index_columns, mass_tolerance, unit_mass_tolerance, fragmentation_method)
+        return _annotate_linear_spectrum(
+            spectrum, index_columns, mass_tolerance, unit_mass_tolerance, fragmentation_method
+        )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
         return None
@@ -398,7 +402,7 @@ def _annotate_linear_spectrum(
         spectrum[index_columns["PRECURSOR_CHARGE"]],
         mass_tolerance,
         unit_mass_tolerance,
-        fragmentation_method
+        fragmentation_method,
     )
     matched_peaks = match_peaks(
         fragments_meta_data,

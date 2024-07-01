@@ -80,6 +80,7 @@ def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
         if xl_pos == -1:
             raise ValueError("Crosslinker position must be provided if using non cleavable XL mode.")
 
+
 def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     """
     Retrieve the ion types resulting from a fragmentation method.
@@ -87,19 +88,21 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     Given the fragmentation method the function returns all ion types that can result from it.
 
     : param fragmentation_method: fragmentation method used during the MS
+    : raises ValueError: if fragmentation_method is other than one of HCD, CID, ETD, ECD, ETCID, ETHCD, UVPD
     : return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
-    if fragmentation_method == 'HCD' or fragmentation_method == 'CID':
-        return ['b', 'y']
-    elif fragmentation_method == 'ETD' or fragmentation_method == 'ECD':
-        return ['c', 'z']
-    elif fragmentation_method == 'ETCID' or fragmentation_method == 'ETHCD':
-        return ['b', 'y', 'c', 'z']
-    elif fragmentation_method == 'UVPD':
-        return ['a', 'b', 'c', 'x', 'y', 'z']
+    if fragmentation_method == "HCD" or fragmentation_method == "CID":
+        return ["b", "y"]
+    elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
+        return ["c", "z"]
+    elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
+        return ["b", "y", "c", "z"]
+    elif fragmentation_method == "UVPD":
+        return ["a", "b", "c", "x", "y", "z"]
     else:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
+
 
 def calculate_ion_mass(residual_mass: int, ion_type: str) -> int:
     """
@@ -109,16 +112,16 @@ def calculate_ion_mass(residual_mass: int, ion_type: str) -> int:
     :param ion_type: type of ion for which mass should be calculated
     :return: mass of the ion
     """
-    
     ion_type_offsets = {
-            'a':  - constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["C"], 
-            'b': 0.0, 
-            'c': 3 * constants.ATOM_MASSES["H"]+ constants.ATOM_MASSES["N"],
-            'x': 2 * constants.ATOM_MASSES["O"] + constants.ATOM_MASSES["C"], 
-            'y': constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"],
-            'z': constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["N"] - constants.ATOM_MASSES["H"]
-        }
+        "a": -constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["C"],
+        "b": 0.0,
+        "c": 3 * constants.ATOM_MASSES["H"] + constants.ATOM_MASSES["N"],
+        "x": 2 * constants.ATOM_MASSES["O"] + constants.ATOM_MASSES["C"],
+        "y": constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"],
+        "z": constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["N"] - constants.ATOM_MASSES["H"],
+    }
     return residual_mass + ion_type_offsets[ion_type]
+
 
 def initialize_peaks(
     sequence: str,
@@ -129,7 +132,7 @@ def initialize_peaks(
     noncl_xl: bool = False,
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
-    fragmentation_method: Optional[str] = "HCD"
+    fragmentation_method: Optional[str] = "HCD",
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
@@ -148,10 +151,10 @@ def initialize_peaks(
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
-    
+
     # tmp place holder ???
     ion_types = retrieve_ion_types(fragmentation_method)
-    ion_type_masses = [0.0 for i in range (len(ion_types))]
+    ion_type_masses = [0.0 for i in range(len(ion_types))]
 
     number_of_ion_types = len(ion_types)
     fragments_meta_data = []
@@ -179,18 +182,17 @@ def initialize_peaks(
         if peptide_length - i - 1 in modification_deltas:  # add mass of modification if present
             backward_sum += modification_deltas[peptide_length - i - 1]
 
-        for j in range (len(ion_types)): # calculate masses of all ion types needed
-            if ion_types[j] in ('a', 'b', 'c'):
-                ion_type_masses[j] = calculate_ion_mass(forward_sum, ion_types[j]) 
+        for j in range(len(ion_types)):  # calculate masses of all ion types needed
+            if ion_types[j] in ("a", "b", "c"):
+                ion_type_masses[j] = calculate_ion_mass(forward_sum, ion_types[j])
             else:
                 ion_type_masses[j] = calculate_ion_mass(backward_sum, ion_types[j])
-
 
         for charge in range(constants.MIN_CHARGE, max_charge + 1):  # generate ion in different charge states
             # positive charge is introduced by protons (or H - ELECTRON_MASS)
             charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
             for ion_type in range(number_of_ion_types):  # generate all ion types
-            
+
                 mass = _compute_ion_mass(
                     ion_mass=ion_type_masses[ion_type],
                     noncl_xl=noncl_xl,
@@ -200,9 +202,8 @@ def initialize_peaks(
                     peptide_length=peptide_length,
                     i=i,
                 )
-                
-                
-                #mass = ion_type_masses[ion_type]
+
+                # mass = ion_type_masses[ion_type]
                 mz = (mass + charge_delta) / charge
                 min_mz, max_mz = get_min_max_mass(mass_analyzer, mz, mass_tolerance, unit_mass_tolerance)
                 fragments_meta_data.append(
@@ -216,7 +217,13 @@ def initialize_peaks(
                     }
                 )
     fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
-    return fragments_meta_data, n_term_mod, sequence, (forward_sum + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"])
+    return (
+        fragments_meta_data,
+        n_term_mod,
+        sequence,
+        (forward_sum + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"]),
+    )
+
 
 def _compute_ion_mass(
     ion_mass: float, noncl_xl: bool, ion_type: int, xl_pos: int, peptide_beta_mass: float, peptide_length: int, i: int
@@ -229,6 +236,7 @@ def _compute_ion_mass(
         mass = ion_mass
 
     return mass
+
 
 def initialize_peaks_xl(
     sequence: str,
@@ -350,6 +358,7 @@ def initialize_peaks_xl(
         raise ValueError(f"Unkown crosslinker type: {crosslinker_type}")
 
     return df_out.to_dict(orient="records"), tmt_n_term, peptide_sequence, mass
+
 
 def get_min_max_mass(
     mass_analyzer: str, mass: float, mass_tolerance: Optional[float] = None, unit_mass_tolerance: Optional[str] = None
