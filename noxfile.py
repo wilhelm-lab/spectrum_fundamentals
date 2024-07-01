@@ -18,7 +18,7 @@ except ImportError:
     sys.exit(1)
 
 package = "spectrum_fundamentals"
-python_versions = ["3.8", "3.9"]
+python_versions = ["3.9", "3.10"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
