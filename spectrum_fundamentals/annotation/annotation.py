@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from spectrum_fundamentals import constants
-from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl
+from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl, retrieve_ion_types
 
 logger = logging.getLogger(__name__)
 
@@ -273,7 +273,7 @@ def generate_annotation_matrix_xl(
 
 
 def generate_annotation_matrix(
-    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int
+    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int, fragmentation_method: str
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
@@ -283,14 +283,18 @@ def generate_annotation_matrix(
     :param charge: Precursor charge
     :return: numpy array of intensities and numpy array of masses
     """
-    intensity = np.full(constants.VEC_LENGTH, -1.0)
-    mass = np.full(constants.VEC_LENGTH, -1.0)
+    ion_types = retrieve_ion_types(fragmentation_method)
+    charge_const = 3
+    VEC_LENGTH = (constants.SEQ_LEN-1) * charge_const * len(ion_types)
+
+    intensity = np.full(VEC_LENGTH, -1.0)
+    mass = np.full(VEC_LENGTH, -1.0)
 
     # change values to zeros
     if len(unmod_seq) < constants.SEQ_LEN:
-        peaks_range = range(0, ((len(unmod_seq) - 1) * 6))
+        peaks_range = range(0, ((len(unmod_seq) - 1) * charge_const * len(ion_types)))
     else:
-        peaks_range = range(0, ((constants.SEQ_LEN - 1) * 6))
+        peaks_range = range(0, ((constants.SEQ_LEN - 1) * charge_const * len(ion_types)))
 
     if charge == 1:
         available_peaks = [index for index in peaks_range if (index % 3 == 0)]
@@ -309,10 +313,8 @@ def generate_annotation_matrix(
     exp_mass_col = matched_peaks.columns.get_loc("exp_mass")
 
     for peak in matched_peaks.values:
-        if peak[ion_type].startswith("y"):
-            peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1)
-        else:
-            peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1) + 3
+        ion_type_index = ion_types.index(peak[ion_type])
+        peak_pos = ((peak[no_col] - 1) * charge_const * len(ion_types)) + (peak[charge_col] - 1) + 3 * ion_type_index
 
         if peak_pos >= constants.VEC_LENGTH:
             continue
@@ -320,7 +322,7 @@ def generate_annotation_matrix(
         mass[peak_pos] = peak[exp_mass_col]
 
     if len(unmod_seq) < constants.SEQ_LEN:
-        mask_peaks = range((len(unmod_seq) - 1) * 6, ((len(unmod_seq) - 1) * 6) + 6)
+        mask_peaks = range((len(unmod_seq) - 1) * charge_const * len(ion_types), ((len(unmod_seq)) * charge_const * len(ion_types)))
         intensity[mask_peaks] = -1.0
         mass[mask_peaks] = -1.0
 
@@ -414,7 +416,7 @@ def _annotate_linear_spectrum(
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
-        matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]
+        matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]], fragmentation_method
     )
     return intensities, mass, calc_mass, removed_peaks
 
