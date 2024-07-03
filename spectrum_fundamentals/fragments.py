@@ -97,7 +97,7 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
         return ["c", "z"]
     elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
-        return ["b", "y", "c", "z"]
+        return ["b", "c", "y", "z"]
     elif fragmentation_method == "UVPD":
         return ["a", "b", "c", "x", "y", "z"]
     else:
@@ -132,7 +132,7 @@ def initialize_peaks(
     noncl_xl: bool = False,
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
-    fragmentation_method: Optional[str] = "HCD"
+    fragmentation_method: Optional[str] = "HCD",
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
@@ -148,14 +148,13 @@ def initialize_peaks(
     :param fragmentation_method: fragmentation method that was used
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
-    #_xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
+    # _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
     ion_types = retrieve_ion_types(fragmentation_method)
-    
+
     number_of_ion_types = len(ion_types)
     peptide_length = len(sequence)
-    
 
     modification_deltas = _get_modifications(sequence)
 
@@ -165,7 +164,7 @@ def initialize_peaks(
     backward_sum = 0
     fragments_meta_data = []
     n_term_mod = 1
-    
+
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
         n_term_delta = modification_deltas.get(-2, 0.0)
@@ -174,49 +173,42 @@ def initialize_peaks(
             # add n_term mass to first aa for easy processing in the following calculation
             modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
 
-    #calculate cumulative mass once forward and once backwards
+    # calculate cumulative mass once forward and once backwards
     for i in range(peptide_length):  # generate substrings
-            forward_sum += constants.AA_MASSES[sequence[i]]  # sum left to right
-            if i in modification_deltas:  # add mass of modification if present
-                forward_sum += modification_deltas[i]
-            forward_masses.append(forward_sum)
-            backward_sum += constants.AA_MASSES[sequence[peptide_length - i - 1]]  # sum right to left
-            if peptide_length - i - 1 in modification_deltas:  # add mass of modification if present
-                backward_sum += modification_deltas[peptide_length - i - 1]
-            backward_masses.append(backward_sum)
+        forward_sum += constants.AA_MASSES[sequence[i]]  # sum left to right
+        if i in modification_deltas:  # add mass of modification if present
+            forward_sum += modification_deltas[i]
+        forward_masses.append(forward_sum)
+        backward_sum += constants.AA_MASSES[sequence[peptide_length - i - 1]]  # sum right to left
+        if peptide_length - i - 1 in modification_deltas:  # add mass of modification if present
+            backward_sum += modification_deltas[peptide_length - i - 1]
+        backward_masses.append(backward_sum)
 
-    #turn masses into numpy array for easy matrix multiplication
+    # turn masses into numpy array for easy matrix multiplication
     forward_masses = np.array(forward_masses)
     backward_masses = np.array(backward_masses)
 
-    #if I keep it that way I will remove the cummulative mass as an argument in the calculate_ion_mass function
-    #TODO: needs to be dymanic depending which ions you need
-    #ion_offsets = np.array([calculate_ion_mass(0,ion_types[i]) for i in range(len(ion_types))]).reshape(len(ion_types),1)
-    ion_foreward_offsets = np.array([calculate_ion_mass(0,'a'), calculate_ion_mass(0,'b'), calculate_ion_mass(0, 'c')]).reshape(3,1)
-    ion_backward_offsets = np.array([calculate_ion_mass(0, 'x'), calculate_ion_mass(0, 'y'), calculate_ion_mass(0, 'z')]).reshape(3,1)
+    # if I keep it that way I will remove the cummulative mass as an argument in the calculate_ion_mass function
+    ion_foreward_offsets = np.array([calculate_ion_mass(0, ion_types[i]) for i in range(int(number_of_ion_types / 2))])
+    ion_foreward_offsets = ion_foreward_offsets.reshape(int(number_of_ion_types / 2), 1)
+    ion_backward_offsets = np.array(
+        [calculate_ion_mass(0, ion_types[i]) for i in range(int(number_of_ion_types / 2), number_of_ion_types)]
+    )
+    ion_backward_offsets = ion_backward_offsets.reshape(int(number_of_ion_types / 2), 1)
 
-    #add ion type offset to forward and backward masses and combine them into one numpy array
-    #TODO: put all ion type offsets into one one array, then firsts concatenate forward and backward masses and afterwards add ion type offset
-    
+    # add ion type offset to forward and backward masses and combine them into one numpy array
     forward_ions = forward_masses + ion_foreward_offsets
-    backward_ions = backward_masses + ion_backward_offsets 
+    backward_ions = backward_masses + ion_backward_offsets
     ion_masses = np.concatenate((forward_ions, backward_ions), axis=0)
-    
-    '''
-    masses = np.concatenate((forward_masses, backward_masses), axis=0)
-    print(masses)
-    ion_masses = masses + ion_offsets
-    print(ion_masses)
-    '''
 
-    #calculate for m/z for charges 1, 2, 3
+    # calculate for m/z for charges 1, 2, 3
     ion_masses_all_charges = np.zeros((max_charge, len(ion_types), len(sequence)))
     for charge in range(constants.MIN_CHARGE, max_charge + 1):
-        ion_masses_all_charges[charge-1] = (ion_masses + charge * constants.PARTICLE_MASSES["PROTON"]) / charge
+        ion_masses_all_charges[charge - 1] = (ion_masses + charge * constants.PARTICLE_MASSES["PROTON"]) / charge
 
-    #write mz together with min and max value in output list with one dictionary for each ion 
-    #First dimension: Charge number, Second Dimension: Ion Type, Third Dimension: sequence position
-    #TODO is there a better solution?
+    # write mz together with min and max value in output list with one dictionary for each ion
+    # First dimension: Charge number, Second Dimension: Ion Type, Third Dimension: sequence position
+    # TODO is there a better solution?
 
     for charge in range(max_charge):
         for ion_type in range(len(ion_types)):
@@ -226,7 +218,7 @@ def initialize_peaks(
                 fragments_meta_data.append(
                     {
                         "ion_type": ion_types[ion_type],  # ion type
-                        "no": number + 1 ,  # no
+                        "no": number + 1,  # no
                         "charge": charge + 1,  # charge
                         "mass": mz,  # mz
                         "min_mass": min_mz,  # min mz
@@ -235,8 +227,12 @@ def initialize_peaks(
                 )
 
     fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
-    return fragments_meta_data, n_term_mod, sequence, (forward_sum + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"])
-
+    return (
+        fragments_meta_data,
+        n_term_mod,
+        sequence,
+        (forward_sum + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"]),
+    )
 
 
 def _compute_ion_mass(
