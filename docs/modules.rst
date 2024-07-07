@@ -1,5 +1,5 @@
 spectrum_fundamentals
-=================
+=====================
 
 .. toctree::
    :maxdepth: 4

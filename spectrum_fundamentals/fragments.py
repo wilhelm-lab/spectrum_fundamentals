@@ -104,7 +104,7 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
 
 
-def calculate_ion_mass(residual_mass: int, ion_type: str) -> int:
+def calculate_ion_mass(residual_mass: float, ion_type: str) -> float:
     """
     Calculate the mass of an ion.
 
@@ -154,14 +154,14 @@ def initialize_peaks(
     ion_types = retrieve_ion_types(fragmentation_method)
 
     number_of_ion_types = len(ion_types)
-    peptide_length = len(sequence)
+    
 
     modification_deltas = _get_modifications(sequence)
 
     forward_masses = []
-    forward_sum = 0
+    forward_sum = 0.0
     backward_masses = []  # sum over all amino acids from right to left (neutral charge)
-    backward_sum = 0
+    backward_sum = 0.0
     fragments_meta_data = []
     n_term_mod = 1
 
@@ -173,6 +173,8 @@ def initialize_peaks(
             # add n_term mass to first aa for easy processing in the following calculation
             modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
 
+    peptide_length = len(sequence)
+    
     # calculate cumulative mass once forward and once backwards
     for i in range(peptide_length):  # generate substrings
         forward_sum += constants.AA_MASSES[sequence[i]]  # sum left to right
@@ -185,8 +187,8 @@ def initialize_peaks(
         backward_masses.append(backward_sum)
 
     # turn masses into numpy array for easy matrix multiplication
-    forward_masses = np.array(forward_masses)
-    backward_masses = np.array(backward_masses)
+    forward_masses_np = np.array(forward_masses)
+    backward_masses_np = np.array(backward_masses)
 
     # if I keep it that way I will remove the cummulative mass as an argument in the calculate_ion_mass function
     ion_foreward_offsets = np.array([calculate_ion_mass(0, ion_types[i]) for i in range(int(number_of_ion_types / 2))])
@@ -197,8 +199,8 @@ def initialize_peaks(
     ion_backward_offsets = ion_backward_offsets.reshape(int(number_of_ion_types / 2), 1)
 
     # add ion type offset to forward and backward masses and combine them into one numpy array
-    forward_ions = forward_masses + ion_foreward_offsets
-    backward_ions = backward_masses + ion_backward_offsets
+    forward_ions = forward_masses_np + ion_foreward_offsets
+    backward_ions = backward_masses_np + ion_backward_offsets
     ion_masses = np.concatenate((forward_ions, backward_ions), axis=0)
 
     # calculate for m/z for charges 1, 2, 3
@@ -208,7 +210,7 @@ def initialize_peaks(
 
     # write mz together with min and max value in output list with one dictionary for each ion
     # First dimension: Charge number, Second Dimension: Ion Type, Third Dimension: sequence position
-    # TODO is there a better solution?
+    # TODO is there a better solution than tripple for loop?
 
     for charge in range(max_charge):
         for ion_type in range(len(ion_types)):
