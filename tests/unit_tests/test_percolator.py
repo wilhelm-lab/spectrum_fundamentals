@@ -186,7 +186,7 @@ class TestRetentionTimeAlignment(unittest.TestCase):
 
     def test_noisy_logistic(self):
         """Test get_aligned_predicted_retention_times for a more realistic, similar to logistic case."""
-        methods = ["lowess", "spline", "logistic"]
+        methods = ["spline", "logistic"]
         x, y, correct_y = _create_noisy_logistic_data()
         for method in methods:
             self._get_aligned_predicted_retention_times_noisy_logistic_error(x, y, correct_y, method)

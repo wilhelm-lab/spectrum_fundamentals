@@ -2,7 +2,7 @@
 
 __author__ = "Mario Picciani"
 __email__ = "mario.picciani@tum.de"
-__version__ = "0.5.2"
+__version__ = "0.5.4"
 
 import logging
 import logging.handlers

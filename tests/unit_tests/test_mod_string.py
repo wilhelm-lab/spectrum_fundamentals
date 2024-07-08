@@ -23,16 +23,16 @@ class TestSageToInternal(unittest.TestCase):
 
     def test_sage_to_internal_carbamidomethylation(self):
         """Test maxquant_to_internal_carbamidomethylation."""
-        self.assertEqual(mod.sage_to_internal(["ABC[+57.0214]DEFGH"]), ["ABC[UNIMOD:4]DEFGH"])
+        self.assertEqual(mod.sage_to_internal(["ABC[+57.0215]DEFGH"]), ["ABC[UNIMOD:4]DEFGH"])
 
     def test_sage_to_internal_variable_oxidation(self):
         """Test maxquant_to_internal_variable_oxidation."""
-        self.assertEqual(mod.sage_to_internal(["ABC[+57.0214]DM[+15.9949]EFGH"]), ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"])
+        self.assertEqual(mod.sage_to_internal(["ABC[+57.0215]DM[+15.9949]EFGH"]), ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"])
 
     def test_sage_to_internal_tmt(self):
         """Test maxquant_to_internal_tmt."""
         self.assertEqual(
-            mod.sage_to_internal(["[+229.1629]-ABC[+57.0214]DEFGHK[+229.1629]"]),
+            mod.sage_to_internal(["[+229.1629]-ABC[+57.0215]DEFGHK[+229.1629]"]),
             ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"],
         )
 
