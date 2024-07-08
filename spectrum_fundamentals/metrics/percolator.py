@@ -140,7 +140,7 @@ class Percolator(Metric):
                 observed_rts = observed_rts[keep_idxs[0]]
                 predicted_rts = predicted_rts[keep_idxs[0]]
 
-                discard_percentage *= 1.5
+                discard_percentage *= 1.2
 
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
@@ -348,8 +348,9 @@ class Percolator(Metric):
 
         accepted_indices = scores_df.index[scores_df["fdr"] < fdr_cutoff]
         if len(accepted_indices) == 0:
-            logger.error(
-                f"Could not find any targets below {fdr_cutoff} out of {len(scores_df.index)} targets in total"
+            logger.warning(
+                f"Could not find any targets below {fdr_cutoff} out of {len(scores_df.index)} "
+                "targets in total. Retrying with higher FDR cutoff..."
             )
             return np.array([])
 
@@ -418,44 +419,42 @@ class Percolator(Metric):
                 lda_failed = False
                 idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
                 current_fdr = self.fdr_cutoff
-                while len(idxs_below_lda_fdr) == 0:
+                while len(idxs_below_lda_fdr) <= 500:
                     current_fdr += 0.01
                     idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
                     if current_fdr >= 0.1:
                         lda_failed = True
                         break
+                if lda_failed:
+                    sampled_idxs = Percolator.sample_balanced_over_bins(
+                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
+                    )
                 else:
-                    if lda_failed:
-                        sampled_idxs = Percolator.sample_balanced_over_bins(
-                            self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
-                        )
-                    else:
-                        sampled_idxs = Percolator.sample_balanced_over_bins(
-                            self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
-                        )
-
-                    file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
-                    aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
-                        file_sample["RETENTION_TIME"],
-                        file_sample["PREDICTED_IRT"],
-                        self.metadata["PREDICTED_IRT"],
-                        self.regression_method,
+                    sampled_idxs = Percolator.sample_balanced_over_bins(
+                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
                     )
 
-                    self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
-                    self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
-                    self.metrics_val["iRT"] = aligned_predicted_rts
-                    self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
-                    self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
+                file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
+                aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
+                    file_sample["RETENTION_TIME"],
+                    file_sample["PREDICTED_IRT"],
+                    self.metadata["PREDICTED_IRT"],
+                    self.regression_method,
+                )
 
-                    median_abs_error_lda_targets = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
-                    logger.info(
-                        "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
-                        f"{median_abs_error_lda_targets}"
-                    )
-                    logger.debug(
-                        self.metrics_val[["RT", "pred_RT", "abs_rt_diff", "lda_scores"]].iloc[idxs_below_lda_fdr, :]
-                    )
+                self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
+                self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
+                self.metrics_val["iRT"] = aligned_predicted_rts
+                self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
+                self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
+                if lda_failed:
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"])
+                else:
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
+                logger.info(
+                    "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
+                    f"{median_abs_error}"
+                )
 
         else:
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
@@ -497,6 +496,10 @@ def spline(knots: int, x: np.ndarray, y: np.ndarray):
     """Calculates spline fitting."""
     x_new = np.linspace(0, 1, knots + 2)[1:-1]
     q_knots = np.quantile(x, x_new)
+    if q_knots[0] == 0:
+        q_knots[0] += 1e-6
+    if q_knots[0] == q_knots[1]:
+        q_knots[1] += 1e-6
     t, c, k = interpolate.splrep(x, y, t=q_knots, s=2)
     yfit = interpolate.BSpline(t, c, k)(x)
     return yfit, t, c, k
