@@ -92,35 +92,42 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     : return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
-    if fragmentation_method == "HCD" or fragmentation_method == "CID":
-        return ["b", "y"]
-    elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
-        return ["c", "z"]
-    elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
-        return ["b", "c", "y", "z"]
-    elif fragmentation_method == "UVPD":
-        return ["a", "b", "c", "x", "y", "z"]
+    if fragmentation_method == 'HCD' or fragmentation_method == 'CID':
+        return ['y', 'b']
+    elif fragmentation_method == 'ETD' or fragmentation_method == 'ECD':
+        return ['z', 'c']
+    elif fragmentation_method == 'ETCID' or fragmentation_method == 'ETHCD':
+        return ['y', 'z', 'b', 'c']
+    elif fragmentation_method == 'UVPD':
+        return ['x', 'y', 'z', 'a', 'b', 'c']
     else:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
 
 
-def calculate_ion_mass(residual_mass: float, ion_type: str) -> float:
+
+def calculate_ion_mass(ion_types: list[str]) -> np.ndarray:
     """
     Calculate the mass of an ion.
 
-    :param residual_mass: cumulative sum of the neutral residual masses
-    :param ion_type: type of ion for which mass should be calculated
-    :return: mass of the ion
+    :param ion_type: type of ions for which mass should be calculated
+    :return numpy array with masses of the ions
+
     """
+    
     ion_type_offsets = {
-        "a": -constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["C"],
-        "b": 0.0,
-        "c": 3 * constants.ATOM_MASSES["H"] + constants.ATOM_MASSES["N"],
-        "x": 2 * constants.ATOM_MASSES["O"] + constants.ATOM_MASSES["C"],
-        "y": constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"],
-        "z": constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["N"] - constants.ATOM_MASSES["H"],
-    }
-    return residual_mass + ion_type_offsets[ion_type]
+            'a':  - constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["C"], 
+            'b': 0.0, 
+            'c': 3 * constants.ATOM_MASSES["H"]+ constants.ATOM_MASSES["N"],
+            'x': 2 * constants.ATOM_MASSES["O"] + constants.ATOM_MASSES["C"], 
+            'y': constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"],
+            'z': constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["N"] - constants.ATOM_MASSES["H"]
+        }
+    # I think list comprehension is fastest way
+    deltas = np.array([ion_type_offsets[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
+
+
+
+    return deltas
 
 
 def initialize_peaks(
@@ -132,7 +139,7 @@ def initialize_peaks(
     noncl_xl: bool = False,
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
-    fragmentation_method: Optional[str] = "HCD",
+    fragmentation_method: str = "HCD",
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
@@ -148,22 +155,17 @@ def initialize_peaks(
     :param fragmentation_method: fragmentation method that was used
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
-    # _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
+    _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
     ion_types = retrieve_ion_types(fragmentation_method)
 
     number_of_ion_types = len(ion_types)
-    
-
     modification_deltas = _get_modifications(sequence)
 
-    forward_masses = []
-    forward_sum = 0.0
-    backward_masses = []  # sum over all amino acids from right to left (neutral charge)
-    backward_sum = 0.0
     fragments_meta_data = []
     n_term_mod = 1
+
 
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
@@ -173,35 +175,36 @@ def initialize_peaks(
             # add n_term mass to first aa for easy processing in the following calculation
             modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
 
+    #can not be done before as peptide_length might changed by the internal_without_mods method
     peptide_length = len(sequence)
+    forward_masses = np.zeros(peptide_length)
+    forward_sum = 0.0
+    backward_masses = np.zeros(peptide_length)  # sum over all amino acids from right to left (neutral charge)
+    backward_sum = 0.0
     
     # calculate cumulative mass once forward and once backwards
     for i in range(peptide_length):  # generate substrings
         forward_sum += constants.AA_MASSES[sequence[i]]  # sum left to right
         if i in modification_deltas:  # add mass of modification if present
             forward_sum += modification_deltas[i]
-        forward_masses.append(forward_sum)
+        forward_masses[i] = (forward_sum)
         backward_sum += constants.AA_MASSES[sequence[peptide_length - i - 1]]  # sum right to left
         if peptide_length - i - 1 in modification_deltas:  # add mass of modification if present
             backward_sum += modification_deltas[peptide_length - i - 1]
-        backward_masses.append(backward_sum)
+        backward_masses[i] = (backward_sum)
 
-    # turn masses into numpy array for easy matrix multiplication
-    forward_masses_np = np.array(forward_masses)
-    backward_masses_np = np.array(backward_masses)
+    
 
     # if I keep it that way I will remove the cummulative mass as an argument in the calculate_ion_mass function
-    ion_foreward_offsets = np.array([calculate_ion_mass(0, ion_types[i]) for i in range(int(number_of_ion_types / 2))])
-    ion_foreward_offsets = ion_foreward_offsets.reshape(int(number_of_ion_types / 2), 1)
-    ion_backward_offsets = np.array(
-        [calculate_ion_mass(0, ion_types[i]) for i in range(int(number_of_ion_types / 2), number_of_ion_types)]
-    )
-    ion_backward_offsets = ion_backward_offsets.reshape(int(number_of_ion_types / 2), 1)
+    ion_backward_offsets = calculate_ion_mass(ion_types[:int(number_of_ion_types / 2)])
+    ion_foreward_offsets = calculate_ion_mass(ion_types[int(number_of_ion_types / 2):])
 
     # add ion type offset to forward and backward masses and combine them into one numpy array
-    forward_ions = forward_masses_np + ion_foreward_offsets
-    backward_ions = backward_masses_np + ion_backward_offsets
-    ion_masses = np.concatenate((forward_ions, backward_ions), axis=0)
+    # shape of ion_masses: (n_foreward_ions + n_backward_ions, n_fragments)
+    forward_ions = forward_masses + ion_foreward_offsets
+    backward_ions = backward_masses + ion_backward_offsets
+    ion_masses = np.concatenate((backward_ions, forward_ions), axis=0)
+    
 
     # calculate for m/z for charges 1, 2, 3
     ion_masses_all_charges = np.zeros((max_charge, len(ion_types), len(sequence)))
@@ -235,7 +238,6 @@ def initialize_peaks(
         sequence,
         (forward_sum + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"]),
     )
-
 
 def _compute_ion_mass(
     ion_mass: float, noncl_xl: bool, ion_type: int, xl_pos: int, peptide_beta_mass: float, peptide_length: int, i: int
