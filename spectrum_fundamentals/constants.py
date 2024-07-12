@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Tuple, List, Dict
 
 import numpy as np
 
@@ -232,6 +233,14 @@ MOD_MASSES = {
     "[UNIMOD:7]": 0.984016,  # Deamidation
     "[UNIMOD:747]": 86.000394,  # Malonylation
 }
+
+
+def update_mod_masses(mods: List[Tuple[str, float]]):
+    for entry in mods:
+        if isinstance(entry[1], float) or isinstance(entry[1], int):
+            MOD_MASSES[entry[0]] = entry[1]
+
+
 
 MOD_MASSES_SAGE = {
     229.1629: "[UNIMOD:737]",

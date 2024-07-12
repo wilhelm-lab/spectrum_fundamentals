@@ -17,7 +17,7 @@ from .constants import (
 )
 
 
-def sage_to_internal(sequences: List[str]) -> List[str]:
+def sage_to_internal(sequences: List[str], stat_custom_mods: Dict[str, Tuple[str, float]] = None, var_custom_mods: Dict[str, Tuple[str, float]] = None) -> List[str]:
     """
     Convert mod string from sage to the internal format.
 
@@ -50,11 +50,40 @@ def sage_to_internal(sequences: List[str]) -> List[str]:
         # If it does, use the replacement value; otherwise, use the original value from the match.
         return unimod_expression
 
+    def find_replacement(match: re.Match, seq: str = None) -> str:
+        """
+        Subfunction to find the corresponding substitution for a match.
+
+        :param match: an re.Match object found by re.sub
+        :return: substitution string for the given match
+        """
+        key = match.string[match.start() : match.end()]
+        assert isinstance(custom_mods[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(custom_mods[key][0]).__name__), (type(custom_mods[key][1]).__name__)}."
+        end = match.span()[1]
+        if seq is not None and end < len(seq) and (seq[end] == "[" or seq[end]== "("):
+            return key
+        if key in var_custom_mods.keys() and not custom_mods[key][0].startswith(key): 
+            return key + custom_mods[key][0]
+        return custom_mods[key][0]
+
+    custom_mods = {}
+
+    if var_custom_mods is not None:
+        custom_mods.update(var_custom_mods)
+    if stat_custom_mods is not None:
+        custom_mods.update(stat_custom_mods)
+
+    if custom_mods:
+        regex = re.compile("|".join(map(custom_regex_escape, custom_mods.keys())))
+
     # Create an empty list 'modified_strings' to store the modified sequences.
     modified_strings = []
 
     # Iterate through the input 'sequences'.
     for string in sequences:
+        if custom_mods:
+            string = regex.sub(lambda match: find_replacement(match, string), string)
+
         # Use 're.sub' to search and replace values within square brackets in the 'string' using the 'replace' function.
         modified_string = re.sub(pattern, replace, string)
 
@@ -130,8 +159,8 @@ def internal_to_spectronaut(sequences: Union[np.ndarray, pd.Series, List[str]]) 
 
 
 def maxquant_to_internal(
-    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
-) -> List[str]:
+    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None,
+    stat_custom_mods: Dict[str, Tuple[str, float]] = None, var_custom_mods: Dict[str, Tuple[str, float]] = None) -> List[str]:
     """
     Function to translate a MaxQuant modstring to the Prosit format.
 
@@ -150,20 +179,14 @@ def maxquant_to_internal(
 
     replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
 
-    def custom_regex_escape(key: str) -> str:
-        """
-        Subfunction to escape only normal brackets in the modstring.
-
-        :param key: The match to escape
-        :return: match with escaped special characters
-        """
-        for k, v in {"(": r"\(", ")": r"\)"}.items():
-            key = key.replace(k, v)
-        return key
+    if var_custom_mods is not None:
+        replacements.update(var_custom_mods)
+    if stat_custom_mods is not None:
+        replacements.update(stat_custom_mods)
 
     regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
 
-    def find_replacement(match: re.Match) -> str:
+    def find_replacement(match: re.Match, sequence: str) -> str:
         """
         Subfunction to find the corresponding substitution for a match.
 
@@ -177,14 +200,26 @@ def maxquant_to_internal(
             else:
                 key = f"{key}$"
 
+        
+        if var_custom_mods is not None and key in var_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+            end = match.span()[1]
+            if end < len(sequence) and (sequence[end] == "[" or sequence[end]== "("):
+                return key
+            if not replacements[key][0].startswith(key):
+                return key + replacements[key][0]
+            return replacements[key][0]
+        elif stat_custom_mods is not None and key in stat_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+            return replacements[key][0]
         return replacements[key]
 
-    return [regex.sub(find_replacement, seq).replace("_", "") for seq in sequences]
+    return [regex.sub(lambda match: find_replacement(match, seq), seq).replace("_", "") for seq in sequences]
 
 
 def msfragger_to_internal(
-    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
-) -> List[str]:
+    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None, 
+    stat_custom_mods: Dict[str, Tuple[str, float]] = None, var_custom_mods: Dict[str, Tuple[str, float]] = None) -> List[str]:
     """
     Function to translate a MSFragger modstring to the Prosit format.
 
@@ -203,18 +238,12 @@ def msfragger_to_internal(
 
     replacements = {**MSFRAGGER_VAR_MODS, **fixed_mods}
 
-    def custom_regex_escape(key: str) -> str:
-        """
-        Subfunction to escape only normal brackets in the modstring.
+    if var_custom_mods is not None:
+        replacements.update(var_custom_mods)
+    if stat_custom_mods is not None:
+        replacements.update(stat_custom_mods)
 
-        :param key: The match to escape
-        :return: match with escaped special characters
-        """
-        for k, v in {"[": r"\[", "]": r"\]"}.items():
-            key = key.replace(k, v)
-        return key
-
-    def find_replacement(match: re.Match) -> str:
+    def find_replacement(match: re.Match, sequence: str) -> str:
         """
         Subfunction to find the corresponding substitution for a match.
 
@@ -222,11 +251,23 @@ def msfragger_to_internal(
         :return: substitution string for the given match
         """
         key = match.string[match.start() : match.end()]
+        if var_custom_mods is not None and key in var_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+            end = match.span()[1]
+            if end < len(sequence) and (sequence[end] == "[" or sequence[end]== "("):
+                return key
+            if not replacements[key][0].startswith(key):
+                return key + replacements[key][0]
+            return replacements[key][0]
+        elif stat_custom_mods is not None and key in stat_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+            return replacements[key][0]
         return replacements[key]
+
 
     regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
 
-    return [regex.sub(find_replacement, seq) for seq in sequences]
+    return [regex.sub(lambda match: find_replacement(match, seq), seq) for seq in sequences]
 
 
 def internal_without_mods(sequences: List[str]) -> List[str]:
@@ -427,3 +468,52 @@ def get_mods_list(mods_variable: str, mods_fixed: str):
         return mods_variable.split(";")
     else:
         return mods_variable.split(";") + mods_fixed.split(";")
+
+
+def custom_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], 
+                       stat_custom_mods: Dict[str, Tuple[str, float]] = None, 
+                       var_custom_mods: Dict[str, Tuple[str, float]] = None) ->List[str]:
+    
+    replacements = {}
+
+    if var_custom_mods is not None:
+        replacements.update(var_custom_mods)
+    if stat_custom_mods is not None:
+        replacements.update(stat_custom_mods)
+
+    def find_replacement(match: re.Match, sequence: str) -> str:
+        """
+        Subfunction to find the corresponding substitution for a match.
+
+        :param match: an re.Match object found by re.sub
+        :return: substitution string for the given match
+        """
+        key = match.string[match.start() : match.end()]
+        if var_custom_mods is not None and key in var_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+            end = match.span()[1]
+            if end < len(sequence) and (sequence[end] == "[" or sequence[end]== "("):
+                return key
+            if not replacements[key][0].startswith(key):
+                return key + replacements[key][0]
+            return replacements[key][0]
+        elif stat_custom_mods is not None and key in stat_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+            return replacements[key][0]
+        return replacements[key]
+
+    regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
+
+    return [regex.sub(lambda match: find_replacement(match, seq), seq) for seq in sequences]
+
+
+def custom_regex_escape(key: str) -> str:
+    """
+    Subfunction to escape only normal brackets in the modstring.
+
+    :param key: The match to escape
+    :return: match with escaped special characters
+    """
+    for k, v in {"(": r"\(", ")": r"\)", "[": r"\[", "]": r"\]", "+": r"\+"}.items():
+        key = key.replace(k, v)
+    return key
