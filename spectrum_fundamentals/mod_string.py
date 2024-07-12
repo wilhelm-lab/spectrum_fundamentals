@@ -58,11 +58,12 @@ def sage_to_internal(sequences: List[str], stat_custom_mods: Dict[str, Tuple[str
         :return: substitution string for the given match
         """
         key = match.string[match.start() : match.end()]
-        assert isinstance(custom_mods[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(custom_mods[key][0]).__name__), (type(custom_mods[key][1]).__name__)}."
+        assert isinstance(custom_mods[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), 
+        recieved {(type(custom_mods[key][0]).__name__), (type(custom_mods[key][1]).__name__)}."
         end = match.span()[1]
         if seq is not None and end < len(seq) and (seq[end] == "[" or seq[end]== "("):
             return key
-        if key in var_custom_mods.keys() and not custom_mods[key][0].startswith(key): 
+        if key in stat_custom_mods.keys() and not custom_mods[key][0].startswith(key): 
             return key + custom_mods[key][0]
         return custom_mods[key][0]
 
@@ -201,16 +202,18 @@ def maxquant_to_internal(
                 key = f"{key}$"
 
         
-        if var_custom_mods is not None and key in var_custom_mods.keys():
-            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+        if stat_custom_mods is not None and key in stat_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), 
+            recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
             end = match.span()[1]
             if end < len(sequence) and (sequence[end] == "[" or sequence[end]== "("):
                 return key
             if not replacements[key][0].startswith(key):
                 return key + replacements[key][0]
             return replacements[key][0]
-        elif stat_custom_mods is not None and key in stat_custom_mods.keys():
-            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+        elif var_custom_mods is not None and key in var_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), 
+            recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
             return replacements[key][0]
         return replacements[key]
 
@@ -251,16 +254,18 @@ def msfragger_to_internal(
         :return: substitution string for the given match
         """
         key = match.string[match.start() : match.end()]
-        if var_custom_mods is not None and key in var_custom_mods.keys():
-            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+        if stat_custom_mods is not None and key in stat_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), 
+            recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
             end = match.span()[1]
             if end < len(sequence) and (sequence[end] == "[" or sequence[end]== "("):
                 return key
             if not replacements[key][0].startswith(key):
                 return key + replacements[key][0]
             return replacements[key][0]
-        elif stat_custom_mods is not None and key in stat_custom_mods.keys():
-            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+        elif var_custom_mods is not None and key in var_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), 
+            recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
             return replacements[key][0]
         return replacements[key]
 
@@ -489,16 +494,18 @@ def custom_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]],
         :return: substitution string for the given match
         """
         key = match.string[match.start() : match.end()]
-        if var_custom_mods is not None and key in var_custom_mods.keys():
-            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+        if stat_custom_mods is not None and key in stat_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float),
+            recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
             end = match.span()[1]
             if end < len(sequence) and (sequence[end] == "[" or sequence[end]== "("):
                 return key
             if not replacements[key][0].startswith(key):
                 return key + replacements[key][0]
             return replacements[key][0]
-        elif stat_custom_mods is not None and key in stat_custom_mods.keys():
-            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float), recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
+        elif var_custom_mods is not None and key in var_custom_mods.keys():
+            assert isinstance(replacements[key][0], str), f"Provided illegal custom mod format, expected dict-values are (str, float),
+            recieved {(type(replacements[key][0]).__name__), (type(replacements[key][1]).__name__)}."
             return replacements[key][0]
         return replacements[key]
 
@@ -509,7 +516,7 @@ def custom_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]],
 
 def custom_regex_escape(key: str) -> str:
     """
-    Subfunction to escape only normal brackets in the modstring.
+    Subfunction to escape normal, square brackets and the plus-sign in the modstring.
 
     :param key: The match to escape
     :return: match with escaped special characters
