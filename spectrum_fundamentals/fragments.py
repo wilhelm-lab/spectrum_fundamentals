@@ -125,8 +125,6 @@ def calculate_ion_mass(ion_types: list[str]) -> np.ndarray:
     # I think list comprehension is fastest way
     deltas = np.array([ion_type_offsets[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
 
-
-
     return deltas
 
 
@@ -166,6 +164,10 @@ def initialize_peaks(
     fragments_meta_data = []
     n_term_mod = 1
 
+    if noncl_xl:
+        if xl_pos not in modification_deltas:
+           modification_deltas[xl_pos] = 0.0
+        modification_deltas[xl_pos] += peptide_beta_mass
 
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
