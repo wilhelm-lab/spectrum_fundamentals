@@ -397,12 +397,12 @@ def _annotate_linear_spectrum(
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
     fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(
-        sequence = spectrum[index_columns[mod_seq_column]],
-        mass_analyzer = spectrum[index_columns["MASS_ANALYZER"]],
-        charge = spectrum[index_columns["PRECURSOR_CHARGE"]],
-        mass_tolerance = mass_tolerance,
-        unit_mass_tolerance = unit_mass_tolerance,
-        fragmentation_method = fragmentation_method
+        sequence=spectrum[index_columns[mod_seq_column]],
+        mass_analyzer=spectrum[index_columns["MASS_ANALYZER"]],
+        charge=spectrum[index_columns["PRECURSOR_CHARGE"]],
+        mass_tolerance=mass_tolerance,
+        unit_mass_tolerance=unit_mass_tolerance,
+        fragmentation_method=fragmentation_method,
     )
     matched_peaks = match_peaks(
         fragments_meta_data,
@@ -415,7 +415,7 @@ def _annotate_linear_spectrum(
 
     ion_types = retrieve_ion_types(fragmentation_method)
     charge_const = 3
-    VEC_LENGTH = (constants.SEQ_LEN-1) * charge_const * len(ion_types)
+    VEC_LENGTH = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
 
     if len(matched_peaks) == 0:
         intensity = np.full(VEC_LENGTH, 0.0)
