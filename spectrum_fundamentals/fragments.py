@@ -108,11 +108,9 @@ def calculate_ion_mass(ion_types: list[str]) -> np.ndarray:
     """
     Calculate the mass of an ion.
 
-    :param ion_type: type of ions for which mass should be calculated
-    :return numpy array with masses of the ions
-
+    :param ion_types: type of ions for which mass should be calculated
+    :return: numpy array with masses of the ions
     """
-
     ion_type_offsets = {
         "a": -constants.ATOM_MASSES["O"] - constants.ATOM_MASSES["C"],
         "b": 0.0,
@@ -207,13 +205,13 @@ def initialize_peaks(
     # calculate for m/z for charges 1, 2, 3
     # shape of ion_masses_all_charges: (n_ions, n_fragments, max_charge)
     charges = np.arange(1, max_charge + 1)
-    ion_masses_all_charges = (ion_masses[..., np.newaxis]+ charges * constants.PARTICLE_MASSES["PROTON"]) / charges
+    ion_masses_all_charges = (ion_masses[..., np.newaxis] + charges * constants.PARTICLE_MASSES["PROTON"]) / charges
 
-    # write mz together with min and max value in output list with one dictionary for each ion  
+    # write mz together with min and max value in output list with one dictionary for each ion
     for ion_type in range(len(ion_types)):
         for number in range(len(sequence)):
             for charge in range(max_charge):
-                mz = ion_masses_all_charges[ ion_type, number, charge]
+                mz = ion_masses_all_charges[ion_type, number, charge]
                 min_mz, max_mz = get_min_max_mass(mass_analyzer, mz, mass_tolerance, unit_mass_tolerance)
                 fragments_meta_data.append(
                     {
@@ -227,7 +225,7 @@ def initialize_peaks(
                 )
 
     fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
-    
+
     return (
         fragments_meta_data,
         n_term_mod,
