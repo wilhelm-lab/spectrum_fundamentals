@@ -36,11 +36,12 @@ def _get_modifications(peptide_sequence: str) -> Dict[int, float]:
     # [^\]*] matches anything but ] greedily till it finds the closing bracket, which is 1 step
     pattern = re.compile(r"\[.{8}[^\]]*\]")
     matches = pattern.finditer(peptide_sequence)
+    MOD_MASSES = constants.update_mod_masses()
 
     for match in matches:
         start_pos = match.start()
         end_pos = match.end()
-        modification_deltas[start_pos - offset] = constants.MOD_MASSES[peptide_sequence[start_pos:end_pos]]
+        modification_deltas[start_pos - offset] = MOD_MASSES[peptide_sequence[start_pos:end_pos]]
         offset += end_pos - start_pos
 
     return modification_deltas
