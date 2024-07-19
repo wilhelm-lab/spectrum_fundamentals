@@ -122,7 +122,7 @@ def annotate_spectra(
     un_annot_spectra: pd.DataFrame,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    fragmentation_method: Optional[str] = "HCD",
+    fragmentation_method: str = "HCD",
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -273,7 +273,7 @@ def generate_annotation_matrix_xl(
 
 
 def generate_annotation_matrix(
-    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int, fragmentation_method: str
+    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int, fragmentation_method: str = "HCD"
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
@@ -281,14 +281,15 @@ def generate_annotation_matrix(
     :param matched_peaks: matched peaks needed to be converted
     :param unmod_seq: Un modified peptide sequence
     :param charge: Precursor charge
+    :param fragmentation_method: fragmentation method that was used
     :return: numpy array of intensities and numpy array of masses
     """
     ion_types = retrieve_ion_types(fragmentation_method)
     charge_const = 3
-    VEC_LENGTH = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
+    vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
 
-    intensity = np.full(VEC_LENGTH, -1.0)
-    mass = np.full(VEC_LENGTH, -1.0)
+    intensity = np.full(vec_length, -1.0)
+    mass = np.full(vec_length, -1.0)
 
     # change values to zeros
     if len(unmod_seq) < constants.SEQ_LEN:
@@ -336,7 +337,7 @@ def parallel_annotate(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    fragmentation_method: Optional[str] = "HCD",
+    fragmentation_method: str = "HCD",
 ) -> Optional[
     Union[
         Tuple[np.ndarray, np.ndarray, float, int],
@@ -381,7 +382,7 @@ def _annotate_linear_spectrum(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float],
     unit_mass_tolerance: Optional[str],
-    fragmentation_method: Optional[str] = "HCD",
+    fragmentation_method: str = "HCD",
 ):
     """
     Annotate a linear peptide spectrum.
@@ -415,11 +416,11 @@ def _annotate_linear_spectrum(
 
     ion_types = retrieve_ion_types(fragmentation_method)
     charge_const = 3
-    VEC_LENGTH = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
+    vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
 
     if len(matched_peaks) == 0:
-        intensity = np.full(VEC_LENGTH, 0.0)
-        mass = np.full(VEC_LENGTH, 0.0)
+        intensity = np.full(vec_length, 0.0)
+        mass = np.full(vec_length, 0.0)
         return intensity, mass, calc_mass, 0
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
