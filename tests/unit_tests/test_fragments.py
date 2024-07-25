@@ -184,3 +184,18 @@ class TestInitializePeaks(unittest.TestCase):
         self.assertEqual(actual_tmt_n_term, expected_tmt_nt_term)
         self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
         assert_almost_equal(actual_mass, expected_mass, decimal=5)
+
+class TestFragmentationMethod(unittest.TestCase):
+    '''Class to test the retrieving of the IonTypes'''
+    def test_get_ion_types(self):
+        assert fragments.retrieve_ion_types("HCD") == ["y", "b"]
+    
+    def test_get_ion_types_lower_case(self):
+        assert fragments.retrieve_ion_types("uvpd") == ["x", "y", "z", "a", "b", "c"]
+    
+    def test_invalid_fragmentation_method(self):
+         self.assertRaises(ValueError, fragments.retrieve_ion_types, "XYZ")
+
+    
+
+
