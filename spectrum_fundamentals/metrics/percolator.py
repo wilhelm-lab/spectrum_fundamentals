@@ -51,6 +51,7 @@ class Percolator(Metric):
         self,
         metadata: pd.DataFrame,
         input_type: str,
+        additional_columns: Union[str, list],
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
@@ -62,9 +63,16 @@ class Percolator(Metric):
         self.metadata = metadata
         self.input_type = input_type
         self.all_features_flag = all_features_flag
+        self.additional_columns = additional_columns
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
         self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
+        self.base_columns = ['RAW_FILE','SCAN_NUMBER','MODIFIED_SEQUENCE','PRECURSOR_CHARGE',
+                            'SCAN_EVENT_NUMBER','MASS','SCORE','REVERSE','SEQUENCE',
+                            'PEPTIDE_LENGTH','FRAGMENTATION','CALCULATED_MASS','SEQUENCE_A',
+                            'SEQUENCE_B','MODIFIED_SEQUENCE_A','MODIFIED_SEQUENCE_B','RETENTION_TIME',
+                            'PREDICTED_IRT','INSTRUMENT_TYPES',
+                            'MASS_ANALYZER','MZ_RANGE']
 
         super().__init__(pred_intensities, true_intensities, mz)
 
@@ -274,6 +282,22 @@ class Percolator(Metric):
         self.metrics_val["HCD"] = (self.metadata["FRAGMENTATION"] == "HCD").astype(int)
         self.metrics_val["CID"] = (self.metadata["FRAGMENTATION"] == "CID").astype(int)
 
+    def add_additional_features(self):
+        """Add additional features from custom serch results if specified"""
+        feature_cols=[]
+        if isinstance(self.additional_columns, list):
+            feature_cols = self.additional_columns
+        elif isinstance(self.additional_columns, list) and (self.additional_columns.lower() == "all"):
+            feature_cols = list(self.metadata.columns.difference(self.base_columns))
+
+        for col in feature_cols:
+            if col not in self.metadata.columns:
+                raise ValueError(f"provided column: {col} cannot be found in search results.")
+            elif not pd.api.types.is_numeric_dtype(self.metadata[col]):
+                raise ValueError(f"wrong datatype for column: {col}, datatype must be numerical.")
+            else:
+                self.metrics_val[col] = self.metadata[col]
+
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
         if self.xl:
@@ -401,6 +425,7 @@ class Percolator(Metric):
     def calc(self):
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
+        self.add_additional_features()
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
         np.random.seed(1)
         # add Prosit or Andromeda features
