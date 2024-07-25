@@ -287,7 +287,7 @@ class Percolator(Metric):
         feature_cols=[]
         if isinstance(self.additional_columns, list):
             feature_cols = self.additional_columns
-        elif isinstance(self.additional_columns, list) and (self.additional_columns.lower() == "all"):
+        elif isinstance(self.additional_columns, str) and (self.additional_columns.lower() == "all"):
             feature_cols = list(self.metadata.columns.difference(self.base_columns))
 
         for col in feature_cols:
