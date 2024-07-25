@@ -51,7 +51,7 @@ class Percolator(Metric):
         self,
         metadata: pd.DataFrame,
         input_type: str,
-        additional_columns: Union[str, list],
+        additional_columns: Optional[Union[str, list]] = None,
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
