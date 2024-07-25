@@ -283,7 +283,7 @@ class Percolator(Metric):
         self.metrics_val["CID"] = (self.metadata["FRAGMENTATION"] == "CID").astype(int)
 
     def add_additional_features(self):
-        """Add additional features from custom serch results if specified"""
+        """Add additional features from custom serch results if specified."""
         feature_cols=[]
         if isinstance(self.additional_columns, list):
             feature_cols = self.additional_columns
