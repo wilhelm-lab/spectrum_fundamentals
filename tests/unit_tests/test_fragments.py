@@ -2,7 +2,8 @@ import json
 import unittest
 from pathlib import Path
 
-from numpy.testing import assert_almost_equal
+import numpy as np
+from numpy.testing import assert_almost_equal, assert_array_equal
 
 import spectrum_fundamentals.fragments as fragments
 
@@ -87,26 +88,26 @@ class TestMassTolerances(unittest.TestCase):
     def test_mass_tol_with_ppm(self):
         """Test get_min_max_mass with a user defined ppm measure."""
         window = fragments.get_min_max_mass(
-            mass_analyzer="FTMS", mass=10.0, mass_tolerance=15, unit_mass_tolerance="ppm"
+            mass_analyzer="FTMS", mass=np.array([10.0]), mass_tolerance=15, unit_mass_tolerance="ppm"
         )
-        self.assertEqual(window, (9.99985, 10.00015))
+        assert_array_equal(window, np.array([[9.99985], [10.00015]]))
 
     def test_mass_tol_with_da(self):
         """Test get_min_max_mass with a user defined da measure."""
         window = fragments.get_min_max_mass(
-            mass_analyzer="FTMS", mass=10.0, mass_tolerance=0.3, unit_mass_tolerance="da"
+            mass_analyzer="FTMS", mass=np.array([10.0]), mass_tolerance=0.3, unit_mass_tolerance="da"
         )
-        self.assertEqual(window, (9.7, 10.3))
+        assert_array_equal(window, np.array([[9.7], [10.3]]))
 
     def test_mass_tol_with_defaults(self):
         """Test get_min_max_mass with mass analyzer defaults."""
-        window_ftms = fragments.get_min_max_mass(mass_analyzer="FTMS", mass=10.0)
-        window_itms = fragments.get_min_max_mass(mass_analyzer="ITMS", mass=10.0)
-        window_tof = fragments.get_min_max_mass(mass_analyzer="TOF", mass=10.0)
+        window_ftms = fragments.get_min_max_mass(mass_analyzer="FTMS", mass=np.array([10.0]))
+        window_itms = fragments.get_min_max_mass(mass_analyzer="ITMS", mass=np.array([10.0]))
+        window_tof = fragments.get_min_max_mass(mass_analyzer="TOF", mass=np.array([10.0]))
 
-        self.assertEqual(window_ftms, (9.9998, 10.0002))
-        self.assertEqual(window_tof, (9.9996, 10.0004))
-        self.assertEqual(window_itms, (9.65, 10.35))
+        assert_array_equal(window_ftms, np.array([[9.9998], [10.0002]]))
+        assert_array_equal(window_tof, np.array([[9.9996], [10.0004]]))
+        assert_array_equal(window_itms, np.array([[9.65], [10.35]]))
 
 
 class TestInitializePeaks(unittest.TestCase):
@@ -185,17 +186,51 @@ class TestInitializePeaks(unittest.TestCase):
         self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
         assert_almost_equal(actual_mass, expected_mass, decimal=5)
 
+    def test_initialize_peaks_all_ions(self):
+        """Test initialize_peaks with basic input, but for all six ion types."""
+        fragments_input = {
+            "sequence": "PEPTIDE",
+            "mass_analyzer": "FTMS",
+            "charge": 3,
+            "noncl_xl": False,
+            "fragmentation_method": "UVPD",
+        }
+
+        with open(Path(__file__).parent / "data/fragments_meta_data_all_ions.json") as file:
+            expected_list_out = json.load(file)
+        expected_tmt_nt_term = 1
+        expected_peptide_sequence = "PEPTIDE"
+        expected_mass_s = 799.359964
+
+        actual_list_out, actual_tmt_n_term, actual_peptide_sequence, actual_calc_mass_s = fragments.initialize_peaks(
+            **fragments_input
+        )
+
+        self.assertEqual(actual_list_out, expected_list_out)
+        self.assertEqual(actual_tmt_n_term, expected_tmt_nt_term)
+        self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
+        assert_almost_equal(actual_calc_mass_s, expected_mass_s, decimal=5)
+
+
 class TestFragmentationMethod(unittest.TestCase):
-    '''Class to test the retrieving of the IonTypes'''
-    def test_get_ion_types(self):
+    """Class to test the retrieving of the IonTypes."""
+
+    def test_get_ion_types_hcd(self):
+        """Test retrieving ion types for HCD."""
         assert fragments.retrieve_ion_types("HCD") == ["y", "b"]
-    
+
+    def test_get_ion_types_etd(self):
+        """Test retrieving ion types for ETD."""
+        assert fragments.retrieve_ion_types("ETD") == ["z", "c"]
+
+    def test_get_ion_types_etcid(self):
+        """Test retrieving ion types for ETCID."""
+        assert fragments.retrieve_ion_types("ETCID") == ["y", "z", "b", "c"]
+
     def test_get_ion_types_lower_case(self):
+        """Test lower case fragmentation method."""
         assert fragments.retrieve_ion_types("uvpd") == ["x", "y", "z", "a", "b", "c"]
-    
+
     def test_invalid_fragmentation_method(self):
-         self.assertRaises(ValueError, fragments.retrieve_ion_types, "XYZ")
-
-    
-
-
+        """Test if error is raised for invalid fragmentation method."""
+        self.assertRaises(ValueError, fragments.retrieve_ion_types, "XYZ")
