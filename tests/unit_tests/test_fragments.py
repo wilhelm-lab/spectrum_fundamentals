@@ -186,8 +186,8 @@ class TestInitializePeaks(unittest.TestCase):
         self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
         assert_almost_equal(actual_mass, expected_mass, decimal=5)
 
-    def test_initialize_peaks_all_ions(self):
-        """Test initialize_peaks with basic input, but for all six ion types."""
+    def test_initialize_peaks_uvpd(self):
+        """Test initialize_peaks with basic input, but for all six ion types for UVPD."""
         fragments_input = {
             "sequence": "PEPTIDE",
             "mass_analyzer": "FTMS",
