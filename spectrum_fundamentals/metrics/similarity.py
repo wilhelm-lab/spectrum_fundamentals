@@ -171,9 +171,9 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :return: spectral entropy similarity values
         """
-        if type(observed_intensities) == scipy.sparse.csr_matrix:
+        if isinstance(observed_intensities, scipy.sparse.csr_matrix):
             observed_intensities = observed_intensities.toarray()
-        if type(predicted_intensities) == scipy.sparse.csr_matrix:
+        if isinstance(predicted_intensities, scipy.sparse.csr_matrix):
             predicted_intensities = predicted_intensities.toarray()
 
         entropies = []
