@@ -15,13 +15,15 @@ class TestInitializePeaks(unittest.TestCase):
         with open(expected_input_file) as file:
             expected_list_out = json.load(file)
 
-        fragments_input = {"sequence": "PEPTIDE", "mass_analyzer": "FTMS", "charge": 3}
         expected_tmt_nt_term = 1
         expected_peptide_sequence = "PEPTIDE"
         expected_mass_s = 799.3599646700001
 
         actual_list_out, actual_tmt_n_term, actual_peptide_sequence, actual_calc_mass_s = fragments.initialize_peaks(
-            fragmentation_method=fragmentation_method, **fragments_input
+            sequence="PEPTIDE",
+            mass_analyzer="FTMS",
+            charge=3,
+            fragmentation_method=fragmentation_method,
         )
 
         self.assertEqual(actual_list_out, expected_list_out)
