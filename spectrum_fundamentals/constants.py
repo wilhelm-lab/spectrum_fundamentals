@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 
 import numpy as np
 
@@ -237,27 +237,19 @@ MOD_MASSES = {
 CUSTOM_MODS = {}
 
 
-def update_custom_mods(mods: List[Tuple[str, float]]):
-    """
-    Function to update CUSTOM_MODS with custom modifications
-    
-    :param mods: list of new internal modifications and their respective masses
-    """
-    global CUSTOM_MODS
-    CUSTOM_MODS = dict(mods)
-    
-
-def update_mod_masses() -> Dict[str, float]:
+def update_mod_masses(mods: List[Tuple[str, float]]) -> Dict[str, float]:
     """
     Function to update MOD_MASSES with custom modifications
     
-    :param mods: list of new internal modifications and their respective masses
+    :param update: if False, MOD_MASSES will not be updated
     :raises AssertionError: if mass of modification was not provided as float.
     :return: updated MOD_MASSES
     """
-    if not all([isinstance(val, float) for val in CUSTOM_MODS.values()]) or not all([isinstance(key,str) for key in CUSTOM_MODS.keys()]): 
+    if not all([isinstance(mod[1], float) and isinstance(mod[0],str) for mod in mods]): 
         raise AssertionError("All custom modifications value entries must be of type Tuple[str, float]")
-    return MOD_MASSES | CUSTOM_MODS
+    mods_dict = dict(mods)
+    
+    return MOD_MASSES | mods_dict
 
 
 

@@ -38,10 +38,16 @@ def sage_to_internal(sequences: List[str], mods: Dict[str, str]) -> List[str]:
         value = float(match.group(1))
         key = match.string[match.start() : match.end()]
         if key.endswith("-"):
-            unimod_expression = f"{mods.get(str(value)), mods.get(value, match.group(0))}-"
+            result = mods.get(str(value))
+            if result is None:
+                result = mods.get(value, match.group(0))
+            unimod_expression = f"{result}-"
         #custom mods can be either the entire key or just the numeric value as string
         elif key in mods.keys() or str(value) in mods.keys():
-            unimod_expression = f"{mods.get(str(value), mods.get(match.group(0), key))}"
+            key_pref = ""
+            if key[0].isalpha():
+                key_pref = key[0]
+            unimod_expression = f"{key_pref}{mods.get(str(value) or mods.get(value, match.group(0)))}"
         elif key.startswith("C"):
             unimod_expression = f"C{mods.get(value, match.group(0))}"
         elif key.startswith("K"):
@@ -168,7 +174,10 @@ def maxquant_to_internal(
             else:
                 key = f"{key}$"
 
-        return mods[key]
+        value =  mods[key]
+        if key[0].isalpha() and not value[0].isalpha():
+            value = f"{key[0]}{value}"
+        return value
 
     return [regex.sub(lambda match: find_replacement(match, seq), seq).replace("_", "") for seq in sequences]
 
@@ -196,7 +205,10 @@ def msfragger_or_custom_to_internal(
         :return: substitution string for the given match
         """
         key = match.string[match.start() : match.end()]
-        return mods[key]
+        value = mods[key]
+        if key[0].isalpha() and key[0].isupper() and not value[0].isalpha():
+            value = f"{key[0]}{value}"
+        return value
 
     regex = re.compile("|".join(map(custom_regex_escape, mods.keys())))
 
@@ -215,18 +227,29 @@ def internal_without_mods(sequences: List[str]) -> List[str]:
 
 
 def internal_to_mod_mass(
-    sequences: List[str],
-) -> List[str]:
+    sequences: List[str], custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None) -> List[str]:
     """
     Function to exchange the internal mod identifiers with the masses of the specific modifiction.
 
     :param sequences: List[str] of sequences
+    :param custom_mods: Optional custom mods with the custom identifier as key and the respespective unimod identifier and mass as value
+    :raises AssertionError: if modifications in custom format were provided in the wrong type.
     :return: List[str] of modified sequences
     """
-    MOD_MASSES = update_mod_masses()
+    mod_masses = []
+    if custom_mods:
+        stat_mods: List[Tuple[str, str]] = [(value[0], value[1]) for key, value in (custom_mods.get("stat_mods") or {}).items()]
+        var_mods: List[Tuple[str, str]] = [(value[0], value[1]) for key, value in (custom_mods.get("var_mods") or {}).items()]
 
-    regex = re.compile("(%s)" % "|".join(map(re.escape, MOD_MASSES.keys())))
-    replacement_func = lambda match: f"[+{MOD_MASSES[match.string[match.start():match.end()]]}]"
+        for value in stat_mods+ var_mods:
+            try:
+                mod_masses.append((value[0], float(value[1])))
+            except ValueError:
+                raise AssertionError(f"Mass = '{value[1]}' is not convertible to float")
+    mod_masses = update_mod_masses(mod_masses)
+
+    regex = re.compile("(%s)" % "|".join(map(re.escape, mod_masses.keys())))
+    replacement_func = lambda match: f"[+{mod_masses[match.string[match.start():match.end()]]}]"
     return [regex.sub(replacement_func, seq) for seq in sequences]
 
 
