@@ -31,11 +31,10 @@ def match_peaks(
     """
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
-    max_intensity = 1.0
+    max_intensity = 0.0
     row_list = []
     temp_list = []
     next_start_peak = 0
-    seq_len = len(unmod_sequence)
     matched_peak = False
     fragment_no: float
     for fragment in fragments_meta_data:
@@ -55,7 +54,7 @@ def match_peaks(
                 start_peak += 1
                 continue
             if (
-                not (fragment["ion_type"] == "b" and fragment_no == 1)
+                not (fragment["ion_type"][0] == "b" and fragment_no == 1)
                 or (unmod_sequence[0] == "R" or unmod_sequence[0] == "H" or unmod_sequence[0] == "K")
                 and (tmt_n_term == 1)
             ):
@@ -69,7 +68,7 @@ def match_peaks(
                         "intensity": peak_intensity,
                     }
                 )
-                if peak_intensity > max_intensity and fragment_no < seq_len:
+                if peak_intensity > max_intensity:
                     max_intensity = float(peak_intensity)
             matched_peak = True
             next_start_peak = start_peak

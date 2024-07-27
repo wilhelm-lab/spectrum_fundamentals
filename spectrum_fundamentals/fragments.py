@@ -179,10 +179,11 @@ def initialize_peaks(
         mass_arr[pos] += mod_mass
 
     n_forward_ions = len(ion_types) // 2
-    sum_array = np.empty(shape=(len(ion_types), len(sequence)))
-    np.cumsum(mass_arr, out=sum_array[n_forward_ions])
-    np.cumsum(mass_arr[::-1], out=sum_array[0])
-    forward_sum = sum_array[0, -1]
+    n_fragments = len(sequence) - 1
+    sum_array = np.empty(shape=(len(ion_types), n_fragments))
+    np.cumsum(mass_arr[:0:-1], out=sum_array[0])  # this is for the reverse ion-series
+    np.cumsum(mass_arr[:-1], out=sum_array[n_forward_ions])  # this is for the forward ion-series
+    peptide_mass = sum_array[0, -1] + mass_arr[0]  # this is the longest reverse ion + the first residue
 
     # get offset for all needed ions
     deltas = get_ion_delta(ion_types)
@@ -198,7 +199,7 @@ def initialize_peaks(
 
     # write mz together with min and max value in output list with one dictionary for each ion
     for ion_type in range(len(ion_types)):
-        for number in range(len(sequence)):
+        for number in range(n_fragments):
             for charge in range(max_charge):
                 fragments_meta_data.append(
                     {
@@ -217,7 +218,7 @@ def initialize_peaks(
         fragments_meta_data,
         n_term_mod,
         sequence,
-        (forward_sum + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"]),
+        (peptide_mass + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"]),
     )
 
 
