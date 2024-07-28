@@ -159,41 +159,41 @@ class TestMaxQuantToInternal(unittest.TestCase):
             mod.maxquant_to_internal(["_ABCDMEFGH_"], mods=mods), ["ABC[UNIMOD:4]DM[UNIMOD:425]EFGH"])
 
 
-class TestMSFraggerOrCustomToInternal(unittest.TestCase):
+class TestMSFraggerToInternal(unittest.TestCase):
     """Class to test MSFragger to internal."""
 
-    def test_msfragger_or_custom_to_internal_carbamidomethylation(self):
-        """Test msfragger_or_custom_to_internal_carbamidomethylation."""
+    def test_msfragger_to_internal_carbamidomethylation(self):
+        """Test msfragger_to_internal_carbamidomethylation."""
         mods = {**c.MSFRAGGER_VAR_MODS, **{"C": "C[UNIMOD:4]"}}
-        self.assertEqual(mod.msfragger_or_custom_to_internal(["ABCDEFGH"], mods), ["ABC[UNIMOD:4]DEFGH"])
+        self.assertEqual(mod.msfragger_to_internal(["ABCDEFGH"], mods), ["ABC[UNIMOD:4]DEFGH"])
 
     def test_msfragger_to_internal_variable_oxidation(self):
         """Test msfragger_to_internal_variable_oxidation."""
         mods = {**c.MSFRAGGER_VAR_MODS, **{"C": "C[UNIMOD:4]"}}
-        self.assertEqual(mod.msfragger_or_custom_to_internal(["ABCDM[147]EFGH"], mods), 
+        self.assertEqual(mod.msfragger_to_internal(["ABCDM[147]EFGH"], mods), 
                          ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"])
 
-    def test_msfragger_or_custom_to_internal_tmt(self):
-        """Test msfragger_or_custom_to_internal_tmt."""
+    def test_msfragger_to_internal_tmt(self):
+        """Test msfragger_to_internal_tmt."""
         fixed_mods = {"C": "C[UNIMOD:4]", r"n[\d+]": "[UNIMOD:737]-", "K": "K[UNIMOD:737]"}
         self.assertEqual(
-            mod.msfragger_or_custom_to_internal(["n[230]ABCDEFGHK"], {**c.MSFRAGGER_VAR_MODS, **fixed_mods}), 
+            mod.msfragger_to_internal(["n[230]ABCDEFGHK"], {**c.MSFRAGGER_VAR_MODS, **fixed_mods}), 
             ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]
         )
 
-    def test_msfragger_or_custom_to_internal_ms_custom_mod(self):
-        """Test msfragger_or_custom_to_internal_ms_custom_mod."""
+    def test_msfragger_to_internal_ms_custom_mod(self):
+        """Test msfragger_to_internal_ms_custom_mod."""
         fixed_mods = {"C": "C[UNIMOD:4]"}
         custom_mod = {"M[35]": "[UNIMOD:35]"}
         mods = {**c.MSFRAGGER_VAR_MODS, **fixed_mods, **custom_mod}
-        self.assertEqual(mod.msfragger_or_custom_to_internal(["n[230]ABCDEFGHM[35]"], mods), 
+        self.assertEqual(mod.msfragger_to_internal(["n[230]ABCDEFGHM[35]"], mods), 
                          ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"])
 
-    def test_msfragger_or_custom_to_internal_custom_mod(self):
-        """Test msfragger_or_custom_to_internal_custom_mod."""
+    def test_msfragger_to_internal_custom_mod(self):
+        """Test msfragger_to_internal_custom_mod."""
         custom_mod = {"M[35]": "[UNIMOD:35]", "(cm)": "[UNIMOD:4]"}
         mods = {**c.MSFRAGGER_VAR_MODS, **custom_mod}
-        self.assertEqual(mod.msfragger_or_custom_to_internal(["ABC(cm)DEFGHM[35]"], mods), 
+        self.assertEqual(mod.msfragger_to_internal(["ABC(cm)DEFGHM[35]"], mods), 
                          ["ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"])
 
 class TestInternalToSpectronaut(unittest.TestCase):
@@ -301,3 +301,20 @@ class TestParsing(unittest.TestCase):
         """Test correct behaviour of parse_modstrings when invalid sequence is handled."""
         invalid_seq = "testing"
         self.assertEqual(next(mod.parse_modstrings([invalid_seq], alphabet=c.ALPHABET, filter=True)), [0])
+
+
+class TestCustomToInternal(unittest.TestCase):
+    """Class to test custom to internal."""
+
+    def test_custom_to_internal_carbamidomethylation(self):
+        """Test custom_to_internal_carbamidomethylation."""
+        mods = {"C": "C[UNIMOD:4]"}
+        self.assertEqual(mod.msfragger_to_internal(["ABCDEFGH"], mods), ["ABC[UNIMOD:4]DEFGH"])
+
+    def test_custom_to_internal_custom_mods(self):
+        """Test custom_to_internal_custom_mods."""
+        fixed_mods = {"C": "C[UNIMOD:4]"}
+        custom_mod = {"M[35]": "[UNIMOD:35]"}
+        mods = {**fixed_mods, **custom_mod}
+        self.assertEqual(mod.msfragger_to_internal(["ABCDEFGHM[35]"], mods), 
+                         ["ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"])

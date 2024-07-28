@@ -160,7 +160,7 @@ def maxquant_to_internal(
 
     regex = re.compile("|".join(map(custom_regex_escape, mods.keys())))
 
-    def find_replacement(match: re.Match, sequence: str) -> str:
+    def find_replacement(match: re.Match) -> str:
         """
         Subfunction to find the corresponding substitution for a match.
 
@@ -179,40 +179,20 @@ def maxquant_to_internal(
             value = f"{key[0]}{value}"
         return value
 
-    return [regex.sub(lambda match: find_replacement(match, seq), seq).replace("_", "") for seq in sequences]
+    return [regex.sub(lambda match: find_replacement(match), seq).replace("_", "") for seq in sequences]
 
 
-def msfragger_or_custom_to_internal(
+def msfragger_to_internal(
     sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
     """
-    Function to translate a MSFragger or custom modstring to the Prosit format.
+    Function to translate a MSFragger modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
     :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': 'M(UNIMOD:35)').
         custom static and variable modifications and in case of MSFragger also standard static mods 
-    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary.
     :return: a list of modified sequences
     """
-    if not all(isinstance(val, str) for val in mods.values()) or not all(isinstance(key, (str, float)) for key in mods.keys()):
-        raise AssertionError("All custom modifications entries must have keys of type str and values of type str.")
-
-
-    def find_replacement(match: re.Match, sequence: str) -> str:
-        """
-        Subfunction to find the corresponding substitution for a match.
-
-        :param match: an re.Match object found by re.sub
-        :return: substitution string for the given match
-        """
-        key = match.string[match.start() : match.end()]
-        value = mods[key]
-        if key[0].isalpha() and key[0].isupper() and not value[0].isalpha():
-            value = f"{key[0]}{value}"
-        return value
-
-    regex = re.compile("|".join(map(custom_regex_escape, mods.keys())))
-
-    return [regex.sub(lambda match: find_replacement(match, seq), seq) for seq in sequences]
+    return(_to_internal(sequences=sequences, mods=mods))
 
 
 def internal_without_mods(sequences: List[str]) -> List[str]:
@@ -438,3 +418,48 @@ def custom_regex_escape(key: str) -> str:
     for k, v in {"(": r"\(", ")": r"\)", "[": r"\[", "]": r"\]", "+": r"\+", "-": r"\-"}.items():
         key = key.replace(k, v)
     return key
+
+def custom_to_internal(
+    sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
+    """
+    Function to translate custom modstrings to the Prosit format.
+
+    :param sequences: List[str] of sequences
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': 'M(UNIMOD:35)').
+        custom static and variable modifications and in case of MSFragger also standard static mods 
+    :return: a list of modified sequences
+    """
+    return(_to_internal(sequences=sequences, mods=mods))
+
+def _to_internal(
+    sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
+    """
+    Function to translate a modstring to the internal Prosit format.
+
+    :param sequences: List[str] of sequences
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': 'M(UNIMOD:35)').
+        custom static and variable modifications and in case of MSFragger also standard static mods 
+    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary.
+    :return: a list of modified sequences
+    """
+
+    if not all(isinstance(val, str) for val in mods.values()) or not all(isinstance(key, (str, float)) for key in mods.keys()):
+        raise AssertionError("All custom modifications entries must have keys of type str and values of type str.")
+
+
+    def find_replacement(match: re.Match) -> str:
+        """
+        Subfunction to find the corresponding substitution for a match.
+
+        :param match: an re.Match object found by re.sub
+        :return: substitution string for the given match
+        """
+        key = match.string[match.start() : match.end()]
+        value = mods[key]
+        if key[0].isalpha() and key[0].isupper() and not value[0].isalpha():
+            value = f"{key[0]}{value}"
+        return value
+
+    regex = re.compile("|".join(map(custom_regex_escape, mods.keys())))
+
+    return [regex.sub(lambda match: find_replacement(match), seq) for seq in sequences]
