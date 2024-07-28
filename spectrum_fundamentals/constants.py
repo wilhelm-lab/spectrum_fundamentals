@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple, List, Dict, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -234,38 +234,46 @@ MOD_MASSES = {
     "[UNIMOD:747]": 86.000394,  # Malonylation
 }
 
-CUSTOM_MODS = {}
 
-
-def update_mod_masses(mods: List[Tuple[str, float]]) -> Dict[str, float]:
+def update_mod_masses(mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None) -> Dict[str, float]:
     """
-    Function to update MOD_MASSES with custom modifications
-    
-    :param update: if False, MOD_MASSES will not be updated
+    Function to update MOD_MASSES with custom modifications.
+
+    :param mods: Modifications with respective mass
     :raises AssertionError: if mass of modification was not provided as float.
     :return: updated MOD_MASSES
     """
-    if not all([isinstance(mod[1], float) and isinstance(mod[0],str) for mod in mods]): 
-        raise AssertionError("All custom modifications value entries must be of type Tuple[str, float]")
-    mods_dict = dict(mods)
-    
-    return MOD_MASSES | mods_dict
+    mod_masses = {}
+    if mods:
+        try:
+            stat_mods: List[Tuple[str, float]] = [
+                (value[0], float(value[1])) for key, value in (mods.get("stat_mods") or {}).items()
+            ]
+            var_mods: List[Tuple[str, float]] = [
+                (value[0], float(value[1])) for key, value in (mods.get("var_mods") or {}).items()
+            ]
+        except ValueError as e:
+            raise AssertionError("All custom modifications value entries must be of type Tuple[str, float]") from e
 
+        for value in stat_mods + var_mods:
+            mod_masses[value[0]] = float(value[1])
+
+    return MOD_MASSES | mod_masses
 
 
 MOD_MASSES_SAGE = {
-    229.1629: "[UNIMOD:737]",
-    304.2071: "[UNIMOD:2016]",
-    144.1020: "[UNIMOD:214]",
-    304.2053: "[UNIMOD:730]",
-    8.0141: "[UNIMOD:259]",
-    10.0082: "[UNIMOD:267]",
-    79.9663: "[UNIMOD:21]",
-    -18.0105: "[UNIMOD:23]",
-    57.0215: "[UNIMOD:4]",
-    15.9949: "[UNIMOD:35]",
-    15.994: "[UNIMOD:35]",
-    42.0105: "[UNIMOD:1]",
+    "229.1629": "[UNIMOD:737]",
+    "304.2071": "[UNIMOD:2016]",
+    "144.1020": "[UNIMOD:214]",
+    "304.2053": "[UNIMOD:730]",
+    "8.0141": "[UNIMOD:259]",
+    "10.0082": "[UNIMOD:267]",
+    "79.9663": "[UNIMOD:21]",
+    "-18.0105": "[UNIMOD:23]",
+    "57.0215": "[UNIMOD:4]",
+    "15.9949": "[UNIMOD:35]",
+    "15.994": "[UNIMOD:35]",
+    "42.0105": "[UNIMOD:1]",
 }
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
 AA_MOD_MASSES = {

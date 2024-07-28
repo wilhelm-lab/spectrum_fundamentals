@@ -1,7 +1,8 @@
 import unittest
 
-import spectrum_fundamentals.mod_string as mod
 import spectrum_fundamentals.constants as c
+import spectrum_fundamentals.mod_string as mod
+
 
 class TestMSP:
     """Class to test msp."""
@@ -26,8 +27,10 @@ class TestSageToInternal(unittest.TestCase):
 
     def test_sage_to_internal_variable_oxidation(self):
         """Test sage_to_internal_variable_oxidation."""
-        self.assertEqual(mod.sage_to_internal(["ABC[+57.0215]DM[+15.9949]EFGH"], c.MOD_MASSES_SAGE), 
-                         ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"])
+        self.assertEqual(
+            mod.sage_to_internal(["ABC[+57.0215]DM[+15.9949]EFGH"], c.MOD_MASSES_SAGE),
+            ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"],
+        )
 
     def test_sage_to_internal_tmt(self):
         """Test sage_to_internal_tmt."""
@@ -35,14 +38,16 @@ class TestSageToInternal(unittest.TestCase):
             mod.sage_to_internal(["[+229.1629]-ABC[+57.0215]DEFGHK[+229.1629]"], c.MOD_MASSES_SAGE),
             ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"],
         )
+
     def test_sage_to_internal_custom(self):
         """Test sage_to_internal_custom."""
-        #difference in rounding
+        # difference in rounding
         mods = {**c.MOD_MASSES_SAGE, **{"229.1628": "[UNIMOD:737]"}}
         self.assertEqual(
             mod.sage_to_internal(["[+229.1628]-ABC[+57.0215]DEFGHK[+229.1629]"], mods),
             ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"],
         )
+
     def test_sage_to_internal_custom_overwrite(self):
         """Test sage_to_internal_custom_overwrite."""
         mods = {**c.MOD_MASSES_SAGE, **{"57.0215": "[UNIMOD:977]"}}
@@ -115,12 +120,16 @@ class TestMaxQuantToInternal(unittest.TestCase):
     def test_maxquant_to_internal_variable_oxidation_long(self):
         """Test maxquant_to_internal_variable_oxidation_long."""
         mods = {**c.MAXQUANT_VAR_MODS, **{"C": "C[UNIMOD:4]"}}
-        self.assertEqual(mod.maxquant_to_internal(["_ABCDM(Oxidation (M))EFGH_"], mods=mods), ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"])
+        self.assertEqual(
+            mod.maxquant_to_internal(["_ABCDM(Oxidation (M))EFGH_"], mods=mods), ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"]
+        )
 
     def test_maxquant_to_internal_variable_dehydration_long(self):
         """Test maxquant_to_internal_variable_dehydration_long."""
         mods = {**c.MAXQUANT_VAR_MODS, **{"C": "C[UNIMOD:4]"}}
-        self.assertEqual(mod.maxquant_to_internal(["_ABCDS(Dehydrated (ST))EFGH_"], mods=mods), ["ABC[UNIMOD:4]DS[UNIMOD:23]EFGH"])
+        self.assertEqual(
+            mod.maxquant_to_internal(["_ABCDS(Dehydrated (ST))EFGH_"], mods=mods), ["ABC[UNIMOD:4]DS[UNIMOD:23]EFGH"]
+        )
 
     def test_maxquant_to_internal_tmt(self):
         """Test maxquant_to_internal_tmt."""
@@ -131,7 +140,7 @@ class TestMaxQuantToInternal(unittest.TestCase):
         )
 
     def test_maxquant_to_internal_custom_stat_overwrite(self):
-        #overwrite fixed_mod with stat mod
+        # overwrite fixed_mod with stat mod
         """Test maxquant_to_internal_custom_stat_overwrite."""
         fixed_mods = {"C": "C[UNIMOD:4]", "^_": "_[UNIMOD:737]-", "K": "K[UNIMOD:737]"}
         stat_mod = {"K": "[UNIMOD:738]"}
@@ -141,22 +150,20 @@ class TestMaxQuantToInternal(unittest.TestCase):
         )
 
     def test_maxquant_to_internal_custom_var(self):
-        #overwrite maxquant_var_mod
+        # overwrite maxquant_var_mod
         """Test maxquant_to_internal_custom_var."""
         fixed_mods = {"C": "C[UNIMOD:4]"}
         var_mod = {"(ox)": "[UNIMOD:425]"}
         mods = {**c.MAXQUANT_VAR_MODS, **fixed_mods, **var_mod}
-        self.assertEqual(
-            mod.maxquant_to_internal(["_ABCDM(ox)EFGH_"], mods=mods), ["ABC[UNIMOD:4]DM[UNIMOD:425]EFGH"])
+        self.assertEqual(mod.maxquant_to_internal(["_ABCDM(ox)EFGH_"], mods=mods), ["ABC[UNIMOD:4]DM[UNIMOD:425]EFGH"])
 
     def test_maxquant_to_internal_custom_stat(self):
-        #overwrite maxquant_var_mod
+        # overwrite maxquant_var_mod
         """Test maxquant_to_internal_custom_var."""
         fixed_mods = {"C": "C[UNIMOD:4]"}
         stat_mod = {"M": "[UNIMOD:425]"}
         mods = {**c.MAXQUANT_VAR_MODS, **fixed_mods, **stat_mod}
-        self.assertEqual(
-            mod.maxquant_to_internal(["_ABCDMEFGH_"], mods=mods), ["ABC[UNIMOD:4]DM[UNIMOD:425]EFGH"])
+        self.assertEqual(mod.maxquant_to_internal(["_ABCDMEFGH_"], mods=mods), ["ABC[UNIMOD:4]DM[UNIMOD:425]EFGH"])
 
 
 class TestMSFraggerToInternal(unittest.TestCase):
@@ -170,15 +177,14 @@ class TestMSFraggerToInternal(unittest.TestCase):
     def test_msfragger_to_internal_variable_oxidation(self):
         """Test msfragger_to_internal_variable_oxidation."""
         mods = {**c.MSFRAGGER_VAR_MODS, **{"C": "C[UNIMOD:4]"}}
-        self.assertEqual(mod.msfragger_to_internal(["ABCDM[147]EFGH"], mods), 
-                         ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"])
+        self.assertEqual(mod.msfragger_to_internal(["ABCDM[147]EFGH"], mods), ["ABC[UNIMOD:4]DM[UNIMOD:35]EFGH"])
 
     def test_msfragger_to_internal_tmt(self):
         """Test msfragger_to_internal_tmt."""
         fixed_mods = {"C": "C[UNIMOD:4]", r"n[\d+]": "[UNIMOD:737]-", "K": "K[UNIMOD:737]"}
         self.assertEqual(
-            mod.msfragger_to_internal(["n[230]ABCDEFGHK"], {**c.MSFRAGGER_VAR_MODS, **fixed_mods}), 
-            ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"]
+            mod.msfragger_to_internal(["n[230]ABCDEFGHK"], {**c.MSFRAGGER_VAR_MODS, **fixed_mods}),
+            ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHK[UNIMOD:737]"],
         )
 
     def test_msfragger_to_internal_ms_custom_mod(self):
@@ -186,15 +192,16 @@ class TestMSFraggerToInternal(unittest.TestCase):
         fixed_mods = {"C": "C[UNIMOD:4]"}
         custom_mod = {"M[35]": "[UNIMOD:35]"}
         mods = {**c.MSFRAGGER_VAR_MODS, **fixed_mods, **custom_mod}
-        self.assertEqual(mod.msfragger_to_internal(["n[230]ABCDEFGHM[35]"], mods), 
-                         ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"])
+        self.assertEqual(
+            mod.msfragger_to_internal(["n[230]ABCDEFGHM[35]"], mods), ["[UNIMOD:737]-ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"]
+        )
 
     def test_msfragger_to_internal_custom_mod(self):
         """Test msfragger_to_internal_custom_mod."""
         custom_mod = {"M[35]": "[UNIMOD:35]", "(cm)": "[UNIMOD:4]"}
         mods = {**c.MSFRAGGER_VAR_MODS, **custom_mod}
-        self.assertEqual(mod.msfragger_to_internal(["ABC(cm)DEFGHM[35]"], mods), 
-                         ["ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"])
+        self.assertEqual(mod.msfragger_to_internal(["ABC(cm)DEFGHM[35]"], mods), ["ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"])
+
 
 class TestInternalToSpectronaut(unittest.TestCase):
     """Class to test Internal to Spectronaut."""
@@ -219,7 +226,7 @@ class TestInternalToSpectronaut(unittest.TestCase):
 
 
 class TestInternalTransformations(unittest.TestCase):
-    """Class to test internal to interla without mods."""
+    """Class to test internal to interal without mods."""
 
     def test_internal_without_mods(self):
         """Test internal with mods to internal without_mods."""
@@ -234,7 +241,7 @@ class TestInternalTransformations(unittest.TestCase):
 
     def test_internal_to_mod_masses_custom(self):
         """Test internal with custom mods to internal without_mods."""
-        mods = {"stat_mods": {"57.0215": ("[UNIMOD:977]", "57.0215")}}
+        mods = {"stat_mods": {"57.0215": ("[UNIMOD:977]", 57.0215)}}
         self.assertEqual(
             mod.internal_to_mod_mass(["[UNIMOD:737]-ABC[UNIMOD:977]DEFGHK[UNIMOD:737]"], mods),
             ["[+229.162932]-ABC[+57.0215]DEFGHK[+229.162932]"],
@@ -309,12 +316,11 @@ class TestCustomToInternal(unittest.TestCase):
     def test_custom_to_internal_carbamidomethylation(self):
         """Test custom_to_internal_carbamidomethylation."""
         mods = {"C": "C[UNIMOD:4]"}
-        self.assertEqual(mod.msfragger_to_internal(["ABCDEFGH"], mods), ["ABC[UNIMOD:4]DEFGH"])
+        self.assertEqual(mod.custom_to_internal(["ABCDEFGH"], mods), ["ABC[UNIMOD:4]DEFGH"])
 
     def test_custom_to_internal_custom_mods(self):
         """Test custom_to_internal_custom_mods."""
         fixed_mods = {"C": "C[UNIMOD:4]"}
         custom_mod = {"M[35]": "[UNIMOD:35]"}
         mods = {**fixed_mods, **custom_mod}
-        self.assertEqual(mod.msfragger_to_internal(["ABCDEFGHM[35]"], mods), 
-                         ["ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"])
+        self.assertEqual(mod.custom_to_internal(["ABCDEFGHM[35]"], mods), ["ABC[UNIMOD:4]DEFGHM[UNIMOD:35]"])
