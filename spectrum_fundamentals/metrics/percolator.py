@@ -445,11 +445,12 @@ class Percolator(Metric):
     def calc(self):
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
-        self.add_additional_features()
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
         np.random.seed(1)
         # add Prosit or Andromeda features
         if self.input_type == "rescore":
+            # add additional features
+            self.add_additional_features()
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
             fragments_ratio.calc(xl=self.xl)
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
