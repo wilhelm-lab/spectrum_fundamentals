@@ -148,8 +148,14 @@ def annotate_spectra(
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-        results = parallel_annotate(row, index_columns, mass_tolerance, unit_mass_tolerance, fragmentation_method,
-                                    custom_mods=custom_mods)
+        results = parallel_annotate(
+            row,
+            index_columns,
+            mass_tolerance,
+            unit_mass_tolerance,
+            fragmentation_method=fragmentation_method,
+            custom_mods=custom_mods,
+        )
         if not results:
             continue
         raw_file_annotations.append(results)
@@ -371,7 +377,12 @@ def parallel_annotate(
         if spectrum[index_columns["PEPTIDE_LENGTH"]] > 30:  # this was in initialize peaks but can be checked prior
             return None
         return _annotate_linear_spectrum(
-            spectrum, index_columns, mass_tolerance, unit_mass_tolerance, fragmentation_method, custom_mods=custom_mods
+            spectrum,
+            index_columns,
+            mass_tolerance,
+            unit_mass_tolerance,
+            fragmentation_method=fragmentation_method,
+            custom_mods=custom_mods,
         )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
@@ -410,7 +421,7 @@ def _annotate_linear_spectrum(
         mass_tolerance=mass_tolerance,
         unit_mass_tolerance=unit_mass_tolerance,
         fragmentation_method=fragmentation_method,
-        custom_mods=custom_mods
+        custom_mods=custom_mods,
     )
     matched_peaks = match_peaks(
         fragments_meta_data,
@@ -444,7 +455,6 @@ def _annotate_crosslinked_spectrum(
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
-
 ):
     """
     Annotate a crosslinked peptide spectrum.
