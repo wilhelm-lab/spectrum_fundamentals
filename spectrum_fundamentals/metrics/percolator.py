@@ -67,12 +67,30 @@ class Percolator(Metric):
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
         self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
-        self.base_columns = ['RAW_FILE','SCAN_NUMBER','MODIFIED_SEQUENCE','PRECURSOR_CHARGE',
-                            'SCAN_EVENT_NUMBER','MASS','SCORE','REVERSE','SEQUENCE',
-                            'PEPTIDE_LENGTH','FRAGMENTATION','CALCULATED_MASS','SEQUENCE_A',
-                            'SEQUENCE_B','MODIFIED_SEQUENCE_A','MODIFIED_SEQUENCE_B','RETENTION_TIME',
-                            'PREDICTED_IRT','INSTRUMENT_TYPES',
-                            'MASS_ANALYZER','MZ_RANGE']
+        self.base_columns = [
+            "raw_file",
+            "scan_number",
+            "modified_sequence",
+            "precursor_charge",
+            "scan_event_number",
+            "mass",
+            "score",
+            "reverse",
+            "sequence",
+            "peptide_length",
+            "fragmentation",
+            "calculated_mass",
+            "sequence_a",
+            "sequence_b",
+            "modified_sequence_a",
+            "modified_sequence_b",
+            "retention_time",
+            "predicted_irt",
+            "instrument_types",
+            "mass_analyzer",
+            "mz_range",
+            "collision_energy",
+        ]
 
         super().__init__(pred_intensities, true_intensities, mz)
 
@@ -284,11 +302,13 @@ class Percolator(Metric):
 
     def add_additional_features(self):
         """Add additional features from custom serch results if specified."""
-        feature_cols=[]
+        feature_cols = []
+
         if isinstance(self.additional_columns, list):
             feature_cols = self.additional_columns
         elif isinstance(self.additional_columns, str) and (self.additional_columns.lower() == "all"):
-            feature_cols = list(self.metadata.columns.difference(self.base_columns))
+            feature_cols = [x for x in self.metadata.columns if x.lower() not in set(self.base_columns)]
+            feature_cols = [x for x in feature_cols if not x.lower().startswith("unnamed")]  # remove Unnamed cols
 
         for col in feature_cols:
             if col not in self.metadata.columns:
