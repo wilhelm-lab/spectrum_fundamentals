@@ -73,7 +73,7 @@ def compute_peptide_mass(sequence: str, custom_mods: Optional[Dict[str, Dict[str
 
 def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
     """
-    Checks input validity for initialize_peacks when used with xl mode.
+    Checks input validity for initialize_peaks when used with xl mode.
 
     :param noncl_xl: whether the function is called with a non-cleavable xl modification
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
