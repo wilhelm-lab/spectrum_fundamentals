@@ -142,7 +142,7 @@ def maxquant_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mod
     Function to translate a MaxQuant modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': 'M(UNIMOD:35)').
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
         custom variable modifications and standard MAXQUANT var mods. Custom static mods are not visible in the mod string,
         therefore input needs to change to key = aa and value aa and unimod identifier.
     :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary or custom mods in illegal type format.
@@ -182,7 +182,7 @@ def msfragger_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mo
     Function to translate a MSFragger modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': 'M(UNIMOD:35)').
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
         custom static and variable modifications and in case of MSFragger also standard static mods
     :return: a list of modified sequences
     """
@@ -409,7 +409,7 @@ def custom_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods:
     Function to translate custom modstrings to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': 'M(UNIMOD:35)').
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
         custom static and variable modifications and in case of MSFragger also standard static mods
     :return: a list of modified sequences
     """
@@ -421,7 +421,7 @@ def _to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[
     Function to translate a modstring to the internal Prosit format.
 
     :param sequences: List[str] of sequences
-    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': 'M(UNIMOD:35)').
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
         custom static and variable modifications and in case of MSFragger also standard static mods
     :return: a list of modified sequences
     """
