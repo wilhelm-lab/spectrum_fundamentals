@@ -13,8 +13,8 @@ Spectrum Fundamentals
    :target: https://opensource.org/licenses/MIT
    :alt: License
 .. |Read the Docs| image:: https://img.shields.io/readthedocs/spectrum_fundamentals/latest.svg?label=Read%20the%20Docs
-   :target: https://spectrum_fundamentals.readthedocs.io/
-   :alt: Read the documentation at https://spectrum_fundamentals.readthedocs.io/
+   :target: https://spectrum-fundamentals.readthedocs.io/
+   :alt: Read the documentation at https://spectrum-fundamentals.readthedocs.io/
 .. |Build| image:: https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Build%20spectrum_fundamentals%20Package/badge.svg
    :target: https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Package
    :alt: Build Package Status

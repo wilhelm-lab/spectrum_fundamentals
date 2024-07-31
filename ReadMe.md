@@ -1,9 +1,9 @@
 [![PyPI](https://img.shields.io/pypi/v/spectrum_fundamentals.svg)](https://pypi.org/project/spectrum_fundamentals/)
 [![Python Version](https://img.shields.io/pypi/pyversions/spectrum_fundamentals)](https://pypi.org/project/spectrum_fundamentals)
 [![License](https://img.shields.io/github/license/wilhelm-lab/spectrum_fundamentals)](https://opensource.org/licenses/MIT)
-[![Read the Docs](https://img.shields.io/readthedocs/spectrum_fundamentals/latest.svg?label=Read%20the%20Docs)](https://spectrum_fundamentals.readthedocs.io/)
-[![Build](https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Build%20oktoberfest%20Package/badge.svg)](https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Package)
-[![Tests](https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Run%20oktoberfest%20Tests/badge.svg)](https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Tests)
+[![Read the Docs](https://img.shields.io/readthedocs/spectrum_fundamentals/latest.svg?label=Read%20the%20Docs)](https://spectrum-fundamentals.readthedocs.io/)
+[![Build](https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Build%20spectrum_fundamentals%20Package/badge.svg)](https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Package)
+[![Tests](https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Run%20spectrum_fundamentals%20Tests/badge.svg)](https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Tests)
 [![Codecov](https://codecov.io/gh/wilhelm-lab/spectrum_fundamentals/branch/main/graph/badge.svg)](https://codecov.io/gh/wilhelm-lab/spectrum_fundamentals)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -21,7 +21,7 @@ It provides the following functionalities:
 
 ## Documentation
 
-The official documentation can be found at https://spectrum_fundamentals.readthedocs.io
+The official documentation can be found at https://spectrum-fundamentals.readthedocs.io
 
 ## How to cite
 
