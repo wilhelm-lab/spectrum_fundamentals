@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>spectrum_fundamentals &mdash; spectrum_fundamentals 0.6.0 documentation</title>
+  <title>Spectrum Fundamentals &mdash; Spectrum-IO 0.7.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
-      <link rel="stylesheet" type="text/css" href="_static/custom_cookietemple.css?v=057798b9" />
+      <link rel="stylesheet" type="text/css" href="_static/custom_cookietemple.css?v=0cf98f86" />
 
   
   <!--[if lt IE 9]>
@@ -16,13 +16,13 @@
   
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=add265a1"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+        <script src="_static/documentation_options.js?v=fe7df9b0"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="spectrum_fundamentals" href="readme.html" /> 
+    <link rel="next" title="Installation" href="installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -33,11 +33,11 @@
 
           
           
-          <a href="#" class="icon icon-home">
-            spectrum_fundamentals
+          <a href="#">
+            
           </a>
               <div class="version">
-                0.6.0
+                0.7.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -49,14 +49,11 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="readme.html">spectrum_fundamentals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="API.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributor Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">spectrum_fundamentals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">How to cite</a></li>
 </ul>
 
         </div>
@@ -65,7 +62,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">spectrum_fundamentals</a>
+          <a href="#">Spectrum-IO</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -73,9 +70,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">spectrum_fundamentals</li>
+      <li class="breadcrumb-item active">Spectrum Fundamentals</li>
       <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/main/spectrum_fundamentals/index.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/wilhelm-lab/spectrum_fundamentals/blob/development/docs/index.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -84,101 +81,72 @@
            <div itemprop="articleBody">
              
   <section id="spectrum-fundamentals">
-<h1>spectrum_fundamentals<a class="headerlink" href="#spectrum-fundamentals" title="Permalink to this heading"></a></h1>
-<p><a class="reference external" href="https://pypi.org/project/spectrum_fundamentals/"><img alt="PyPI" src="https://img.shields.io/pypi/v/spectrum_fundamentals.svg" /></a> <a class="reference external" href="https://pypi.org/project/spectrum_fundamentals"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/spectrum_fundamentals" /></a> <a class="reference external" href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/github/license/wilhelm-lab/spectrum_fundamentals" /></a> <a class="reference external" href="https://spectrum_fundamentals.readthedocs.io/"><img alt="Read the documentation at https://spectrum_fundamentals.readthedocs.io/" src="https://img.shields.io/readthedocs/spectrum_fundamentals/latest.svg?label=Read%20the%20Docs" /></a> <a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Package"><img alt="Build Package Status" src="https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Build%20spectrum_fundamentals%20Package/badge.svg" /></a> <a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Tests"><img alt="Run Tests Status" src="https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Run%20spectrum_fundamentals%20Tests/badge.svg" /></a> <a class="reference external" href="https://codecov.io/gh/wilhelm-lab/spectrum_fundamentals"><img alt="Codecov" src="https://codecov.io/gh/wilhelm-lab/spectrum_fundamentals/branch/master/graph/badge.svg" /></a> <a class="reference external" href="https://github.com/pre-commit/pre-commit"><img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&amp;logoColor=white" /></a> <a class="reference external" href="https://github.com/psf/black"><img alt="Black" src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a></p>
-<section id="features">
-<h2>Features<a class="headerlink" href="#features" title="Permalink to this heading"></a></h2>
+<h1>Spectrum Fundamentals<a class="headerlink" href="#spectrum-fundamentals" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://pypi.org/project/spectrum_fundamentals/"><img alt="PyPI" src="https://img.shields.io/pypi/v/spectrum_fundamentals.svg" /></a> <a class="reference external" href="https://pypi.org/project/spectrum_fundamentals"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/spectrum_fundamentals" /></a> <a class="reference external" href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/github/license/wilhelm-lab/spectrum_fundamentals" /></a> <a class="reference external" href="https://spectrum-fundamentals.readthedocs.io/"><img alt="Read the documentation at https://spectrum-fundamentals.readthedocs.io/" src="https://img.shields.io/readthedocs/spectrum_fundamentals/latest.svg?label=Read%20the%20Docs" /></a> <a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Package"><img alt="Build Package Status" src="https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Build%20spectrum_fundamentals%20Package/badge.svg" /></a> <a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals/actions?workflow=Tests"><img alt="Run Tests Status" src="https://github.com/wilhelm-lab/spectrum_fundamentals/workflows/Run%20spectrum_fundamentals%20Tests/badge.svg" /></a> <a class="reference external" href="https://codecov.io/gh/wilhelm-lab/spectrum_fundamentals"><img alt="Codecov" src="https://codecov.io/gh/wilhelm-lab/spectrum_fundamentals/branch/main/graph/badge.svg" /></a> <a class="reference external" href="https://github.com/pre-commit/pre-commit"><img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&amp;logoColor=white" /></a> <a class="reference external" href="https://github.com/psf/black"><img alt="Black" src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a></p>
+<p>spectrum_fundamentals is a package primarily developed for usage within the rescoring and spectral library generation pipeline oktoberfest (<a class="reference external" href="https://github.com/wilhelm-lab/oktoberfest">https://github.com/wilhelm-lab/oktoberfest</a>).</p>
+<dl class="simple">
+<dt>It provides the following functionalities:</dt><dd><ul class="simple">
+<li><p>conversion between search engine-specific modstrings and the ProForma standard</p></li>
+<li><p>calculation of theoretical peptide / ion masses</p></li>
+<li><p>annotation of spectra</p></li>
+<li><p>spectral similarity calculation with various metrics</p></li>
+</ul>
+</dd>
+</dl>
+<aside class="sidebar">
+<p class="sidebar-title">Key Contributors</p>
+<p>Current developers</p>
 <ul class="simple">
-<li><p>TODO</p></li>
+<li><p><a class="reference external" href="https://github.com/picciama">Mario Picciani</a>: lead developer since 2022, maintainer</p></li>
+<li><p><a class="reference external" href="https://github.com/mostafakalhor">Mostafa Kalhor</a>: developer, crosslinking</p></li>
+<li><p><a class="reference external" href="https://github.com/WassimG">Wassim Gabriel</a>: developer, PTMs, neutral losses, GUI</p></li>
+<li><p><a class="reference external" href="https://github.com/arne-vdb">Arne van den Berg</a>: developer, diverse contributions</p></li>
+<li><p><a class="reference external" href="https://github.com/victorgiurcoiu">Victor-George Giurcoiu</a>: developer, diverse contributions</p></li>
+<li><p><a class="reference external" href="https://github.com/LLautenbacher">Ludwig Lautenbacher</a>: developer, Koina, GUI</p></li>
+<li><p><a class="reference external" href="https://github.com/arminsl">Armin Soleymaniniya</a>: developer, GUI</p></li>
+<li><p><a class="reference external" href="https://github.com/ayla-s">Ayla Schröder</a>: developer, pickedGroupFDR</p></li>
+<li><p>Zixuan Xiao: developer, GUI</p></li>
+</ul>
+<p>Previous developers</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/MatthewThe">Matthew The</a>: developer, percolator</p></li>
+<li><p><a class="reference external" href="https://github.com/omsh">Omar Shouman</a>: developer, diverse contributions</p></li>
+<li><p>Firas Hamood: developer, diverse contributions</p></li>
+<li><p>Cecilia Jensen: developer, diverse contributions</p></li>
+<li><p>Julian Mueller: developer, diverse contributions</p></li>
+</ul>
+<p>Other roles</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/mwilhelm42">Mathias Wilhelm</a>: advisor and PI of wilhelmlab</p></li>
+</ul>
+</aside>
+<section id="quickstart">
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Discuss usage, development and issues on <a class="reference external" href="https://github.com/wilhelm-lab/spectrum_fundamentals">GitHub</a>.</p></li>
+<li><p>Check the <a class="reference external" href="./usage.html">usage principles</a> or the <a class="reference external" href="./API.html">API</a>.</p></li>
+<li><p>Check the <a class="reference external" href="./contributing.html">Contributor Guide</a> if you want to participate in developing.</p></li>
+<li><p>Consider citing the main publication, <a class="reference external" href="https://doi.org/10.1002/pmic.202300112">Oktoberfest</a>.</p></li>
 </ul>
 </section>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
-<p>You can install <em>spectrum_fundamentals</em> via <a class="reference external" href="https://pip.pypa.io/">pip</a> from <a class="reference external" href="https://pypi.org/">PyPI</a>:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>spectrum_fundamentals
-</pre></div>
-</div>
 </section>
-<section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h2>
-<p>Please see the <a class="reference external" href="https://spectrum_fundamentals.readthedocs.io/en/latest/usage.html">Command-line Reference</a> for details.</p>
-</section>
-<section id="credits">
-<h2>Credits<a class="headerlink" href="#credits" title="Permalink to this heading"></a></h2>
-<p>This package was created with <a class="reference external" href="https://cookietemple.com">cookietemple</a> using <a class="reference external" href="https://github.com/audreyr/cookiecutter">Cookiecutter</a> based on <a class="reference external" href="https://github.com/cjolowicz/cookiecutter-hypermodern-python">Hypermodern_Python_Cookiecutter</a>.</p>
+<section id="news">
+<h1>News<a class="headerlink" href="#news" title="Link to this heading"></a></h1>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="readme.html">spectrum_fundamentals</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#features">Features</a></li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#usage">Usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="readme.html#credits">Credits</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#stable-release">Stable release</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#from-sources">From sources</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#spectrum-fundamentals">spectrum_fundamentals</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributor Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#how-to-report-a-bug">How to report a bug</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#how-to-request-a-feature">How to request a feature</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#how-to-set-up-your-development-environment">How to set up your development environment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#how-to-test-the-project">How to test the project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#how-to-build-and-view-the-documentation">How to build and view the documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#how-to-submit-changes">How to submit changes</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="authors.html#development-lead">Development Lead</a></li>
-<li class="toctree-l2"><a class="reference internal" href="authors.html#contributors">Contributors</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Contributor Covenant Code of Conduct</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="code_of_conduct.html#our-pledge">Our Pledge</a></li>
-<li class="toctree-l2"><a class="reference internal" href="code_of_conduct.html#our-standards">Our Standards</a></li>
-<li class="toctree-l2"><a class="reference internal" href="code_of_conduct.html#our-responsibilities">Our Responsibilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="code_of_conduct.html#scope">Scope</a></li>
-<li class="toctree-l2"><a class="reference internal" href="code_of_conduct.html#enforcement">Enforcement</a></li>
-<li class="toctree-l2"><a class="reference internal" href="code_of_conduct.html#attribution">Attribution</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">spectrum_fundamentals</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.html">spectrum_fundamentals package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.annotation.html">spectrum_fundamentals.annotation package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum_fundamentals.metrics.html">spectrum_fundamentals.metrics package</a></li>
-</ul>
-</li>
-</ul>
 </div>
-</section>
-</section>
-<section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading"></a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="readme.html" class="btn btn-neutral float-right" title="spectrum_fundamentals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Victor Giurcoiu.</p>
+    <p>&#169; Copyright 2024, Wilhelmlab at Technical University of Munich.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
