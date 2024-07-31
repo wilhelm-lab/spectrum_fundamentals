@@ -125,6 +125,81 @@ def get_ion_delta(ion_types: List[str]) -> np.ndarray:
     return deltas
 
 
+def initialize_peaks_new(
+    sequence: str,
+    charge: int,
+    noncl_xl: bool = False,
+    peptide_beta_mass: float = 0.0,
+    xl_pos: int = -1,
+    fragmentation_method: str = "HCD",
+) -> Tuple[List[dict], int, str, float]:
+    """
+    Generate theoretical peaks for a modified peptide sequence.
+
+    :param sequence: Modified peptide sequence
+    :param charge: Precursor charge
+    :param noncl_xl: whether the function is called with a non-cleavable xl modification
+    :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
+    :param xl_pos: the position of the crosslinker for non-cleavable XL
+    :param fragmentation_method: fragmentation method that was used
+    :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
+    """
+    _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
+
+    max_charge = min(3, charge)
+    ion_types = retrieve_ion_types(fragmentation_method)
+    modification_deltas = _get_modifications(sequence)
+
+    n_term_mod = 1
+
+    if noncl_xl:
+        # the test only needs to be done because the unit tests use non_cl_xl peptides
+        # without a crosslinker modification. This cannot occur in nature!!!
+        # The unit tests need to be changed, then we can simply add to the existing
+        # modification mass at xl_pos -1.
+        modification_deltas[xl_pos - 1] = modification_deltas.get(xl_pos - 1, 0.0) + peptide_beta_mass
+
+    if modification_deltas:  # there were modifictions
+        sequence = internal_without_mods([sequence])[0]
+        n_term_delta = modification_deltas.get(-2, 0.0)
+        if n_term_delta != 0:
+            n_term_mod = 2
+            # add n_term mass to first aa for easy processing in the following calculation
+            modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
+
+    mass_arr = np.array([constants.AA_MASSES[_] for _ in sequence])
+    for pos, mod_mass in modification_deltas.items():
+        mass_arr[pos] += mod_mass
+
+    n_forward_ions = len(ion_types) // 2
+    n_fragments = len(sequence) - 1
+    sum_array = np.empty(shape=(1, len(ion_types), n_fragments))
+    annot_array = np.empty(shape=(len(ion_types), 1, n_fragments), dtype="<U1")
+    annot_array[0, 0, :] = [f"y{i}+" for i in range(len(sequence) - 1)]
+    annot_array[1, 0, :] = [f"b{i}+" for i in range(len(sequence) - 1)]
+
+    np.cumsum(mass_arr[:0:-1], out=sum_array[0, 0])  # this is for the reverse ion-series
+    np.cumsum(mass_arr[:-1], out=sum_array[0, n_forward_ions])  # this is for the forward ion-series
+    peptide_mass = sum_array[0, 0, -1] + mass_arr[0]  # this is the longest reverse ion + the first residue
+
+    # get offset for all needed ions
+    deltas = get_ion_delta(ion_types)
+    np.add(sum_array[0, 0], deltas[:n_forward_ions], out=sum_array[0, :n_forward_ions])
+    np.add(sum_array[0, n_forward_ions], deltas[n_forward_ions:], out=sum_array[0, n_forward_ions:])
+
+    # calculate m/z for charges 1 to max charge
+    # shape of ion_mzs: (max_charge, n_ions, n_fragments)
+    charges = np.arange(1, max_charge + 1).reshape(max_charge, 1, 1)
+    ion_mzs = np.add(sum_array, charges * constants.PARTICLE_MASSES["PROTON"], order="F") / charges
+
+    return (
+        ion_mzs,
+        sequence,
+        peptide_mass + constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"],
+        n_term_mod == 2,
+    )
+
+
 def initialize_peaks(
     sequence: str,
     mass_analyzer: str,

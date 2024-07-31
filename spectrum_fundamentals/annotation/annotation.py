@@ -5,9 +5,106 @@ import numpy as np
 import pandas as pd
 
 from spectrum_fundamentals import constants
-from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl, retrieve_ion_types
+from spectrum_fundamentals.fragments import (
+    get_min_max_mass,
+    initialize_peaks_new,
+    initialize_peaks_xl,
+    retrieve_ion_types,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def match_peaks_fast(
+    theoretical_mzs: np.ndarray,
+    peak_intensities: np.ndarray,
+    peak_mzs: np.ndarray,
+    mass_analyzer: str,
+    mass_tolerance: float,
+    unit_mass_tolerance: str,
+    unmod_sequence: str,
+    n_term: bool,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Matching experimental peaks with theoretical fragment ions.
+
+    :param theoretical_mzs: Fragments ions meta data eg. ion type, number, theo_mass...
+    :param peak_intensities: Experimental peaks intensities
+    :param peak_mzs: Experimental peaks masses
+    :param mass_analyzer: str
+    :param mass_tolerance: float
+    :param unit_mass_tolerance: str
+    :param unmod_sequence: Unmodified peptide sequence
+    :param n_term: Flag to check if there is tmt modification on n_terminus 1: no_tmt, 2:tmt
+    :return: List of matched/annotated peaks
+    """
+    full_mz_array = np.full((3, 2, 29), -1.0, order="F")
+    full_int_array = np.full((3, 2, 29), -1.0, order="F", dtype="float64")
+
+    mz_ouz_flat = full_mz_array.ravel(order="K")
+    int_ouz_flat = full_int_array.ravel(order="K")
+
+    theoretical_mzs_flat_view = theoretical_mzs.ravel(order="K")
+    idx = theoretical_mzs_flat_view.argsort(axis=None)
+
+    min_mzs, max_mzs = get_min_max_mass(mass_analyzer, theoretical_mzs, mass_tolerance, unit_mass_tolerance)
+    min_mzs_flat_view = min_mzs.ravel(order="K")
+    max_mzs_flat_view = max_mzs.ravel(order="K")
+
+    annot_array = np.empty(shape=(3, 2, 29), dtype="<U15", order="F")
+    annot_array[0, 0, :] = [f"y{i+1}+1" for i in range(29)]
+    annot_array[0, 1, :] = [f"b{i+1}+1" for i in range(29)]
+    annot_array[1, 0, :] = [f"y{i+1}+2" for i in range(29)]
+    annot_array[1, 1, :] = [f"b{i+1}+2" for i in range(29)]
+    annot_array[2, 0, :] = [f"y{i+1}+3" for i in range(29)]
+    annot_array[2, 1, :] = [f"b{i+1}+3" for i in range(29)]
+    annot_array
+    annot_array_flat = annot_array.ravel(order="K")
+
+    n_charges = theoretical_mzs.shape[0]
+    i = 0
+    matched_peak = False
+    new_i = 0
+    max_intensity = 0.0
+
+    out_idx = np.floor_divide(3 * idx, n_charges)
+
+    for id, out_id in zip(idx, out_idx):
+        theoretical_mz = theoretical_mzs_flat_view[id]
+        min_mz = min_mzs_flat_view[id]
+        max_mz = max_mzs_flat_view[id]
+
+        last_abs_diff = float("inf")
+        mz_ouz_flat[out_id] = 0.0
+        int_ouz_flat[out_id] = 0.0
+        if matched_peak:
+            i = new_i
+        matched_peak = False
+        while i < len(peak_intensities):
+            peak_mz = peak_mzs[i]
+            if peak_mz > max_mz:
+                break
+            if peak_mz < min_mz:
+                i += 1
+                continue
+            if (
+                not annot_array_flat[out_id].startswith("b1")
+                or (unmod_sequence[0] == "R" or unmod_sequence[0] == "H" or unmod_sequence[0] == "K")
+                and (not n_term)
+            ):
+                new_abs_diff = abs(peak_mz - theoretical_mz)
+
+                if new_abs_diff < last_abs_diff:
+                    mz_ouz_flat[out_id] = peak_mz
+                    int_ouz_flat[out_id] = peak_intensities[i]
+                    last_abs_diff = new_abs_diff
+                    max_intensity = max(peak_intensities[i], max_intensity)
+            new_i = i
+            matched_peak = True
+            i += 1
+
+    int_ouz_flat = np.where(int_ouz_flat > 0.0, int_ouz_flat / max_intensity, int_ouz_flat)
+    return int_ouz_flat, mz_ouz_flat
 
 
 def match_peaks(
@@ -68,8 +165,7 @@ def match_peaks(
                         "intensity": peak_intensity,
                     }
                 )
-                if peak_intensity > max_intensity:
-                    max_intensity = float(peak_intensity)
+                max_intensity = max(max_intensity, peak_intensity)
             matched_peak = True
             next_start_peak = start_peak
             start_peak += 1
@@ -112,7 +208,6 @@ def handle_multiple_matches(
 
     original_length = len(matched_peaks_df.index)
     matched_peaks_df = matched_peaks_df.drop_duplicates(subset=["ion_type", "no", "charge"], keep="first")
-    # matched_peaks_df = matched_peaks_df[matched_peaks_df['intensity']>0.01]
     length_after_matches = len(matched_peaks_df.index)
     return matched_peaks_df, (original_length - length_after_matches)
 
@@ -394,9 +489,8 @@ def _annotate_linear_spectrum(
     :return: Annotated spectrum
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
-    if "MODIFIED_SEQUENCE_MSA" in index_columns:
-        mod_seq_column = "MODIFIED_SEQUENCE_MSA"
-    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(
+
+    theoretical_mzs, unmod_sequence, calc_mass, n_term = initialize_peaks_new(
         sequence=spectrum[index_columns[mod_seq_column]],
         mass_analyzer=spectrum[index_columns["MASS_ANALYZER"]],
         charge=spectrum[index_columns["PRECURSOR_CHARGE"]],
@@ -404,29 +498,19 @@ def _annotate_linear_spectrum(
         unit_mass_tolerance=unit_mass_tolerance,
         fragmentation_method=fragmentation_method,
     )
-    matched_peaks = match_peaks(
-        fragments_meta_data,
+
+    matched_ints, matched_mzs = match_peaks_fast(
+        theoretical_mzs,
         spectrum[index_columns["INTENSITIES"]],
         spectrum[index_columns["MZ"]],
-        tmt_n_term,
-        unmod_sequence,
-        spectrum[index_columns["PRECURSOR_CHARGE"]],
+        mass_analyzer=spectrum[index_columns["MASS_ANALYZER"]],
+        mass_tolerance=mass_tolerance,
+        unit_mass_tolerance=unit_mass_tolerance,
+        n_term=n_term,
+        unmod_sequence=unmod_sequence,
     )
 
-    ion_types = retrieve_ion_types(fragmentation_method)
-    charge_const = 3
-    vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
-
-    if len(matched_peaks) == 0:
-        intensity = np.full(vec_length, 0.0)
-        mass = np.full(vec_length, 0.0)
-        return intensity, mass, calc_mass, 0
-
-    matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
-    intensities, mass = generate_annotation_matrix(
-        matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]], fragmentation_method
-    )
-    return intensities, mass, calc_mass, removed_peaks
+    return matched_ints, matched_mzs, calc_mass, 0
 
 
 def _annotate_crosslinked_spectrum(
