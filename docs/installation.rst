@@ -1,9 +1,12 @@
 .. highlight:: shell
 
-============
 Installation
 ============
 
-.. include:: ../README.rst
-   :start-line: 40
-   :end-line: 47
+spectrum_fundamentals is listed on the Python Package Index (PyPI) and can be installed with pip.
+
+.. code-block:: bash
+
+   pip install spectrum_fundamentals
+
+

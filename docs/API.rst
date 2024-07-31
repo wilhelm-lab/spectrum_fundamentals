@@ -1,41 +1,33 @@
-.. module:: spectrum_io
+.. module:: spectrum_fundamentals
 
-.. automodule:: spectrum_io
+.. automodule:: spectrum_fundamentals
    :noindex:
 
 API
 ===
 
-Import SpectrumIO using
+Import spectrum_fundamentals using
 
 .. code-block:: python
 
-   import spectrum_io as specio
-
-File conversions
-----------------
-
-.. module:: spectrum_io.d
-
-.. currentmodule:: spectrum_io
-
-Todo: add functions for bruker d conversions here
-
-.. autosummary::
-   :toctree: api/d
-
-.. module:: spectrum_io.raw
-
-.. currentmodule:: spectrum_io
-
-Todo: add functions for thermoraw here
-
-Modstring conversions
----------------------
-
-Todo
-----
-
-other modules
+   import spectrum_fundamentals as specfun
 
 
+Modstring conversions: :code:`convert`
+--------------------------------------
+
+
+Peptide and ion mass / mz calculations: :code:`peptide`
+-------------------------------------------------------
+
+
+Annotation of spectra: :code:`annot`
+------------------------------------
+
+
+Spectral similarity calculation: :code:`similarity`
+---------------------------------------------------
+
+
+Further utility functions: :code:`utils`
+----------------------------------------

@@ -61,6 +61,9 @@ pyupgrade = ">=2.31.0"
 [tool.poetry.scripts]
 spectrum_fundamentals = "spectrum_fundamentals.__main__:main"
 
+[tool.poetry.group.dev.dependencies]
+sphinx-autodoc-typehints = "^2.2.3"
+
 [tool.black]
 line-length = 120
 
