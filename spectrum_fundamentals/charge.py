@@ -22,7 +22,7 @@ def indices_to_one_hot(labels: Union[int, List[int], np.ndarray], classes: Optio
             f"Type of labels not understood. Only int, List[int] and np.ndarray are supported. Given: {type(labels)}."
         )
 
-    max_label = labels.max()
+    max_label = int(labels.max())
     if classes is None:
         classes = max_label
     if max_label > classes:

@@ -1,4 +1,5 @@
 """Nox sessions."""
+
 import os
 import shlex
 import shutil
@@ -17,12 +18,13 @@ except ImportError:
     sys.exit(1)
 
 package = "spectrum_fundamentals"
-python_versions = ["3.8", "3.9"]
+python_versions = ["3.9", "3.10"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
     "mypy",
     "tests",
+    "typeguard",
     "xdoctest",
     "docs-build",
 )
@@ -35,8 +37,7 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
     session's virtual environment. This allows pre-commit to locate hooks in
     that environment when invoked from git.
 
-    Args:
-        session: The Session object.
+    :param session: The Session object.
     """
     assert session.bin is not None  # noqa: S101
 
@@ -110,6 +111,7 @@ def precommit(session: Session) -> None:
         "flake8-docstrings",
         "flake8-rst-docstrings",
         "isort",
+        "darglint",
         "pep8-naming",
         "pre-commit",
         "pre-commit-hooks",
@@ -125,7 +127,7 @@ def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
     session.install("safety")
-    session.run("safety", "check", "--full-report", f"--file={requirements}", "--ignore=51457")
+    session.run("safety", "check", "--full-report", f"--file={requirements}", "--ignore=51457,70612")
 
 
 @session(python=python_versions)

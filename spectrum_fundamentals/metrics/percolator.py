@@ -1,8 +1,5 @@
 import enum
-import hashlib
 import logging
-import re
-import subprocess
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -60,25 +57,42 @@ class Percolator(Metric):
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
-        percolator_version: Optional[float] = 3.05,
+        additional_columns: Optional[Union[str, list]] = None,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
         self.input_type = input_type
         self.all_features_flag = all_features_flag
+        self.additional_columns = additional_columns
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
+        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
+        self.base_columns = [
+            "raw_file",
+            "scan_number",
+            "modified_sequence",
+            "precursor_charge",
+            "scan_event_number",
+            "mass",
+            "score",
+            "reverse",
+            "sequence",
+            "peptide_length",
+            "fragmentation",
+            "calculated_mass",
+            "sequence_a",
+            "sequence_b",
+            "modified_sequence_a",
+            "modified_sequence_b",
+            "retention_time",
+            "predicted_irt",
+            "instrument_types",
+            "mass_analyzer",
+            "mz_range",
+            "collision_energy",
+        ]
 
-        self._resolve_percolator_compatibility(percolator_version)
         super().__init__(pred_intensities, true_intensities, mz)
-
-    def _resolve_percolator_compatibility(self, percolator_version: Optional[float] = None):
-        if percolator_version is None:
-            result = subprocess.run(["percolator", "-h"], capture_output=True, text=True)
-            version_line = result.stderr.splitlines()[0].strip()
-            version = version_line.split("version ")[1]
-            percolator_version = float(re.sub(r"\.[^.]+$", "", version))
-        self.prot_col_name = "Proteins" if percolator_version >= 3.06 else "Protein"
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -152,7 +166,7 @@ class Percolator(Metric):
                 observed_rts = observed_rts[keep_idxs[0]]
                 predicted_rts = predicted_rts[keep_idxs[0]]
 
-                discard_percentage *= 1.5
+                discard_percentage *= 1.2
 
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
@@ -169,18 +183,6 @@ class Percolator(Metric):
             )
 
         return aligned_rts_predicted
-
-    @staticmethod
-    def get_scannr(metadata_subset: Union[pd.Series, Tuple[str, int]]) -> int:
-        """
-        Creates a hash of the raw_file and scan number to use as a unique scan number in percolator.
-
-        :param metadata_subset: tuple of (raw_file, scan_number)
-        :return: hashed unique id
-        """
-        raw_file, scan_number = metadata_subset
-        s = f"{raw_file}{scan_number}".encode()
-        return int(hashlib.sha224(s).hexdigest()[:6], 16)
 
     @staticmethod
     def get_delta_score(scores_df: pd.DataFrame, scoring_feature: str) -> np.ndarray:
@@ -271,38 +273,75 @@ class Percolator(Metric):
 
     def add_common_features(self):
         """Add features used by both Andromeda and Prosit feature scoring sets."""
-        self.metrics_val["missedCleavages"] = self.metadata["SEQUENCE"].apply(Percolator.count_missed_cleavages)
-        self.metrics_val["KR"] = self.metadata["SEQUENCE"].apply(Percolator.count_arginines_and_lysines)
-        self.metrics_val["sequence_length"] = self.metadata["SEQUENCE"].apply(lambda x: len(x))
+        if self.xl:
+            self.metrics_val["missedCleavages_A"] = self.metadata["SEQUENCE_A"].apply(Percolator.count_missed_cleavages)
+            self.metrics_val["missedCleavages_B"] = self.metadata["SEQUENCE_B"].apply(Percolator.count_missed_cleavages)
+            self.metrics_val["KR_A"] = self.metadata["SEQUENCE_A"].apply(Percolator.count_arginines_and_lysines)
+            self.metrics_val["KR_B"] = self.metadata["SEQUENCE_B"].apply(Percolator.count_arginines_and_lysines)
+            self.metrics_val["sequence_length_a"] = self.metadata["SEQUENCE_A"].apply(lambda x: len(x))
+            self.metrics_val["sequence_length_b"] = self.metadata["SEQUENCE_B"].apply(lambda x: len(x))
+            for column_name in self.metadata.columns:
+                self.metrics_val[column_name] = self.metadata[column_name]
+        else:
+            self.metrics_val["missedCleavages"] = self.metadata["SEQUENCE"].apply(Percolator.count_missed_cleavages)
+            self.metrics_val["KR"] = self.metadata["SEQUENCE"].apply(Percolator.count_arginines_and_lysines)
+            self.metrics_val["sequence_length"] = self.metadata["SEQUENCE"].apply(lambda x: len(x))
+            self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
 
-        self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
         self.metrics_val["Charge1"] = (self.metadata["PRECURSOR_CHARGE"] == 1).astype(int)
         self.metrics_val["Charge2"] = (self.metadata["PRECURSOR_CHARGE"] == 2).astype(int)
         self.metrics_val["Charge3"] = (self.metadata["PRECURSOR_CHARGE"] == 3).astype(int)
         self.metrics_val["Charge4"] = (self.metadata["PRECURSOR_CHARGE"] == 4).astype(int)
         self.metrics_val["Charge5"] = (self.metadata["PRECURSOR_CHARGE"] == 5).astype(int)
         self.metrics_val["Charge6"] = (self.metadata["PRECURSOR_CHARGE"] == 6).astype(int)
-
         self.metrics_val["UnknownFragmentationMethod"] = (~self.metadata["FRAGMENTATION"].isin(["HCD", "CID"])).astype(
             int
         )
         self.metrics_val["HCD"] = (self.metadata["FRAGMENTATION"] == "HCD").astype(int)
         self.metrics_val["CID"] = (self.metadata["FRAGMENTATION"] == "CID").astype(int)
 
+    def add_additional_features(self):
+        """Add additional features from custom serch results if specified."""
+        feature_cols = []
+
+        if isinstance(self.additional_columns, list):
+            feature_cols = self.additional_columns
+        elif isinstance(self.additional_columns, str) and (self.additional_columns.lower() == "all"):
+            feature_cols = [x for x in self.metadata.columns if x.lower() not in set(self.base_columns)]
+            feature_cols = [x for x in feature_cols if not x.lower().startswith("unnamed")]  # remove Unnamed cols
+
+        for col in feature_cols:
+            if col not in self.metadata.columns:
+                raise ValueError(f"provided column: {col} cannot be found in search results.")
+            elif not pd.api.types.is_numeric_dtype(self.metadata[col]):
+                raise ValueError(f"wrong datatype for column: {col}, datatype must be numerical.")
+            else:
+                self.metrics_val[col] = self.metadata[col]
+
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
-        spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
+        if self.xl:
+            spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE_A", "MODIFIED_SEQUENCE_B", "PRECURSOR_CHARGE"]
+            self.metrics_val["Peptide"] = (
+                self.metadata["MODIFIED_SEQUENCE_A"] + "_" + self.metadata["MODIFIED_SEQUENCE_B"]
+            ).apply(lambda x: "_." + x + "._")
+            self.metrics_val["Proteins"] = (
+                self.metadata["MODIFIED_SEQUENCE_A"] + "_" + self.metadata["MODIFIED_SEQUENCE_B"]
+            )
+            self.metrics_val["Label"] = self.target_decoy_labels
+        else:
+            spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
+            self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
+            self.metrics_val["Proteins"] = self.metadata[
+                "MODIFIED_SEQUENCE"
+            ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+
         if "SCAN_EVENT_NUMBER" in self.metadata.columns:
             spec_id_cols.append("SCAN_EVENT_NUMBER")
         self.metrics_val["SpecId"] = self.metadata[spec_id_cols].apply(Percolator.get_specid, axis=1)
         self.metrics_val["Label"] = self.target_decoy_labels
-        self.metrics_val["ScanNr"] = self.metadata[["RAW_FILE", "SCAN_NUMBER"]].apply(Percolator.get_scannr, axis=1)
-
-        self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
-
-        self.metrics_val[self.prot_col_name] = self.metadata[
-            "MODIFIED_SEQUENCE"
-        ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+        self.metrics_val["ScanNr"] = self.metadata["SCAN_NUMBER"]
+        self.metrics_val["filename"] = self.metadata["RAW_FILE"]
 
     def apply_lda_and_get_indices_below_fdr(
         self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
@@ -348,14 +387,14 @@ class Percolator(Metric):
         logger.debug(scores_df.head(100))
 
         scores_df["fdr"] = Percolator.calculate_fdrs(scores_df["Label"])
-
         # filter for targets only
         scores_df = scores_df[scores_df["Label"] == TargetDecoyLabel.TARGET]
 
         accepted_indices = scores_df.index[scores_df["fdr"] < fdr_cutoff]
         if len(accepted_indices) == 0:
-            logger.error(
-                f"Could not find any targets below {fdr_cutoff} out of {len(scores_df.index)} targets in total"
+            logger.warning(
+                f"Could not find any targets below {fdr_cutoff} out of {len(scores_df.index)} "
+                "targets in total. Retrying with higher FDR cutoff..."
             )
             return np.array([])
 
@@ -397,8 +436,8 @@ class Percolator(Metric):
 
     def _reorder_columns_for_percolator(self):
         all_columns = self.metrics_val.columns
-        first_columns = ["SpecId", "Label", "ScanNr"]
-        last_columns = ["Peptide", "Protein"] if "Protein" in all_columns else ["Peptide", "Proteins"]
+        first_columns = ["SpecId", "Label", "ScanNr", "filename"]
+        last_columns = ["Peptide", "Proteins"]
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
@@ -406,59 +445,65 @@ class Percolator(Metric):
     def calc(self):
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
-
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
-
         np.random.seed(1)
         # add Prosit or Andromeda features
         if self.input_type == "rescore":
+            # add additional features
+            self.add_additional_features()
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
-            fragments_ratio.calc()
-
+            fragments_ratio.calc(xl=self.xl)
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
-            similarity.calc(self.all_features_flag)
+            similarity.calc(self.all_features_flag, xl=self.xl)
 
             self.metrics_val = pd.concat(
                 [self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1
             )
-
-            lda_failed = False
-            idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
-            current_fdr = self.fdr_cutoff
-            while len(idxs_below_lda_fdr) == 0:
-                current_fdr += 0.01
-                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
-                if current_fdr >= 0.1:
-                    lda_failed = True
-                    break
-
-            if lda_failed:
-                sampled_idxs = Percolator.sample_balanced_over_bins(self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]])
+            if self.xl:
+                self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:
-                sampled_idxs = Percolator.sample_balanced_over_bins(
-                    self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
+                lda_failed = False
+                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+                current_fdr = self.fdr_cutoff
+                while len(idxs_below_lda_fdr) <= 500:
+                    current_fdr += 0.01
+                    idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
+                    if current_fdr >= 0.1:
+                        lda_failed = True
+                        break
+                if lda_failed:
+                    sampled_idxs = Percolator.sample_balanced_over_bins(
+                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
+                    )
+                else:
+                    sampled_idxs = Percolator.sample_balanced_over_bins(
+                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
+                    )
+
+                file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
+                aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
+                    file_sample["RETENTION_TIME"],
+                    file_sample["PREDICTED_IRT"],
+                    self.metadata["PREDICTED_IRT"],
+                    self.regression_method,
                 )
 
-            file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
-            aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
-                file_sample["RETENTION_TIME"],
-                file_sample["PREDICTED_IRT"],
-                self.metadata["PREDICTED_IRT"],
-                self.regression_method,
-            )
+                self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
+                self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
+                self.metrics_val["iRT"] = aligned_predicted_rts
+                self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
+                self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
+                if lda_failed:
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"])
+                else:
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
+                logger.info(
+                    "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
+                    f"{median_abs_error}"
+                )
 
-            self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
-            self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
-            self.metrics_val["iRT"] = aligned_predicted_rts
-            self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
-            self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
-
-            median_abs_error_lda_targets = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
-            logger.info(
-                f"Median absolute error predicted vs observed retention time on targets < 1% FDR: {median_abs_error_lda_targets}"
-            )
-            logger.debug(self.metrics_val[["RT", "pred_RT", "abs_rt_diff", "lda_scores"]].iloc[idxs_below_lda_fdr, :])
         else:
+            self.add_additional_features()
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
 
         self.add_percolator_metadata_columns()
@@ -498,6 +543,10 @@ def spline(knots: int, x: np.ndarray, y: np.ndarray):
     """Calculates spline fitting."""
     x_new = np.linspace(0, 1, knots + 2)[1:-1]
     q_knots = np.quantile(x, x_new)
+    if q_knots[0] == 0:
+        q_knots[0] += 1e-6
+    if q_knots[0] == q_knots[1]:
+        q_knots[1] += 1e-6
     t, c, k = interpolate.splrep(x, y, t=q_knots, s=2)
     yfit = interpolate.BSpline(t, c, k)(x)
     return yfit, t, c, k
