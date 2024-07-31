@@ -315,6 +315,41 @@ class TestPercolator:
             perc.Percolator.get_delta_score(df, "spectral_angle"), np.array([20, 40, 0, 40, 250, 0])
         )
 
+    def test_add_additional_features(self):
+        """Test add_additional_features."""
+        types = {
+            "RAW_FILE": str,
+            "SCAN_NUMBER": int,
+            "MODIFIED_SEQUENCE": str,
+            "PRECURSOR_CHARGE": int,
+            "SCAN_EVENT_NUMBER": int,
+            "MASS": float,
+            "SCORE": float,
+            "REVERSE": int,
+            "SEQUENCE": str,
+            "PEPTIDE_LENGTH": float,
+            "A": float,
+            "B": float,
+            "precursor_charge": float,
+            "Unnamed 1": int,
+        }
+
+        perc_input = pd.DataFrame(columns=types).astype(types)
+
+        percolator_all = perc.Percolator(metadata=perc_input, input_type="rescore", additional_columns="all")
+        percolator_all.add_additional_features()
+        pd.testing.assert_frame_equal(
+            pd.DataFrame(columns=["A", "B"]).astype({"A": float, "B": float}), percolator_all.metrics_val
+        )
+
+        percolator_list = perc.Percolator(metadata=perc_input, input_type="rescore", additional_columns=["A"])
+        percolator_list.add_additional_features()
+        pd.testing.assert_frame_equal(pd.DataFrame(columns=["A"]).astype({"A": float}), percolator_list.metrics_val)
+
+        percolator_none = perc.Percolator(metadata=perc_input, input_type="rescore", additional_columns="none")
+        percolator_none.add_additional_features()
+        pd.testing.assert_frame_equal(pd.DataFrame(), percolator_none.metrics_val)
+
     def test_calc(self):
         """Test calc."""
         perc_input = pd.read_csv(Path(__file__).parent / "data/perc_input.csv")
