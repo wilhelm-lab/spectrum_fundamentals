@@ -1,4 +1,4 @@
-"""Initialize fundamentals."""
+"""Spectrum Fundamentals."""
 
 __author__ = "Mario Picciani"
 __email__ = "mario.picciani@tum.de"
