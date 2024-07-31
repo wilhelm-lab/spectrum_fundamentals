@@ -1,5 +1,4 @@
-.. include:: ../README.rst
-   :end-line: 45
+.. include:: readme.rst
 
 .. include:: _key_contributors.rst
 
@@ -7,7 +6,12 @@
 
 .. role:: smaller
 
+.. include:: quickstart.rst
+
+.. include:: news.rst
+
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Contents:
 
@@ -15,5 +19,6 @@
    usage
    API
    contributing
-   contributors
    reference
+
+.. _github: https://github.com/wilhelm-lab/spectrum_fundamentals
