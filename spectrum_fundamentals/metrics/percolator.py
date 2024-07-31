@@ -51,13 +51,13 @@ class Percolator(Metric):
         self,
         metadata: pd.DataFrame,
         input_type: str,
-        additional_columns: Optional[Union[str, list]] = None,
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
+        additional_columns: Optional[Union[str, list]] = None,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
@@ -503,6 +503,7 @@ class Percolator(Metric):
                 )
 
         else:
+            self.add_additional_features()
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
 
         self.add_percolator_metadata_columns()
