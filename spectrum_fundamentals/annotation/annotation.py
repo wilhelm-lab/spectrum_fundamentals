@@ -121,6 +121,7 @@ def annotate_spectra(
     un_annot_spectra: pd.DataFrame,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
+    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
     fragmentation_method: str = "HCD",
 ) -> pd.DataFrame:
     """
@@ -141,12 +142,20 @@ def annotate_spectra(
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param fragmentation_method: fragmentation method that was used
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-        results = parallel_annotate(row, index_columns, mass_tolerance, unit_mass_tolerance, fragmentation_method)
+        results = parallel_annotate(
+            row,
+            index_columns,
+            mass_tolerance,
+            unit_mass_tolerance,
+            fragmentation_method=fragmentation_method,
+            custom_mods=custom_mods,
+        )
         if not results:
             continue
         raw_file_annotations.append(results)
@@ -336,6 +345,7 @@ def parallel_annotate(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
+    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
     fragmentation_method: str = "HCD",
 ) -> Optional[
     Union[
@@ -357,6 +367,7 @@ def parallel_annotate(
     :param index_columns: a dictionary that contains the index columns of the spectrum
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :param fragmentation_method: fragmentation method that was used
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
@@ -366,13 +377,18 @@ def parallel_annotate(
         if spectrum[index_columns["PEPTIDE_LENGTH"]] > 30:  # this was in initialize peaks but can be checked prior
             return None
         return _annotate_linear_spectrum(
-            spectrum, index_columns, mass_tolerance, unit_mass_tolerance, fragmentation_method
+            spectrum,
+            index_columns,
+            mass_tolerance,
+            unit_mass_tolerance,
+            fragmentation_method=fragmentation_method,
+            custom_mods=custom_mods,
         )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
         return None
     return _annotate_crosslinked_spectrum(
-        spectrum, index_columns, spectrum[xl_type_col], mass_tolerance, unit_mass_tolerance
+        spectrum, index_columns, spectrum[xl_type_col], mass_tolerance, unit_mass_tolerance, custom_mods=custom_mods
     )
 
 
@@ -381,6 +397,7 @@ def _annotate_linear_spectrum(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float],
     unit_mass_tolerance: Optional[str],
+    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
     fragmentation_method: str = "HCD",
 ):
     """
@@ -390,6 +407,7 @@ def _annotate_linear_spectrum(
     :param index_columns: Index columns of the spectrum
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :param fragmentation_method: fragmentation method that was used
     :return: Annotated spectrum
     """
@@ -403,6 +421,7 @@ def _annotate_linear_spectrum(
         mass_tolerance=mass_tolerance,
         unit_mass_tolerance=unit_mass_tolerance,
         fragmentation_method=fragmentation_method,
+        custom_mods=custom_mods,
     )
     matched_peaks = match_peaks(
         fragments_meta_data,
@@ -435,6 +454,7 @@ def _annotate_crosslinked_spectrum(
     crosslinker_type: str,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
+    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
 ):
     """
     Annotate a crosslinked peptide spectrum.
@@ -444,6 +464,7 @@ def _annotate_crosslinked_spectrum(
     :param crosslinker_type: Type of crosslinker used
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :raises ValueError: if unsupported crosslinker type was supplied.
 
     :return: Annotated spectrum
@@ -470,6 +491,7 @@ def _annotate_crosslinked_spectrum(
 
         else:
             array_size = 348
+        inputs.append(custom_mods)
         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks_xl(*inputs)
         matched_peaks = match_peaks(
             fragments_meta_data,
