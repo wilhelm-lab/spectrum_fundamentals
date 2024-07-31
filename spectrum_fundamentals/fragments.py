@@ -12,7 +12,9 @@ from .mod_string import internal_without_mods
 logger = logging.getLogger(__name__)
 
 
-def _get_modifications(peptide_sequence: str) -> Dict[int, float]:
+def _get_modifications(
+    peptide_sequence: str, custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None
+) -> Dict[int, float]:
     """
     Get modification masses and position in a peptide sequence.
 
@@ -24,6 +26,7 @@ def _get_modifications(peptide_sequence: str) -> Dict[int, float]:
     modification was present are returned.
 
     :param peptide_sequence: Modified peptide sequence
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :return: modification_deltas
     """
     modification_deltas = {}
@@ -37,25 +40,28 @@ def _get_modifications(peptide_sequence: str) -> Dict[int, float]:
     pattern = re.compile(r"\[.{8}[^\]]*\]")
     matches = pattern.finditer(peptide_sequence)
 
+    mod_masses = constants.update_mod_masses(mods=custom_mods)
+
     for match in matches:
         start_pos = match.start()
         end_pos = match.end()
-        modification_deltas[start_pos - offset] = constants.MOD_MASSES[peptide_sequence[start_pos:end_pos]]
+        modification_deltas[start_pos - offset] = mod_masses[peptide_sequence[start_pos:end_pos]]
         offset += end_pos - start_pos
 
     return modification_deltas
 
 
-def compute_peptide_mass(sequence: str) -> float:
+def compute_peptide_mass(sequence: str, custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None) -> float:
     """
     Compute the theoretical mass of the peptide sequence.
 
     :param sequence: Modified peptide sequence
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :return: Theoretical mass of the sequence
     """
     terminal_masses = 2 * constants.ATOM_MASSES["H"] + constants.ATOM_MASSES["O"]  # add terminal masses HO- and H-
 
-    modification_deltas = _get_modifications(sequence)
+    modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
         terminal_masses += modification_deltas.get(-2, 0.0)  # prime with n_term_mod delta if present
@@ -67,7 +73,7 @@ def compute_peptide_mass(sequence: str) -> float:
 
 def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
     """
-    Checks input validity for initialize_peacks when used with xl mode.
+    Checks input validity for initialize_peaks when used with xl mode.
 
     :param noncl_xl: whether the function is called with a non-cleavable xl modification
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
@@ -158,6 +164,7 @@ def initialize_peaks(
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
     fragmentation_method: str = "HCD",
+    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified peptide sequence.
@@ -171,13 +178,14 @@ def initialize_peaks(
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
     :param xl_pos: the position of the crosslinker for non-cleavable XL
     :param fragmentation_method: fragmentation method that was used
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
     ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
-    modification_deltas = _get_modifications(sequence)
+    modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
 
     fragments_meta_data = []
     n_term_mod = 1
@@ -253,6 +261,7 @@ def initialize_peaks_xl(
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
     sequence_beta: Optional[str] = None,
+    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
@@ -266,6 +275,7 @@ def initialize_peaks_xl(
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param sequence_beta: optional second peptide to be considered for non-cleavable XL
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :raises ValueError: if crosslinker_type is unkown
     :raises AssertionError: if the short and long XL sequence (the one with the short / long crosslinker mod)
         has a tmt n term while the other one does not
@@ -301,10 +311,10 @@ def initialize_peaks_xl(
         # percolator!
 
         list_out_s, tmt_n_term_s, peptide_sequence, _ = initialize_peaks(
-            sequence_s, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance
+            sequence_s, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance, custom_mods=custom_mods
         )
         list_out_l, tmt_n_term_l, peptide_sequence, _ = initialize_peaks(
-            sequence_l, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance
+            sequence_l, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance, custom_mods=custom_mods
         )
 
         tmt_n_term = tmt_n_term_s
@@ -347,6 +357,7 @@ def initialize_peaks_xl(
             True,
             sequence_beta_mass if sequence_beta_mass is not None else None,
             crosslinker_position,
+            custom_mods=custom_mods,
         )
         df_out = pd.DataFrame(list_out)
 

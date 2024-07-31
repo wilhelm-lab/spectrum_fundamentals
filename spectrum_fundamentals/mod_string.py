@@ -6,18 +6,10 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from .constants import (
-    MAXQUANT_VAR_MODS,
-    MOD_MASSES,
-    MOD_MASSES_SAGE,
-    MOD_NAMES,
-    MSFRAGGER_VAR_MODS,
-    SPECTRONAUT_MODS,
-    XISEARCH_VAR_MODS,
-)
+from .constants import MOD_NAMES, SPECTRONAUT_MODS, XISEARCH_VAR_MODS, update_mod_masses
 
 
-def sage_to_internal(sequences: List[str]) -> List[str]:
+def sage_to_internal(sequences: List[str], mods: Dict[str, str]) -> List[str]:
     """
     Convert mod string from sage to the internal format.
 
@@ -27,34 +19,50 @@ def sage_to_internal(sequences: List[str]) -> List[str]:
     modifications defined in the constants.
 
     :param sequences: A list of sequences with values inside square brackets.
+    :param mods: Dict with all Sage-specific and custom modifications
+    :raises AssertionError: if modifications in custom or internal format were provided in the wrong type.
     :return: A list of modified sequences with values converted to internal format.
     """
     # Define a regular expression pattern to match values within square brackets, like [+1.0] or [-2.0].
     pattern = r"[A-Z]?\[([\+\-]\d+\.\d+)\]-?"
 
     # Define a function 'replace' that takes a regex match object.
+    # Define a function 'replace' that takes a regex match object.
     def replace(match):
         # Extract the value inside the square brackets as a float.
-        value = float(match.group(1))
+        value = str(float(match.group(1)))
         key = match.string[match.start() : match.end()]
         if key.endswith("-"):
-            unimod_expression = f"{MOD_MASSES_SAGE.get(value, match.group(0))}-"
+            unimod_expression = f"{mods.get(value, match.group(0))}-"
+        # custom mods can be either the entire key or just the numeric value as string
+        elif key in mods.keys() or value in mods.keys():
+            key_pref = ""
+            if key[0].isalpha():
+                key_pref = key[0]
+            unimod_expression = f"{key_pref}{mods.get(value, match.group(0))}"
         elif key.startswith("C"):
-            unimod_expression = f"C{MOD_MASSES_SAGE.get(value, match.group(0))}"
+            unimod_expression = f"C{mods.get(value, match.group(0))}"
         elif key.startswith("K"):
-            unimod_expression = f"K{MOD_MASSES_SAGE.get(value, match.group(0))}"
+            unimod_expression = f"K{mods.get(value, match.group(0))}"
         elif key.startswith("M"):
-            unimod_expression = f"M{MOD_MASSES_SAGE.get(value, match.group(0))}"
-
-        # Check if the 'MOD_MASSES_SAGE' dictionary has a replacement value for the extracted value.
+            unimod_expression = f"M{mods.get(value, match.group(0))}"
+        else:
+            unimod_expression = match.group(0)
+        # Check if the 'mods' dictionary has a replacement value for the extracted value.
         # If it does, use the replacement value; otherwise, use the original value from the match.
         return unimod_expression
 
     # Create an empty list 'modified_strings' to store the modified sequences.
     modified_strings = []
 
+    if not all(isinstance(val, str) for val in mods.values()) or not all(
+        isinstance(key, (str, float)) for key in mods.keys()
+    ):
+        raise AssertionError("All custom modifications entries must have keys of type str and values of type str.")
+
     # Iterate through the input 'sequences'.
     for string in sequences:
+
         # Use 're.sub' to search and replace values within square brackets in the 'string' using the 'replace' function.
         modified_string = re.sub(pattern, replace, string)
 
@@ -129,39 +137,23 @@ def internal_to_spectronaut(sequences: Union[np.ndarray, pd.Series, List[str]]) 
     return [regex.sub(lambda mo: SPECTRONAUT_MODS[mo.string[mo.start() : mo.end()]], seq) for seq in sequences]
 
 
-def maxquant_to_internal(
-    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
-) -> List[str]:
+def maxquant_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
     """
     Function to translate a MaxQuant modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param fixed_mods: Optional dictionary of modifications with key aa and value mod, e.g. 'M': 'M(UNIMOD:35)'.
-        Fixed modifications must be included in the variable modificatons dictionary.
-        By default, i.e. if nothing is supplied to fixed_mods, carbamidomethylation on cystein will be included
-        in the fixed modifications. If you want to have no fixed modifictions at all, supply fixed_mods={}
-    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary.
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
+        custom variable modifications and standard MAXQUANT var mods. Custom static mods are not visible in the mod string,
+        therefore input needs to change to key = aa and value aa and unimod identifier.
+    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary or custom mods in illegal type format.
     :return: a list of modified sequences
     """
-    if fixed_mods is None:
-        fixed_mods = {"C": "C[UNIMOD:4]"}
-    err_msg = f"Provided illegal fixed mod, supported modifications are {set(MAXQUANT_VAR_MODS.values())}."
-    assert all(x in MAXQUANT_VAR_MODS.values() for x in fixed_mods.values()), err_msg
+    if not all(isinstance(val, str) for val in mods.values()) or not all(
+        isinstance(key, (str, float)) for key in mods.keys()
+    ):
+        raise AssertionError("All custom modifications entries must have keys of type str and values of type str.")
 
-    replacements = {**MAXQUANT_VAR_MODS, **fixed_mods}
-
-    def custom_regex_escape(key: str) -> str:
-        """
-        Subfunction to escape only normal brackets in the modstring.
-
-        :param key: The match to escape
-        :return: match with escaped special characters
-        """
-        for k, v in {"(": r"\(", ")": r"\)"}.items():
-            key = key.replace(k, v)
-        return key
-
-    regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
+    regex = re.compile("|".join(map(custom_regex_escape, mods.keys())))
 
     def find_replacement(match: re.Match) -> str:
         """
@@ -177,56 +169,24 @@ def maxquant_to_internal(
             else:
                 key = f"{key}$"
 
-        return replacements[key]
+        value = mods[key]
+        if key[0].isalpha() and not value[0].isalpha():
+            value = f"{key[0]}{value}"
+        return value
 
-    return [regex.sub(find_replacement, seq).replace("_", "") for seq in sequences]
+    return [regex.sub(lambda match: find_replacement(match), seq).replace("_", "") for seq in sequences]
 
 
-def msfragger_to_internal(
-    sequences: Union[np.ndarray, pd.Series, List[str]], fixed_mods: Optional[Dict[str, str]] = None
-) -> List[str]:
+def msfragger_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
     """
     Function to translate a MSFragger modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param fixed_mods: Optional dictionary of modifications with key aa and value mod, e.g. 'M[147]': 'M(UNIMOD:35)'.
-        Fixed modifications must be included in the variable modificatons dictionary.
-        By default, i.e. if nothing is supplied to fixed_mods, carbamidomethylation on cystein will be included
-        in the fixed modifications. If you want to have no fixed modifictions at all, supply fixed_mods={}
-    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary.
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
+        custom static and variable modifications and in case of MSFragger also standard static mods
     :return: a list of modified sequences
     """
-    if fixed_mods is None:
-        fixed_mods = {"C": "C[UNIMOD:4]"}
-    err_msg = f"Provided illegal fixed mod, supported modifications are {set(MSFRAGGER_VAR_MODS.values())}."
-    assert all(x in MSFRAGGER_VAR_MODS.values() for x in fixed_mods.values()), err_msg
-
-    replacements = {**MSFRAGGER_VAR_MODS, **fixed_mods}
-
-    def custom_regex_escape(key: str) -> str:
-        """
-        Subfunction to escape only normal brackets in the modstring.
-
-        :param key: The match to escape
-        :return: match with escaped special characters
-        """
-        for k, v in {"[": r"\[", "]": r"\]"}.items():
-            key = key.replace(k, v)
-        return key
-
-    def find_replacement(match: re.Match) -> str:
-        """
-        Subfunction to find the corresponding substitution for a match.
-
-        :param match: an re.Match object found by re.sub
-        :return: substitution string for the given match
-        """
-        key = match.string[match.start() : match.end()]
-        return replacements[key]
-
-    regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
-
-    return [regex.sub(find_replacement, seq) for seq in sequences]
+    return _to_internal(sequences=sequences, mods=mods)
 
 
 def internal_without_mods(sequences: List[str]) -> List[str]:
@@ -241,16 +201,19 @@ def internal_without_mods(sequences: List[str]) -> List[str]:
 
 
 def internal_to_mod_mass(
-    sequences: List[str],
+    sequences: List[str], custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None
 ) -> List[str]:
     """
     Function to exchange the internal mod identifiers with the masses of the specific modifiction.
 
     :param sequences: List[str] of sequences
+    :param custom_mods: custom mods with the identifier (=key), respespective unimod identifier and mass (value)
     :return: List[str] of modified sequences
     """
-    regex = re.compile("(%s)" % "|".join(map(re.escape, MOD_MASSES.keys())))
-    replacement_func = lambda match: f"[+{MOD_MASSES[match.string[match.start():match.end()]]}]"
+    mod_masses = update_mod_masses(custom_mods)
+
+    regex = re.compile("(%s)" % "|".join(map(re.escape, mod_masses.keys())))
+    replacement_func = lambda match: f"[+{mod_masses[match.string[match.start():match.end()]]}]"
     return [regex.sub(replacement_func, seq) for seq in sequences]
 
 
@@ -427,3 +390,55 @@ def get_mods_list(mods_variable: str, mods_fixed: str):
         return mods_variable.split(";")
     else:
         return mods_variable.split(";") + mods_fixed.split(";")
+
+
+def custom_regex_escape(key: str) -> str:
+    """
+    Subfunction to escape normal, square brackets and the plus-sign in the modstring.
+
+    :param key: The match to escape
+    :return: match with escaped special characters
+    """
+    for k, v in {"(": r"\(", ")": r"\)", "[": r"\[", "]": r"\]", "+": r"\+", "-": r"\-"}.items():
+        key = key.replace(k, v)
+    return key
+
+
+def custom_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
+    """
+    Function to translate custom modstrings to the Prosit format.
+
+    :param sequences: List[str] of sequences
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
+        custom static and variable modifications and in case of MSFragger also standard static mods
+    :return: a list of modified sequences
+    """
+    return _to_internal(sequences=sequences, mods=mods)
+
+
+def _to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
+    """
+    Function to translate a modstring to the internal Prosit format.
+
+    :param sequences: List[str] of sequences
+    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
+        custom static and variable modifications and in case of MSFragger also standard static mods
+    :return: a list of modified sequences
+    """
+
+    def find_replacement(match: re.Match) -> str:
+        """
+        Subfunction to find the corresponding substitution for a match.
+
+        :param match: an re.Match object found by re.sub
+        :return: substitution string for the given match
+        """
+        key = match.string[match.start() : match.end()]
+        value = mods[key]
+        if key[0].isalpha() and key[0].isupper() and not value[0].isalpha():
+            value = f"{key[0]}{value}"
+        return value
+
+    regex = re.compile("|".join(map(custom_regex_escape, mods.keys())))
+
+    return [regex.sub(lambda match: find_replacement(match), seq) for seq in sequences]
