@@ -89,7 +89,30 @@ def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
 
 def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     """
-    Retrieve the ion types resulting from a fragmentation method.
+    Retrieve the ion types resulting from a fragmentation method in the correct order for dlomix predictions.
+
+    Given the fragmentation method the function returns all ion types that can result from it.
+
+    : param fragmentation_method: fragmentation method used during the MS
+    : raises ValueError: if fragmentation_method is other than one of HCD, CID, ETD, ECD, ETCID, ETHCD, UVPD
+    : return: list of possible ion types
+    """
+    fragmentation_method = fragmentation_method.upper()
+    if fragmentation_method == "HCD" or fragmentation_method == "CID":
+        return ["y", "b"]
+    elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
+        return ["z", "c"]
+    elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
+        return ["y", "b", "z", "c"]
+    elif fragmentation_method == "UVPD":
+        return ["y", "b", "z", "c", "x", "a"]
+    else:
+        raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
+
+
+def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> List[str]:
+    """
+    Retrieve the ion types resulting from a fragmentation method in the correct order for peak initialization.
 
     Given the fragmentation method the function returns all ion types that can result from it.
 
@@ -161,7 +184,7 @@ def initialize_peaks(
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
-    ion_types = retrieve_ion_types(fragmentation_method)
+    ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
     modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
 
     fragments_meta_data = []
