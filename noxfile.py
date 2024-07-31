@@ -18,12 +18,13 @@ except ImportError:
     sys.exit(1)
 
 package = "spectrum_fundamentals"
-python_versions = ["3.8", "3.9"]
+python_versions = ["3.9", "3.10"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
     "mypy",
     "tests",
+    "typeguard",
     "xdoctest",
     "docs-build",
 )
@@ -188,7 +189,8 @@ def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
     session.install(".")
-    session.install("sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinx-rtd-dark-mode")
+    session.install("sphinx", "sphinx-click", "sphinx-rtd-theme")
+    session.install("-r", "./docs/requirements.txt")
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():

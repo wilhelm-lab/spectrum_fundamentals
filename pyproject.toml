@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spectrum_fundamentals"
-version = "0.6.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
+version = "0.7.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Fundamental functions, annotation pipeline and constants for oktoberfest"
 authors = ["Wilhelmlab at Technical University of Munich"]
 license = "MIT"
@@ -12,15 +12,13 @@ packages = [
     { include = "spectrum_fundamentals" },
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
 ]
 
 
 [tool.poetry.dependencies]
-python = ">=3.8.0,<3.11.0"
+python = ">=3.9.0,<3.11.0"
 click = ">=8.0.0"
 rich = ">=10.3.0"
 PyYAML = ">=5.4.1"
@@ -62,6 +60,9 @@ pyupgrade = ">=2.31.0"
 
 [tool.poetry.scripts]
 spectrum_fundamentals = "spectrum_fundamentals.__main__:main"
+
+[tool.poetry.group.dev.dependencies]
+sphinx-autodoc-typehints = "^2.2.3"
 
 [tool.black]
 line-length = 120
