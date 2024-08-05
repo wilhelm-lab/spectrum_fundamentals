@@ -200,7 +200,9 @@ def internal_without_mods(sequences: List[str]) -> List[str]:
     return [re.sub(regex, "", seq) for seq in sequences]
 
 
-def internal_to_mod_mass(sequences: List[str], custom_mods: Optional[Dict[str, float]] = None) -> List[str]:
+def internal_to_mod_mass(
+    sequences: List[str], custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None
+) -> List[str]:
     """
     Function to exchange the internal mod identifiers with the masses of the specific modifiction.
 
@@ -243,10 +245,10 @@ def internal_to_msp(
         mod_string = "; ".join([f"{mod[2:]}@{mod[0]}{pos}" for pos, mod in mod_list])
         n_mods = len(mod_list)
         if n_mods > 0:
-            mods = f"{n_mods}/{'/'.join([f'{pos},{mod}' for pos, mod in mod_list])}"
+            mods_field = f"{n_mods}/{'/'.join([f'{pos},{mod}' for pos, mod in mod_list])}"
         else:
-            mods = "0"
-        ret_vals.append((mods, mod_string))
+            mods_field = "0"
+        ret_vals.append((mods_field, mod_string))
     return ret_vals
 
 
