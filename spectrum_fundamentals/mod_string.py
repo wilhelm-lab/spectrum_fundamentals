@@ -200,9 +200,7 @@ def internal_without_mods(sequences: List[str]) -> List[str]:
     return [re.sub(regex, "", seq) for seq in sequences]
 
 
-def internal_to_mod_mass(
-    sequences: List[str], custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None
-) -> List[str]:
+def internal_to_mod_mass(sequences: List[str], custom_mods: Optional[Dict[str, float]] = None) -> List[str]:
     """
     Function to exchange the internal mod identifiers with the masses of the specific modifiction.
 
@@ -215,6 +213,41 @@ def internal_to_mod_mass(
     regex = re.compile("(%s)" % "|".join(map(re.escape, mod_masses.keys())))
     replacement_func = lambda match: f"[+{mod_masses[match.string[match.start():match.end()]]}]"
     return [regex.sub(replacement_func, seq) for seq in sequences]
+
+
+def internal_to_msp(
+    sequences: Union[List[str], pd.Series],
+    mods: Dict[str, str],
+) -> List[Tuple[str, str]]:
+    """
+    Function to translate an internal modstring to modstring and Mods for MSP format.
+
+    :param sequences: sequences to translate
+    :param mods: dictionary mapping from internal unimod format (keys) to MSP format (values).
+    :return: a tuple for each sequence, containing (Mods, mod_string) for the MSP format
+    """
+    ret_vals = []
+    p = re.compile("|".join(mods.keys()))
+    for seq in sequences:
+        offset = 0
+        mod_list = []
+        matches = p.finditer(seq)
+        for match in matches:
+            replacement = mods[re.escape(match.group())]
+            start, end = match.span()
+            actual_start = start - offset
+            mod_list.append((actual_start, replacement))
+
+            offset += end - start - 1
+
+        mod_string = "; ".join([f"{mod[2:]}@{mod[0]}{pos}" for pos, mod in mod_list])
+        n_mods = len(mod_list)
+        if n_mods > 0:
+            mods = f"{n_mods}/{'/'.join([f'{pos},{mod}' for pos, mod in mod_list])}"
+        else:
+            mods = "0"
+        ret_vals.append((mods, mod_string))
+    return ret_vals
 
 
 def internal_to_mod_names(
