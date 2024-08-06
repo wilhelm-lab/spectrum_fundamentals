@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from .constants import MOD_NAMES, SPECTRONAUT_MODS, XISEARCH_VAR_MODS, update_mod_masses
+from .constants import MOD_MASSES, MOD_NAMES, SPECTRONAUT_MODS, XISEARCH_VAR_MODS
 
 
 def sage_to_internal(sequences: List[str], mods: Dict[str, str]) -> List[str]:
@@ -200,9 +200,7 @@ def internal_without_mods(sequences: List[str]) -> List[str]:
     return [re.sub(regex, "", seq) for seq in sequences]
 
 
-def internal_to_mod_mass(
-    sequences: List[str], custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None
-) -> List[str]:
+def internal_to_mod_mass(sequences: List[str], custom_mods: Optional[Dict[str, float]] = None) -> List[str]:
     """
     Function to exchange the internal mod identifiers with the masses of the specific modifiction.
 
@@ -210,7 +208,7 @@ def internal_to_mod_mass(
     :param custom_mods: custom mods with the identifier (=key), respespective unimod identifier and mass (value)
     :return: List[str] of modified sequences
     """
-    mod_masses = update_mod_masses(custom_mods)
+    mod_masses = MOD_MASSES | (custom_mods or {})
 
     regex = re.compile("(%s)" % "|".join(map(re.escape, mod_masses.keys())))
     replacement_func = lambda match: f"[+{mod_masses[match.string[match.start():match.end()]]}]"

@@ -121,7 +121,7 @@ def annotate_spectra(
     un_annot_spectra: pd.DataFrame,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
+    custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
 ) -> pd.DataFrame:
     """
@@ -142,7 +142,7 @@ def annotate_spectra(
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param fragmentation_method: fragmentation method that was used
-    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
@@ -345,7 +345,7 @@ def parallel_annotate(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
+    custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
 ) -> Optional[
     Union[
@@ -367,7 +367,7 @@ def parallel_annotate(
     :param index_columns: a dictionary that contains the index columns of the spectrum
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
-    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param fragmentation_method: fragmentation method that was used
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
@@ -397,7 +397,7 @@ def _annotate_linear_spectrum(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float],
     unit_mass_tolerance: Optional[str],
-    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
+    custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
 ):
     """
@@ -407,7 +407,7 @@ def _annotate_linear_spectrum(
     :param index_columns: Index columns of the spectrum
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
-    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param fragmentation_method: fragmentation method that was used
     :return: Annotated spectrum
     """
@@ -454,7 +454,7 @@ def _annotate_crosslinked_spectrum(
     crosslinker_type: str,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
-    custom_mods: Optional[Dict[str, Dict[str, Tuple[str, float]]]] = None,
+    custom_mods: Optional[Dict[str, float]] = None,
 ):
     """
     Annotate a crosslinked peptide spectrum.
@@ -464,7 +464,7 @@ def _annotate_crosslinked_spectrum(
     :param crosslinker_type: Type of crosslinker used
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
-    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :raises ValueError: if unsupported crosslinker type was supplied.
 
     :return: Annotated spectrum
