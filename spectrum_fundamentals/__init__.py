@@ -1,8 +1,8 @@
-"""Initialize fundamentals."""
+"""Spectrum Fundamentals."""
 
 __author__ = "Mario Picciani"
 __email__ = "mario.picciani@tum.de"
-__version__ = "0.6.0"
+__version__ = "0.7.2"
 
 import logging
 import logging.handlers

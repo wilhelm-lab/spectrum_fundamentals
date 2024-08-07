@@ -233,21 +233,24 @@ MOD_MASSES = {
     "[UNIMOD:747]": 86.000394,  # Malonylation
 }
 
+
 MOD_MASSES_SAGE = {
-    229.1629: "[UNIMOD:737]",
-    304.2071: "[UNIMOD:2016]",
-    144.1020: "[UNIMOD:214]",
-    304.2053: "[UNIMOD:730]",
-    8.0141: "[UNIMOD:259]",
-    10.0082: "[UNIMOD:267]",
-    79.9663: "[UNIMOD:21]",
-    -18.0105: "[UNIMOD:23]",
-    57.0215: "[UNIMOD:4]",
-    15.9949: "[UNIMOD:35]",
-    15.994: "[UNIMOD:35]",
-    42.0105: "[UNIMOD:1]",
+    "229.1629": "[UNIMOD:737]",
+    "304.2071": "[UNIMOD:2016]",
+    "144.1020": "[UNIMOD:214]",
+    "304.2053": "[UNIMOD:730]",
+    "8.0141": "[UNIMOD:259]",
+    "10.0082": "[UNIMOD:267]",
+    "79.9663": "[UNIMOD:21]",
+    "-18.0105": "[UNIMOD:23]",
+    "57.0215": "[UNIMOD:4]",
+    "15.9949": "[UNIMOD:35]",
+    "15.994": "[UNIMOD:35]",
+    "42.0105": "[UNIMOD:1]",
 }
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
+
+
 AA_MOD_MASSES = {
     "K[UNIMOD:737]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:737]"],
     "M[UNIMOD:35]": AA_MASSES["M"] + MOD_MASSES["[UNIMOD:35]"],

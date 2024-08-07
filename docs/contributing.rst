@@ -14,7 +14,7 @@ Here is a list of important resources for contributors:
 
 .. _MIT license: https://opensource.org/licenses/MIT
 .. _Source Code: https://github.com/wilhelm-lab/spectrum_fundamentals
-.. _Documentation: https://spectrum_fundamentals.readthedocs.io/
+.. _Documentation: https://spectrum-fundamentals.readthedocs.io/
 .. _Issue Tracker: https://github.com/wilhelm-lab/spectrum_fundamentals/issues
 
 How to report a bug
@@ -32,7 +32,7 @@ Request features on the `Issue Tracker`_.
 How to set up your development environment
 ------------------------------------------
 
-You need Python 3.8+ and the following tools:
+You need Python 3.9+ and the following tools:
 
 - Poetry_
 - Nox_
