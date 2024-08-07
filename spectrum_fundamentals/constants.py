@@ -377,7 +377,7 @@ SPECTRONAUT_MODS = {
     "[UNIMOD:35]": "[Oxidation (O)]",
 }
 
-FRAGMENTATION_ENCODING = {"HCD": 2, "CID": 1}
+FRAGMENTATION_ENCODING = {"CID": 1, "HCD": 2, "ETD": 3}
 
 ############################
 # GENERATION OF ANNOTATION #
