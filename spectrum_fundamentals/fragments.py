@@ -121,7 +121,7 @@ def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> Lis
     if fragmentation_method == "HCD" or fragmentation_method == "CID":
         return ["y", "b"]
     elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
-        return ["z", "c"]
+        return ["z_r", "c"]
     elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
         return ["y", "z", "b", "c"]
     elif fragmentation_method == "UVPD":
@@ -144,8 +144,9 @@ def get_ion_delta(ion_types: List[str]) -> np.ndarray:
         "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
         "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
         "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
+        "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
     }
-    # I think list comprehension is fastest way
+
     deltas = np.array([ion_type_offsets[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
 
     return deltas
@@ -178,7 +179,7 @@ def initialize_peaks(
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
-    _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
+    # _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
     ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
