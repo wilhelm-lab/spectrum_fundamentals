@@ -1,7 +1,7 @@
 import logging
 import re
 from operator import itemgetter
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -84,14 +84,14 @@ def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
             raise ValueError("Crosslinker position must be provided if using non cleavable XL mode.")
 
 
-def retrieve_ion_types(fragmentation_method: str) -> List[str]:
+def retrieve_ion_types(fragmentation_method: Literal["HCD", "CID", "ETD", "ETCID", "ETHCD", "UVPD"]) -> List[str]:
     """
     Retrieve the ion types resulting from a fragmentation method in the correct order for dlomix predictions.
 
     Given the fragmentation method the function returns all ion types that can result from it.
 
     : param fragmentation_method: fragmentation method used during the MS
-    : raises ValueError: if fragmentation_method is other than one of HCD, CID, ETD, ECD, ETCID, ETHCD, UVPD
+    :raises ValueError: if fragmentation_method is not supported
     : return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
@@ -107,14 +107,14 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
 
 
-def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> List[str]:
+def retrieve_ion_types_for_peak_initialization(fragmentation_method: Literal["HCD", "CID", "ETD", "ETCID", "ETHCD", "UVPD"]) -> List[str]:
     """
     Retrieve the ion types resulting from a fragmentation method in the correct order for peak initialization.
 
     Given the fragmentation method the function returns all ion types that can result from it.
 
     : param fragmentation_method: fragmentation method used during the MS
-    : raises ValueError: if fragmentation_method is other than one of HCD, CID, ETD, ECD, ETCID, ETHCD, UVPD
+    :raises ValueError: if fragmentation_method is not supported
     : return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
