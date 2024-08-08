@@ -90,9 +90,9 @@ def retrieve_ion_types(fragmentation_method: Literal["HCD", "CID", "ETD", "ETCID
 
     Given the fragmentation method the function returns all ion types that can result from it.
 
-    : param fragmentation_method: fragmentation method used during the MS
+    :param fragmentation_method: fragmentation method used during the MS
     :raises ValueError: if fragmentation_method is not supported
-    : return: list of possible ion types
+    :return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
     if fragmentation_method == "HCD" or fragmentation_method == "CID":
@@ -113,9 +113,9 @@ def retrieve_ion_types_for_peak_initialization(fragmentation_method: Literal["HC
 
     Given the fragmentation method the function returns all ion types that can result from it.
 
-    : param fragmentation_method: fragmentation method used during the MS
+    :param fragmentation_method: fragmentation method used during the MS
     :raises ValueError: if fragmentation_method is not supported
-    : return: list of possible ion types
+    :return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
     if fragmentation_method == "HCD" or fragmentation_method == "CID":
