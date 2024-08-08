@@ -1,12 +1,13 @@
+import itertools
 import logging
 import re
 from operator import itemgetter
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from .constants import AA_MASSES, ATOM_MASSES, MOD_MASSES, PARTICLE_MASSES
+from .constants import AA_MASSES, ATOM_MASSES, CHARGES, MOD_MASSES, PARTICLE_MASSES, POSITIONS
 from .mod_string import internal_without_mods
 
 logger = logging.getLogger(__name__)
@@ -84,7 +85,7 @@ def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
             raise ValueError("Crosslinker position must be provided if using non cleavable XL mode.")
 
 
-def retrieve_ion_types(fragmentation_method: Literal["HCD", "CID", "ETD", "ETCID", "ETHCD", "UVPD"]) -> List[str]:
+def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     """
     Retrieve the ion types resulting from a fragmentation method in the correct order for dlomix predictions.
 
@@ -107,7 +108,7 @@ def retrieve_ion_types(fragmentation_method: Literal["HCD", "CID", "ETD", "ETCID
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
 
 
-def retrieve_ion_types_for_peak_initialization(fragmentation_method: Literal["HCD", "CID", "ETD", "ETCID", "ETHCD", "UVPD"]) -> List[str]:
+def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> List[str]:
     """
     Retrieve the ion types resulting from a fragmentation method in the correct order for peak initialization.
 
@@ -422,3 +423,39 @@ def get_min_max_mass(
     else:
         raise ValueError(f"Unsupported mass_analyzer: {mass_analyzer}")
     return (min_mass, max_mass)
+
+
+FragmentIonComponent = Literal["ion_type", "position", "charge"]
+
+
+def generate_fragment_ion_annotations(
+    ion_types: List[str], order: Tuple[FragmentIonComponent, FragmentIonComponent, FragmentIonComponent]
+) -> List[str]:
+    """Generate full list of fragment ions for permitted ion types and specified order.
+
+    :param ion_types: List of permitted ion types
+    :param order: What fragment ion parameters (ion type, position & charge) to group the annotations by
+    :return: List of `<ion_type><position>+<charge>` annotations sorted by specified components
+    :raises ValueError: if invalid or unsupported ion types are specified or duplicate order keys are used
+    """
+    fragment_ion_components: Dict[str, Union[List[int], List[str]]] = {
+        "ion_type": ion_types,
+        "position": POSITIONS,
+        "charge": CHARGES,
+    }
+
+    if len(unsupported_ions := set(ion_types) - set("abcxyz")) > 0:
+        raise ValueError(f"Unsupported ion types specified: {unsupported_ions}")
+    elif len(set(ion_types)) != len(ion_types):
+        raise ValueError("Redundant ion types specified")
+    elif len(ion_types) == 0:
+        raise ValueError("No ion types specified")
+    if set(order) != {"ion_type", "position", "charge"}:
+        raise ValueError("Duplicate component used for ordering fragment ions")
+
+    raw_annotations = list(itertools.product(*[fragment_ion_components[component] for component in order]))
+    ordered_raw_annotations = [
+        tuple(combination[list(fragment_ion_components.keys()).index(i)] for i in order)
+        for combination in raw_annotations
+    ]
+    return [f"{ion_type}{pos}+{charge}" for ion_type, pos, charge in ordered_raw_annotations]
