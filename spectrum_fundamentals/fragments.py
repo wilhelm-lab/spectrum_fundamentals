@@ -179,7 +179,7 @@ def initialize_peaks(
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
     """
-    # _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
+    _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
     ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
