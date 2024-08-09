@@ -317,7 +317,7 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
             if translate:
                 results = []
                 for aa in split_seq:
-                    if aa not in alphabet: #does not exist
+                    if aa not in alphabet:  # does not exist
                         alphabet[aa] = val
                         val += 1
                     results.append(alphabet[aa])
