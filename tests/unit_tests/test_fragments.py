@@ -154,7 +154,7 @@ class TestFragmentIonAnnotation(unittest.TestCase):
         for ion_types in [["y", "b"], ["b", "y"], ["y", "b", "x", "a"]]:
             order = ("position", "ion_type", "charge")
             annotations = [
-                f"{ion_type}{pos}+{charge}" for pos in c.POSITIONS for ion_type in ion_types for charge in c.CHARGES
+                (ion_type, pos, charge) for pos in c.POSITIONS for ion_type in ion_types for charge in c.CHARGES
             ]
             with self.subTest(order=order, ion_types=ion_types):
                 self.assertEqual(
@@ -163,13 +163,12 @@ class TestFragmentIonAnnotation(unittest.TestCase):
 
             order = ("ion_type", "position", "charge")
             annotations = [
-                f"{ion_type}{pos}+{charge}" for ion_type in ion_types for pos in c.POSITIONS for charge in c.CHARGES
+                (ion_type, pos, charge) for ion_type in ion_types for pos in c.POSITIONS for charge in c.CHARGES
             ]
             with self.subTest(order=order, ion_types=ion_types):
                 self.assertEqual(
                     fragments.generate_fragment_ion_annotations(ion_types=ion_types, order=order), annotations
                 )
-
 
     def test_catches_redundant_order(self):
         """Check if redundant order is caught."""

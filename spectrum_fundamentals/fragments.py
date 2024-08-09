@@ -433,18 +433,18 @@ FragmentIonComponent = Literal["ion_type", "position", "charge"]
 
 def generate_fragment_ion_annotations(
     ion_types: List[str], order: Tuple[FragmentIonComponent, FragmentIonComponent, FragmentIonComponent]
-) -> List[str]:
+) -> Tuple[str, int, int]:
     """Generate full list of fragment ions for permitted ion types and specified order.
 
     :param ion_types: List of permitted ion types
     :param order: What fragment ion parameters (ion type, position & charge) to group the annotations by
-    :return: List of `<ion_type><position>+<charge>` annotations sorted by specified components
+    :return: List of (ion_type, position, charge) tuples sorted by specified components
     :raises ValueError: if invalid or unsupported ion types are specified or duplicate order keys are used
     """
     fragment_ion_components: Dict[str, Union[List[int], List[str]]] = {
         "ion_type": ion_types,
-        "position": POSITIONS,
-        "charge": CHARGES,
+        "position": c.POSITIONS,
+        "charge": c.CHARGES,
     }
 
     if len(set(ion_types)) != len(ion_types):
@@ -454,9 +454,21 @@ def generate_fragment_ion_annotations(
     if set(order) != {"ion_type", "position", "charge"}:
         raise ValueError("Duplicate component used for ordering fragment ions")
 
-    raw_annotations = list(itertools.product(*[fragment_ion_components[component] for component in order]))
+    raw_annotations: Tuple[Union[str, int], Union[str, int], Union[str, int]] = list(
+        itertools.product(*[fragment_ion_components[component] for component in order])
+    )
     ordered_raw_annotations = [
         tuple(combination[list(fragment_ion_components.keys()).index(i)] for i in order)
         for combination in raw_annotations
     ]
-    return [f"{ion_type}{pos}+{charge}" for ion_type, pos, charge in ordered_raw_annotations]
+    return ordered_raw_annotations
+
+
+def format_fragment_ion_annotation(raw_annotation: Tuple[str, int, int]) -> str:
+    """Transform (ion_type, position, charge) tuple into <ion_type><position>+<charge> string.
+
+    :param raw_annotation: `(ion_type, position, charge)` tuple
+    :returns: formatted annotation string
+    """
+    ion_type, pos, charge = raw_annotation
+    return f"{ion_type}{pos}+{charge}"
