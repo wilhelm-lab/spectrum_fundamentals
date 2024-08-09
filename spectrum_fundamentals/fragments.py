@@ -122,7 +122,7 @@ def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> Lis
     if fragmentation_method == "HCD" or fragmentation_method == "CID":
         return ["y", "b"]
     elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
-        return ["z", "c"]
+        return ["z_r", "c"]
     elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
         return ["y", "z", "b", "c"]
     elif fragmentation_method == "UVPD":
@@ -145,8 +145,9 @@ def get_ion_delta(ion_types: List[str]) -> np.ndarray:
         "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
         "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
         "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
+        "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
     }
-    # I think list comprehension is fastest way
+
     deltas = np.array([ion_type_offsets[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
 
     return deltas

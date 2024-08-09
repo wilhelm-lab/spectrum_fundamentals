@@ -131,7 +131,7 @@ class TestFragmentationMethodForPeakInitialization(unittest.TestCase):
 
     def test_get_ion_types_etd(self):
         """Test retrieving ion types for ETD."""
-        assert fragments.retrieve_ion_types_for_peak_initialization("ETD") == ["z", "c"]
+        assert fragments.retrieve_ion_types_for_peak_initialization("ETD") == ["z_r", "c"]
 
     def test_get_ion_types_etcid(self):
         """Test retrieving ion types for ETCID."""
