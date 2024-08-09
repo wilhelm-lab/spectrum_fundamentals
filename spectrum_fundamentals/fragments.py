@@ -7,7 +7,8 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from .constants import AA_MASSES, ATOM_MASSES, CHARGES, MOD_MASSES, PARTICLE_MASSES, POSITIONS
+import spectrum_fundamentals.constants as c
+
 from .mod_string import internal_without_mods
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ def _get_modifications(peptide_sequence: str, custom_mods: Optional[Dict[str, fl
     pattern = re.compile(r"\[.{8}[^\]]*\]")
     matches = pattern.finditer(peptide_sequence)
 
-    mod_masses = MOD_MASSES | (custom_mods or {})
+    mod_masses = c.MOD_MASSES | (custom_mods or {})
 
     for match in matches:
         start_pos, end_pos = match.span()
@@ -57,14 +58,14 @@ def compute_peptide_mass(sequence: str, custom_mods: Optional[Dict[str, float]] 
     :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :return: Theoretical mass of the sequence
     """
-    terminal_masses = 2 * ATOM_MASSES["H"] + ATOM_MASSES["O"]  # add terminal masses HO- and H-
+    terminal_masses = 2 * c.ATOM_MASSES["H"] + c.ATOM_MASSES["O"]  # add terminal masses HO- and H-
 
     modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
         terminal_masses += modification_deltas.get(-2, 0.0)  # prime with n_term_mod delta if present
 
-    peptide_sum = sum([AA_MASSES[c] + modification_deltas.get(i, 0.0) for i, c in enumerate(sequence)])
+    peptide_sum = sum([c.AA_MASSES[aa] + modification_deltas.get(i, 0.0) for i, aa in enumerate(sequence)])
 
     return terminal_masses + peptide_sum
 
@@ -120,12 +121,13 @@ def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> Lis
     """
     fragmentation_method = fragmentation_method.upper()
     if fragmentation_method == "HCD" or fragmentation_method == "CID":
-        return ["y", "b"]
+        return c.HCD_IONS
     elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
-        return ["z●", "c"]
+        return c.ETD_IONS
     elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
-        return ["y", "z", "b", "c"]
+        return c.ETCID_IONS
     elif fragmentation_method == "UVPD":
+        return c.UVPD_IONS
         return ["x", "y", "z", "a", "b", "c"]
     else:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
@@ -139,13 +141,13 @@ def get_ion_delta(ion_types: List[str]) -> np.ndarray:
     :return: numpy array with masses of the ions
     """
     ion_type_offsets = {
-        "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
+        "a": -c.ATOM_MASSES["O"] - c.ATOM_MASSES["C"],
         "b": 0.0,
-        "c": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
-        "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
-        "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
-        "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
-        "z●": ATOM_MASSES["O"] - ATOM_MASSES["N"],
+        "c": 3 * c.ATOM_MASSES["H"] + c.ATOM_MASSES["N"],
+        "x": 2 * c.ATOM_MASSES["O"] + c.ATOM_MASSES["C"],
+        "y": c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"],
+        "z": c.ATOM_MASSES["O"] - c.ATOM_MASSES["N"] - c.ATOM_MASSES["H"],
+        "z●": c.ATOM_MASSES["O"] - c.ATOM_MASSES["N"],
     }
 
     deltas = np.array([ion_type_offsets[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
@@ -204,7 +206,7 @@ def initialize_peaks(
             # add n_term mass to first aa for easy processing in the following calculation
             modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
 
-    mass_arr = np.array([AA_MASSES[_] for _ in sequence])
+    mass_arr = np.array([c.AA_MASSES[_] for _ in sequence])
     for pos, mod_mass in modification_deltas.items():
         mass_arr[pos] += mod_mass
 
@@ -223,7 +225,7 @@ def initialize_peaks(
     # calculate for m/z for charges 1, 2, 3
     # shape of ion_mzs: (n_ions, n_fragments, max_charge)
     charges = np.arange(1, max_charge + 1)
-    ion_mzs = (sum_array[..., np.newaxis] + charges * PARTICLE_MASSES["PROTON"]) / charges
+    ion_mzs = (sum_array[..., np.newaxis] + charges * c.PARTICLE_MASSES["PROTON"]) / charges
 
     min_mzs, max_mzs = get_min_max_mass(mass_analyzer, ion_mzs, mass_tolerance, unit_mass_tolerance)
 
@@ -248,7 +250,7 @@ def initialize_peaks(
         fragments_meta_data,
         n_term_mod,
         sequence,
-        (peptide_mass + ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"]),
+        (peptide_mass + c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"]),
     )
 
 

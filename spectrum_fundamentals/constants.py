@@ -396,7 +396,12 @@ FRAGMENTATION_ENCODING = {
 # GENERATION OF ANNOTATION #
 ############################
 
-IONS = ["y", "b"]  # limited to single character unicode string when array is created
+IONS = ["x", "y", "z", "z●" "a", "b", "c"]
+HCD_IONS = ["y", "b"]
+ETD_IONS = ["z●", "c"]
+ETCID_IONS = ["y", "z", "b", "c"]
+UVPD_IONS = ["x", "y", "z", "a", "b", "c"]
+
 CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
 POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
 
@@ -404,7 +409,7 @@ ANNOTATION_FRAGMENT_TYPE = []
 ANNOTATION_FRAGMENT_CHARGE = []
 ANNOTATION_FRAGMENT_NUMBER = []
 for pos in POSITIONS:
-    for ion in IONS:
+    for ion in HCD_IONS:
         for charge in CHARGES:
             ANNOTATION_FRAGMENT_TYPE.append(ion)
             ANNOTATION_FRAGMENT_CHARGE.append(charge)
