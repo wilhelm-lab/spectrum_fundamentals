@@ -334,10 +334,10 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
                 f"The element(s) [{not_parsable_elements}] " f"in the sequence [{sequence}] could not be parsed"
             )
 
-    pattern = r"[A-Z]\[UNIMOD:\d+\]"
+    unimod_pattern = r"[A-Z]\[UNIMOD:\d+\]"
     alphabet_pattern = [re.escape(i) for i in sorted(alphabet, key=len, reverse=True)]
 
-    pattern = [pattern] + alphabet_pattern
+    pattern = [unimod_pattern] + alphabet_pattern
     regex_pattern = re.compile("|".join(pattern))
     return map(split_modstring, sequences, repeat(regex_pattern))
 
