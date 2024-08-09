@@ -20,40 +20,6 @@ VEC_LENGTH_CMS2 = (SEQ_LEN - 1) * 2 * 3 * 2
 
 
 #############
-# ION TYPES #
-#############
-FORWARD_IONS = ["a", "b", "c"]
-BACKWARDS_IONS = ["x", "y", "z", "z●"]
-IONS = FORWARD_IONS + BACKWARDS_IONS
-
-FRAGMENTATION_TO_IONS_BY_PAIRS = {
-    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z●,c
-    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z●,c
-    "ETHCD": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z●,c
-    "ETCID": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z●,c
-    "UVPD": [
-        BACKWARDS_IONS[0],
-        FORWARD_IONS[0],
-        BACKWARDS_IONS[1],
-        FORWARD_IONS[1],
-        BACKWARDS_IONS[2],
-        FORWARD_IONS[2],
-    ],  # y,b,z,c,x,a
-}
-
-FRAGMENTATION_TO_IONS_BY_DIRECTION = {
-    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z●,c
-    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z●,c
-    "ETHCD": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z●,b,c
-    "ETCID": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z●,b,c
-    "UVPD": BACKWARDS_IONS[:-1] + FORWARD_IONS,  # y,z,x,b,c,a
-}
-
-#############
 # ALPHABETS #
 #############
 
@@ -449,3 +415,48 @@ class RescoreType(Enum):
 
     PROSIT = "prosit"
     ANDROMEDA = "andromeda"
+
+
+#############
+# ION TYPES #
+#############
+FORWARD_IONS = ["a", "b", "c"]
+BACKWARDS_IONS = ["x", "y", "z", "z_r"]  #
+IONS = FORWARD_IONS + BACKWARDS_IONS
+
+FRAGMENTATION_TO_IONS_BY_PAIRS = {
+    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ETHCD": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
+    "ETCID": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
+    "UVPD": [
+        BACKWARDS_IONS[0],
+        FORWARD_IONS[0],
+        BACKWARDS_IONS[1],
+        FORWARD_IONS[1],
+        BACKWARDS_IONS[2],
+        FORWARD_IONS[2],
+    ],  # y,b,z,c,x,a
+}
+
+FRAGMENTATION_TO_IONS_BY_DIRECTION = {
+    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ETHCD": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
+    "ETCID": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
+    "UVPD": BACKWARDS_IONS[:-1] + FORWARD_IONS,  # y,z,x,b,c,a
+}
+
+ION_DELTAS = {
+    "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
+    "b": 0.0,
+    "c": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
+    "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
+    "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
+    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
+    "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
+}
