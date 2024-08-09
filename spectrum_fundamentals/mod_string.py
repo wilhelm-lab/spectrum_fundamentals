@@ -311,10 +311,17 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
         # Ugly and fast fix for reading modifications as is from maxquant we should reconsider how to fix it.
         # sequence = sequence.replace('M(ox)','M(U:35)')
         # sequence = sequence.replace('C','C(U:4)')
+        val = max(alphabet.values()) + 1
         split_seq = r_pattern.findall(sequence)
         if "".join(split_seq) == sequence:
             if translate:
-                return [alphabet[aa] for aa in split_seq]
+                results = []
+                for aa in split_seq:
+                    if aa not in alphabet: #does not exist
+                        alphabet[aa] = val
+                        val += 1
+                    results.append(alphabet[aa])
+                return results
             else:
                 return split_seq
         elif filter:
@@ -327,9 +334,10 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
                 f"The element(s) [{not_parsable_elements}] " f"in the sequence [{sequence}] could not be parsed"
             )
 
-    pattern = sorted(alphabet, key=len, reverse=True)
+    pattern = r"[A-Z]\[UNIMOD:\d+\]"
+    alphabet_pattern = [re.escape(i) for i in sorted(alphabet, key=len, reverse=True)]
 
-    pattern = [re.escape(i) for i in pattern]
+    pattern = [pattern] + alphabet_pattern
     regex_pattern = re.compile("|".join(pattern))
     return map(split_modstring, sequences, repeat(regex_pattern))
 
