@@ -6,7 +6,15 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from .constants import AA_MASSES, ATOM_MASSES, MOD_MASSES, PARTICLE_MASSES
+from .constants import (
+    AA_MASSES,
+    ATOM_MASSES,
+    FRAGMENTATION_TO_IONS_BY_DIRECTION,
+    FRAGMENTATION_TO_IONS_BY_PAIRS,
+    ION_DELTAS,
+    MOD_MASSES,
+    PARTICLE_MASSES,
+)
 from .mod_string import internal_without_mods
 
 logger = logging.getLogger(__name__)
@@ -95,16 +103,10 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     : return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
-    if fragmentation_method == "HCD" or fragmentation_method == "CID":
-        return ["y", "b"]
-    elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
-        return ["z", "c"]
-    elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
-        return ["y", "b", "z", "c"]
-    elif fragmentation_method == "UVPD":
-        return ["y", "b", "z", "c", "x", "a"]
-    else:
+    ions = FRAGMENTATION_TO_IONS_BY_PAIRS.get(fragmentation_method, [])
+    if not ions:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
+    return ions
 
 
 def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> List[str]:
@@ -118,16 +120,10 @@ def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> Lis
     : return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
-    if fragmentation_method == "HCD" or fragmentation_method == "CID":
-        return ["y", "b"]
-    elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
-        return ["z", "c"]
-    elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
-        return ["y", "z", "b", "c"]
-    elif fragmentation_method == "UVPD":
-        return ["x", "y", "z", "a", "b", "c"]
-    else:
+    ions = FRAGMENTATION_TO_IONS_BY_DIRECTION.get(fragmentation_method, [])
+    if not ions:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
+    return ions
 
 
 def get_ion_delta(ion_types: List[str]) -> np.ndarray:
@@ -137,18 +133,7 @@ def get_ion_delta(ion_types: List[str]) -> np.ndarray:
     :param ion_types: type of ions for which mass should be calculated
     :return: numpy array with masses of the ions
     """
-    ion_type_offsets = {
-        "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
-        "b": 0.0,
-        "c": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
-        "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
-        "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
-        "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
-    }
-    # I think list comprehension is fastest way
-    deltas = np.array([ion_type_offsets[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
-
-    return deltas
+    return np.array([ION_DELTAS[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
 
 
 def initialize_peaks(

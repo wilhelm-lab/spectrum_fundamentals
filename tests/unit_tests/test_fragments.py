@@ -106,15 +106,15 @@ class TestFragmentationMethod(unittest.TestCase):
 
     def test_get_ion_types_etd(self):
         """Test retrieving ion types for ETD."""
-        assert fragments.retrieve_ion_types("ETD") == ["z", "c"]
+        assert fragments.retrieve_ion_types("ETD") == ["z_r", "c"]
 
     def test_get_ion_types_etcid(self):
         """Test retrieving ion types for ETCID."""
-        assert fragments.retrieve_ion_types("ETCID") == ["y", "b", "z", "c"]
+        assert fragments.retrieve_ion_types("ETCID") == ["y", "b", "z_r", "c"]
 
     def test_get_ion_types_lower_case(self):
         """Test lower case fragmentation method."""
-        assert fragments.retrieve_ion_types("uvpd") == ["y", "b", "z", "c", "x", "a"]
+        assert fragments.retrieve_ion_types("uvpd") == ["x", "a", "y", "b", "z", "c"]
 
     def test_invalid_fragmentation_method(self):
         """Test if error is raised for invalid fragmentation method."""
@@ -130,11 +130,11 @@ class TestFragmentationMethodForPeakInitialization(unittest.TestCase):
 
     def test_get_ion_types_etd(self):
         """Test retrieving ion types for ETD."""
-        assert fragments.retrieve_ion_types_for_peak_initialization("ETD") == ["z", "c"]
+        assert fragments.retrieve_ion_types_for_peak_initialization("ETD") == ["z_r", "c"]
 
     def test_get_ion_types_etcid(self):
         """Test retrieving ion types for ETCID."""
-        assert fragments.retrieve_ion_types_for_peak_initialization("ETCID") == ["y", "z", "b", "c"]
+        assert fragments.retrieve_ion_types_for_peak_initialization("ETCID") == ["y", "z_r", "b", "c"]
 
     def test_get_ion_types_lower_case(self):
         """Test lower case fragmentation method."""
