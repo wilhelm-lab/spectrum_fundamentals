@@ -445,9 +445,7 @@ def generate_fragment_ion_annotations(
         "charge": CHARGES,
     }
 
-    if len(unsupported_ions := set(ion_types) - set("abcxyz")) > 0:
-        raise ValueError(f"Unsupported ion types specified: {unsupported_ions}")
-    elif len(set(ion_types)) != len(ion_types):
+    if len(set(ion_types)) != len(ion_types):
         raise ValueError("Redundant ion types specified")
     elif len(ion_types) == 0:
         raise ValueError("No ion types specified")

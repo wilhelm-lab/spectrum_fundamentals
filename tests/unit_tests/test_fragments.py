@@ -170,13 +170,6 @@ class TestFragmentIonAnnotation(unittest.TestCase):
                     fragments.generate_fragment_ion_annotations(ion_types=ion_types, order=order), annotations
                 )
 
-    def test_catches_unsupported_ion_types(self):
-        """Check if unsupported ion types are caught."""
-        for ion_types in [[], ["y", "y"], ["b", "y", "q"]]:
-            with self.subTest(ion_types=ion_types), self.assertRaises(ValueError):
-                _ = fragments.generate_fragment_ion_annotations(
-                    ion_types=["b", "y", "q"], order=("position", "ion_type", "charge")
-                )
 
     def test_catches_redundant_order(self):
         """Check if redundant order is caught."""
