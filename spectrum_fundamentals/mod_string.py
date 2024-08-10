@@ -1,7 +1,7 @@
 import difflib
 import re
 from itertools import combinations, repeat
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -340,6 +340,15 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
     pattern = [unimod_pattern] + alphabet_pattern
     regex_pattern = re.compile("|".join(pattern))
     return map(split_modstring, sequences, repeat(regex_pattern))
+
+
+def get_all_tokens(sequences: List[str]) -> Set[str]:
+    """Parse given sequences in UNIMOD ProForma standard into a set of all tokens."""
+    pattern = r"[ACDEFGHIKLMNPQRSTVWY](\[UNIMOD:\d+\])?"
+    tokens = set()
+    for seq in sequences:
+        tokens |= {match.group() for match in re.finditer(pattern, seq)}
+    return tokens
 
 
 def add_permutations(modified_sequence: str, unimod_id: int, residues: List[str]):

@@ -97,16 +97,10 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     :return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
-    if fragmentation_method == "HCD" or fragmentation_method == "CID":
-        return ["y", "b"]
-    elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
-        return ["z●", "c"]
-    elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
-        return ["y", "b", "z", "c"]
-    elif fragmentation_method == "UVPD":
-        return ["y", "b", "z", "c", "x", "a"]
-    else:
+    ions = c.FRAGMENTATION_TO_IONS_BY_PAIRS.get(fragmentation_method, [])
+    if not ions:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
+    return ions
 
 
 def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> List[str]:
@@ -120,17 +114,10 @@ def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> Lis
     :return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
-    if fragmentation_method == "HCD" or fragmentation_method == "CID":
-        return c.HCD_IONS
-    elif fragmentation_method == "ETD" or fragmentation_method == "ECD":
-        return c.ETD_IONS
-    elif fragmentation_method == "ETCID" or fragmentation_method == "ETHCD":
-        return c.ETCID_IONS
-    elif fragmentation_method == "UVPD":
-        return c.UVPD_IONS
-        return ["x", "y", "z", "a", "b", "c"]
-    else:
+    ions = c.FRAGMENTATION_TO_IONS_BY_DIRECTION.get(fragmentation_method, [])
+    if not ions:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
+    return ions
 
 
 def get_ion_delta(ion_types: List[str]) -> np.ndarray:
@@ -140,19 +127,7 @@ def get_ion_delta(ion_types: List[str]) -> np.ndarray:
     :param ion_types: type of ions for which mass should be calculated
     :return: numpy array with masses of the ions
     """
-    ion_type_offsets = {
-        "a": -c.ATOM_MASSES["O"] - c.ATOM_MASSES["C"],
-        "b": 0.0,
-        "c": 3 * c.ATOM_MASSES["H"] + c.ATOM_MASSES["N"],
-        "x": 2 * c.ATOM_MASSES["O"] + c.ATOM_MASSES["C"],
-        "y": c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"],
-        "z": c.ATOM_MASSES["O"] - c.ATOM_MASSES["N"] - c.ATOM_MASSES["H"],
-        "z●": c.ATOM_MASSES["O"] - c.ATOM_MASSES["N"],
-    }
-
-    deltas = np.array([ion_type_offsets[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
-
-    return deltas
+    return np.array([c.ION_DELTAS[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
 
 
 def initialize_peaks(
