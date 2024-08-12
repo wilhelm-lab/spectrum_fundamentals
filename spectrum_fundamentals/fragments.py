@@ -181,7 +181,7 @@ def initialize_peaks(
 
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
-        n_term_delta = modification_deltas.get(-2, 0.0)
+        n_term_delta = modification_deltas.pop(-2, 0.0)  # directly pop it to avoid readding it later
         if n_term_delta != 0:
             n_term_mod = 2
             # add n_term mass to first aa for easy processing in the following calculation

@@ -73,6 +73,19 @@ class TestAnnotationPipeline(unittest.TestCase):
         result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)
 
+    def test_annotate_spectra_tmt(self):
+        """Test annotate spectra."""
+        spectrum_input = pd.read_json(
+            Path(__file__).parent / "data/tmt_spectrum_input.json",
+            # converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        expected_result = pd.read_json(
+            Path(__file__).parent / "data/tmt_spectrum_output.json",
+        )
+
+        result = annotation.annotate_spectra(spectrum_input)
+        pd.testing.assert_frame_equal(expected_result, result)
+
     def test_handle_multiple_matches(self):
         """Test handle_multiple_matches function."""
         # Example input data with multiple matches. They don't make biological sense but it tests the mathematical correctness.
