@@ -408,18 +408,18 @@ FragmentIonComponent = Literal["ion_type", "position", "charge"]
 
 def generate_fragment_ion_annotations(
     ion_types: List[str], order: Tuple[FragmentIonComponent, FragmentIonComponent, FragmentIonComponent]
-) -> Tuple[str, int, int]:
+) -> List[Tuple[str, int, int]]:
     """Generate full list of fragment ions for permitted ion types and specified order.
 
     :param ion_types: List of permitted ion types
     :param order: What fragment ion parameters (ion type, position & charge) to group the annotations by
-    :return: List of (ion_type, position, charge) tuples sorted by specified components
+    :return: List of (ion_type, position, charge) tuples sorted by specified component order
     :raises ValueError: if invalid or unsupported ion types are specified or duplicate order keys are used
     """
-    fragment_ion_components: Dict[str, Union[List[int], List[str]]] = {
+    fragment_ion_components: Dict[str, Union[List[str]]] = {
         "ion_type": ion_types,
-        "position": c.POSITIONS,
-        "charge": c.CHARGES,
+        "position": [str(pos) for pos in c.POSITIONS],
+        "charge": [str(charge) for charge in c.CHARGES],
     }
 
     if len(set(ion_types)) != len(ion_types):
@@ -429,13 +429,17 @@ def generate_fragment_ion_annotations(
     if set(order) != {"ion_type", "position", "charge"}:
         raise ValueError("Duplicate component used for ordering fragment ions")
 
-    raw_annotations: Tuple[Union[str, int], Union[str, int], Union[str, int]] = list(
-        itertools.product(*[fragment_ion_components[component] for component in order])
-    )
+    raw_annotations = list(itertools.product(*[fragment_ion_components[component] for component in order]))
+
     ordered_raw_annotations = [
-        tuple(combination[list(fragment_ion_components.keys()).index(i)] for i in order)
+        (
+            str(combination[order.index("ion_type")]),
+            int(combination[order.index("position")]),
+            int(combination[order.index("charge")]),
+        )
         for combination in raw_annotations
     ]
+
     return ordered_raw_annotations
 
 
