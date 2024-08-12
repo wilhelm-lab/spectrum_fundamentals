@@ -398,10 +398,10 @@ FRAGMENTATION_ENCODING = {
 # GENERATION OF ANNOTATION #
 ############################
 
-IONS = ["x", "y", "z", "z●" "a", "b", "c"]
+IONS = ["x", "y", "z", "z_r" "a", "b", "c"]
 HCD_IONS = ["y", "b"]
 ETD_IONS = ["z_r", "c"]
-ETCID_IONS = ["y", "z", "b", "c"]
+ETCID_IONS = ["y", "z_r", "b", "c"]
 UVPD_IONS = ["x", "y", "z", "a", "b", "c"]
 
 CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
