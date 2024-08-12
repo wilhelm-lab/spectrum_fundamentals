@@ -382,28 +382,17 @@ SPECTRONAUT_MODS = {
     "[UNIMOD:35]": "[Oxidation (O)]",
 }
 
-FRAGMENTATION_ENCODING = {"HCD": 2, "CID": 1}
-
-############################
-# GENERATION OF ANNOTATION #
-############################
-
-IONS = ["y", "b"]  # limited to single character unicode string when array is created
-CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
-POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
-
-ANNOTATION_FRAGMENT_TYPE = []
-ANNOTATION_FRAGMENT_CHARGE = []
-ANNOTATION_FRAGMENT_NUMBER = []
-for pos in POSITIONS:
-    for ion in IONS:
-        for charge in CHARGES:
-            ANNOTATION_FRAGMENT_TYPE.append(ion)
-            ANNOTATION_FRAGMENT_CHARGE.append(charge)
-            ANNOTATION_FRAGMENT_NUMBER.append(pos)
-
-ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
-
+FRAGMENTATION_ENCODING = {
+    "CID": 1,
+    "HCD": 2,
+    "ETD": 3,
+    "ETHCD": 4,
+    "ETCID": 5,
+    "UVPD": 6,
+    "EID": 7,
+    "ECD": 8,
+    "AIECD": 9,
+}
 
 ########################
 # RESCORING PARAMETERS #
@@ -460,3 +449,22 @@ ION_DELTAS = {
     "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
     "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
 }
+
+############################
+# GENERATION OF ANNOTATION #
+############################
+
+CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
+POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
+
+ANNOTATION_FRAGMENT_TYPE = []
+ANNOTATION_FRAGMENT_CHARGE = []
+ANNOTATION_FRAGMENT_NUMBER = []
+for pos in POSITIONS:
+    for ion in FRAGMENTATION_TO_IONS_BY_DIRECTION["HCD"]:
+        for charge in CHARGES:
+            ANNOTATION_FRAGMENT_TYPE.append(ion)
+            ANNOTATION_FRAGMENT_CHARGE.append(charge)
+            ANNOTATION_FRAGMENT_NUMBER.append(pos)
+
+ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]

@@ -1,20 +1,14 @@
+import itertools
 import logging
 import re
 from operator import itemgetter
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from .constants import (
-    AA_MASSES,
-    ATOM_MASSES,
-    FRAGMENTATION_TO_IONS_BY_DIRECTION,
-    FRAGMENTATION_TO_IONS_BY_PAIRS,
-    ION_DELTAS,
-    MOD_MASSES,
-    PARTICLE_MASSES,
-)
+import spectrum_fundamentals.constants as c
+
 from .mod_string import internal_without_mods
 
 logger = logging.getLogger(__name__)
@@ -46,7 +40,7 @@ def _get_modifications(peptide_sequence: str, custom_mods: Optional[Dict[str, fl
     pattern = re.compile(r"\[.{8}[^\]]*\]")
     matches = pattern.finditer(peptide_sequence)
 
-    mod_masses = MOD_MASSES | (custom_mods or {})
+    mod_masses = c.MOD_MASSES | (custom_mods or {})
 
     for match in matches:
         start_pos, end_pos = match.span()
@@ -64,14 +58,14 @@ def compute_peptide_mass(sequence: str, custom_mods: Optional[Dict[str, float]] 
     :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :return: Theoretical mass of the sequence
     """
-    terminal_masses = 2 * ATOM_MASSES["H"] + ATOM_MASSES["O"]  # add terminal masses HO- and H-
+    terminal_masses = 2 * c.ATOM_MASSES["H"] + c.ATOM_MASSES["O"]  # add terminal masses HO- and H-
 
     modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
         terminal_masses += modification_deltas.get(-2, 0.0)  # prime with n_term_mod delta if present
 
-    peptide_sum = sum([AA_MASSES[c] + modification_deltas.get(i, 0.0) for i, c in enumerate(sequence)])
+    peptide_sum = sum([c.AA_MASSES[aa] + modification_deltas.get(i, 0.0) for i, aa in enumerate(sequence)])
 
     return terminal_masses + peptide_sum
 
@@ -98,12 +92,12 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
 
     Given the fragmentation method the function returns all ion types that can result from it.
 
-    : param fragmentation_method: fragmentation method used during the MS
-    : raises ValueError: if fragmentation_method is other than one of HCD, CID, ETD, ECD, ETCID, ETHCD, UVPD
-    : return: list of possible ion types
+    :param fragmentation_method: fragmentation method used during the MS
+    :raises ValueError: if fragmentation_method is not supported
+    :return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
-    ions = FRAGMENTATION_TO_IONS_BY_PAIRS.get(fragmentation_method, [])
+    ions = c.FRAGMENTATION_TO_IONS_BY_PAIRS.get(fragmentation_method, [])
     if not ions:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
     return ions
@@ -115,12 +109,12 @@ def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> Lis
 
     Given the fragmentation method the function returns all ion types that can result from it.
 
-    : param fragmentation_method: fragmentation method used during the MS
-    : raises ValueError: if fragmentation_method is other than one of HCD, CID, ETD, ECD, ETCID, ETHCD, UVPD
-    : return: list of possible ion types
+    :param fragmentation_method: fragmentation method used during the MS
+    :raises ValueError: if fragmentation_method is not supported
+    :return: list of possible ion types
     """
     fragmentation_method = fragmentation_method.upper()
-    ions = FRAGMENTATION_TO_IONS_BY_DIRECTION.get(fragmentation_method, [])
+    ions = c.FRAGMENTATION_TO_IONS_BY_DIRECTION.get(fragmentation_method, [])
     if not ions:
         raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
     return ions
@@ -133,7 +127,7 @@ def get_ion_delta(ion_types: List[str]) -> np.ndarray:
     :param ion_types: type of ions for which mass should be calculated
     :return: numpy array with masses of the ions
     """
-    return np.array([ION_DELTAS[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
+    return np.array([c.ION_DELTAS[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
 
 
 def initialize_peaks(
@@ -187,7 +181,7 @@ def initialize_peaks(
             # add n_term mass to first aa for easy processing in the following calculation
             modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
 
-    mass_arr = np.array([AA_MASSES[_] for _ in sequence])
+    mass_arr = np.array([c.AA_MASSES[_] for _ in sequence])
     for pos, mod_mass in modification_deltas.items():
         mass_arr[pos] += mod_mass
 
@@ -206,7 +200,7 @@ def initialize_peaks(
     # calculate for m/z for charges 1, 2, 3
     # shape of ion_mzs: (n_ions, n_fragments, max_charge)
     charges = np.arange(1, max_charge + 1)
-    ion_mzs = (sum_array[..., np.newaxis] + charges * PARTICLE_MASSES["PROTON"]) / charges
+    ion_mzs = (sum_array[..., np.newaxis] + charges * c.PARTICLE_MASSES["PROTON"]) / charges
 
     min_mzs, max_mzs = get_min_max_mass(mass_analyzer, ion_mzs, mass_tolerance, unit_mass_tolerance)
 
@@ -231,7 +225,7 @@ def initialize_peaks(
         fragments_meta_data,
         n_term_mod,
         sequence,
-        (peptide_mass + ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"]),
+        (peptide_mass + c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"]),
     )
 
 
@@ -407,3 +401,53 @@ def get_min_max_mass(
     else:
         raise ValueError(f"Unsupported mass_analyzer: {mass_analyzer}")
     return (min_mass, max_mass)
+
+
+FragmentIonComponent = Literal["ion_type", "position", "charge"]
+
+
+def generate_fragment_ion_annotations(
+    ion_types: List[str], order: Tuple[FragmentIonComponent, FragmentIonComponent, FragmentIonComponent]
+) -> List[Tuple[str, int, int]]:
+    """Generate full list of fragment ions for permitted ion types and specified order.
+
+    :param ion_types: List of permitted ion types
+    :param order: What fragment ion parameters (ion type, position & charge) to group the annotations by
+    :return: List of (ion_type, position, charge) tuples sorted by specified component order
+    :raises ValueError: if invalid or unsupported ion types are specified or duplicate order keys are used
+    """
+    fragment_ion_components: Dict[str, Union[List[str]]] = {
+        "ion_type": ion_types,
+        "position": [str(pos) for pos in c.POSITIONS],
+        "charge": [str(charge) for charge in c.CHARGES],
+    }
+
+    if len(set(ion_types)) != len(ion_types):
+        raise ValueError("Redundant ion types specified")
+    elif len(ion_types) == 0:
+        raise ValueError("No ion types specified")
+    if set(order) != {"ion_type", "position", "charge"}:
+        raise ValueError("Duplicate component used for ordering fragment ions")
+
+    raw_annotations = list(itertools.product(*[fragment_ion_components[component] for component in order]))
+
+    ordered_raw_annotations = [
+        (
+            str(combination[order.index("ion_type")]),
+            int(combination[order.index("position")]),
+            int(combination[order.index("charge")]),
+        )
+        for combination in raw_annotations
+    ]
+
+    return ordered_raw_annotations
+
+
+def format_fragment_ion_annotation(raw_annotation: Tuple[str, int, int]) -> str:
+    """Transform (ion_type, position, charge) tuple into <ion_type><position>+<charge> string.
+
+    :param raw_annotation: `(ion_type, position, charge)` tuple
+    :returns: formatted annotation string
+    """
+    ion_type, pos, charge = raw_annotation
+    return f"{ion_type}{pos}+{charge}"
