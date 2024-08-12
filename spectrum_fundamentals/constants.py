@@ -394,32 +394,6 @@ FRAGMENTATION_ENCODING = {
     "AIECD": 9,
 }
 
-############################
-# GENERATION OF ANNOTATION #
-############################
-
-IONS = ["x", "y", "z", "z_r" "a", "b", "c"]
-HCD_IONS = ["y", "b"]
-ETD_IONS = ["z_r", "c"]
-ETCID_IONS = ["y", "z_r", "b", "c"]
-UVPD_IONS = ["x", "y", "z", "a", "b", "c"]
-
-CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
-POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
-
-ANNOTATION_FRAGMENT_TYPE = []
-ANNOTATION_FRAGMENT_CHARGE = []
-ANNOTATION_FRAGMENT_NUMBER = []
-for pos in POSITIONS:
-    for ion in HCD_IONS:
-        for charge in CHARGES:
-            ANNOTATION_FRAGMENT_TYPE.append(ion)
-            ANNOTATION_FRAGMENT_CHARGE.append(charge)
-            ANNOTATION_FRAGMENT_NUMBER.append(pos)
-
-ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
-
-
 ########################
 # RESCORING PARAMETERS #
 ########################
@@ -475,3 +449,22 @@ ION_DELTAS = {
     "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
     "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
 }
+
+############################
+# GENERATION OF ANNOTATION #
+############################
+
+CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
+POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
+
+ANNOTATION_FRAGMENT_TYPE = []
+ANNOTATION_FRAGMENT_CHARGE = []
+ANNOTATION_FRAGMENT_NUMBER = []
+for pos in POSITIONS:
+    for ion in FRAGMENTATION_TO_IONS_BY_DIRECTION["HCD"]:
+        for charge in CHARGES:
+            ANNOTATION_FRAGMENT_TYPE.append(ion)
+            ANNOTATION_FRAGMENT_CHARGE.append(charge)
+            ANNOTATION_FRAGMENT_NUMBER.append(pos)
+
+ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
