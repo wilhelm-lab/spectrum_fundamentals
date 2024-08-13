@@ -4,6 +4,7 @@ from pathlib import Path
 
 from numpy.testing import assert_almost_equal
 
+import spectrum_fundamentals.constants as c
 import spectrum_fundamentals.fragments as fragments
 
 
@@ -106,15 +107,15 @@ class TestFragmentationMethod(unittest.TestCase):
 
     def test_get_ion_types_etd(self):
         """Test retrieving ion types for ETD."""
-        assert fragments.retrieve_ion_types("ETD") == ["z", "c"]
+        assert fragments.retrieve_ion_types("ETD") == ["z_r", "c"]
 
     def test_get_ion_types_etcid(self):
         """Test retrieving ion types for ETCID."""
-        assert fragments.retrieve_ion_types("ETCID") == ["y", "b", "z", "c"]
+        assert fragments.retrieve_ion_types("ETCID") == ["y", "b", "z_r", "c"]
 
     def test_get_ion_types_lower_case(self):
         """Test lower case fragmentation method."""
-        assert fragments.retrieve_ion_types("uvpd") == ["y", "b", "z", "c", "x", "a"]
+        assert fragments.retrieve_ion_types("uvpd") == ["x", "a", "y", "b", "z", "c"]
 
     def test_invalid_fragmentation_method(self):
         """Test if error is raised for invalid fragmentation method."""
@@ -130,11 +131,11 @@ class TestFragmentationMethodForPeakInitialization(unittest.TestCase):
 
     def test_get_ion_types_etd(self):
         """Test retrieving ion types for ETD."""
-        assert fragments.retrieve_ion_types_for_peak_initialization("ETD") == ["z", "c"]
+        assert fragments.retrieve_ion_types_for_peak_initialization("ETD") == ["z_r", "c"]
 
     def test_get_ion_types_etcid(self):
         """Test retrieving ion types for ETCID."""
-        assert fragments.retrieve_ion_types_for_peak_initialization("ETCID") == ["y", "z", "b", "c"]
+        assert fragments.retrieve_ion_types_for_peak_initialization("ETCID") == ["y", "z_r", "b", "c"]
 
     def test_get_ion_types_lower_case(self):
         """Test lower case fragmentation method."""
@@ -143,3 +144,35 @@ class TestFragmentationMethodForPeakInitialization(unittest.TestCase):
     def test_invalid_fragmentation_method(self):
         """Test if error is raised for invalid fragmentation method."""
         self.assertRaises(ValueError, fragments.retrieve_ion_types_for_peak_initialization, "XYZ")
+
+
+class TestFragmentIonAnnotation(unittest.TestCase):
+    """Tests for fragment ion annotation generation."""
+
+    def test_generate_fragment_ion_types(self):
+        """Test if output ordering is valid."""
+        for ion_types in [["y", "b"], ["b", "y"], ["y", "b", "x", "a"]]:
+            order = ("position", "ion_type", "charge")
+            annotations = [
+                (ion_type, pos, charge) for pos in c.POSITIONS for ion_type in ion_types for charge in c.CHARGES
+            ]
+            with self.subTest(order=order, ion_types=ion_types):
+                self.assertEqual(
+                    fragments.generate_fragment_ion_annotations(ion_types=ion_types, order=order), annotations
+                )
+
+            order = ("ion_type", "position", "charge")
+            annotations = [
+                (ion_type, pos, charge) for ion_type in ion_types for pos in c.POSITIONS for charge in c.CHARGES
+            ]
+            with self.subTest(order=order, ion_types=ion_types):
+                self.assertEqual(
+                    fragments.generate_fragment_ion_annotations(ion_types=ion_types, order=order), annotations
+                )
+
+    def test_catches_redundant_order(self):
+        """Check if redundant order is caught."""
+        with self.assertRaises(ValueError):
+            _ = fragments.generate_fragment_ion_annotations(
+                ion_types=["y", "b"], order=("ion_type", "position", "ion_type")
+            )

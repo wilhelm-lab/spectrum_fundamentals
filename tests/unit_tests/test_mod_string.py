@@ -309,6 +309,13 @@ class TestParsing(unittest.TestCase):
         invalid_seq = "testing"
         self.assertEqual(next(mod.parse_modstrings([invalid_seq], alphabet=c.ALPHABET, filter=True)), [0])
 
+    def test_get_all_tokens(self):
+        """Test parsing of any UNIMOD sequence into tokens."""
+        seqs = ["ACKC[UNIMOD:4]AD", "PEPTIDE", "PEM[UNIMOD:35]"]
+
+        result = mod.get_all_tokens(seqs)
+        self.assertEqual(result, {"A", "C", "C[UNIMOD:4]", "D", "E", "I", "K", "M[UNIMOD:35]", "P", "T"})
+
 
 class TestCustomToInternal(unittest.TestCase):
     """Class to test custom to internal."""

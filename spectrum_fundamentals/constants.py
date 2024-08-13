@@ -17,6 +17,8 @@ VEC_LENGTH = (
 VEC_LENGTH_CMS2 = (SEQ_LEN - 1) * 2 * 3 * 2
 # peptide of length 30 can have 29 b, y, b_short, y_short, b_long and y_long ions, each with charge 1+, 2+ and 3+
 # we do not annotate fragments wth charge 3+. All fragmets with charge 3+ convert to -1
+
+
 #############
 # ALPHABETS #
 #############
@@ -380,28 +382,17 @@ SPECTRONAUT_MODS = {
     "[UNIMOD:35]": "[Oxidation (O)]",
 }
 
-FRAGMENTATION_ENCODING = {"HCD": 2, "CID": 1}
-
-############################
-# GENERATION OF ANNOTATION #
-############################
-
-IONS = ["y", "b"]  # limited to single character unicode string when array is created
-CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
-POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
-
-ANNOTATION_FRAGMENT_TYPE = []
-ANNOTATION_FRAGMENT_CHARGE = []
-ANNOTATION_FRAGMENT_NUMBER = []
-for pos in POSITIONS:
-    for ion in IONS:
-        for charge in CHARGES:
-            ANNOTATION_FRAGMENT_TYPE.append(ion)
-            ANNOTATION_FRAGMENT_CHARGE.append(charge)
-            ANNOTATION_FRAGMENT_NUMBER.append(pos)
-
-ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
-
+FRAGMENTATION_ENCODING = {
+    "CID": 1,
+    "HCD": 2,
+    "ETD": 3,
+    "ETHCD": 4,
+    "ETCID": 5,
+    "UVPD": 6,
+    "EID": 7,
+    "ECD": 8,
+    "AIECD": 9,
+}
 
 ########################
 # RESCORING PARAMETERS #
@@ -413,3 +404,67 @@ class RescoreType(Enum):
 
     PROSIT = "prosit"
     ANDROMEDA = "andromeda"
+
+
+#############
+# ION TYPES #
+#############
+FORWARD_IONS = ["a", "b", "c"]
+BACKWARDS_IONS = ["x", "y", "z", "z_r"]  #
+IONS = FORWARD_IONS + BACKWARDS_IONS
+
+FRAGMENTATION_TO_IONS_BY_PAIRS = {
+    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ETHCD": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
+    "ETCID": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
+    "UVPD": [
+        BACKWARDS_IONS[0],
+        FORWARD_IONS[0],
+        BACKWARDS_IONS[1],
+        FORWARD_IONS[1],
+        BACKWARDS_IONS[2],
+        FORWARD_IONS[2],
+    ],  # y,b,z,c,x,a
+}
+
+FRAGMENTATION_TO_IONS_BY_DIRECTION = {
+    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ETHCD": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
+    "ETCID": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
+    "UVPD": BACKWARDS_IONS[:-1] + FORWARD_IONS,  # y,z,x,b,c,a
+}
+
+ION_DELTAS = {
+    "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
+    "b": 0.0,
+    "c": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
+    "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
+    "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
+    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
+    "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
+}
+
+############################
+# GENERATION OF ANNOTATION #
+############################
+
+CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
+POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
+
+ANNOTATION_FRAGMENT_TYPE = []
+ANNOTATION_FRAGMENT_CHARGE = []
+ANNOTATION_FRAGMENT_NUMBER = []
+for pos in POSITIONS:
+    for ion in FRAGMENTATION_TO_IONS_BY_DIRECTION["HCD"]:
+        for charge in CHARGES:
+            ANNOTATION_FRAGMENT_TYPE.append(ion)
+            ANNOTATION_FRAGMENT_CHARGE.append(charge)
+            ANNOTATION_FRAGMENT_NUMBER.append(pos)
+
+ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]

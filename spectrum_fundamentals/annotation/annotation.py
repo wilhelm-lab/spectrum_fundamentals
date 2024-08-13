@@ -322,7 +322,7 @@ def generate_annotation_matrix(
     exp_mass_col = matched_peaks.columns.get_loc("exp_mass")
 
     for peak in matched_peaks.values:
-        ion_type_index = ion_types.index(peak[ion_type][0])
+        ion_type_index = ion_types.index(peak[ion_type].split("-", 1)[0])
         peak_pos = ((peak[no_col] - 1) * charge_const * len(ion_types)) + (peak[charge_col] - 1) + 3 * ion_type_index
 
         if peak_pos >= constants.VEC_LENGTH:
