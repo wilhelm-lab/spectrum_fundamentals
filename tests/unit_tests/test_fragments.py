@@ -176,3 +176,51 @@ class TestFragmentIonAnnotation(unittest.TestCase):
             _ = fragments.generate_fragment_ion_annotations(
                 ion_types=["y", "b"], order=("ion_type", "position", "ion_type")
             )
+
+
+class TestNeutralLossFunctions(unittest.TestCase):
+
+    def test_add_nl(self):
+        """
+        Test the _add_nl function with a range of amino acids and neutral losses.
+        """
+        neutral_losses = ['H2O', 'NH3']
+        nl_dict = {
+            0: ['CO2'],     # Initial dictionary contains CO2 for index 0
+            1: ['H2O'],     # Initial dictionary contains H2O for index 1
+        }
+        start_aa_index = 0
+        end_aa_index = 2  # Only indices 0 and 1 will be modified
+
+        # Expected output after the neutral losses are added
+        expected_nl_dict = {
+            0: ['CO2', 'H2O', 'NH3'],  # Both H2O and NH3 added
+            1: ['H2O', 'NH3']          # NH3 added, H2O already present
+        }
+
+        result = fragments._add_nl(neutral_losses, nl_dict, start_aa_index, end_aa_index)
+        self.assertEqual(result, expected_nl_dict)
+
+    def test_calculate_nl_score_mass(self):
+        """
+        Test the _calculate_nl_score_mass function with various neutral losses.
+        """
+        # Test for H2O, which should reduce the score by 5
+        score, mass = fragments._calculate_nl_score_mass('H2O')
+        self.assertEqual(score, 95)  # Starting score of 100 - 5
+        self.assertEqual(mass, 18.01056467)  # Mass of H2O
+
+        # Test for NH3, which should also reduce the score by 5
+        score, mass = fragments._calculate_nl_score_mass('NH3')
+        self.assertEqual(score, 95)  # Starting score of 100 - 5
+        self.assertEqual(mass, 17.026549105)  # Mass of NH3
+
+        # Test for CO2, which should reduce the score by 30
+        score, mass = fragments._calculate_nl_score_mass('CO2')
+        self.assertEqual(score, 70)  # Starting score of 100 - 30
+        self.assertEqual(mass, 43.9898292)  # Mass of CO2
+
+        # Test for C2H4O2, which should reduce the score by 30
+        score, mass = fragments._calculate_nl_score_mass('C2H4O2')
+        self.assertEqual(score, 70)  # Starting score of 100 - 30
+        self.assertEqual(mass, 60.02112934)
