@@ -351,15 +351,17 @@ def get_all_tokens(sequences: List[str]) -> Set[str]:
     return tokens
 
 
-def add_permutations(modified_sequence: str, unimod_id: int, residues: List[str], allow_one_less_modification: bool = False):
+def add_permutations(
+    modified_sequence: str, unimod_id: int, residues: List[str], allow_one_less_modification: bool = False
+):
     """
     Generate different peptide sequences with moving the modification to all possible residues.
 
     :param modified_sequence: Peptide sequence
     :param unimod_id: modification unimod id to be used for generating different permutations.
     :param residues: possible amino acids where this mod can exist
-    :param allow_one_less_modification: Flag to indicate if permutations with one less modification should be generated to check 
-                                whether the modification mass was mistakenly picked as the monoisotopic peak. Mainly used for Citrullination.
+    :param allow_one_less_modification: Flag to indicate if permutations with one less modification should be generated to check
+        whether the modification mass was mistakenly picked as the monoisotopic peak. Mainly used for Citrullination.
     :return: list of possible sequence permutations
     """
     sequence = modified_sequence.replace("[unimod:" + str(unimod_id) + "]", "")
@@ -371,7 +373,9 @@ def add_permutations(modified_sequence: str, unimod_id: int, residues: List[str]
     all_combinations = [list(each_permutation) for each_permutation in combinations(possible_positions, modifications)]
 
     if allow_one_less_modification:
-        all_combinations_1 = [list(each_permutation) for each_permutation in combinations(possible_positions, modifications-1)]
+        all_combinations_1 = [
+            list(each_permutation) for each_permutation in combinations(possible_positions, modifications - 1)
+        ]
         all_combinations = all_combinations + all_combinations_1
 
     modified_sequences_comb = []
