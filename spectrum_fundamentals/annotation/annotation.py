@@ -355,7 +355,7 @@ def parallel_annotate(
     fragmentation_method: str = "HCD",
 ) -> Optional[
     Union[
-        Tuple[np.ndarray, np.ndarray, float, int],
+        Tuple[np.ndarray, np.ndarray, float, int, int],
         Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, int, int],
     ]
 ]:
@@ -420,6 +420,7 @@ def _annotate_linear_spectrum(
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
+
     fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass, _ = initialize_peaks(
         sequence=spectrum[index_columns[mod_seq_column]],
         mass_analyzer=spectrum[index_columns["MASS_ANALYZER"]],
@@ -445,7 +446,7 @@ def _annotate_linear_spectrum(
     if len(matched_peaks) == 0:
         intensity = np.full(vec_length, 0.0)
         mass = np.full(vec_length, 0.0)
-        return intensity, mass, calc_mass, 0
+        return intensity, mass, calc_mass, 0, 0
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
