@@ -213,7 +213,7 @@ def _calculate_nl_score_mass(neutral_loss):
     return score, mass
 
 
-def initialize_peaks(
+def initialize_peaks(  # noqa: C901
     sequence: str,
     mass_analyzer: str,
     charge: int,

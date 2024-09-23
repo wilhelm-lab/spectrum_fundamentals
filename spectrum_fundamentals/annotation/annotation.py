@@ -129,6 +129,7 @@ def annotate_spectra(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
+    annotate_neutral_losses: Optional[bool] = False
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -149,6 +150,7 @@ def annotate_spectra(
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param fragmentation_method: fragmentation method that was used
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
+    :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
@@ -161,6 +163,7 @@ def annotate_spectra(
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
             custom_mods=custom_mods,
+            annotate_neutral_losses=annotate_neutral_losses
         )
         if not results:
             continue
@@ -168,7 +171,14 @@ def annotate_spectra(
     results_df = pd.DataFrame(raw_file_annotations)
 
     if "CROSSLINKER_TYPE" not in index_columns:
-        results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks", "count_nl_peaks"]
+        results_df.columns = [
+            "INTENSITIES",
+            "MZ",
+            "CALCULATED_MASS",
+            "removed_peaks",
+            "ANNOTATED_NL_COUNT",
+            "EXPECTED_NL_COUNT",
+        ]
     else:
         results_df.columns = [
             "INTENSITIES_A",
@@ -353,9 +363,10 @@ def parallel_annotate(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
+    annotate_neutral_losses: Optional[bool] = False
 ) -> Optional[
     Union[
-        Tuple[np.ndarray, np.ndarray, float, int, int],
+        Tuple[np.ndarray, np.ndarray, float, int, int, int],
         Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, int, int],
     ]
 ]:
@@ -375,6 +386,7 @@ def parallel_annotate(
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param fragmentation_method: fragmentation method that was used
+    :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -389,6 +401,7 @@ def parallel_annotate(
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
             custom_mods=custom_mods,
+            add_neutral_losses= annotate_neutral_losses
         )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
@@ -405,6 +418,7 @@ def _annotate_linear_spectrum(
     unit_mass_tolerance: Optional[str],
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
+    add_neutral_losses: Optional[bool] = False
 ):
     """
     Annotate a linear peptide spectrum.
@@ -415,13 +429,14 @@ def _annotate_linear_spectrum(
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param fragmentation_method: fragmentation method that was used
+    :param add_neutral_losses: flag to indicate whether to annotate neutral losses or not
     :return: Annotated spectrum
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
 
-    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass, _ = initialize_peaks(
+    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass, expected_nl = initialize_peaks(
         sequence=spectrum[index_columns[mod_seq_column]],
         mass_analyzer=spectrum[index_columns["MASS_ANALYZER"]],
         charge=spectrum[index_columns["PRECURSOR_CHARGE"]],
@@ -429,6 +444,7 @@ def _annotate_linear_spectrum(
         unit_mass_tolerance=unit_mass_tolerance,
         fragmentation_method=fragmentation_method,
         custom_mods=custom_mods,
+        add_neutral_losses= add_neutral_losses
     )
     matched_peaks, count_annotated_nl = match_peaks(
         fragments_meta_data,
@@ -446,13 +462,13 @@ def _annotate_linear_spectrum(
     if len(matched_peaks) == 0:
         intensity = np.full(vec_length, 0.0)
         mass = np.full(vec_length, 0.0)
-        return intensity, mass, calc_mass, 0, 0
+        return intensity, mass, calc_mass, 0, 0, 0
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
         matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]], fragmentation_method
     )
-    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl
+    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl
 
 
 def _annotate_crosslinked_spectrum(
