@@ -335,6 +335,8 @@ Neutral_losses_Mass = {
     "H3O4P": (ATOM_MASSES["H"] * 3) + (ATOM_MASSES["O"] * 4) + ATOM_MASSES["P"],
 }
 
+Unimod_Neutral_losses = {7: ["CHNO"], 21: ["H3O4P"]}
+
 #######################################
 # HELPERS FOR FRAGMENT MZ CALCULATION #
 #######################################

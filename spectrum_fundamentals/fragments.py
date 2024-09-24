@@ -175,24 +175,24 @@ def _get_neutral_losses(peptide_sequence, modifications):
         aa = peptide_sequence[i]
         if aa in c.AA_Neutral_losses:
             if i in modifications:
-                if aa == "M" and modifications[i] == 15.9949146:
+                """if aa == "M" and modifications[i] == 15.9949146:
                     nl_b_ions = _add_nl(c.AA_Neutral_losses["M[UNIMOD:35]"], nl_b_ions, i, sequence_length - 1)
                     nl_y_ions = _add_nl(
                         c.AA_Neutral_losses["M[UNIMOD:35]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
-                    )
-                elif aa == "R" and modifications[i] == 0.984016:
+                    )"""
+                if aa == "R" and modifications[i] == 0.984016:
                     nl_b_ions = _add_nl(c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_b_ions, i, sequence_length - 1)
                     nl_y_ions = _add_nl(
                         c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
                     )
-                elif (aa == "S" or aa == "T") and modifications[i] == 79.9663:
-                    nl_b_ions = _add_nl(c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_b_ions, i, sequence_length - 1)
+                elif (aa == "S" or aa == "T") and modifications[i] == 79.966331:
+                    nl_b_ions = _add_nl(c.Mod_Neutral_losses["S[UNIMOD:21]"], nl_b_ions, i, sequence_length - 1)
                     nl_y_ions = _add_nl(
-                        c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
+                        c.Mod_Neutral_losses["S[UNIMOD:21]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
                     )
-            else:
+            """else:
                 nl_b_ions = _add_nl(c.AA_Neutral_losses[aa], nl_b_ions, i, sequence_length - 1)
-                nl_y_ions = _add_nl(c.AA_Neutral_losses[aa], nl_y_ions, sequence_length - i - 1, sequence_length - 1)
+                nl_y_ions = _add_nl(c.AA_Neutral_losses[aa], nl_y_ions, sequence_length - i - 1, sequence_length - 1)"""
     return nl_b_ions, nl_y_ions
 
 
