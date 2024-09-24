@@ -129,7 +129,7 @@ def annotate_spectra(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
-    annotate_neutral_losses: Optional[bool] = False
+    annotate_neutral_loss: Optional[bool] = False
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -163,7 +163,7 @@ def annotate_spectra(
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
             custom_mods=custom_mods,
-            annotate_neutral_losses=annotate_neutral_losses
+            annotate_neutral_losses=annotate_neutral_loss
         )
         if not results:
             continue
