@@ -368,6 +368,7 @@ def add_permutations(
     sequence = modified_sequence.replace("[unimod:" + str(unimod_id) + "]", "")
     modifications = len(re.findall("unimod:" + str(unimod_id), modified_sequence))
     if modifications == 0:
+        modified_sequence = modified_sequence.replace('unimod','UNIMOD')
         return [modified_sequence]
     possible_positions = [i for i, ltr in enumerate(sequence) if ltr in residues]
     possible_positions.sort(reverse=True)
