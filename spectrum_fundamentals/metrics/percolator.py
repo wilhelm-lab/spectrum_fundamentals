@@ -467,7 +467,7 @@ class Percolator(Metric):
                 self.metrics_val["ANNOTATED_NL_COUNT"] = self.metadata["ANNOTATED_NL_COUNT"]
                 self.metrics_val["EXPECTED_NL_COUNT"] = self.metadata["EXPECTED_NL_COUNT"]
             if self.drop_miss_cleavage_flag:
-                self.metrics_val.drop(columns=["missedCleavages","KR"],inplace=True)
+                self.metrics_val.drop(columns=["missedCleavages", "KR"], inplace=True)
             if self.xl:
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:

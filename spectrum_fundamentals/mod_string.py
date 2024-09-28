@@ -364,11 +364,11 @@ def add_permutations(
         whether the modification mass was mistakenly picked as the monoisotopic peak. Mainly used for Citrullination.
     :return: list of possible sequence permutations
     """
-    modified_sequence = modified_sequence.replace('UNIMOD','unimod')
+    modified_sequence = modified_sequence.replace("UNIMOD", "unimod")
     sequence = modified_sequence.replace("[unimod:" + str(unimod_id) + "]", "")
     modifications = len(re.findall("unimod:" + str(unimod_id), modified_sequence))
     if modifications == 0:
-        modified_sequence = modified_sequence.replace('unimod','UNIMOD')
+        modified_sequence = modified_sequence.replace("unimod", "UNIMOD")
         return [modified_sequence]
     possible_positions = [i for i, ltr in enumerate(sequence) if ltr in residues]
     possible_positions.sort(reverse=True)
@@ -387,7 +387,7 @@ def add_permutations(
             modified_sequence = (
                 modified_sequence[: index + 1] + "[unimod:" + str(unimod_id) + "]" + modified_sequence[index + 1 :]
             )
-        modified_sequence = modified_sequence.replace('unimod','UNIMOD')
+        modified_sequence = modified_sequence.replace("unimod", "UNIMOD")
         modified_sequences_comb.append(modified_sequence)
     return modified_sequences_comb
 

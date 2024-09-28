@@ -346,45 +346,45 @@ class TestAddPermutations(unittest.TestCase):
 
     def test_single_modification(self):
         """Test case with a single modification."""
-        modified_sequence = "P[unimod:123]EPTIDE"
+        modified_sequence = "P[UNIMOD:123]EPTIDE"
         unimod_id = 123
         residues = ["P", "E"]
         result = mod.add_permutations(modified_sequence, unimod_id, residues)
-        expected_result = ["PEPTIDE[unimod:123]", "PEP[unimod:123]TIDE", "PE[unimod:123]PTIDE", "P[unimod:123]EPTIDE"]
+        expected_result = ["PEPTIDE[UNIMOD:123]", "PEP[UNIMOD:123]TIDE", "PE[UNIMOD:123]PTIDE", "P[UNIMOD:123]EPTIDE"]
         self.assertEqual(result, expected_result)
 
     def test_multiple_modifications(self):
         """Test case with multiple modifications."""
-        modified_sequence = "PEP[unimod:123]TIDE[unimod:123]"
+        modified_sequence = "PEP[UNIMOD:123]TIDE[UNIMOD:123]"
         unimod_id = 123
         residues = ["P", "E"]
         result = mod.add_permutations(modified_sequence, unimod_id, residues)
         expected_result = [
-            "PEP[unimod:123]TIDE[unimod:123]",
-            "PE[unimod:123]PTIDE[unimod:123]",
-            "P[unimod:123]EPTIDE[unimod:123]",
-            "PE[unimod:123]P[unimod:123]TIDE",
-            "P[unimod:123]EP[unimod:123]TIDE",
-            "P[unimod:123]E[unimod:123]PTIDE",
+            "PEP[UNIMOD:123]TIDE[UNIMOD:123]",
+            "PE[UNIMOD:123]PTIDE[UNIMOD:123]",
+            "P[UNIMOD:123]EPTIDE[UNIMOD:123]",
+            "PE[UNIMOD:123]P[UNIMOD:123]TIDE",
+            "P[UNIMOD:123]EP[UNIMOD:123]TIDE",
+            "P[UNIMOD:123]E[UNIMOD:123]PTIDE",
         ]
         self.assertEqual(result, expected_result)
 
     def test_check_monoisotopic_peak_enabled(self):
         """Test case with check_monoisotopic_peak flag enabled."""
-        modified_sequence = "PEP[unimod:123]TID[unimod:123]E"
+        modified_sequence = "PEP[UNIMOD:123]TID[UNIMOD:123]E"
         unimod_id = 123
         residues = ["P", "E"]
         result = mod.add_permutations(modified_sequence, unimod_id, residues, allow_one_less_modification=True)
         expected_result = [
-            "PEP[unimod:123]TIDE[unimod:123]",
-            "PE[unimod:123]PTIDE[unimod:123]",
-            "P[unimod:123]EPTIDE[unimod:123]",
-            "PE[unimod:123]P[unimod:123]TIDE",
-            "P[unimod:123]EP[unimod:123]TIDE",
-            "P[unimod:123]E[unimod:123]PTIDE",
-            "PEPTIDE[unimod:123]",
-            "PEP[unimod:123]TIDE",
-            "PE[unimod:123]PTIDE",
-            "P[unimod:123]EPTIDE",
+            "PEP[UNIMOD:123]TIDE[UNIMOD:123]",
+            "PE[UNIMOD:123]PTIDE[UNIMOD:123]",
+            "P[UNIMOD:123]EPTIDE[UNIMOD:123]",
+            "PE[UNIMOD:123]P[UNIMOD:123]TIDE",
+            "P[UNIMOD:123]EP[UNIMOD:123]TIDE",
+            "P[UNIMOD:123]E[UNIMOD:123]PTIDE",
+            "PEPTIDE[UNIMOD:123]",
+            "PEP[UNIMOD:123]TIDE",
+            "PE[UNIMOD:123]PTIDE",
+            "P[UNIMOD:123]EPTIDE",
         ]
         self.assertEqual(result, expected_result)

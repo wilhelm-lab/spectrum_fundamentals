@@ -129,7 +129,7 @@ def annotate_spectra(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
-    annotate_neutral_loss: Optional[bool] = False
+    annotate_neutral_loss: Optional[bool] = False,
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -150,7 +150,7 @@ def annotate_spectra(
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param fragmentation_method: fragmentation method that was used
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
-    :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
+    :param annotate_neutral_loss: flag to indicate whether to annotate neutral losses or not
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
@@ -163,7 +163,7 @@ def annotate_spectra(
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
             custom_mods=custom_mods,
-            annotate_neutral_losses=annotate_neutral_loss
+            annotate_neutral_losses=annotate_neutral_loss,
         )
         if not results:
             continue
@@ -363,7 +363,7 @@ def parallel_annotate(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
-    annotate_neutral_losses: Optional[bool] = False
+    annotate_neutral_losses: Optional[bool] = False,
 ) -> Optional[
     Union[
         Tuple[np.ndarray, np.ndarray, float, int, int, int],
@@ -401,7 +401,7 @@ def parallel_annotate(
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
             custom_mods=custom_mods,
-            add_neutral_losses= annotate_neutral_losses
+            add_neutral_losses=annotate_neutral_losses,
         )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
@@ -418,7 +418,7 @@ def _annotate_linear_spectrum(
     unit_mass_tolerance: Optional[str],
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
-    add_neutral_losses: Optional[bool] = False
+    add_neutral_losses: Optional[bool] = False,
 ):
     """
     Annotate a linear peptide spectrum.
@@ -444,7 +444,7 @@ def _annotate_linear_spectrum(
         unit_mass_tolerance=unit_mass_tolerance,
         fragmentation_method=fragmentation_method,
         custom_mods=custom_mods,
-        add_neutral_losses= add_neutral_losses
+        add_neutral_losses=add_neutral_losses,
     )
     matched_peaks, count_annotated_nl = match_peaks(
         fragments_meta_data,
