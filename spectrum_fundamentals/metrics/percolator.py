@@ -58,6 +58,8 @@ class Percolator(Metric):
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
         additional_columns: Optional[Union[str, list]] = None,
+        neutral_loss_flag: Optional[bool] = False,
+        drop_miss_cleavage_flag: Optional[bool] = False,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
@@ -66,6 +68,8 @@ class Percolator(Metric):
         self.additional_columns = additional_columns
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
+        self.neutral_loss_flag = neutral_loss_flag
+        self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
         self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
         self.base_columns = [
             "raw_file",
@@ -459,6 +463,11 @@ class Percolator(Metric):
             self.metrics_val = pd.concat(
                 [self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1
             )
+            if self.neutral_loss_flag:
+                self.metrics_val["ANNOTATED_NL_COUNT"] = self.metadata["ANNOTATED_NL_COUNT"]
+                self.metrics_val["EXPECTED_NL_COUNT"] = self.metadata["EXPECTED_NL_COUNT"]
+            if self.drop_miss_cleavage_flag:
+                self.metrics_val.drop(columns=["missedCleavages", "KR"], inplace=True)
             if self.xl:
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:

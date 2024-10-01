@@ -1,8 +1,11 @@
 """Spectrum Fundamentals."""
 
-__author__ = "Mario Picciani"
-__email__ = "mario.picciani@tum.de"
-__version__ = "0.7.3"
+from datetime import datetime
+
+__author__ = """The Oktoberfest development team (Wilhelmlab at Technical University of Munich)"""
+__copyright__ = f"Copyright {datetime.now():%Y}, Wilhelmlab at Technical University of Munich"
+__license__ = "MIT"
+__version__ = "0.7.4"
 
 import logging
 import logging.handlers
