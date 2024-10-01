@@ -74,7 +74,7 @@ class TestAnnotationPipeline(unittest.TestCase):
         pd.testing.assert_frame_equal(expected_result, result)
 
     def test_annotate_spectra_tmt(self):
-        """Test annotate spectra."""
+        """Test annotate TMT spectra."""
         spectrum_input = pd.read_json(
             Path(__file__).parent / "data/tmt_spectrum_input.json",
             # converters={"INTENSITIES": literal_eval, "MZ": literal_eval},

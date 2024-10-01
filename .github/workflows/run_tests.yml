@@ -119,6 +119,7 @@ jobs:
               if: always() && matrix.session == 'tests' && matrix.os == 'ubuntu-latest'
               uses: actions/upload-artifact@v4
               with:
+                  include-hidden-files: "true"
                   name: coverage-data
                   path: ".coverage.*"
 
