@@ -1,7 +1,10 @@
 """Spectrum Fundamentals."""
 
-__author__ = "Wassim Gabriel"
-__email__ = "wassim.gabriel@tum.de"
+from datetime import datetime
+
+__author__ = """The Oktoberfest development team (Wilhelmlab at Technical University of Munich)"""
+__copyright__ = f"Copyright {datetime.now():%Y}, Wilhelmlab at Technical University of Munich"
+__license__ = "MIT"
 __version__ = "0.7.4"
 
 import logging
