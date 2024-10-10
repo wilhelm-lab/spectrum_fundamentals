@@ -444,7 +444,7 @@ class Percolator(Metric):
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
 
-    def calc(self):
+    def calc(self):  # noqa: C901
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
@@ -464,6 +464,11 @@ class Percolator(Metric):
             if self.neutral_loss_flag:
                 self.metrics_val["ANNOTATED_NL_COUNT"] = self.metadata["ANNOTATED_NL_COUNT"]
                 self.metrics_val["EXPECTED_NL_COUNT"] = self.metadata["EXPECTED_NL_COUNT"]
+                columns_to_remove = []
+                for col in self.metrics_val.columns:
+                    if "vs_predicted" in col:
+                        columns_to_remove.append(col)
+                self.metrics_val.drop(columns=columns_to_remove, inplace=True)
             if self.drop_miss_cleavage_flag:
                 self.metrics_val.drop(columns=["missedCleavages", "KR"], inplace=True)
             if self.xl:
