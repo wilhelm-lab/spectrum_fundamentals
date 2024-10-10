@@ -336,9 +336,7 @@ class Percolator(Metric):
         else:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
             self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
-            self.metrics_val["Proteins"] = self.metadata[
-                "MODIFIED_SEQUENCE"
-            ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+            self.metrics_val["Proteins"] = self.metadata["PROTEINS"]
 
         if "SCAN_EVENT_NUMBER" in self.metadata.columns:
             spec_id_cols.append("SCAN_EVENT_NUMBER")
