@@ -395,7 +395,7 @@ class TestPercolator:
         # np.testing.assert_almost_equal(percolator.metrics_val['ExpMass'][0], 900.50345678)
         np.testing.assert_string_equal(percolator.metrics_val["Peptide"][0], "_.AAIGEATRL._")
         np.testing.assert_string_equal(
-            percolator.metrics_val["Proteins"][0], "AAIGEATRL"
+            percolator.metrics_val["Proteins"][0], "sp|O23523|RGGA_ARATH"
         )  # we don't need the protein ID to get PSM / peptide results
 
         # features
