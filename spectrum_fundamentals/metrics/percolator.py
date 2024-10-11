@@ -94,6 +94,7 @@ class Percolator(Metric):
             "mass_analyzer",
             "mz_range",
             "collision_energy",
+            "proteins",
         ]
 
         super().__init__(pred_intensities, true_intensities, mz)
