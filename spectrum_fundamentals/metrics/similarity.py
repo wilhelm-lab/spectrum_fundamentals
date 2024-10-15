@@ -481,9 +481,7 @@ class SimilarityMetrics(Metric):
             true_intensities, pred_intensities, "max"
         )
         self.metrics_val[f"mse{key_suffix}"] = SimilarityMetrics.abs_diff(true_intensities, pred_intensities, "mse")
-        self.metrics_val[f"modified_cosine{key_suffix}"] = SimilarityMetrics.modified_cosine(
-            true_intensities, pred_intensities, self.mz, self.mz
-        )
+        
 
         col_names_spectral_angle = [
             f"spectral_angle_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
@@ -538,4 +536,8 @@ class SimilarityMetrics(Metric):
             for i, col_name_spearman_corr in enumerate(col_names_spearman_corr):
                 self.metrics_val[col_name_spearman_corr] = SimilarityMetrics.correlation(
                     true_intensities, pred_intensities, i + 1, "spearman"
+                )
+
+            self.metrics_val[f"modified_cosine{key_suffix}"] = SimilarityMetrics.modified_cosine(
+            true_intensities, pred_intensities, self.mz, self.mz
                 )

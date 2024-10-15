@@ -64,9 +64,9 @@ class Percolator(Metric):
         self.all_features_flag = all_features_flag
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
-        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
-
-        super().__init__(pred_intensities, true_intensities, mz)
+        
+        super().__init__(pred_intensities, true_intensities, mz, xl="CROSSLINKER_TYPE" in self.metadata.columns)
+       
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -278,12 +278,10 @@ class Percolator(Metric):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
         if self.xl:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE_A", "MODIFIED_SEQUENCE_B", "PRECURSOR_CHARGE"]
-            self.metrics_val["Peptide"] = (
-                self.metadata["MODIFIED_SEQUENCE_A"] + "_" + self.metadata["MODIFIED_SEQUENCE_B"]
-            ).apply(lambda x: "_." + x + "._")
-            self.metrics_val["Proteins"] = (
-                self.metadata["MODIFIED_SEQUENCE_A"] + "_" + self.metadata["MODIFIED_SEQUENCE_B"]
-            )
+            modified_sequence_a = self.metadata["MODIFIED_SEQUENCE_A"].astype(str)
+            modified_sequence_b = self.metadata["MODIFIED_SEQUENCE_B"].astype(str)
+            self.metrics_val["Peptide"] = (modified_sequence_a + "_" + modified_sequence_b).apply(lambda x: "_." + x + "._")
+            self.metrics_val["Proteins"] = (modified_sequence_a + "_" + modified_sequence_b)
             self.metrics_val["Label"] = self.target_decoy_labels
         else:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
@@ -466,10 +464,10 @@ class Percolator(Metric):
             # self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr',
             # 'spectral_angle']], 'spectral_angle')
             pass
-        else:
-            self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
-                self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
-            )
+        #else:
+           # self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
+               # self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
+           # )
 
         self._reorder_columns_for_percolator()
 
