@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from spectrum_fundamentals import constants
-from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl
+from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl, retrieve_ion_types
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ def match_peaks(
     tmt_n_term: int,
     unmod_sequence: str,
     charge: int,
-) -> List[Dict[str, Union[str, int, float]]]:
+) -> Tuple[List[Dict[str, Union[str, int, float]]], int]:
     """
     Matching experimental peaks with theoretical fragment ions.
 
@@ -31,12 +31,12 @@ def match_peaks(
     """
     start_peak = 0
     no_of_peaks = len(peaks_intensity)
-    max_intensity = 1.0
+    max_intensity = 0.0
     row_list = []
     temp_list = []
     next_start_peak = 0
-    seq_len = len(unmod_sequence)
     matched_peak = False
+    count_annotated_nl = 0
     fragment_no: float
     for fragment in fragments_meta_data:
         min_mass = fragment["min_mass"]
@@ -55,29 +55,34 @@ def match_peaks(
                 start_peak += 1
                 continue
             if (
-                not (fragment["ion_type"] == "b" and fragment_no == 1)
+                not (fragment["ion_type"][0] == "b" and fragment_no == 1)
                 or (unmod_sequence[0] == "R" or unmod_sequence[0] == "H" or unmod_sequence[0] == "K")
-                and (tmt_n_term == 1)
+                or (tmt_n_term == 2)
             ):
-                row_list.append(
-                    {
-                        "ion_type": fragment["ion_type"],
-                        "no": fragment_no,
-                        "charge": fragment["charge"],
-                        "exp_mass": peak_mass,
-                        "theoretical_mass": fragment["mass"],
-                        "intensity": peak_intensity,
-                    }
-                )
-                if peak_intensity > max_intensity and fragment_no < seq_len:
-                    max_intensity = float(peak_intensity)
+                # For now only counting neutral loss peaks this can change with different models later
+                if fragment["neutral_loss"] == "":
+                    row_list.append(
+                        {
+                            "ion_type": fragment["ion_type"],
+                            "no": fragment_no,
+                            "charge": fragment["charge"],
+                            "exp_mass": peak_mass,
+                            "theoretical_mass": fragment["mass"],
+                            "intensity": peak_intensity,
+                        }
+                    )
+                    if peak_intensity > max_intensity:
+                        max_intensity = float(peak_intensity)
+                else:
+                    count_annotated_nl += 1
+
             matched_peak = True
             next_start_peak = start_peak
             start_peak += 1
     for row in row_list:
         row["intensity"] = float(row["intensity"]) / max_intensity
         temp_list.append(row)
-    return temp_list
+    return temp_list, count_annotated_nl
 
 
 def handle_multiple_matches(
@@ -119,7 +124,12 @@ def handle_multiple_matches(
 
 
 def annotate_spectra(
-    un_annot_spectra: pd.DataFrame, mass_tolerance: Optional[float] = None, unit_mass_tolerance: Optional[str] = None
+    un_annot_spectra: pd.DataFrame,
+    mass_tolerance: Optional[float] = None,
+    unit_mass_tolerance: Optional[str] = None,
+    custom_mods: Optional[Dict[str, float]] = None,
+    fragmentation_method: str = "HCD",
+    annotate_neutral_loss: Optional[bool] = False,
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -138,19 +148,37 @@ def annotate_spectra(
     :param un_annot_spectra: a Pandas DataFrame containing the raw peaks and metadata to be annotated
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param fragmentation_method: fragmentation method that was used
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
+    :param annotate_neutral_loss: flag to indicate whether to annotate neutral losses or not
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
     for row in un_annot_spectra.values:
-        results = parallel_annotate(row, index_columns, mass_tolerance, unit_mass_tolerance)
+        results = parallel_annotate(
+            row,
+            index_columns,
+            mass_tolerance,
+            unit_mass_tolerance,
+            fragmentation_method=fragmentation_method,
+            custom_mods=custom_mods,
+            annotate_neutral_losses=annotate_neutral_loss,
+        )
         if not results:
             continue
         raw_file_annotations.append(results)
     results_df = pd.DataFrame(raw_file_annotations)
 
     if "CROSSLINKER_TYPE" not in index_columns:
-        results_df.columns = ["INTENSITIES", "MZ", "CALCULATED_MASS", "removed_peaks"]
+        results_df.columns = [
+            "INTENSITIES",
+            "MZ",
+            "CALCULATED_MASS",
+            "removed_peaks",
+            "ANNOTATED_NL_COUNT",
+            "EXPECTED_NL_COUNT",
+        ]
     else:
         results_df.columns = [
             "INTENSITIES_A",
@@ -269,7 +297,7 @@ def generate_annotation_matrix_xl(
 
 
 def generate_annotation_matrix(
-    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int
+    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int, fragmentation_method: str = "HCD"
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
@@ -277,16 +305,21 @@ def generate_annotation_matrix(
     :param matched_peaks: matched peaks needed to be converted
     :param unmod_seq: Un modified peptide sequence
     :param charge: Precursor charge
+    :param fragmentation_method: fragmentation method that was used
     :return: numpy array of intensities and numpy array of masses
     """
-    intensity = np.full(constants.VEC_LENGTH, -1.0)
-    mass = np.full(constants.VEC_LENGTH, -1.0)
+    ion_types = retrieve_ion_types(fragmentation_method)
+    charge_const = 3
+    vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
+
+    intensity = np.full(vec_length, -1.0)
+    mass = np.full(vec_length, -1.0)
 
     # change values to zeros
     if len(unmod_seq) < constants.SEQ_LEN:
-        peaks_range = range(0, ((len(unmod_seq) - 1) * 6))
+        peaks_range = range(0, ((len(unmod_seq) - 1) * charge_const * len(ion_types)))
     else:
-        peaks_range = range(0, ((constants.SEQ_LEN - 1) * 6))
+        peaks_range = range(0, ((constants.SEQ_LEN - 1) * charge_const * len(ion_types)))
 
     if charge == 1:
         available_peaks = [index for index in peaks_range if (index % 3 == 0)]
@@ -305,10 +338,8 @@ def generate_annotation_matrix(
     exp_mass_col = matched_peaks.columns.get_loc("exp_mass")
 
     for peak in matched_peaks.values:
-        if peak[ion_type].startswith("y"):
-            peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1)
-        else:
-            peak_pos = ((peak[no_col] - 1) * 6) + (peak[charge_col] - 1) + 3
+        ion_type_index = ion_types.index(peak[ion_type].split("-", 1)[0])
+        peak_pos = ((peak[no_col] - 1) * charge_const * len(ion_types)) + (peak[charge_col] - 1) + 3 * ion_type_index
 
         if peak_pos >= constants.VEC_LENGTH:
             continue
@@ -316,7 +347,9 @@ def generate_annotation_matrix(
         mass[peak_pos] = peak[exp_mass_col]
 
     if len(unmod_seq) < constants.SEQ_LEN:
-        mask_peaks = range((len(unmod_seq) - 1) * 6, ((len(unmod_seq) - 1) * 6) + 6)
+        mask_peaks = range(
+            (len(unmod_seq) - 1) * charge_const * len(ion_types), ((len(unmod_seq)) * charge_const * len(ion_types))
+        )
         intensity[mask_peaks] = -1.0
         mass[mask_peaks] = -1.0
 
@@ -328,9 +361,12 @@ def parallel_annotate(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
+    custom_mods: Optional[Dict[str, float]] = None,
+    fragmentation_method: str = "HCD",
+    annotate_neutral_losses: Optional[bool] = False,
 ) -> Optional[
     Union[
-        Tuple[np.ndarray, np.ndarray, float, int],
+        Tuple[np.ndarray, np.ndarray, float, int, int, int],
         Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, int, int],
     ]
 ]:
@@ -348,6 +384,9 @@ def parallel_annotate(
     :param index_columns: a dictionary that contains the index columns of the spectrum
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
+    :param fragmentation_method: fragmentation method that was used
+    :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -355,12 +394,20 @@ def parallel_annotate(
     if xl_type_col is None:
         if spectrum[index_columns["PEPTIDE_LENGTH"]] > 30:  # this was in initialize peaks but can be checked prior
             return None
-        return _annotate_linear_spectrum(spectrum, index_columns, mass_tolerance, unit_mass_tolerance)
+        return _annotate_linear_spectrum(
+            spectrum,
+            index_columns,
+            mass_tolerance,
+            unit_mass_tolerance,
+            fragmentation_method=fragmentation_method,
+            custom_mods=custom_mods,
+            add_neutral_losses=annotate_neutral_losses,
+        )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
         return None
     return _annotate_crosslinked_spectrum(
-        spectrum, index_columns, spectrum[xl_type_col], mass_tolerance, unit_mass_tolerance
+        spectrum, index_columns, spectrum[xl_type_col], mass_tolerance, unit_mass_tolerance, custom_mods=custom_mods
     )
 
 
@@ -369,6 +416,9 @@ def _annotate_linear_spectrum(
     index_columns: Dict[str, int],
     mass_tolerance: Optional[float],
     unit_mass_tolerance: Optional[str],
+    custom_mods: Optional[Dict[str, float]] = None,
+    fragmentation_method: str = "HCD",
+    add_neutral_losses: Optional[bool] = False,
 ):
     """
     Annotate a linear peptide spectrum.
@@ -377,19 +427,26 @@ def _annotate_linear_spectrum(
     :param index_columns: Index columns of the spectrum
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
+    :param fragmentation_method: fragmentation method that was used
+    :param add_neutral_losses: flag to indicate whether to annotate neutral losses or not
     :return: Annotated spectrum
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
-    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks(
-        spectrum[index_columns[mod_seq_column]],
-        spectrum[index_columns["MASS_ANALYZER"]],
-        spectrum[index_columns["PRECURSOR_CHARGE"]],
-        mass_tolerance,
-        unit_mass_tolerance,
+
+    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass, expected_nl = initialize_peaks(
+        sequence=spectrum[index_columns[mod_seq_column]],
+        mass_analyzer=spectrum[index_columns["MASS_ANALYZER"]],
+        charge=spectrum[index_columns["PRECURSOR_CHARGE"]],
+        mass_tolerance=mass_tolerance,
+        unit_mass_tolerance=unit_mass_tolerance,
+        fragmentation_method=fragmentation_method,
+        custom_mods=custom_mods,
+        add_neutral_losses=add_neutral_losses,
     )
-    matched_peaks = match_peaks(
+    matched_peaks, count_annotated_nl = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
         spectrum[index_columns["MZ"]],
@@ -398,16 +455,20 @@ def _annotate_linear_spectrum(
         spectrum[index_columns["PRECURSOR_CHARGE"]],
     )
 
+    ion_types = retrieve_ion_types(fragmentation_method)
+    charge_const = 3
+    vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
+
     if len(matched_peaks) == 0:
-        intensity = np.full(174, 0.0)
-        mass = np.full(174, 0.0)
-        return intensity, mass, calc_mass, 0
+        intensity = np.full(vec_length, 0.0)
+        mass = np.full(vec_length, 0.0)
+        return intensity, mass, calc_mass, 0, 0, 0
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
-        matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]]
+        matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]], fragmentation_method
     )
-    return intensities, mass, calc_mass, removed_peaks
+    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl
 
 
 def _annotate_crosslinked_spectrum(
@@ -416,6 +477,7 @@ def _annotate_crosslinked_spectrum(
     crosslinker_type: str,
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
+    custom_mods: Optional[Dict[str, float]] = None,
 ):
     """
     Annotate a crosslinked peptide spectrum.
@@ -425,6 +487,7 @@ def _annotate_crosslinked_spectrum(
     :param crosslinker_type: Type of crosslinker used
     :param mass_tolerance: Mass tolerance for calculating min and max mass
     :param unit_mass_tolerance: Unit for the mass tolerance (da or ppm)
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :raises ValueError: if unsupported crosslinker type was supplied.
 
     :return: Annotated spectrum
@@ -451,8 +514,9 @@ def _annotate_crosslinked_spectrum(
 
         else:
             array_size = 348
+        inputs.append(custom_mods)
         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks_xl(*inputs)
-        matched_peaks = match_peaks(
+        matched_peaks, annotated_nl = match_peaks(
             fragments_meta_data,
             np.array(spectrum[index_columns["INTENSITIES"]]),
             np.array(spectrum[index_columns["MZ"]]),  # Convert to numpy array

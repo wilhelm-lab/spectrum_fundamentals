@@ -57,16 +57,47 @@ class Percolator(Metric):
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
+        additional_columns: Optional[Union[str, list]] = None,
+        neutral_loss_flag: Optional[bool] = False,
+        drop_miss_cleavage_flag: Optional[bool] = False,
     ):
         """Initialize a Percolator obj."""
         self.metadata = metadata
         self.input_type = input_type
         self.all_features_flag = all_features_flag
+        self.additional_columns = additional_columns
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
-        
-        super().__init__(pred_intensities, true_intensities, mz, xl="CROSSLINKER_TYPE" in self.metadata.columns)
-       
+        self.neutral_loss_flag = neutral_loss_flag
+        self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
+        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
+        self.base_columns = [
+            "raw_file",
+            "scan_number",
+            "modified_sequence",
+            "precursor_charge",
+            "scan_event_number",
+            "mass",
+            "score",
+            "reverse",
+            "sequence",
+            "peptide_length",
+            "fragmentation",
+            "calculated_mass",
+            "sequence_a",
+            "sequence_b",
+            "modified_sequence_a",
+            "modified_sequence_b",
+            "retention_time",
+            "predicted_irt",
+            "instrument_types",
+            "mass_analyzer",
+            "mz_range",
+            "collision_energy",
+            "proteins",
+        ]
+
+        super().__init__(pred_intensities, true_intensities, mz)
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -140,7 +171,7 @@ class Percolator(Metric):
                 observed_rts = observed_rts[keep_idxs[0]]
                 predicted_rts = predicted_rts[keep_idxs[0]]
 
-                discard_percentage *= 1.5
+                discard_percentage *= 1.2
 
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
@@ -274,6 +305,24 @@ class Percolator(Metric):
         self.metrics_val["HCD"] = (self.metadata["FRAGMENTATION"] == "HCD").astype(int)
         self.metrics_val["CID"] = (self.metadata["FRAGMENTATION"] == "CID").astype(int)
 
+    def add_additional_features(self):
+        """Add additional features from custom serch results if specified."""
+        feature_cols = []
+
+        if isinstance(self.additional_columns, list):
+            feature_cols = self.additional_columns
+        elif isinstance(self.additional_columns, str) and (self.additional_columns.lower() == "all"):
+            feature_cols = [x for x in self.metadata.columns if x.lower() not in set(self.base_columns)]
+            feature_cols = [x for x in feature_cols if not x.lower().startswith("unnamed")]  # remove Unnamed cols
+
+        for col in feature_cols:
+            if col not in self.metadata.columns:
+                raise ValueError(f"provided column: {col} cannot be found in search results.")
+            elif not pd.api.types.is_numeric_dtype(self.metadata[col]):
+                raise ValueError(f"wrong datatype for column: {col}, datatype must be numerical.")
+            else:
+                self.metrics_val[col] = self.metadata[col]
+
     def add_percolator_metadata_columns(self):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
         if self.xl:
@@ -286,9 +335,7 @@ class Percolator(Metric):
         else:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
             self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
-            self.metrics_val["Proteins"] = self.metadata[
-                "MODIFIED_SEQUENCE"
-            ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+            self.metrics_val["Proteins"] = self.metadata["PROTEINS"]
 
         if "SCAN_EVENT_NUMBER" in self.metadata.columns:
             spec_id_cols.append("SCAN_EVENT_NUMBER")
@@ -346,8 +393,9 @@ class Percolator(Metric):
 
         accepted_indices = scores_df.index[scores_df["fdr"] < fdr_cutoff]
         if len(accepted_indices) == 0:
-            logger.error(
-                f"Could not find any targets below {fdr_cutoff} out of {len(scores_df.index)} targets in total"
+            logger.warning(
+                f"Could not find any targets below {fdr_cutoff} out of {len(scores_df.index)} "
+                "targets in total. Retrying with higher FDR cutoff..."
             )
             return np.array([])
 
@@ -395,13 +443,15 @@ class Percolator(Metric):
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
 
-    def calc(self):
+    def calc(self):  # noqa: C901
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
         np.random.seed(1)
         # add Prosit or Andromeda features
         if self.input_type == "rescore":
+            # add additional features
+            self.add_additional_features()
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
             fragments_ratio.calc(xl=self.xl)
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
@@ -410,52 +460,61 @@ class Percolator(Metric):
             self.metrics_val = pd.concat(
                 [self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1
             )
+            if self.neutral_loss_flag:
+                self.metrics_val["ANNOTATED_NL_COUNT"] = self.metadata["ANNOTATED_NL_COUNT"]
+                self.metrics_val["EXPECTED_NL_COUNT"] = self.metadata["EXPECTED_NL_COUNT"]
+                columns_to_remove = []
+                for col in self.metrics_val.columns:
+                    if "vs_predicted" in col:
+                        columns_to_remove.append(col)
+                self.metrics_val.drop(columns=columns_to_remove, inplace=True)
+            if self.drop_miss_cleavage_flag:
+                self.metrics_val.drop(columns=["missedCleavages", "KR"], inplace=True)
             if self.xl:
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:
                 lda_failed = False
                 idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
                 current_fdr = self.fdr_cutoff
-                while len(idxs_below_lda_fdr) == 0:
+                while len(idxs_below_lda_fdr) <= 500:
                     current_fdr += 0.01
                     idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
                     if current_fdr >= 0.1:
                         lda_failed = True
                         break
+                if lda_failed:
+                    sampled_idxs = Percolator.sample_balanced_over_bins(
+                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
+                    )
                 else:
-                    if lda_failed:
-                        sampled_idxs = Percolator.sample_balanced_over_bins(
-                            self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
-                        )
-                    else:
-                        sampled_idxs = Percolator.sample_balanced_over_bins(
-                            self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
-                        )
-
-                    file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
-                    aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
-                        file_sample["RETENTION_TIME"],
-                        file_sample["PREDICTED_IRT"],
-                        self.metadata["PREDICTED_IRT"],
-                        self.regression_method,
+                    sampled_idxs = Percolator.sample_balanced_over_bins(
+                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
                     )
 
-                    self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
-                    self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
-                    self.metrics_val["iRT"] = aligned_predicted_rts
-                    self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
-                    self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
+                file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
+                aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
+                    file_sample["RETENTION_TIME"],
+                    file_sample["PREDICTED_IRT"],
+                    self.metadata["PREDICTED_IRT"],
+                    self.regression_method,
+                )
 
-                    median_abs_error_lda_targets = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
-                    logger.info(
-                        "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
-                        f"{median_abs_error_lda_targets}"
-                    )
-                    logger.debug(
-                        self.metrics_val[["RT", "pred_RT", "abs_rt_diff", "lda_scores"]].iloc[idxs_below_lda_fdr, :]
-                    )
+                self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
+                self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
+                self.metrics_val["iRT"] = aligned_predicted_rts
+                self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
+                self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
+                if lda_failed:
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"])
+                else:
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
+                logger.info(
+                    "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
+                    f"{median_abs_error}"
+                )
 
         else:
+            self.add_additional_features()
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
 
         self.add_percolator_metadata_columns()
@@ -495,6 +554,10 @@ def spline(knots: int, x: np.ndarray, y: np.ndarray):
     """Calculates spline fitting."""
     x_new = np.linspace(0, 1, knots + 2)[1:-1]
     q_knots = np.quantile(x, x_new)
+    if q_knots[0] == 0:
+        q_knots[0] += 1e-6
+    if q_knots[0] == q_knots[1]:
+        q_knots[1] += 1e-6
     t, c, k = interpolate.splrep(x, y, t=q_knots, s=2)
     yfit = interpolate.BSpline(t, c, k)(x)
     return yfit, t, c, k

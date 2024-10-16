@@ -1,23 +1,25 @@
-.. include:: ../README.rst
-===========================
-Welcome to spectrum_fundamentals's documentation!
-==========================================================
+.. include:: readme.rst
+
+.. include:: _key_contributors.rst
+
+.. role:: small
+
+.. role:: smaller
+
+.. include:: quickstart.rst
+
+.. include:: news.rst
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Contents:
 
-   readme
    installation
    usage
-   reference
+   API
    contributing
-   authors
-   code_of_conduct
-   modules
+   reference
 
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. _github: https://github.com/wilhelm-lab/spectrum_fundamentals
+
