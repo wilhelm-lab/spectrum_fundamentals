@@ -510,7 +510,7 @@ ION_DELTAS = {
 
 CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
 POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
-
+POSITIONS_XL = [x for x in range(1, 59)]
 ANNOTATION_FRAGMENT_TYPE = []
 ANNOTATION_FRAGMENT_CHARGE = []
 ANNOTATION_FRAGMENT_NUMBER = []
