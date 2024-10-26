@@ -481,7 +481,6 @@ class SimilarityMetrics(Metric):
             true_intensities, pred_intensities, "max"
         )
         self.metrics_val[f"mse{key_suffix}"] = SimilarityMetrics.abs_diff(true_intensities, pred_intensities, "mse")
-        
 
         col_names_spectral_angle = [
             f"spectral_angle_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
@@ -539,5 +538,5 @@ class SimilarityMetrics(Metric):
                 )
 
             self.metrics_val[f"modified_cosine{key_suffix}"] = SimilarityMetrics.modified_cosine(
-            true_intensities, pred_intensities, self.mz, self.mz
-                )
+                true_intensities, pred_intensities, self.mz, self.mz
+            )

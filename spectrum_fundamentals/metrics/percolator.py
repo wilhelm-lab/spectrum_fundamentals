@@ -72,7 +72,7 @@ class Percolator(Metric):
         self.fdr_cutoff = fdr_cutoff
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
-        
+
         self.base_columns = [
             "raw_file",
             "scan_number",
@@ -329,8 +329,10 @@ class Percolator(Metric):
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE_A", "MODIFIED_SEQUENCE_B", "PRECURSOR_CHARGE"]
             modified_sequence_a = self.metadata["MODIFIED_SEQUENCE_A"].astype(str)
             modified_sequence_b = self.metadata["MODIFIED_SEQUENCE_B"].astype(str)
-            self.metrics_val["Peptide"] = (modified_sequence_a + "_" + modified_sequence_b).apply(lambda x: "_." + x + "._")
-            self.metrics_val["Proteins"] = (modified_sequence_a + "_" + modified_sequence_b)
+            self.metrics_val["Peptide"] = (modified_sequence_a + "_" + modified_sequence_b).apply(
+                lambda x: "_." + x + "._"
+            )
+            self.metrics_val["Proteins"] = modified_sequence_a + "_" + modified_sequence_b
             self.metrics_val["Label"] = self.target_decoy_labels
         else:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
@@ -523,10 +525,10 @@ class Percolator(Metric):
             # self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr',
             # 'spectral_angle']], 'spectral_angle')
             pass
-        #else:
-           # self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
-               # self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
-           # )
+        # else:
+        # self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
+        # self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
+        # )
 
         self._reorder_columns_for_percolator()
 
