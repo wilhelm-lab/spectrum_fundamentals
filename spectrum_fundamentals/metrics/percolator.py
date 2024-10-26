@@ -525,10 +525,10 @@ class Percolator(Metric):
             # self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr',
             # 'spectral_angle']], 'spectral_angle')
             pass
-        # else:
-        # self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
-        # self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
-        # )
+        else:
+            self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
+                self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
+            )
 
         self._reorder_columns_for_percolator()
 
