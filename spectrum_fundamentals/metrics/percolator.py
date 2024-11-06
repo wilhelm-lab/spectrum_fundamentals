@@ -62,6 +62,8 @@ class Percolator(Metric):
         drop_miss_cleavage_flag: Optional[bool] = False,
     ):
         """Initialize a Percolator obj."""
+        super().__init__(pred_intensities, true_intensities, mz, "CROSSLINKER_TYPE" in metadata.columns)
+
         self.metadata = metadata
         self.input_type = input_type
         self.all_features_flag = all_features_flag
@@ -70,7 +72,7 @@ class Percolator(Metric):
         self.fdr_cutoff = fdr_cutoff
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
-        self.xl = "CROSSLINKER_TYPE" in self.metadata.columns
+
         self.base_columns = [
             "raw_file",
             "scan_number",
@@ -94,9 +96,8 @@ class Percolator(Metric):
             "mass_analyzer",
             "mz_range",
             "collision_energy",
+            "proteins",
         ]
-
-        super().__init__(pred_intensities, true_intensities, mz)
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -328,19 +329,17 @@ class Percolator(Metric):
         """Add metadata columns needed by percolator, e.g. to identify a PSM."""
         if self.xl:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE_A", "MODIFIED_SEQUENCE_B", "PRECURSOR_CHARGE"]
-            self.metrics_val["Peptide"] = (
-                self.metadata["MODIFIED_SEQUENCE_A"] + "_" + self.metadata["MODIFIED_SEQUENCE_B"]
-            ).apply(lambda x: "_." + x + "._")
-            self.metrics_val["Proteins"] = (
-                self.metadata["MODIFIED_SEQUENCE_A"] + "_" + self.metadata["MODIFIED_SEQUENCE_B"]
+            modified_sequence_a = self.metadata["MODIFIED_SEQUENCE_A"].astype(str)
+            modified_sequence_b = self.metadata["MODIFIED_SEQUENCE_B"].astype(str)
+            self.metrics_val["Peptide"] = (modified_sequence_a + "_" + modified_sequence_b).apply(
+                lambda x: "_." + x + "._"
             )
+            self.metrics_val["Proteins"] = modified_sequence_a + "_" + modified_sequence_b
             self.metrics_val["Label"] = self.target_decoy_labels
         else:
             spec_id_cols = ["RAW_FILE", "SCAN_NUMBER", "MODIFIED_SEQUENCE", "PRECURSOR_CHARGE"]
             self.metrics_val["Peptide"] = self.metadata["MODIFIED_SEQUENCE"].apply(lambda x: "_." + x + "._")
-            self.metrics_val["Proteins"] = self.metadata[
-                "MODIFIED_SEQUENCE"
-            ]  # we don't need the protein ID to get PSM / peptide results, fill with peptide sequence
+            self.metrics_val["Proteins"] = self.metadata["PROTEINS"]
 
         if "SCAN_EVENT_NUMBER" in self.metadata.columns:
             spec_id_cols.append("SCAN_EVENT_NUMBER")
@@ -469,6 +468,11 @@ class Percolator(Metric):
             if self.neutral_loss_flag:
                 self.metrics_val["ANNOTATED_NL_COUNT"] = self.metadata["ANNOTATED_NL_COUNT"]
                 self.metrics_val["EXPECTED_NL_COUNT"] = self.metadata["EXPECTED_NL_COUNT"]
+                columns_to_remove = []
+                for col in self.metrics_val.columns:
+                    if "vs_predicted" in col:
+                        columns_to_remove.append(col)
+                self.metrics_val.drop(columns=columns_to_remove, inplace=True)
             if self.drop_miss_cleavage_flag:
                 self.metrics_val.drop(columns=["missedCleavages", "KR"], inplace=True)
             if self.xl:
