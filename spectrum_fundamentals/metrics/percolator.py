@@ -154,8 +154,9 @@ class Percolator(Metric):
         fit_func = get_fitting_func(curve_fitting_method)
         discard_percentage = 0.1  # in percents, so 0.1 = 0.1% (not 10%!)
         median_abs_error = 1.0
+        total_discarded_percentage = 0.1
 
-        while discard_percentage < 50.0 and median_abs_error > 0.02:
+        while total_discarded_percentage < 40.0 and len(observed_rts) >= 10 and median_abs_error > 0.02:
             params = fit_func(predicted_rts, observed_rts)
             aligned_rts_predicted = params[0]
 
@@ -171,6 +172,7 @@ class Percolator(Metric):
                 predicted_rts = predicted_rts[keep_idxs[0]]
 
                 discard_percentage *= 1.2
+                total_discarded_percentage += discard_percentage
 
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
@@ -349,7 +351,7 @@ class Percolator(Metric):
 
     def apply_lda_and_get_indices_below_fdr(
         self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
-    ):
+    ):  # noqa: B036
         """
         Applies a linear discriminant analysis on the features calculated so far (before retention time alignment) \
         to estimate false discovery rates (FDRs).
@@ -446,15 +448,16 @@ class Percolator(Metric):
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
 
-    def calc(self):
+    def calc(self):  # noqa: C901
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
         np.random.seed(1)
         # add Prosit or Andromeda features
+        self.add_additional_features()
+
         if self.input_type == "rescore":
             # add additional features
-            self.add_additional_features()
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
             fragments_ratio.calc(xl=self.xl)
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
@@ -472,9 +475,17 @@ class Percolator(Metric):
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:
                 lda_failed = False
-                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+                try:
+                    idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+                except ValueError:
+                    lda_failed = True
+                    pass
                 current_fdr = self.fdr_cutoff
-                while len(idxs_below_lda_fdr) <= 500:
+                while (
+                    not lda_failed
+                    and len(idxs_below_lda_fdr) <= 500
+                    and (len(idxs_below_lda_fdr) / len(self.target_decoy_labels)) < 0.5
+                ):
                     current_fdr += 0.01
                     idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
                     if current_fdr >= 0.1:
@@ -490,6 +501,7 @@ class Percolator(Metric):
                     )
 
                 file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
+
                 aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
                     file_sample["RETENTION_TIME"],
                     file_sample["PREDICTED_IRT"],
@@ -504,15 +516,22 @@ class Percolator(Metric):
                 self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
                 if lda_failed:
                     median_abs_error = np.median(self.metrics_val["abs_rt_diff"])
+                    delta_95_error = np.percentile(self.metrics_val["abs_rt_diff"], 95)
                 else:
                     median_abs_error = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
+                    delta_95_error = np.percentile(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr], 95)
+
                 logger.info(
                     "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
                     f"{median_abs_error}"
                 )
-
+                logger.info(
+                    "Delta 95 absolute error predicted vs observed retention time on targets < 1% FDR: "
+                    f"{delta_95_error}"
+                )
+                # if 'lda_scores' in self.metrics_val.columns:
+                #    self.metrics_val.drop(columns=['lda_scores'],inplace=True)
         else:
-            self.add_additional_features()
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
 
         self.add_percolator_metadata_columns()
