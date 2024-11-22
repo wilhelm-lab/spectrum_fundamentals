@@ -138,10 +138,7 @@ XISEARCH_VAR_MODS = {
 # OpenMS constants #
 #######################
 
-OPENMS_VAR_MODS = {
-    "M(Oxidation)": "M[UNIMOD:35]",
-    "C(Carbamidomethyl)": "C[UNIMOD:4]"
-}
+OPENMS_VAR_MODS = {"M(Oxidation)": "M[UNIMOD:35]", "C(Carbamidomethyl)": "C[UNIMOD:4]"}
 
 ####################
 # MASS CALCULATION #

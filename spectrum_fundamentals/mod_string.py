@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from .constants import MOD_MASSES, MOD_NAMES, SPECTRONAUT_MODS, XISEARCH_VAR_MODS, OPENMS_VAR_MODS
+from .constants import MOD_MASSES, MOD_NAMES, OPENMS_VAR_MODS, SPECTRONAUT_MODS, XISEARCH_VAR_MODS
 
 
 def sage_to_internal(sequences: List[str], mods: Dict[str, str]) -> List[str]:
@@ -188,6 +188,7 @@ def msfragger_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mo
     """
     return _to_internal(sequences=sequences, mods=mods)
 
+
 def openms_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
     """
     Function to translate a OpenMS modstring to the Prosit format.
@@ -200,9 +201,8 @@ def openms_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]
     :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary.
     :return: a list of modified sequences
     """
-
     if fixed_mods is None:
-          fixed_mods = {"C": "C[UNIMOD:4]"}
+        fixed_mods = {"C": "C[UNIMOD:4]"}
     err_msg = f"Provided illegal fixed mod, supported modifications are {set(OPENMS_VAR_MODS.values())}."
     assert all(x in OPENMS_VAR_MODS.values() for x in fixed_mods.values()), err_msg
 
@@ -229,10 +229,11 @@ def openms_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]
         :return: substitution string for the given match
         """
         key = match.string[match.start() : match.end()]
-      
+
         return replacements[key]
 
     return [regex.sub(find_replacement, seq) for seq in sequences]
+
 
 def internal_without_mods(sequences: List[str]) -> List[str]:
     """
