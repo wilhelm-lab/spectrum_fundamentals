@@ -1,18 +1,20 @@
+import itertools
 import logging
 import re
 from operator import itemgetter
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from . import constants as constants
+import spectrum_fundamentals.constants as c
+
 from .mod_string import internal_without_mods
 
 logger = logging.getLogger(__name__)
 
 
-def _get_modifications(peptide_sequence: str) -> Dict[int, float]:
+def _get_modifications(peptide_sequence: str, custom_mods: Optional[Dict[str, float]] = None) -> Dict[int, float]:
     """
     Get modification masses and position in a peptide sequence.
 
@@ -24,6 +26,7 @@ def _get_modifications(peptide_sequence: str) -> Dict[int, float]:
     modification was present are returned.
 
     :param peptide_sequence: Modified peptide sequence
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :return: modification_deltas
     """
     modification_deltas = {}
@@ -37,37 +40,39 @@ def _get_modifications(peptide_sequence: str) -> Dict[int, float]:
     pattern = re.compile(r"\[.{8}[^\]]*\]")
     matches = pattern.finditer(peptide_sequence)
 
+    mod_masses = c.MOD_MASSES | (custom_mods or {})
+
     for match in matches:
-        start_pos = match.start()
-        end_pos = match.end()
-        modification_deltas[start_pos - offset] = constants.MOD_MASSES[peptide_sequence[start_pos:end_pos]]
+        start_pos, end_pos = match.span()
+        modification_deltas[start_pos - offset] = mod_masses[match.group()]
         offset += end_pos - start_pos
 
     return modification_deltas
 
 
-def compute_peptide_mass(sequence: str) -> float:
+def compute_peptide_mass(sequence: str, custom_mods: Optional[Dict[str, float]] = None) -> float:
     """
     Compute the theoretical mass of the peptide sequence.
 
     :param sequence: Modified peptide sequence
+    :param custom_mods: Custom Modifications with the identifier, the unimod equivalent and the respective mass
     :return: Theoretical mass of the sequence
     """
-    terminal_masses = 2 * constants.ATOM_MASSES["H"] + constants.ATOM_MASSES["O"]  # add terminal masses HO- and H-
+    terminal_masses = 2 * c.ATOM_MASSES["H"] + c.ATOM_MASSES["O"]  # add terminal masses HO- and H-
 
-    modification_deltas = _get_modifications(sequence)
+    modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
         terminal_masses += modification_deltas.get(-2, 0.0)  # prime with n_term_mod delta if present
 
-    peptide_sum = sum([constants.AA_MASSES[c] + modification_deltas.get(i, 0.0) for i, c in enumerate(sequence)])
+    peptide_sum = sum([c.AA_MASSES[aa] + modification_deltas.get(i, 0.0) for i, aa in enumerate(sequence)])
 
     return terminal_masses + peptide_sum
 
 
 def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
     """
-    Checks input validity for initialize_peacks when used with xl mode.
+    Checks input validity for initialize_peaks when used with xl mode.
 
     :param noncl_xl: whether the function is called with a non-cleavable xl modification
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
@@ -81,7 +86,134 @@ def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
             raise ValueError("Crosslinker position must be provided if using non cleavable XL mode.")
 
 
-def initialize_peaks(
+def retrieve_ion_types(fragmentation_method: str) -> List[str]:
+    """
+    Retrieve the ion types resulting from a fragmentation method in the correct order for dlomix predictions.
+
+    Given the fragmentation method the function returns all ion types that can result from it.
+
+    :param fragmentation_method: fragmentation method used during the MS
+    :raises ValueError: if fragmentation_method is not supported
+    :return: list of possible ion types
+    """
+    fragmentation_method = fragmentation_method.upper()
+    ions = c.FRAGMENTATION_TO_IONS_BY_PAIRS.get(fragmentation_method, [])
+    if not ions:
+        raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
+    return ions
+
+
+def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> List[str]:
+    """
+    Retrieve the ion types resulting from a fragmentation method in the correct order for peak initialization.
+
+    Given the fragmentation method the function returns all ion types that can result from it.
+
+    :param fragmentation_method: fragmentation method used during the MS
+    :raises ValueError: if fragmentation_method is not supported
+    :return: list of possible ion types
+    """
+    fragmentation_method = fragmentation_method.upper()
+    ions = c.FRAGMENTATION_TO_IONS_BY_DIRECTION.get(fragmentation_method, [])
+    if not ions:
+        raise ValueError(f"Unknown fragmentation method provided: {fragmentation_method}")
+    return ions
+
+
+def get_ion_delta(ion_types: List[str]) -> np.ndarray:
+    """
+    Calculate the mass of an ion.
+
+    :param ion_types: type of ions for which mass should be calculated
+    :return: numpy array with masses of the ions
+    """
+    return np.array([c.ION_DELTAS[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
+
+
+def _add_nl(neutral_losses: List[str], nl_dict: dict, start_aa_index: int, end_aa_index: int):
+    """
+    Adds neutral losses (NL) to a dictionary of neutral losses for specific amino acid indices.
+
+    This function updates the `nl_dict` by incorporating the provided `neutral_losses` into
+    the amino acid indices between `start_aa_index` and `end_aa_index`.
+
+    :param neutral_losses: A list of neutral losses to be added to the amino acids.
+    :param nl_dict: A dictionary where the keys are amino acid indices and the values are lists of neutral
+        losses associated with each index.
+    :param start_aa_index: The starting index of the amino acid range to which the neutral losses should be added.
+    :param end_aa_index: The ending index of the amino acid range to which the neutral losses should be added.
+    :returns: Updated dictionary with the added neutral losses for the specified amino acid indices.
+    """
+    first_nl = True
+    new_nls = {}
+    for nl in neutral_losses:
+        for i in range(start_aa_index, end_aa_index):
+            current_aa_nl = nl_dict[i]
+            if first_nl:
+                new_nls[i] = list(set(neutral_losses) - set(current_aa_nl))
+            if nl not in current_aa_nl:
+                current_aa_nl.append(nl)
+        first_nl = False
+    return nl_dict
+
+
+def _get_neutral_losses(peptide_sequence, modifications):
+    """
+    Get possible neutral losses and position in a peptide sequence.
+
+    :param peptide_sequence: Unmodified peptide sequence
+    :param modifications: modifications dict generated by _get_modifications from modified petide sequence.
+    :return: Dict with neutral losses position as an ID and composition as its value.
+    """
+    sequence_length = len(peptide_sequence)
+    keys = range(0, sequence_length - 1)
+
+    nl_b_ions = {key: [] for key in keys}
+    nl_y_ions = {key: [] for key in keys}
+
+    for i in range(0, sequence_length):
+        aa = peptide_sequence[i]
+        if aa in c.AA_Neutral_losses:
+            if i in modifications:
+                """if aa == "M" and modifications[i] == 15.9949146:
+                nl_b_ions = _add_nl(c.AA_Neutral_losses["M[UNIMOD:35]"], nl_b_ions, i, sequence_length - 1)
+                nl_y_ions = _add_nl(
+                    c.AA_Neutral_losses["M[UNIMOD:35]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
+                )"""
+                if aa == "R" and modifications[i] == 0.984016:
+                    nl_b_ions = _add_nl(c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_b_ions, i, sequence_length - 1)
+                    nl_y_ions = _add_nl(
+                        c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
+                    )
+                elif (aa == "S" or aa == "T") and modifications[i] == 79.966331:
+                    nl_b_ions = _add_nl(c.Mod_Neutral_losses["S[UNIMOD:21]"], nl_b_ions, i, sequence_length - 1)
+                    nl_y_ions = _add_nl(
+                        c.Mod_Neutral_losses["S[UNIMOD:21]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
+                    )
+            """else:
+                nl_b_ions = _add_nl(c.AA_Neutral_losses[aa], nl_b_ions, i, sequence_length - 1)
+                nl_y_ions = _add_nl(c.AA_Neutral_losses[aa], nl_y_ions, sequence_length - i - 1, sequence_length - 1)"""
+    return nl_b_ions, nl_y_ions
+
+
+def _calculate_nl_score_mass(neutral_loss):
+    """
+    Calculates the score and mass for a given neutral loss (NL).
+
+    :param neutral_loss: The type of neutral loss for which to calculate the score and mass.
+    :returns: A tuple containing the adjusted score and the mass of the specified neutral loss.
+    """
+    score = 100
+    mass = 0
+    mass = c.Neutral_losses_Mass[neutral_loss]
+    if neutral_loss == "H2O" or neutral_loss == "NH3":
+        score -= 5
+    else:
+        score -= 30
+    return score, mass
+
+
+def initialize_peaks(  # noqa: C901
     sequence: str,
     mass_analyzer: str,
     charge: int,
@@ -90,7 +222,10 @@ def initialize_peaks(
     noncl_xl: bool = False,
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
-) -> Tuple[List[dict], int, str, float]:
+    fragmentation_method: str = "HCD",
+    custom_mods: Optional[Dict[str, float]] = None,
+    add_neutral_losses: Optional[bool] = False,
+) -> Tuple[List[dict], int, str, float, int]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 
@@ -102,88 +237,109 @@ def initialize_peaks(
     :param noncl_xl: whether the function is called with a non-cleavable xl modification
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
     :param xl_pos: the position of the crosslinker for non-cleavable XL
-    :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence
+    :param fragmentation_method: fragmentation method that was used
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
+    :param add_neutral_losses: Flag to indicate whether to annotate neutral losses or not
+    :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence,
+        number of expected nl peaks
     """
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
-    ion_type_offsets = [0.0, constants.ATOM_MASSES["O"] + 2 * constants.ATOM_MASSES["H"]]
+    ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
+    modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
 
-    # tmp place holder
-    ion_type_masses = [0.0, 0.0]
-    ion_types = ["b", "y"]
-
-    number_of_ion_types = len(ion_type_offsets)
     fragments_meta_data = []
-
-    modification_deltas = _get_modifications(sequence)
-    forward_sum = 0.0  # sum over all amino acids from left to right (neutral charge)
-    backward_sum = 0.0  # sum over all amino acids from right to left (neutral charge)
     n_term_mod = 1
+
+    if noncl_xl:
+        # the test only needs to be done because the unit tests use non_cl_xl peptides
+        # without a crosslinker modification. This cannot occur in nature!!!
+        # The unit tests need to be changed, then we can simply add to the existing
+        # modification mass at xl_pos -1.
+        modification_deltas[xl_pos - 1] = modification_deltas.get(xl_pos - 1, 0.0) + peptide_beta_mass
+
     if modification_deltas:  # there were modifictions
         sequence = internal_without_mods([sequence])[0]
-        n_term_delta = modification_deltas.get(-2, 0.0)
+        n_term_delta = modification_deltas.pop(-2, 0.0)  # directly pop it to avoid readding it later
         if n_term_delta != 0:
             n_term_mod = 2
             # add n_term mass to first aa for easy processing in the following calculation
             modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
 
-    # calculation:
+    if add_neutral_losses:
+        nl_b_ions, nl_y_ions = _get_neutral_losses(sequence, modification_deltas)
+        nl_ions = [nl_y_ions, nl_b_ions]
 
-    peptide_length = len(sequence)
-    for i in range(peptide_length):  # generate substrings
-        forward_sum += constants.AA_MASSES[sequence[i]]  # sum left to right
-        if i in modification_deltas:  # add mass of modification if present
-            forward_sum += modification_deltas[i]
-        backward_sum += constants.AA_MASSES[sequence[peptide_length - i - 1]]  # sum right to left
-        if peptide_length - i - 1 in modification_deltas:  # add mass of modification if present
-            backward_sum += modification_deltas[peptide_length - i - 1]
+    expected_nl_count = 0
+    mass_arr = np.array([c.AA_MASSES[_] for _ in sequence])
+    for pos, mod_mass in modification_deltas.items():
+        mass_arr[pos] += mod_mass
 
-        ion_type_masses[0] = forward_sum + ion_type_offsets[0]  # b ion - ...
+    n_forward_ions = len(ion_types) // 2
+    n_fragments = len(sequence) - 1
+    sum_array = np.empty(shape=(len(ion_types), n_fragments))
+    np.cumsum(mass_arr[:0:-1], out=sum_array[0])  # this is for the reverse ion-series
+    np.cumsum(mass_arr[:-1], out=sum_array[n_forward_ions])  # this is for the forward ion-series
+    peptide_mass = sum_array[0, -1] + mass_arr[0]  # this is the longest reverse ion + the first residue
 
-        ion_type_masses[1] = backward_sum + ion_type_offsets[1]  # y ion
+    # get offset for all needed ions
+    deltas = get_ion_delta(ion_types)
+    np.add(sum_array[0], deltas[:n_forward_ions], out=sum_array[:n_forward_ions])
+    np.add(sum_array[n_forward_ions], deltas[n_forward_ions:], out=sum_array[n_forward_ions:])
 
-        for charge in range(constants.MIN_CHARGE, max_charge + 1):  # generate ion in different charge states
-            # positive charge is introduced by protons (or H - ELECTRON_MASS)
-            charge_delta = charge * constants.PARTICLE_MASSES["PROTON"]
-            for ion_type in range(number_of_ion_types):  # generate all ion types
-                mass = _compute_ion_mass(
-                    ion_mass=ion_type_masses[ion_type],
-                    noncl_xl=noncl_xl,
-                    ion_type=ion_type,
-                    xl_pos=xl_pos,
-                    peptide_beta_mass=peptide_beta_mass,
-                    peptide_length=peptide_length,
-                    i=i,
-                )
-                mz = (mass + charge_delta) / charge
-                min_mz, max_mz = get_min_max_mass(mass_analyzer, mz, mass_tolerance, unit_mass_tolerance)
+    # calculate for m/z for charges 1, 2, 3
+    # shape of ion_mzs: (n_ions, n_fragments, max_charge)
+    charges = np.arange(1, max_charge + 1)
+    ion_mzs = (sum_array[..., np.newaxis] + charges * c.PARTICLE_MASSES["PROTON"]) / charges
+    min_mzs, max_mzs = get_min_max_mass(mass_analyzer, ion_mzs, mass_tolerance, unit_mass_tolerance)
 
+    # write mz together with min and max value in output list with one dictionary for each ion
+    for ion_type in range(len(ion_types)):
+        for number in range(n_fragments):
+            for charge in range(max_charge):
                 fragments_meta_data.append(
                     {
                         "ion_type": ion_types[ion_type],  # ion type
-                        "no": i + 1,  # no
-                        "charge": charge,  # charge
-                        "mass": mz,  # mz
-                        "min_mass": min_mz,  # min mz
-                        "max_mass": max_mz,  # max mz
+                        "no": number + 1,  # no
+                        "charge": charge + 1,  # charge
+                        "mass": ion_mzs[ion_type, number, charge],  # mz
+                        "min_mass": min_mzs[ion_type, number, charge],  # min mz
+                        "max_mass": max_mzs[ion_type, number, charge],  # max mz
+                        "neutral_loss": "",
+                        "fragment_score": 100,
                     }
                 )
+                if not add_neutral_losses:
+                    continue
+                for nl in nl_ions[ion_type][number]:
+                    nl_score, nl_mass = _calculate_nl_score_mass(nl)
+                    ion_mass = sum_array[ion_type, number] - nl_mass
+                    ion_mz = (ion_mass + (charge + 1) * c.PARTICLE_MASSES["PROTON"]) / (charge + 1)
+                    min_mz, max_mz = get_min_max_mass(mass_analyzer, ion_mz, mass_tolerance, unit_mass_tolerance)
+                    expected_nl_count += 1
+                    fragments_meta_data.append(
+                        {
+                            "ion_type": ion_types[ion_type],  # ion type
+                            "no": number + 1,  # no
+                            "charge": charge + 1,  # charge
+                            "mass": ion_mz,  # mz
+                            "min_mass": min_mz,  # min mz
+                            "max_mass": max_mz,  # max mz
+                            "neutral_loss": nl,
+                            "fragment_score": 100 - nl_score,
+                        }
+                    )
+
     fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
-    return fragments_meta_data, n_term_mod, sequence, (forward_sum + ion_type_offsets[0] + ion_type_offsets[1])
 
-
-def _compute_ion_mass(
-    ion_mass: float, noncl_xl: bool, ion_type: int, xl_pos: int, peptide_beta_mass: float, peptide_length: int, i: int
-) -> float:
-    # Check for neutral loss here
-
-    if noncl_xl and ((ion_type == 0 and i + 1 >= xl_pos) or (ion_type == 1 and i >= peptide_length - xl_pos)):
-        mass = ion_mass + peptide_beta_mass
-    else:
-        mass = ion_mass
-
-    return mass
+    return (
+        fragments_meta_data,
+        n_term_mod,
+        sequence,
+        (peptide_mass + c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"]),
+        expected_nl_count,
+    )
 
 
 def initialize_peaks_xl(
@@ -194,6 +350,7 @@ def initialize_peaks_xl(
     mass_tolerance: Optional[float] = None,
     unit_mass_tolerance: Optional[str] = None,
     sequence_beta: Optional[str] = None,
+    custom_mods: Optional[Dict[str, float]] = None,
 ) -> Tuple[List[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
@@ -207,6 +364,7 @@ def initialize_peaks_xl(
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param sequence_beta: optional second peptide to be considered for non-cleavable XL
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :raises ValueError: if crosslinker_type is unkown
     :raises AssertionError: if the short and long XL sequence (the one with the short / long crosslinker mod)
         has a tmt n term while the other one does not
@@ -241,11 +399,11 @@ def initialize_peaks_xl(
         # the crosslinker is returned! This needs to be fixed, because mass is used as CALCULATED_MASS in
         # percolator!
 
-        list_out_s, tmt_n_term_s, peptide_sequence, _ = initialize_peaks(
-            sequence_s, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance
+        list_out_s, tmt_n_term_s, peptide_sequence, _, _ = initialize_peaks(
+            sequence_s, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance, custom_mods=custom_mods
         )
-        list_out_l, tmt_n_term_l, peptide_sequence, _ = initialize_peaks(
-            sequence_l, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance
+        list_out_l, tmt_n_term_l, peptide_sequence, _, _ = initialize_peaks(
+            sequence_l, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance, custom_mods=custom_mods
         )
 
         tmt_n_term = tmt_n_term_s
@@ -279,7 +437,7 @@ def initialize_peaks_xl(
         sequence_mass = compute_peptide_mass(sequence_without_crosslinker)
         sequence_beta_mass = compute_peptide_mass(sequence_beta_without_crosslinker)
 
-        list_out, tmt_n_term, peptide_sequence, _ = initialize_peaks(
+        list_out, tmt_n_term, peptide_sequence, _, _ = initialize_peaks(
             sequence,
             mass_analyzer,
             charge,
@@ -288,6 +446,7 @@ def initialize_peaks_xl(
             True,
             sequence_beta_mass if sequence_beta_mass is not None else None,
             crosslinker_position,
+            custom_mods=custom_mods,
         )
         df_out = pd.DataFrame(list_out)
 
@@ -309,8 +468,11 @@ def initialize_peaks_xl(
 
 
 def get_min_max_mass(
-    mass_analyzer: str, mass: float, mass_tolerance: Optional[float] = None, unit_mass_tolerance: Optional[str] = None
-) -> Tuple[float, float]:
+    mass_analyzer: str,
+    mass: np.ndarray,
+    mass_tolerance: Optional[float] = None,
+    unit_mass_tolerance: Optional[str] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Helper function to get min and max mass based on mass analyzer.
 
     If both mass_tolerance and unit_mass_tolerance are provided, the function uses the provided tolerance
@@ -354,108 +516,51 @@ def get_min_max_mass(
     return (min_mass, max_mass)
 
 
-def compute_ion_masses(seq_int: List[int], charge_onehot: List[int], tmt: str = "") -> Optional[np.ndarray]:
+FragmentIonComponent = Literal["ion_type", "position", "charge"]
+
+
+def generate_fragment_ion_annotations(
+    ion_types: List[str], order: Tuple[FragmentIonComponent, FragmentIonComponent, FragmentIonComponent]
+) -> List[Tuple[str, int, int]]:
+    """Generate full list of fragment ions for permitted ion types and specified order.
+
+    :param ion_types: List of permitted ion types
+    :param order: What fragment ion parameters (ion type, position & charge) to group the annotations by
+    :return: List of (ion_type, position, charge) tuples sorted by specified component order
+    :raises ValueError: if invalid or unsupported ion types are specified or duplicate order keys are used
     """
-    Collects an integer sequence e.g. [1,2,3] with charge 2 and returns array with 174 positions for ion masses.
+    fragment_ion_components: Dict[str, Union[List[str]]] = {
+        "ion_type": ion_types,
+        "position": [str(pos) for pos in c.POSITIONS],
+        "charge": [str(charge) for charge in c.CHARGES],
+    }
 
-    Invalid masses are set to -1.
+    if len(set(ion_types)) != len(ion_types):
+        raise ValueError("Redundant ion types specified")
+    elif len(ion_types) == 0:
+        raise ValueError("No ion types specified")
+    if set(order) != {"ion_type", "position", "charge"}:
+        raise ValueError("Duplicate component used for ordering fragment ions")
 
-    :param seq_int: TODO
-    :param charge_onehot: is a onehot representation of charge with 6 elems for charges 1 to 6
-    :param tmt: TODO
-    :return: list of masses as floats
+    raw_annotations = list(itertools.product(*[fragment_ion_components[component] for component in order]))
+
+    ordered_raw_annotations = [
+        (
+            str(combination[order.index("ion_type")]),
+            int(combination[order.index("position")]),
+            int(combination[order.index("charge")]),
+        )
+        for combination in raw_annotations
+    ]
+
+    return ordered_raw_annotations
+
+
+def format_fragment_ion_annotation(raw_annotation: Tuple[str, int, int]) -> str:
+    """Transform (ion_type, position, charge) tuple into <ion_type><position>+<charge> string.
+
+    :param raw_annotation: `(ion_type, position, charge)` tuple
+    :returns: formatted annotation string
     """
-    charge = list(charge_onehot).index(1) + 1
-    if not (charge in (1, 2, 3, 4, 5, 6) and len(charge_onehot) == 6):
-        print("[ERROR] One-hot-enconded Charge is not in valid range 1 to 6")
-        return None
-
-    if not len(seq_int) == constants.SEQ_LEN:
-        print(f"[ERROR] Sequence length {len(seq_int)} is not desired length of {constants.SEQ_LEN}")
-        return None
-
-    idx = list(seq_int).index(0) if 0 in seq_int else constants.SEQ_LEN
-    masses = np.ones((constants.SEQ_LEN - 1) * 2 * 3, dtype=np.float32) * -1
-    mass_b = 0
-    mass_y = 0
-    j = 0  # iterate over masses
-
-    # Iterate over sequence, sequence should have length 30
-    for i in range(idx - 1):  # only 29 possible ions
-        j = i * 6  # index for masses array at position
-
-        # MASS FOR Y IONS
-        # print("Added", constants.VEC_MZ[seq_int[l-1-i]])
-        mass_y += constants.VEC_MZ[seq_int[idx - 1 - i]]
-
-        # Compute charge +1
-        masses[j] = (
-            mass_y
-            + 1 * constants.PARTICLE_MASSES["PROTON"]
-            + constants.MASSES["C_TERMINUS"]
-            + constants.ATOM_MASSES["H"]
-        ) / 1.0
-        # Compute charge +2
-        masses[j + 1] = (
-            (
-                mass_y
-                + 2 * constants.PARTICLE_MASSES["PROTON"]
-                + constants.MASSES["C_TERMINUS"]
-                + constants.ATOM_MASSES["H"]
-            )
-            / 2.0
-            if charge >= 2
-            else -1.0
-        )
-        # Compute charge +3
-        masses[j + 2] = (
-            (
-                mass_y
-                + 3 * constants.PARTICLE_MASSES["PROTON"]
-                + constants.MASSES["C_TERMINUS"]
-                + constants.ATOM_MASSES["H"]
-            )
-            / 3.0
-            if charge >= 3.0
-            else -1.0
-        )
-
-        # MASS FOR B IONS
-        if i == 0 and tmt != "":
-            mass_b += constants.VEC_MZ[seq_int[i]] + constants.MOD_MASSES[constants.TMT_MODS[tmt]]
-        else:
-            mass_b += constants.VEC_MZ[seq_int[i]]
-
-        # Compute charge +1
-        masses[j + 3] = (
-            mass_b
-            + 1 * constants.PARTICLE_MASSES["PROTON"]
-            + constants.MASSES["N_TERMINUS"]
-            - constants.ATOM_MASSES["H"]
-        ) / 1.0
-        # Compute charge +2
-        masses[j + 4] = (
-            (
-                mass_b
-                + 2 * constants.PARTICLE_MASSES["PROTON"]
-                + constants.MASSES["N_TERMINUS"]
-                - constants.ATOM_MASSES["H"]
-            )
-            / 2.0
-            if charge >= 2
-            else -1.0
-        )
-        # Compute charge +3
-        masses[j + 5] = (
-            (
-                mass_b
-                + 3 * constants.PARTICLE_MASSES["PROTON"]
-                + constants.MASSES["N_TERMINUS"]
-                - constants.ATOM_MASSES["H"]
-            )
-            / 3.0
-            if charge >= 3.0
-            else -1.0
-        )
-
-    return masses
+    ion_type, pos, charge = raw_annotation
+    return f"{ion_type}{pos}+{charge}"

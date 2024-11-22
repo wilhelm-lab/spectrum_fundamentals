@@ -1,0 +1,1082 @@
+[
+    {
+        "ion_type": "a",
+        "no": 1,
+        "charge": 3,
+        "mass": 24.026559600333332,
+        "min_mass": 24.026079069141325,
+        "max_mass": 24.02704013152534,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 1,
+        "charge": 3,
+        "mass": 33.358197800333336,
+        "min_mass": 33.35753063637733,
+        "max_mass": 33.358864964289346,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 1,
+        "charge": 2,
+        "mass": 35.536201166999994,
+        "min_mass": 35.53549044297665,
+        "max_mass": 35.53691189102334,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 1,
+        "charge": 3,
+        "mass": 39.03371416866667,
+        "min_mass": 39.03293349438329,
+        "max_mass": 39.034494842950046,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 1,
+        "charge": 3,
+        "mass": 44.349479322,
+        "min_mass": 44.34859233241356,
+        "max_mass": 44.35036631158644,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 1,
+        "charge": 2,
+        "mass": 49.533658466999995,
+        "min_mass": 49.532667793830655,
+        "max_mass": 49.534649140169336,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 1,
+        "charge": 3,
+        "mass": 50.024995690333334,
+        "min_mass": 50.02399519041953,
+        "max_mass": 50.02599619024714,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 1,
+        "charge": 2,
+        "mass": 58.046933019499996,
+        "min_mass": 58.045772080839605,
+        "max_mass": 58.048093958160386,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 1,
+        "charge": 3,
+        "mass": 58.684750533666666,
+        "min_mass": 58.683576838655995,
+        "max_mass": 58.68592422867734,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 1,
+        "charge": 2,
+        "mass": 66.0205807495,
+        "min_mass": 66.01926033788502,
+        "max_mass": 66.02190116111498,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 2,
+        "charge": 3,
+        "mass": 67.040757267,
+        "min_mass": 67.03941645185466,
+        "max_mass": 67.04209808214534,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 1,
+        "charge": 1,
+        "mass": 70.06512586699999,
+        "min_mass": 70.06372456448265,
+        "max_mass": 70.06652716951733,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 1,
+        "charge": 2,
+        "mass": 74.533855302,
+        "min_mass": 74.53236462489397,
+        "max_mass": 74.53534597910604,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 2,
+        "charge": 3,
+        "mass": 76.372395467,
+        "min_mass": 76.37086801909066,
+        "max_mass": 76.37392291490934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 2,
+        "charge": 3,
+        "mass": 82.04791183533332,
+        "min_mass": 82.04627087709662,
+        "max_mass": 82.04955279357003,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 2,
+        "charge": 3,
+        "mass": 82.69179365533334,
+        "min_mass": 82.69013981946024,
+        "max_mass": 82.69344749120644,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 1,
+        "charge": 2,
+        "mass": 87.523487567,
+        "min_mass": 87.52173709724866,
+        "max_mass": 87.52523803675135,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 2,
+        "charge": 3,
+        "mass": 88.36731002366668,
+        "min_mass": 88.36554267746621,
+        "max_mass": 88.36907736986714,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 2,
+        "charge": 3,
+        "mass": 97.02706486699999,
+        "min_mass": 97.02512432570265,
+        "max_mass": 97.02900540829734,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 1,
+        "charge": 1,
+        "mass": 98.060040467,
+        "min_mass": 98.05807926619066,
+        "max_mass": 98.06200166780933,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 3,
+        "charge": 3,
+        "mass": 99.39167860033332,
+        "min_mass": 99.38969076676132,
+        "max_mass": 99.39366643390532,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 2,
+        "charge": 2,
+        "mass": 100.057497667,
+        "min_mass": 100.05549651704666,
+        "max_mass": 100.05949881695335,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 3,
+        "charge": 3,
+        "mass": 108.72331680033334,
+        "min_mass": 108.72114233399734,
+        "max_mass": 108.72549126666934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 2,
+        "charge": 2,
+        "mass": 114.054954967,
+        "min_mass": 114.05267386790067,
+        "max_mass": 114.05723606609934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 3,
+        "charge": 3,
+        "mass": 114.39883316866667,
+        "min_mass": 114.3965451920033,
+        "max_mass": 114.40112114533004,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 1,
+        "charge": 1,
+        "mass": 115.086589572,
+        "min_mass": 115.08428784020856,
+        "max_mass": 115.08889130379143,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 3,
+        "charge": 3,
+        "mass": 120.38648165533334,
+        "min_mass": 120.38407392570024,
+        "max_mass": 120.38888938496645,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 2,
+        "charge": 2,
+        "mass": 122.5682295195,
+        "min_mass": 122.56577815490961,
+        "max_mass": 122.57068088409038,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 2,
+        "charge": 2,
+        "mass": 123.53405224950001,
+        "min_mass": 123.53158156845501,
+        "max_mass": 123.536522930545,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 3,
+        "charge": 3,
+        "mass": 126.06199802366667,
+        "min_mass": 126.0594767837062,
+        "max_mass": 126.06451926362715,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 1,
+        "charge": 1,
+        "mass": 131.033885032,
+        "min_mass": 131.03126435429937,
+        "max_mass": 131.03650570970063,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 2,
+        "charge": 2,
+        "mass": 132.04732680200001,
+        "min_mass": 132.04468585546397,
+        "max_mass": 132.04996774853606,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 4,
+        "charge": 3,
+        "mass": 133.074238267,
+        "min_mass": 133.07157678223467,
+        "max_mass": 133.07689975176532,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 3,
+        "charge": 3,
+        "mass": 134.721752867,
+        "min_mass": 134.71905843194264,
+        "max_mass": 134.72444730205734,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 4,
+        "charge": 3,
+        "mass": 142.405876467,
+        "min_mass": 142.40302834947067,
+        "max_mass": 142.40872458452935,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 2,
+        "charge": 2,
+        "mass": 145.036959067,
+        "min_mass": 145.03405832781866,
+        "max_mass": 145.03985980618134,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 1,
+        "charge": 1,
+        "mass": 148.06043413700002,
+        "min_mass": 148.05747292831728,
+        "max_mass": 148.06339534568275,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 4,
+        "charge": 3,
+        "mass": 148.08139283533333,
+        "min_mass": 148.07843120747663,
+        "max_mass": 148.08435446319004,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 3,
+        "charge": 2,
+        "mass": 148.583879667,
+        "min_mass": 148.58090798940665,
+        "max_mass": 148.58685134459333,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 4,
+        "charge": 3,
+        "mass": 154.069041322,
+        "min_mass": 154.06595994117356,
+        "max_mass": 154.07212270282645,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 4,
+        "charge": 3,
+        "mass": 159.74455769033335,
+        "min_mass": 159.74136279917954,
+        "max_mass": 159.74775258148716,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 3,
+        "charge": 2,
+        "mass": 162.581336967,
+        "min_mass": 162.57808534026066,
+        "max_mass": 162.58458859373934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 4,
+        "charge": 3,
+        "mass": 168.40431253366668,
+        "min_mass": 168.400944447416,
+        "max_mass": 168.40768061991736,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 5,
+        "charge": 3,
+        "mass": 170.76892626699998,
+        "min_mass": 170.76551088847464,
+        "max_mass": 170.77234164552533,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 3,
+        "charge": 2,
+        "mass": 171.0946115195,
+        "min_mass": 171.0911896272696,
+        "max_mass": 171.0980334117304,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 1,
+        "charge": 1,
+        "mass": 174.039698667,
+        "min_mass": 174.03621787302666,
+        "max_mass": 174.04317946097336,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 3,
+        "charge": 2,
+        "mass": 180.0760842495,
+        "min_mass": 180.07248272781501,
+        "max_mass": 180.079685771185,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 5,
+        "charge": 3,
+        "mass": 180.100564467,
+        "min_mass": 180.09696245571067,
+        "max_mass": 180.10416647828933,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 5,
+        "charge": 3,
+        "mass": 185.77608083533332,
+        "min_mass": 185.77236531371662,
+        "max_mass": 185.77979635695002,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 5,
+        "charge": 3,
+        "mass": 186.41996265533336,
+        "min_mass": 186.41623425608026,
+        "max_mass": 186.42369105458647,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 3,
+        "charge": 2,
+        "mass": 188.58935880200002,
+        "min_mass": 188.58558701482397,
+        "max_mass": 188.59313058917607,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 5,
+        "charge": 3,
+        "mass": 192.09547902366668,
+        "min_mass": 192.0916371140862,
+        "max_mass": 192.09932093324716,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 2,
+        "charge": 1,
+        "mass": 199.10771886700002,
+        "min_mass": 199.10373671262266,
+        "max_mass": 199.11170102137737,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 4,
+        "charge": 2,
+        "mass": 199.107719167,
+        "min_mass": 199.10373701261665,
+        "max_mass": 199.11170132138335,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 5,
+        "charge": 3,
+        "mass": 200.75523386700002,
+        "min_mass": 200.75121876232268,
+        "max_mass": 200.75924897167735,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 3,
+        "charge": 2,
+        "mass": 201.578991067,
+        "min_mass": 201.57495948717866,
+        "max_mass": 201.58302264682135,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 6,
+        "charge": 3,
+        "mass": 209.1112406003333,
+        "min_mass": 209.1070583755213,
+        "max_mass": 209.11542282514532,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 4,
+        "charge": 2,
+        "mass": 213.105176467,
+        "min_mass": 213.10091436347068,
+        "max_mass": 213.10943857052933,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 6,
+        "charge": 3,
+        "mass": 218.44287880033332,
+        "min_mass": 218.43850994275732,
+        "max_mass": 218.44724765790932,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 4,
+        "charge": 2,
+        "mass": 221.61845101950001,
+        "min_mass": 221.61401865047964,
+        "max_mass": 221.6228833885204,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 6,
+        "charge": 3,
+        "mass": 224.11839516866664,
+        "min_mass": 224.11391280076327,
+        "max_mass": 224.12287753657,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 2,
+        "charge": 1,
+        "mass": 227.102633467,
+        "min_mass": 227.09809141433067,
+        "max_mass": 227.10717551966934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 6,
+        "charge": 3,
+        "mass": 229.43416032200003,
+        "min_mass": 229.4295716387936,
+        "max_mass": 229.43874900520646,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 4,
+        "charge": 2,
+        "mass": 230.59992374950002,
+        "min_mass": 230.59531175102504,
+        "max_mass": 230.604535747975,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 6,
+        "charge": 3,
+        "mass": 235.10967669033334,
+        "min_mass": 235.10497449679954,
+        "max_mass": 235.11437888386715,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 4,
+        "charge": 2,
+        "mass": 239.11319830200003,
+        "min_mass": 239.108416038034,
+        "max_mass": 239.11798056596606,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 6,
+        "charge": 3,
+        "mass": 243.76943153366668,
+        "min_mass": 243.764556145036,
+        "max_mass": 243.77430692229734,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 2,
+        "charge": 1,
+        "mass": 244.129182572,
+        "min_mass": 244.12429998834855,
+        "max_mass": 244.13406515565143,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 2,
+        "charge": 1,
+        "mass": 246.06082803200002,
+        "min_mass": 246.05590681543939,
+        "max_mass": 246.06574924856065,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 4,
+        "charge": 2,
+        "mass": 252.102830567,
+        "min_mass": 252.09778851038868,
+        "max_mass": 252.10787262361134,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 5,
+        "charge": 2,
+        "mass": 255.64975116699998,
+        "min_mass": 255.64463817197662,
+        "max_mass": 255.65486416202333,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 2,
+        "charge": 1,
+        "mass": 263.08737713700003,
+        "min_mass": 263.0821153894573,
+        "max_mass": 263.0926388845428,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 5,
+        "charge": 2,
+        "mass": 269.647208467,
+        "min_mass": 269.64181552283065,
+        "max_mass": 269.6526014111693,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 5,
+        "charge": 2,
+        "mass": 278.16048301949996,
+        "min_mass": 278.15491980983956,
+        "max_mass": 278.1660462291604,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 5,
+        "charge": 2,
+        "mass": 279.12630574950003,
+        "min_mass": 279.120723223385,
+        "max_mass": 279.13188827561504,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 5,
+        "charge": 2,
+        "mass": 287.639580302,
+        "min_mass": 287.633827510394,
+        "max_mass": 287.64533309360604,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 2,
+        "charge": 1,
+        "mass": 289.066641667,
+        "min_mass": 289.06086033416665,
+        "max_mass": 289.07242299983335,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 3,
+        "charge": 1,
+        "mass": 296.160482867,
+        "min_mass": 296.15455965734265,
+        "max_mass": 296.1664060766573,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 5,
+        "charge": 2,
+        "mass": 300.629212567,
+        "min_mass": 300.6231999827487,
+        "max_mass": 300.63522515125135,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 6,
+        "charge": 2,
+        "mass": 313.16322266699996,
+        "min_mass": 313.1569594025466,
+        "max_mass": 313.1694859314533,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 3,
+        "charge": 1,
+        "mass": 324.155397467,
+        "min_mass": 324.14891435905065,
+        "max_mass": 324.16188057494935,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 6,
+        "charge": 2,
+        "mass": 327.16067996699996,
+        "min_mass": 327.1541367534006,
+        "max_mass": 327.1672231805993,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 6,
+        "charge": 2,
+        "mass": 335.67395451949994,
+        "min_mass": 335.6672410404096,
+        "max_mass": 335.6806679985903,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 3,
+        "charge": 1,
+        "mass": 341.181946572,
+        "min_mass": 341.17512293306856,
+        "max_mass": 341.18877021093147,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 6,
+        "charge": 2,
+        "mass": 343.64760224950004,
+        "min_mass": 343.64072929745504,
+        "max_mass": 343.65447520154504,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 6,
+        "charge": 2,
+        "mass": 352.160876802,
+        "min_mass": 352.153833584464,
+        "max_mass": 352.16792001953604,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 3,
+        "charge": 1,
+        "mass": 359.14489203200003,
+        "min_mass": 359.13770913415937,
+        "max_mass": 359.1520749298407,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 6,
+        "charge": 2,
+        "mass": 365.15050906700003,
+        "min_mass": 365.1432060568187,
+        "max_mass": 365.15781207718135,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 3,
+        "charge": 1,
+        "mass": 376.17144113700004,
+        "min_mass": 376.1639177081773,
+        "max_mass": 376.1789645658228,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 4,
+        "charge": 1,
+        "mass": 397.208161867,
+        "min_mass": 397.2002177037627,
+        "max_mass": 397.2161060302373,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 3,
+        "charge": 1,
+        "mass": 402.150705667,
+        "min_mass": 402.14266265288666,
+        "max_mass": 402.15874868111337,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 4,
+        "charge": 1,
+        "mass": 425.203076467,
+        "min_mass": 425.1945724054707,
+        "max_mass": 425.21158052852934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 4,
+        "charge": 1,
+        "mass": 442.22962557200003,
+        "min_mass": 442.2207809794886,
+        "max_mass": 442.23847016451145,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 4,
+        "charge": 1,
+        "mass": 460.19257103200005,
+        "min_mass": 460.1833671805794,
+        "max_mass": 460.2017748834207,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 4,
+        "charge": 1,
+        "mass": 477.21912013700006,
+        "min_mass": 477.2095757545973,
+        "max_mass": 477.2286645194028,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 4,
+        "charge": 1,
+        "mass": 503.198384667,
+        "min_mass": 503.1883206993067,
+        "max_mass": 503.20844863469335,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 5,
+        "charge": 1,
+        "mass": 510.29222586699996,
+        "min_mass": 510.28202002248264,
+        "max_mass": 510.3024317115173,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 5,
+        "charge": 1,
+        "mass": 538.287140467,
+        "min_mass": 538.2763747241906,
+        "max_mass": 538.2979062098093,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 5,
+        "charge": 1,
+        "mass": 555.3136895719999,
+        "min_mass": 555.3025832982084,
+        "max_mass": 555.3247958457914,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 5,
+        "charge": 1,
+        "mass": 557.2453350320001,
+        "min_mass": 557.2341901252994,
+        "max_mass": 557.2564799387007,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 5,
+        "charge": 1,
+        "mass": 574.271884137,
+        "min_mass": 574.2603986993173,
+        "max_mass": 574.2833695746828,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 5,
+        "charge": 1,
+        "mass": 600.251148667,
+        "min_mass": 600.2391436440267,
+        "max_mass": 600.2631536899734,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "a",
+        "no": 6,
+        "charge": 1,
+        "mass": 625.3191688669999,
+        "min_mass": 625.3066624836226,
+        "max_mass": 625.3316752503772,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 6,
+        "charge": 1,
+        "mass": 653.3140834669999,
+        "min_mass": 653.3010171853306,
+        "max_mass": 653.3271497486693,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "c",
+        "no": 6,
+        "charge": 1,
+        "mass": 670.3406325719999,
+        "min_mass": 670.3272257593485,
+        "max_mass": 670.3540393846513,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "z",
+        "no": 6,
+        "charge": 1,
+        "mass": 686.2879280320001,
+        "min_mass": 686.2742022734394,
+        "max_mass": 686.3016537905607,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 6,
+        "charge": 1,
+        "mass": 703.314477137,
+        "min_mass": 703.3004108474573,
+        "max_mass": 703.3285434265428,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "x",
+        "no": 6,
+        "charge": 1,
+        "mass": 729.2937416670001,
+        "min_mass": 729.2791557921668,
+        "max_mass": 729.3083275418334,
+        "neutral_loss": "",
+        "fragment_score": 100
+    }
+]

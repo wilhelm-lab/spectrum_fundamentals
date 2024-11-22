@@ -3,144 +3,360 @@
         "ion_type": "b",
         "no": 1,
         "charge": 3,
-        "mass": 24.686314467000003,
-        "min_mass": 24.685820740710664,
-        "max_mass": 24.68680819328934
+        "mass": 33.358197800333336,
+        "min_mass": 33.35753063637733,
+        "max_mass": 33.358864964289346,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "b",
         "no": 1,
         "charge": 2,
-        "mass": 36.525833467,
-        "min_mass": 36.525102950330655,
-        "max_mass": 36.52656398366934
+        "mass": 49.533658466999995,
+        "min_mass": 49.532667793830655,
+        "max_mass": 49.534649140169336,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "y",
         "no": 1,
         "charge": 3,
-        "mass": 41.34719302366667,
-        "min_mass": 41.346366079806195,
-        "max_mass": 41.348019967527144
+        "mass": 50.024995690333334,
+        "min_mass": 50.02399519041953,
+        "max_mass": 50.02599619024714,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "y",
         "no": 1,
         "charge": 2,
-        "mass": 61.517151302,
-        "min_mass": 61.515920958973965,
-        "max_mass": 61.51838164502604
+        "mass": 74.533855302,
+        "min_mass": 74.53236462489397,
+        "max_mass": 74.53534597910604,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 2,
+        "charge": 3,
+        "mass": 76.372395467,
+        "min_mass": 76.37086801909066,
+        "max_mass": 76.37392291490934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 2,
+        "charge": 3,
+        "mass": 88.36731002366668,
+        "min_mass": 88.36554267746621,
+        "max_mass": 88.36907736986714,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "b",
         "no": 1,
         "charge": 1,
-        "mass": 72.044390467,
-        "min_mass": 72.04294957919066,
-        "max_mass": 72.04583135480934
+        "mass": 98.060040467,
+        "min_mass": 98.05807926619066,
+        "max_mass": 98.06200166780933,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 2,
+        "charge": 2,
+        "mass": 114.054954967,
+        "min_mass": 114.05267386790067,
+        "max_mass": 114.05723606609934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 3,
+        "charge": 3,
+        "mass": 126.06199802366667,
+        "min_mass": 126.0594767837062,
+        "max_mass": 126.06451926362715,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 2,
+        "charge": 2,
+        "mass": 132.04732680200001,
+        "min_mass": 132.04468585546397,
+        "max_mass": 132.04996774853606,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "y",
         "no": 1,
         "charge": 1,
-        "mass": 122.02702613700001,
-        "min_mass": 122.02458559647727,
-        "max_mass": 122.02946667752275
+        "mass": 148.06043413700002,
+        "min_mass": 148.05747292831728,
+        "max_mass": 148.06339534568275,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
-        "ion_type": "b-xl",
-        "no": 2,
+        "ion_type": "y",
+        "no": 4,
         "charge": 3,
-        "mass": 163.44455402366668,
-        "min_mass": 163.44128513258622,
-        "max_mass": 163.44782291474715
+        "mass": 159.74455769033335,
+        "min_mass": 159.74136279917954,
+        "max_mass": 159.74775258148716,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
-        "ion_type": "y-xl",
-        "no": 2,
-        "charge": 3,
-        "mass": 180.10543258033337,
-        "min_mass": 180.10183047168175,
-        "max_mass": 180.109034688985
-    },
-    {
-        "ion_type": "b-xl",
-        "no": 3,
-        "charge": 3,
-        "mass": 197.78094902366664,
-        "min_mass": 197.77699340468615,
-        "max_mass": 197.78490464264712
-    },
-    {
-        "ion_type": "y-xl",
-        "no": 3,
-        "charge": 3,
-        "mass": 203.78447058033336,
-        "min_mass": 203.78039489092177,
-        "max_mass": 203.78854626974496
-    },
-    {
-        "ion_type": "b-xl",
-        "no": 2,
-        "charge": 2,
-        "mass": 244.66319280200003,
-        "min_mass": 244.65829953814398,
-        "max_mass": 244.66808606585607
-    },
-    {
-        "ion_type": "y-xl",
-        "no": 2,
-        "charge": 2,
-        "mass": 269.65451063700004,
-        "min_mass": 269.6491175467873,
-        "max_mass": 269.6599037272128
-    },
-    {
-        "ion_type": "b-xl",
+        "ion_type": "y",
         "no": 3,
         "charge": 2,
-        "mass": 296.16778530199997,
-        "min_mass": 296.1618619462939,
-        "max_mass": 296.173708657706
+        "mass": 188.58935880200002,
+        "min_mass": 188.58558701482397,
+        "max_mass": 188.59313058917607,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b",
+        "no": 2,
+        "charge": 1,
+        "mass": 227.102633467,
+        "min_mass": 227.09809141433067,
+        "max_mass": 227.10717551966934,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 4,
+        "charge": 2,
+        "mass": 239.11319830200003,
+        "min_mass": 239.108416038034,
+        "max_mass": 239.11798056596606,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 2,
+        "charge": 1,
+        "mass": 263.08737713700003,
+        "min_mass": 263.0821153894573,
+        "max_mass": 263.0926388845428,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 3,
+        "charge": 3,
+        "mass": 294.8358880236667,
+        "min_mass": 294.8299913059062,
+        "max_mass": 294.8417847414272,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 4,
+        "charge": 3,
+        "mass": 328.5184476903334,
+        "min_mass": 328.5118773213796,
+        "max_mass": 328.5250180592872,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 5,
+        "charge": 3,
+        "mass": 366.21313569033344,
+        "min_mass": 366.20581142761966,
+        "max_mass": 366.2204599530472,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 3,
+        "charge": 1,
+        "mass": 376.17144113700004,
+        "min_mass": 376.1639177081773,
+        "max_mass": 376.1789645658228,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "y-xl",
+        "no": 5,
+        "charge": 3,
+        "mass": 378.2080502470001,
+        "min_mass": 378.2004860859951,
+        "max_mass": 378.215614408005,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 6,
+        "charge": 3,
+        "mass": 404.55545002366676,
+        "min_mass": 404.5473589146663,
+        "max_mass": 404.56354113266724,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y-xl",
+        "no": 6,
+        "charge": 3,
+        "mass": 421.2222479136667,
+        "min_mass": 421.2138234687084,
+        "max_mass": 421.230672358625,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
         "no": 3,
         "charge": 2,
-        "mass": 305.17306763700003,
-        "min_mass": 305.1669641756473,
-        "max_mass": 305.17917109835275
+        "mass": 441.75019380200007,
+        "min_mass": 441.74135879812405,
+        "max_mass": 441.7590288058761,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y",
+        "no": 4,
+        "charge": 1,
+        "mass": 477.21912013700006,
+        "min_mass": 477.2095757545973,
+        "max_mass": 477.2286645194028,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "b-xl",
-        "no": 2,
-        "charge": 1,
-        "mass": 488.31910913700005,
-        "min_mass": 488.3093427548173,
-        "max_mass": 488.3288755191828
+        "no": 4,
+        "charge": 2,
+        "mass": 492.2740333020001,
+        "min_mass": 492.264187821334,
+        "max_mass": 492.28387878266614,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 5,
+        "charge": 2,
+        "mass": 548.8160653020001,
+        "min_mass": 548.805088980694,
+        "max_mass": 548.8270416233062,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "y-xl",
-        "no": 2,
-        "charge": 1,
-        "mass": 538.3017448070001,
-        "min_mass": 538.2909787721039,
-        "max_mass": 538.3125108418963
+        "no": 5,
+        "charge": 2,
+        "mass": 566.808437137,
+        "min_mass": 566.7971009682573,
+        "max_mass": 566.8197733057428,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 6,
+        "charge": 2,
+        "mass": 606.3295368020001,
+        "min_mass": 606.3174102112641,
+        "max_mass": 606.3416633927361,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y-xl",
+        "no": 6,
+        "charge": 2,
+        "mass": 631.329733637,
+        "min_mass": 631.3171070423273,
+        "max_mass": 631.3423602316727,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "b-xl",
         "no": 3,
         "charge": 1,
-        "mass": 591.328294137,
-        "min_mass": 591.3164675711172,
-        "max_mass": 591.3401207028827
+        "mass": 882.4931111370001,
+        "min_mass": 882.4754612747774,
+        "max_mass": 882.5107609992228,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 4,
+        "charge": 1,
+        "mass": 983.5407901370002,
+        "min_mass": 983.5211193211974,
+        "max_mass": 983.5604609528029,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 5,
+        "charge": 1,
+        "mass": 1096.6248541370003,
+        "min_mass": 1096.6029216399174,
+        "max_mass": 1096.6467866340831,
+        "neutral_loss": "",
+        "fragment_score": 100
     },
     {
         "ion_type": "y-xl",
-        "no": 3,
+        "no": 5,
         "charge": 1,
-        "mass": 609.3388588070001,
-        "min_mass": 609.326672029824,
-        "max_mass": 609.3510455841762
+        "mass": 1132.6095978070002,
+        "min_mass": 1132.586945615044,
+        "max_mass": 1132.6322499989565,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "b-xl",
+        "no": 6,
+        "charge": 1,
+        "mass": 1211.6517971370004,
+        "min_mass": 1211.6275641010577,
+        "max_mass": 1211.676030172943,
+        "neutral_loss": "",
+        "fragment_score": 100
+    },
+    {
+        "ion_type": "y-xl",
+        "no": 6,
+        "charge": 1,
+        "mass": 1261.6521908070001,
+        "min_mass": 1261.626957763184,
+        "max_mass": 1261.6774238508162,
+        "neutral_loss": "",
+        "fragment_score": 100
     }
 ]

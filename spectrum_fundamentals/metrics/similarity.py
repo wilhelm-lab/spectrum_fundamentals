@@ -171,9 +171,9 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :return: spectral entropy similarity values
         """
-        if type(observed_intensities) == scipy.sparse.csr_matrix:
+        if isinstance(observed_intensities, scipy.sparse.csr_matrix):
             observed_intensities = observed_intensities.toarray()
-        if type(predicted_intensities) == scipy.sparse.csr_matrix:
+        if isinstance(predicted_intensities, scipy.sparse.csr_matrix):
             predicted_intensities = predicted_intensities.toarray()
 
         entropies = []
@@ -481,9 +481,6 @@ class SimilarityMetrics(Metric):
             true_intensities, pred_intensities, "max"
         )
         self.metrics_val[f"mse{key_suffix}"] = SimilarityMetrics.abs_diff(true_intensities, pred_intensities, "mse")
-        self.metrics_val[f"modified_cosine{key_suffix}"] = SimilarityMetrics.modified_cosine(
-            true_intensities, pred_intensities, self.mz, self.mz
-        )
 
         col_names_spectral_angle = [
             f"spectral_angle_{amount}_charge{key_suffix}" for amount in ["single", "double", "triple"]
@@ -539,3 +536,7 @@ class SimilarityMetrics(Metric):
                 self.metrics_val[col_name_spearman_corr] = SimilarityMetrics.correlation(
                     true_intensities, pred_intensities, i + 1, "spearman"
                 )
+
+            self.metrics_val[f"modified_cosine{key_suffix}"] = SimilarityMetrics.modified_cosine(
+                true_intensities, pred_intensities, self.mz, self.mz
+            )

@@ -17,6 +17,8 @@ VEC_LENGTH = (
 VEC_LENGTH_CMS2 = (SEQ_LEN - 1) * 2 * 3 * 2
 # peptide of length 30 can have 29 b, y, b_short, y_short, b_long and y_long ions, each with charge 1+, 2+ and 3+
 # we do not annotate fragments wth charge 3+. All fragmets with charge 3+ convert to -1
+
+
 #############
 # ALPHABETS #
 #############
@@ -113,6 +115,9 @@ MSFRAGGER_VAR_MODS = {
     "K[230]": "K[UNIMOD:737]",
     "K[305]": "K[UNIMOD:2016]",
     "K[214]": "K[UNIMOD:214]",
+    "R[157]": "R[UNIMOD:7]",
+    "Q[129]": "Q[UNIMOD:7]",
+    "N[115]": "N[UNIMOD:7]",
     "n[230]": "[UNIMOD:737]-",
     "n[305]": "[UNIMOD:2016]-",
     "n[214]": "[UNIMOD:214]-",
@@ -146,12 +151,7 @@ OPENMS_VAR_MODS = {
 PARTICLE_MASSES = {"PROTON": 1.007276467, "ELECTRON": 0.00054858}
 
 # masses of different atoms
-ATOM_MASSES = {
-    "H": 1.007825035,
-    "C": 12.0,
-    "O": 15.9949146,
-    "N": 14.003074,
-}
+ATOM_MASSES = {"H": 1.007825035, "C": 12.0, "O": 15.9949146, "N": 14.003074, "S": 31.9720712, "P": 30.9737619}
 
 MASSES = {**PARTICLE_MASSES, **ATOM_MASSES}
 MASSES["N_TERMINUS"] = MASSES["H"]
@@ -242,20 +242,24 @@ MOD_MASSES = {
     "[UNIMOD:747]": 86.000394,  # Malonylation
 }
 
+
 MOD_MASSES_SAGE = {
-    229.1629: "[UNIMOD:737]",
-    304.2071: "[UNIMOD:2016]",
-    144.1020: "[UNIMOD:214]",
-    304.2053: "[UNIMOD:730]",
-    8.0141: "[UNIMOD:259]",
-    10.0082: "[UNIMOD:267]",
-    79.9663: "[UNIMOD:21]",
-    -18.0105: "[UNIMOD:23]",
-    57.0214: "[UNIMOD:4]",
-    15.9949: "[UNIMOD:35]",
-    42.0105: "[UNIMOD:1]",
+    "229.1629": "[UNIMOD:737]",
+    "304.2071": "[UNIMOD:2016]",
+    "144.1020": "[UNIMOD:214]",
+    "304.2053": "[UNIMOD:730]",
+    "8.0141": "[UNIMOD:259]",
+    "10.0082": "[UNIMOD:267]",
+    "79.9663": "[UNIMOD:21]",
+    "-18.0105": "[UNIMOD:23]",
+    "57.0215": "[UNIMOD:4]",
+    "15.9949": "[UNIMOD:35]",
+    "15.994": "[UNIMOD:35]",
+    "42.0105": "[UNIMOD:1]",
 }
 # these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
+
+
 AA_MOD_MASSES = {
     "K[UNIMOD:737]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:737]"],
     "M[UNIMOD:35]": AA_MASSES["M"] + MOD_MASSES["[UNIMOD:35]"],
@@ -285,6 +289,62 @@ AA_MOD_MASSES = {
 }
 
 AA_MOD = {**AA_MASSES, **AA_MOD_MASSES}
+
+
+AA_Neutral_losses = {
+    "R": ["NH3", "CH2N2", "C3H9N3"],
+    "N": ["NH3", "CH3NO", "C2H5NO", "C3H5NO"],
+    "D": ["H2O", "CO2", "C2H4O2"],
+    "C": ["CH2S"],
+    "E": ["H2O", "C2H4O2"],
+    "Q": ["NH3", "CH3NO", "C2H5NO", "C3H5NO"],
+    "I": ["C2H4"],
+    "L": ["C3H6", "C4H8"],
+    "K": ["C2H5N", "C4H9N", "C4H11N", "C3H9N"],
+    "M": ["C2H4S", "C3H6S"],
+    "M[UNIMOD:35]": ["CH4SO", "C3H8SO", "C3H6SO"],
+    "S": ["H2O", "CH4O"],
+    "T": ["H2O", "C2H4O"],
+    "W": ["C8H7N", "C9H9N"],
+    "V": ["C3H6"],
+    "[]-": ["NH3"],
+    "-[]": ["H2O"],
+}
+
+Mod_Neutral_losses = {"R[UNIMOD:7]": ["CHNO"], "S[UNIMOD:21]": ["H3O4P"]}
+
+Neutral_losses_Mass = {
+    "C2H4": (ATOM_MASSES["C"] * 2) + (ATOM_MASSES["H"] * 4),
+    "C2H4O": (ATOM_MASSES["C"] * 2) + (ATOM_MASSES["H"] * 4) + ATOM_MASSES["O"],
+    "C2H4O2": (ATOM_MASSES["C"] * 2) + (ATOM_MASSES["H"] * 4) + (ATOM_MASSES["O"] * 2),
+    "C2H4S": (ATOM_MASSES["C"] * 2) + (ATOM_MASSES["H"] * 4) + ATOM_MASSES["S"],
+    "C2H5N": (ATOM_MASSES["C"] * 2) + (ATOM_MASSES["H"] * 5) + ATOM_MASSES["N"],
+    "CHNO": (ATOM_MASSES["C"]) + (ATOM_MASSES["H"]) + ATOM_MASSES["N"] + ATOM_MASSES["O"],
+    "C2H5NO": (ATOM_MASSES["C"] * 2) + (ATOM_MASSES["H"] * 5) + ATOM_MASSES["N"] + ATOM_MASSES["O"],
+    "C3H5NO": (ATOM_MASSES["C"] * 3) + (ATOM_MASSES["H"] * 5) + ATOM_MASSES["N"] + ATOM_MASSES["O"],
+    "C3H6": (ATOM_MASSES["C"] * 3) + (ATOM_MASSES["H"] * 6),
+    "C3H6S": (ATOM_MASSES["C"] * 3) + (ATOM_MASSES["H"] * 6) + ATOM_MASSES["S"],
+    "C3H6SO": (ATOM_MASSES["C"] * 3) + (ATOM_MASSES["H"] * 6) + ATOM_MASSES["S"] + ATOM_MASSES["O"],
+    "C3H8SO": (ATOM_MASSES["C"] * 3) + (ATOM_MASSES["H"] * 8) + ATOM_MASSES["S"] + ATOM_MASSES["O"],
+    "C3H9N": (ATOM_MASSES["C"] * 3) + (ATOM_MASSES["H"] * 9) + ATOM_MASSES["N"],
+    "C3H9N3": (ATOM_MASSES["C"] * 3) + (ATOM_MASSES["H"] * 9) + (ATOM_MASSES["N"] * 3),
+    "C4H11N": (ATOM_MASSES["C"] * 4) + (ATOM_MASSES["H"] * 11) + ATOM_MASSES["N"],
+    "C4H8": (ATOM_MASSES["C"] * 4) + (ATOM_MASSES["H"] * 8),
+    "C4H9N": (ATOM_MASSES["C"] * 4) + (ATOM_MASSES["H"] * 9) + ATOM_MASSES["N"],
+    "C8H7N": (ATOM_MASSES["C"] * 8) + (ATOM_MASSES["H"] * 7) + ATOM_MASSES["N"],
+    "C9H9N": (ATOM_MASSES["C"] * 9) + (ATOM_MASSES["H"] * 9) + ATOM_MASSES["N"],
+    "CH2N2": ATOM_MASSES["C"] + (ATOM_MASSES["H"] * 2) + (ATOM_MASSES["N"] * 2),
+    "CH2S": ATOM_MASSES["C"] + (ATOM_MASSES["H"] * 2) + ATOM_MASSES["S"],
+    "CH3NO": ATOM_MASSES["C"] + (ATOM_MASSES["H"] * 3) + ATOM_MASSES["N"] + ATOM_MASSES["O"],
+    "CH4O": ATOM_MASSES["C"] + (ATOM_MASSES["H"] * 4) + ATOM_MASSES["O"],
+    "CH4SO": ATOM_MASSES["C"] + (ATOM_MASSES["H"] * 4) + ATOM_MASSES["S"] + ATOM_MASSES["O"],
+    "CO2": ATOM_MASSES["C"] + (ATOM_MASSES["O"] * 2),
+    "H2O": (ATOM_MASSES["H"] * 2) + ATOM_MASSES["O"],
+    "NH3": ATOM_MASSES["N"] + (ATOM_MASSES["H"] * 3),
+    "H3O4P": (ATOM_MASSES["H"] * 3) + (ATOM_MASSES["O"] * 4) + ATOM_MASSES["P"],
+}
+
+Unimod_Neutral_losses = {7: ["CHNO"], 21: ["H3O4P"]}
 
 #######################################
 # HELPERS FOR FRAGMENT MZ CALCULATION #
@@ -339,6 +399,7 @@ META_DATA_ONLY_COLUMNS = [
     "PRECURSOR_MASS_EXP",
     "SCORE",
     "REVERSE",
+    "PROTEINS",
 ]
 META_DATA_COLUMNS = SHARED_DATA_COLUMNS + META_DATA_ONLY_COLUMNS
 MZML_ONLY_DATA_COLUMNS = [
@@ -384,28 +445,17 @@ SPECTRONAUT_MODS = {
     "[UNIMOD:35]": "[Oxidation (O)]",
 }
 
-FRAGMENTATION_ENCODING = {"HCD": 2, "CID": 1}
-
-############################
-# GENERATION OF ANNOTATION #
-############################
-
-IONS = ["y", "b"]  # limited to single character unicode string when array is created
-CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
-POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
-
-ANNOTATION_FRAGMENT_TYPE = []
-ANNOTATION_FRAGMENT_CHARGE = []
-ANNOTATION_FRAGMENT_NUMBER = []
-for pos in POSITIONS:
-    for ion in IONS:
-        for charge in CHARGES:
-            ANNOTATION_FRAGMENT_TYPE.append(ion)
-            ANNOTATION_FRAGMENT_CHARGE.append(charge)
-            ANNOTATION_FRAGMENT_NUMBER.append(pos)
-
-ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
-
+FRAGMENTATION_ENCODING = {
+    "CID": 1,
+    "HCD": 2,
+    "ETD": 3,
+    "ETHCD": 4,
+    "ETCID": 5,
+    "UVPD": 6,
+    "EID": 7,
+    "ECD": 8,
+    "AIECD": 9,
+}
 
 ########################
 # RESCORING PARAMETERS #
@@ -417,3 +467,67 @@ class RescoreType(Enum):
 
     PROSIT = "prosit"
     ANDROMEDA = "andromeda"
+
+
+#############
+# ION TYPES #
+#############
+FORWARD_IONS = ["a", "b", "c"]
+BACKWARDS_IONS = ["x", "y", "z", "z_r"]  #
+IONS = FORWARD_IONS + BACKWARDS_IONS
+
+FRAGMENTATION_TO_IONS_BY_PAIRS = {
+    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ETHCD": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
+    "ETCID": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
+    "UVPD": [
+        BACKWARDS_IONS[0],
+        FORWARD_IONS[0],
+        BACKWARDS_IONS[1],
+        FORWARD_IONS[1],
+        BACKWARDS_IONS[2],
+        FORWARD_IONS[2],
+    ],  # y,b,z,c,x,a
+}
+
+FRAGMENTATION_TO_IONS_BY_DIRECTION = {
+    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
+    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
+    "ETHCD": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
+    "ETCID": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
+    "UVPD": BACKWARDS_IONS[:-1] + FORWARD_IONS,  # y,z,x,b,c,a
+}
+
+ION_DELTAS = {
+    "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
+    "b": 0.0,
+    "c": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
+    "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
+    "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
+    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
+    "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
+}
+
+############################
+# GENERATION OF ANNOTATION #
+############################
+
+CHARGES = [1, 2, 3]  # limited to uint8 (0-255) when array is created
+POSITIONS = [x for x in range(1, 30)]  # fragment numbers 1-29 -- limited to uint8 (0-255) when array is created
+POSITIONS_XL = [x for x in range(1, 59)]
+ANNOTATION_FRAGMENT_TYPE = []
+ANNOTATION_FRAGMENT_CHARGE = []
+ANNOTATION_FRAGMENT_NUMBER = []
+for pos in POSITIONS:
+    for ion in FRAGMENTATION_TO_IONS_BY_DIRECTION["HCD"]:
+        for charge in CHARGES:
+            ANNOTATION_FRAGMENT_TYPE.append(ion)
+            ANNOTATION_FRAGMENT_CHARGE.append(charge)
+            ANNOTATION_FRAGMENT_NUMBER.append(pos)
+
+ANNOTATION = [ANNOTATION_FRAGMENT_TYPE, ANNOTATION_FRAGMENT_CHARGE, ANNOTATION_FRAGMENT_NUMBER]
