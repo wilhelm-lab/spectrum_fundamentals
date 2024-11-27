@@ -173,26 +173,31 @@ def _get_neutral_losses(peptide_sequence, modifications):
 
     for i in range(0, sequence_length):
         aa = peptide_sequence[i]
-        if aa in c.AA_Neutral_losses:
-            if i in modifications:
-                """if aa == "M" and modifications[i] == 15.9949146:
-                nl_b_ions = _add_nl(c.AA_Neutral_losses["M[UNIMOD:35]"], nl_b_ions, i, sequence_length - 1)
+        # if aa in c.AA_Neutral_losses:
+        if i in modifications:
+            """if aa == "M" and modifications[i] == 15.9949146:
+            nl_b_ions = _add_nl(c.AA_Neutral_losses["M[UNIMOD:35]"], nl_b_ions, i, sequence_length - 1)
+            nl_y_ions = _add_nl(
+                c.AA_Neutral_losses["M[UNIMOD:35]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
+            )"""
+            if aa == "R" and modifications[i] == 0.984016:
+                nl_b_ions = _add_nl(c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_b_ions, i, sequence_length - 1)
                 nl_y_ions = _add_nl(
-                    c.AA_Neutral_losses["M[UNIMOD:35]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
-                )"""
-                if aa == "R" and modifications[i] == 0.984016:
-                    nl_b_ions = _add_nl(c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_b_ions, i, sequence_length - 1)
-                    nl_y_ions = _add_nl(
-                        c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
-                    )
-                elif (aa == "S" or aa == "T") and modifications[i] == 79.966331:
-                    nl_b_ions = _add_nl(c.Mod_Neutral_losses["S[UNIMOD:21]"], nl_b_ions, i, sequence_length - 1)
-                    nl_y_ions = _add_nl(
-                        c.Mod_Neutral_losses["S[UNIMOD:21]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
-                    )
-            """else:
-                nl_b_ions = _add_nl(c.AA_Neutral_losses[aa], nl_b_ions, i, sequence_length - 1)
-                nl_y_ions = _add_nl(c.AA_Neutral_losses[aa], nl_y_ions, sequence_length - i - 1, sequence_length - 1)"""
+                    c.Mod_Neutral_losses["R[UNIMOD:7]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
+                )
+            if aa == "R" and modifications[i] == 213.0538:
+                nl_b_ions = _add_nl(c.Mod_Neutral_losses["R[UNIMOD:21305]"], nl_b_ions, i, sequence_length - 1)
+                nl_y_ions = _add_nl(
+                    c.Mod_Neutral_losses["R[UNIMOD:21305]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
+                )
+            elif (aa == "S" or aa == "T" or aa == "H") and modifications[i] == 79.966331:
+                nl_b_ions = _add_nl(c.Mod_Neutral_losses["S[UNIMOD:21]"], nl_b_ions, i, sequence_length - 1)
+                nl_y_ions = _add_nl(
+                    c.Mod_Neutral_losses["S[UNIMOD:21]"], nl_y_ions, sequence_length - i - 1, sequence_length - 1
+                )
+        """else:
+            nl_b_ions = _add_nl(c.AA_Neutral_losses[aa], nl_b_ions, i, sequence_length - 1)
+            nl_y_ions = _add_nl(c.AA_Neutral_losses[aa], nl_y_ions, sequence_length - i - 1, sequence_length - 1)"""
     return nl_b_ions, nl_y_ions
 
 
@@ -225,6 +230,7 @@ def initialize_peaks(  # noqa: C901
     fragmentation_method: str = "HCD",
     custom_mods: Optional[Dict[str, float]] = None,
     add_neutral_losses: Optional[bool] = False,
+    custom_ions: Optional[List[str]] = None,
 ) -> Tuple[List[dict], int, str, float, int]:
     """
     Generate theoretical peaks for a modified peptide sequence.
@@ -240,13 +246,17 @@ def initialize_peaks(  # noqa: C901
     :param fragmentation_method: fragmentation method that was used
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param add_neutral_losses: Flag to indicate whether to annotate neutral losses or not
+    :param custom_ions: list of custom ions to be annotated
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence,
         number of expected nl peaks
     """
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
-    ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
+    if custom_ions is None:
+        ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
+    else:
+        ion_types = custom_ions
     modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
 
     fragments_meta_data = []
@@ -271,7 +281,7 @@ def initialize_peaks(  # noqa: C901
         nl_b_ions, nl_y_ions = _get_neutral_losses(sequence, modification_deltas)
         nl_ions = [nl_y_ions, nl_b_ions]
 
-    expected_nl_count = 0
+    expected_nl_count = 0  # [0,0,0]
     mass_arr = np.array([c.AA_MASSES[_] for _ in sequence])
     for pos, mod_mass in modification_deltas.items():
         mass_arr[pos] += mod_mass
@@ -310,7 +320,7 @@ def initialize_peaks(  # noqa: C901
                         "fragment_score": 100,
                     }
                 )
-                if not add_neutral_losses:
+                if not add_neutral_losses or charge >= 1:
                     continue
                 for nl in nl_ions[ion_type][number]:
                     nl_score, nl_mass = _calculate_nl_score_mass(nl)
@@ -318,6 +328,12 @@ def initialize_peaks(  # noqa: C901
                     ion_mz = (ion_mass + (charge + 1) * c.PARTICLE_MASSES["PROTON"]) / (charge + 1)
                     min_mz, max_mz = get_min_max_mass(mass_analyzer, ion_mz, mass_tolerance, unit_mass_tolerance)
                     expected_nl_count += 1
+                    """if nl == 'NL1':
+                        expected_nl_count[0] = expected_nl_count[0] + 1
+                    if nl == 'NL2':
+                        expected_nl_count[1] = expected_nl_count[1] + 1
+                    if nl == 'NL3':
+                        expected_nl_count[2] = expected_nl_count[2] + 1"""
                     fragments_meta_data.append(
                         {
                             "ion_type": ion_types[ion_type],  # ion type

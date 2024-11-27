@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from spectrum_fundamentals import constants
 from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl, retrieve_ion_types
@@ -75,6 +76,13 @@ def match_peaks(
                         max_intensity = float(peak_intensity)
                 else:
                     count_annotated_nl += 1
+                """else:
+                    if fragment["neutral_loss"] == 'NL1':
+                        count_annotated_nl[0] = count_annotated_nl[0] + 1
+                    if fragment["neutral_loss"] == 'NL2':
+                        count_annotated_nl[1] = count_annotated_nl[1] + 1
+                    if fragment["neutral_loss"] == 'NL3':
+                        count_annotated_nl[2] = count_annotated_nl[2] + 1"""
 
             matched_peak = True
             next_start_peak = start_peak
@@ -130,6 +138,7 @@ def annotate_spectra(
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
     annotate_neutral_loss: Optional[bool] = False,
+    custom_ions: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -151,11 +160,12 @@ def annotate_spectra(
     :param fragmentation_method: fragmentation method that was used
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param annotate_neutral_loss: flag to indicate whether to annotate neutral losses or not
+    :param custom_ions: list of custom ions to be annotated
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
-    for row in un_annot_spectra.values:
+    for row in tqdm(un_annot_spectra.values):
         results = parallel_annotate(
             row,
             index_columns,
@@ -164,6 +174,7 @@ def annotate_spectra(
             fragmentation_method=fragmentation_method,
             custom_mods=custom_mods,
             annotate_neutral_losses=annotate_neutral_loss,
+            custom_ions=custom_ions,
         )
         if not results:
             continue
@@ -297,7 +308,11 @@ def generate_annotation_matrix_xl(
 
 
 def generate_annotation_matrix(
-    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int, fragmentation_method: str = "HCD"
+    matched_peaks: pd.DataFrame,
+    unmod_seq: str,
+    charge: int,
+    fragmentation_method: str = "HCD",
+    custom_ions: Optional[List[str]] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
@@ -306,9 +321,13 @@ def generate_annotation_matrix(
     :param unmod_seq: Un modified peptide sequence
     :param charge: Precursor charge
     :param fragmentation_method: fragmentation method that was used
+    :param custom_ions: list of custom ions to be annotated
     :return: numpy array of intensities and numpy array of masses
     """
-    ion_types = retrieve_ion_types(fragmentation_method)
+    if custom_ions is None:
+        ion_types = retrieve_ion_types(fragmentation_method)
+    else:
+        ion_types = custom_ions
     charge_const = 3
     vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
 
@@ -364,6 +383,7 @@ def parallel_annotate(
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
     annotate_neutral_losses: Optional[bool] = False,
+    custom_ions: Optional[List[str]] = None,
 ) -> Optional[
     Union[
         Tuple[np.ndarray, np.ndarray, float, int, int, int],
@@ -387,6 +407,7 @@ def parallel_annotate(
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param fragmentation_method: fragmentation method that was used
     :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
+    :param custom_ions: list of custom ions to be annotated
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -402,6 +423,7 @@ def parallel_annotate(
             fragmentation_method=fragmentation_method,
             custom_mods=custom_mods,
             add_neutral_losses=annotate_neutral_losses,
+            custom_ions=custom_ions,
         )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
@@ -419,6 +441,7 @@ def _annotate_linear_spectrum(
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
     add_neutral_losses: Optional[bool] = False,
+    custom_ions: Optional[List[str]] = None,
 ):
     """
     Annotate a linear peptide spectrum.
@@ -430,6 +453,7 @@ def _annotate_linear_spectrum(
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param fragmentation_method: fragmentation method that was used
     :param add_neutral_losses: flag to indicate whether to annotate neutral losses or not
+    :param custom_ions: list of custom ions to be annotated
     :return: Annotated spectrum
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
@@ -445,6 +469,7 @@ def _annotate_linear_spectrum(
         fragmentation_method=fragmentation_method,
         custom_mods=custom_mods,
         add_neutral_losses=add_neutral_losses,
+        custom_ions=custom_ions,
     )
     matched_peaks, count_annotated_nl = match_peaks(
         fragments_meta_data,
@@ -455,7 +480,10 @@ def _annotate_linear_spectrum(
         spectrum[index_columns["PRECURSOR_CHARGE"]],
     )
 
-    ion_types = retrieve_ion_types(fragmentation_method)
+    if custom_ions is None:
+        ion_types = retrieve_ion_types(fragmentation_method)
+    else:
+        ion_types = custom_ions
     charge_const = 3
     vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
 
@@ -466,7 +494,11 @@ def _annotate_linear_spectrum(
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
-        matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]], fragmentation_method
+        matched_peaks,
+        unmod_sequence,
+        spectrum[index_columns["PRECURSOR_CHARGE"]],
+        fragmentation_method,
+        custom_ions=custom_ions,
     )
     return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl
 

@@ -231,6 +231,7 @@ MOD_MASSES = {
     "[UNIMOD:64]": 100.016044,  # Succinylation
     "[UNIMOD:7]": 0.984016,  # Deamidation
     "[UNIMOD:747]": 86.000394,  # Malonylation
+    "[UNIMOD:21305]": 213.0538,
 }
 
 
@@ -302,7 +303,7 @@ AA_Neutral_losses = {
     "-[]": ["H2O"],
 }
 
-Mod_Neutral_losses = {"R[UNIMOD:7]": ["CHNO"], "S[UNIMOD:21]": ["H3O4P"]}
+Mod_Neutral_losses = {"R[UNIMOD:7]": ["CHNO"], "S[UNIMOD:21]": ["H3O4P"], "R[UNIMOD:21305]": ["NL1", "NL2", "NL3"]}
 
 Neutral_losses_Mass = {
     "C2H4": (ATOM_MASSES["C"] * 2) + (ATOM_MASSES["H"] * 4),
@@ -333,6 +334,9 @@ Neutral_losses_Mass = {
     "H2O": (ATOM_MASSES["H"] * 2) + ATOM_MASSES["O"],
     "NH3": ATOM_MASSES["N"] + (ATOM_MASSES["H"] * 3),
     "H3O4P": (ATOM_MASSES["H"] * 3) + (ATOM_MASSES["O"] * 4) + ATOM_MASSES["P"],
+    "NL1": 45.0327,
+    "NL2": 28.0061,
+    "NL3": 17.0265,
 }
 
 Unimod_Neutral_losses = {7: ["CHNO"], 21: ["H3O4P"]}
@@ -463,7 +467,7 @@ class RescoreType(Enum):
 #############
 # ION TYPES #
 #############
-FORWARD_IONS = ["a", "b", "c"]
+FORWARD_IONS = ["a", "b", "c", "c_r"]
 BACKWARDS_IONS = ["x", "y", "z", "z_r"]  #
 IONS = FORWARD_IONS + BACKWARDS_IONS
 
@@ -498,6 +502,7 @@ ION_DELTAS = {
     "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
     "b": 0.0,
     "c": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
+    "c_r": 2 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
     "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
     "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
     "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
