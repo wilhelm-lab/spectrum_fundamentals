@@ -1,5 +1,5 @@
 import enum
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 import numpy as np
 import scipy.sparse
@@ -139,7 +139,11 @@ class FragmentsRatio(Metric):
         )
         return observation_state
 
-    def calc(self, xl: bool = False, ion_dict: pd.DataFrame = None):
+    def calc(self, 
+        xl: bool=False, 
+        ion_dict: pd.DataFrame=None,
+        featured_ions: List[str]=None,
+    ):
         """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
         if self.true_intensities is None or self.pred_intensities is None:
             return None
@@ -423,7 +427,7 @@ class FragmentsRatio(Metric):
             )
         
         elif ion_dict is not None:
-            unique_ions = ion_dict['ion'].unique()
+            unique_ions = ion_dict['ion'].unique() if featured_ions is None else featured_ions
             ION_MASKS = {ion: (ion_dict['ion'] == ion).to_numpy().astype(int) for ion in unique_ions}
             
             mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
