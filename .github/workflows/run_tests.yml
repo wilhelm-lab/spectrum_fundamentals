@@ -72,13 +72,14 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Set up Python ${{ matrix.python-version }}
-              uses: actions/setup-python@v5.2.0
+              uses: actions/setup-python@v5.3.0
               with:
                   python-version: ${{ matrix.python-version }}
 
             - name: Install Poetry
               run: |
                   pipx install poetry
+                  pipx inject poetry poetry-plugin-export
                   poetry --version
 
             - name: Install nox nox-poetry rich
@@ -104,7 +105,7 @@ jobs:
                   print("::set-output name=result::{}".format(result))
 
             - name: Restore pre-commit cache
-              uses: actions/cache@v4.0.2
+              uses: actions/cache@v4.2.0
               if: matrix.session == 'pre-commit'
               with:
                   path: ~/.cache/pre-commit
@@ -138,13 +139,14 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Set up Python 3.9
-              uses: actions/setup-python@v5.2.0
+              uses: actions/setup-python@v5.3.0
               with:
                   python-version: 3.9
 
             - name: Install Poetry
               run: |
                   pipx install poetry
+                  pipx inject poetry poetry-plugin-export
                   poetry --version
 
             - name: Install nox nox-poetry rich
@@ -166,4 +168,4 @@ jobs:
               run: nox --force-color --session=coverage -- xml -i
 
             - name: Upload coverage report
-              uses: codecov/codecov-action@v4.6.0
+              uses: codecov/codecov-action@v5.1.2

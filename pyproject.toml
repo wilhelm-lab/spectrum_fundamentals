@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spectrum_fundamentals"
-version = "0.7.8"  # <<COOKIETEMPLE_FORCE_BUMP>>
+version = "0.7.9"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Fundamental functions, annotation pipeline and constants for oktoberfest"
 authors = ["Wilhelmlab at Technical University of Munich"]
 license = "MIT"
@@ -24,7 +24,7 @@ rich = ">=10.3.0"
 PyYAML = ">=5.4.1"
 numpy = ">=1.24.1,<1.25"
 pandas = ">=1.3,<3.0"
-scikit-learn = "^1.0"
+scikit-learn = "^1.5"
 joblib = "^1.0.1"
 moepy = "^1.1.4"
 

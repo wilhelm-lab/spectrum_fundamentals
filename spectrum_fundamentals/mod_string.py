@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from .constants import MOD_MASSES, MOD_NAMES, SPECTRONAUT_MODS, XISEARCH_VAR_MODS
+from .constants import MOD_MASSES, MOD_NAMES, OPENMS_VAR_MODS, SPECTRONAUT_MODS, XISEARCH_VAR_MODS
 
 
 def sage_to_internal(sequences: List[str], mods: Dict[str, str]) -> List[str]:
@@ -187,6 +187,52 @@ def msfragger_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mo
     :return: a list of modified sequences
     """
     return _to_internal(sequences=sequences, mods=mods)
+
+
+def openms_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
+    """
+    Function to translate a OpenMS modstring to the Prosit format.
+
+    :param sequences: List[str] of sequences
+    :param fixed_mods: Optional dictionary of modifications with key aa and value mod, e.g. 'M(Oxidation)': 'M(UNIMOD:35)'.
+        Fixed modifications must be included in the variable modificatons dictionary.
+        By default, i.e. if nothing is supplied to fixed_mods, carbamidomethylation on cystein will be included
+        in the fixed modifications. If you want to have no fixed modifictions at all, supply fixed_mods={}
+    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary.
+    :return: a list of modified sequences
+    """
+    if fixed_mods is None:
+        fixed_mods = {"C": "C[UNIMOD:4]"}
+    err_msg = f"Provided illegal fixed mod, supported modifications are {set(OPENMS_VAR_MODS.values())}."
+    assert all(x in OPENMS_VAR_MODS.values() for x in fixed_mods.values()), err_msg
+
+    replacements = {**OPENMS_VAR_MODS, **fixed_mods}
+
+    def custom_regex_escape(key: str) -> str:
+        """
+        Subfunction to escape only normal brackets in the modstring.
+
+        :param key: The match to escape
+        :return: match with escaped special characters
+        """
+        for k, v in {"(": r"\(", ")": r"\)"}.items():
+            key = key.replace(k, v)
+        return key
+
+    regex = re.compile("|".join(map(custom_regex_escape, replacements.keys())))
+
+    def find_replacement(match: re.Match) -> str:
+        """
+        Subfunction to find the corresponding substitution for a match.
+
+        :param match: an re.Match object found by re.sub
+        :return: substitution string for the given match
+        """
+        key = match.string[match.start() : match.end()]
+
+        return replacements[key]
+
+    return [regex.sub(find_replacement, seq) for seq in sequences]
 
 
 def internal_without_mods(sequences: List[str]) -> List[str]:
