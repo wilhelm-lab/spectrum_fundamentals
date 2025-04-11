@@ -108,24 +108,25 @@ class Percolator(Metric):
         :param sample_size: number of samples
         :return: RT Index
         """
-        # bin retention times
-        # print(retention_time_df['RETENTION_TIME'])
+        # Calculate bin edges using Freedman–Diaconis rule
         min_rt = retention_time_df["RETENTION_TIME"].min() * 0.99
         max_rt = retention_time_df["RETENTION_TIME"].max() * 1.01
         bin_width = (
             2
             * scipy.stats.iqr(retention_time_df["RETENTION_TIME"])
             / len(retention_time_df["RETENTION_TIME"]) ** (1 / 3)
-        )  # Freedman–Diaconis rule
+        )
         break_points = np.arange(min_rt, max_rt, bin_width)
+
         retention_time_df["rt_bin_index"] = np.digitize(retention_time_df["RETENTION_TIME"], break_points)
 
         # sample a subset in each bin. Arbitrary target is 5000 datapoints spread over the bin counts
         points_per_bin = int(np.floor(sample_size / len(break_points)))
-        retention_time_df = retention_time_df.groupby("rt_bin_index", include_groups=False).apply(
-            lambda x: pd.DataFrame.sample(x, n=min(points_per_bin, len(x)), replace=False)
+
+        retention_time_df = retention_time_df.groupby("rt_bin_index", group_keys=False).apply(
+            lambda x: x.sample(n=min(points_per_bin, len(x)), replace=False)
         )
-        return retention_time_df.reset_index(level=0, drop=True).index
+        return retention_time_df.index
 
     @staticmethod
     def get_aligned_predicted_retention_times(
@@ -201,17 +202,17 @@ class Percolator(Metric):
         :raises NotImplementedError: If there is only one unique value for ScanNr in the scores_df.
         :return: numpy array of delta scores
         """
-        # TODO: sort after grouping for better efficiency
-        scores_df = scores_df.sort_values(by=scoring_feature, ascending=True)
-        groups = scores_df.groupby(["ScanNr"], include_groups=False)
-        t = groups.apply(lambda scores_df_: scores_df_[scoring_feature] - scores_df_[scoring_feature].shift(1))
-        # apply doesnt work for one group only
-        if len(groups) == 1:
+        if scores_df["ScanNr"].nunique() == 1:
             raise NotImplementedError
-        scores_df["delta_" + scoring_feature] = pd.Series(t.reset_index(level=0, drop=True))
-        scores_df.fillna(0, inplace=True)
-        scores_df.sort_index(inplace=True)
-        return scores_df["delta_" + scoring_feature].to_numpy()
+
+        return (
+            scores_df.sort_values(by=[scoring_feature])
+            .groupby("ScanNr")[scoring_feature]
+            .diff(periods=1)
+            .fillna(0)
+            .sort_index()
+            .to_numpy()
+        )
 
     @staticmethod
     def get_specid(metadata_subset: Union[pd.Series, Tuple]) -> str:
