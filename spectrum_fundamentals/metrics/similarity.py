@@ -116,7 +116,7 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def unit_normalization(
-        matrix: Union[scipy.sparse.csr_matrix, np.ndarray]
+        matrix: Union[scipy.sparse.csr_matrix, np.ndarray],
     ) -> Union[scipy.sparse.csr_matrix, np.ndarray]:
         """
         Normalize each row of the matrix such that the norm equals 1.0.
