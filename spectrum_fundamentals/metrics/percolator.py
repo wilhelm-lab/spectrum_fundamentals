@@ -122,7 +122,7 @@ class Percolator(Metric):
 
         # sample a subset in each bin. Arbitrary target is 5000 datapoints spread over the bin counts
         points_per_bin = int(np.floor(sample_size / len(break_points)))
-        retention_time_df = retention_time_df.groupby("rt_bin_index").apply(
+        retention_time_df = retention_time_df.groupby("rt_bin_index", include_groups=False).apply(
             lambda x: pd.DataFrame.sample(x, n=min(points_per_bin, len(x)), replace=False)
         )
         return retention_time_df.reset_index(level=0, drop=True).index
@@ -203,7 +203,7 @@ class Percolator(Metric):
         """
         # TODO: sort after grouping for better efficiency
         scores_df = scores_df.sort_values(by=scoring_feature, ascending=True)
-        groups = scores_df.groupby(["ScanNr"])
+        groups = scores_df.groupby(["ScanNr"], include_groups=False)
         t = groups.apply(lambda scores_df_: scores_df_[scoring_feature] - scores_df_[scoring_feature].shift(1))
         # apply doesnt work for one group only
         if len(groups) == 1:
