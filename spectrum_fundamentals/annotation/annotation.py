@@ -17,6 +17,7 @@ def match_peaks(
     tmt_n_term: int,
     unmod_sequence: str,
     charge: int,
+    p_window_bounds: list,
 ) -> Tuple[List[Dict[str, Union[str, int, float]]], int]:
     """
     Matching experimental peaks with theoretical fragment ions.
@@ -48,14 +49,20 @@ def match_peaks(
         while start_peak < no_of_peaks:
             peak_mass = peaks_masses[start_peak]
             peak_intensity = peaks_intensity[start_peak]
+            
+            # precursor exclusion window
+            if peak_mass > p_window_bounds[0] and peak_mass < p_window_bounds[1]:
+                start_peak += 1
+                continue
 
             if peak_mass > max_mass:
                 break
             if peak_mass < min_mass:
                 start_peak += 1
                 continue
+            
             if (
-                not (fragment["ion_type"][0] == "b" and fragment_no == 1)
+                not (fragment["ion_type"] in constants.FORWARD_IONS and fragment_no == 1)
                 or (unmod_sequence[0] == "R" or unmod_sequence[0] == "H" or unmod_sequence[0] == "K")
                 or (tmt_n_term == 2)
             ):
@@ -69,6 +76,7 @@ def match_peaks(
                             "exp_mass": peak_mass,
                             "theoretical_mass": fragment["mass"],
                             "intensity": peak_intensity,
+                            "full_name": fragment["full_name"],
                         }
                     )
                     if peak_intensity > max_intensity:
@@ -129,6 +137,8 @@ def annotate_spectra(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
+    ion_df: Optional[pd.DataFrame] = None,
+    p_window: Optional[float] = 0.0,
     annotate_neutral_loss: Optional[bool] = False,
 ) -> pd.DataFrame:
     """
@@ -155,6 +165,8 @@ def annotate_spectra(
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
+    ion_types = None if ion_df is None else list(np.sort(ion_df['ion'].unique()))
+
     for row in un_annot_spectra.values:
         results = parallel_annotate(
             row,
@@ -162,6 +174,8 @@ def annotate_spectra(
             mass_tolerance,
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
+            ion_df=ion_df,
+            p_window=p_window,
             custom_mods=custom_mods,
             annotate_neutral_losses=annotate_neutral_loss,
         )
@@ -297,7 +311,11 @@ def generate_annotation_matrix_xl(
 
 
 def generate_annotation_matrix(
-    matched_peaks: pd.DataFrame, unmod_seq: str, charge: int, fragmentation_method: str = "HCD"
+    matched_peaks: pd.DataFrame, 
+    unmod_seq: str, 
+    charge: int, 
+    fragmentation_method: str = "HCD",
+    ion_df: Optional[pd.DataFrame] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
@@ -308,25 +326,29 @@ def generate_annotation_matrix(
     :param fragmentation_method: fragmentation method that was used
     :return: numpy array of intensities and numpy array of masses
     """
-    ion_types = retrieve_ion_types(fragmentation_method)
-    charge_const = 3
-    vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
+    if ion_df is None:
+        ion_types = retrieve_ion_types(fragmentation_method)
+        charge_const = 3
+        vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
+        
+        # change values to zeros
+        if len(unmod_seq) < constants.SEQ_LEN:
+            peaks_range = range(0, ((len(unmod_seq) - 1) * charge_const * len(ion_types)))
+        else:
+            peaks_range = range(0, ((constants.SEQ_LEN - 1) * charge_const * len(ion_types)))
 
+        if charge == 1:
+            available_peaks = [index for index in peaks_range if (index % 3 == 0)]
+        elif charge == 2:
+            available_peaks = [index for index in peaks_range if (index % 3 in (0, 1))]
+        else:
+            available_peaks = [index for index in peaks_range]   
+    else:
+        vec_length = len(ion_df)
+        available_peaks = ion_df.query(f"length < {len(unmod_seq)-1} and charge <= {charge}")['index'].to_list()
+    
     intensity = np.full(vec_length, -1.0)
     mass = np.full(vec_length, -1.0)
-
-    # change values to zeros
-    if len(unmod_seq) < constants.SEQ_LEN:
-        peaks_range = range(0, ((len(unmod_seq) - 1) * charge_const * len(ion_types)))
-    else:
-        peaks_range = range(0, ((constants.SEQ_LEN - 1) * charge_const * len(ion_types)))
-
-    if charge == 1:
-        available_peaks = [index for index in peaks_range if (index % 3 == 0)]
-    elif charge == 2:
-        available_peaks = [index for index in peaks_range if (index % 3 in (0, 1))]
-    else:
-        available_peaks = [index for index in peaks_range]
 
     intensity[available_peaks] = 0.0
     mass[available_peaks] = 0.0
@@ -336,17 +358,33 @@ def generate_annotation_matrix(
     charge_col = matched_peaks.columns.get_loc("charge")
     intensity_col = matched_peaks.columns.get_loc("intensity")
     exp_mass_col = matched_peaks.columns.get_loc("exp_mass")
+    full_name_col = matched_peaks.columns.get_loc("full_name")
 
     for peak in matched_peaks.values:
-        ion_type_index = ion_types.index(peak[ion_type].split("-", 1)[0])
-        peak_pos = ((peak[no_col] - 1) * charge_const * len(ion_types)) + (peak[charge_col] - 1) + 3 * ion_type_index
+        
+        if ion_df is not None:
+            try:
+                peak_pos = ion_df.loc[peak[full_name_col]]["index"]
+            except:
+                continue
+            """query = ion_df.query(f"ion == '{peak[ion_type]}' and length == {peak[no_col]} and charge == {peak[charge_col]}")
+            if len(query) == 0:
+                continue
+            elif len(query) == 1:
+                peak_pos = query.iloc[0]['index']
+            elif len(query) > 1:
+                NotImplementedError("Haven't implemented for neutral losses yet. Must add it to query.")"""
+        else:
+            ion_type_index = ion_types.index(peak[ion_type].split("-", 1)[0])
+            peak_pos = ((peak[no_col] - 1) * charge_const * len(ion_types)) + (peak[charge_col] - 1) + 3 * ion_type_index
 
-        if peak_pos >= constants.VEC_LENGTH:
-            continue
+            if peak_pos >= constants.VEC_LENGTH:
+                continue
+        
         intensity[peak_pos] = peak[intensity_col]
         mass[peak_pos] = peak[exp_mass_col]
 
-    if len(unmod_seq) < constants.SEQ_LEN:
+    if (ion_df is None) and (len(unmod_seq) < constants.SEQ_LEN):
         mask_peaks = range(
             (len(unmod_seq) - 1) * charge_const * len(ion_types), ((len(unmod_seq)) * charge_const * len(ion_types))
         )
@@ -363,6 +401,8 @@ def parallel_annotate(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
+    ion_df: Optional[pd.DataFrame] = None,
+    p_window: Optional[float] = 0.0,
     annotate_neutral_losses: Optional[bool] = False,
 ) -> Optional[
     Union[
@@ -400,6 +440,8 @@ def parallel_annotate(
             mass_tolerance,
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
+            ion_df=ion_df,
+            p_window=p_window,
             custom_mods=custom_mods,
             add_neutral_losses=annotate_neutral_losses,
         )
@@ -418,6 +460,8 @@ def _annotate_linear_spectrum(
     unit_mass_tolerance: Optional[str],
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
+    ion_df: Optional[pd.DataFrame] = None,
+    p_window: Optional[float] = 0.0,
     add_neutral_losses: Optional[bool] = False,
 ):
     """
@@ -435,14 +479,24 @@ def _annotate_linear_spectrum(
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
+    
+    if ion_df is not None:
+        ion_types = list(np.sort(ion_df['ion'].unique()))
+        vec_length = len(ion_df)
+    else:
+        ion_types = retrieve_ion_types(fragmentation_method)
+        charge_const = 3
+        vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
 
-    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass, expected_nl = initialize_peaks(
+    fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass, expected_nl, p_window_bounds = initialize_peaks(
         sequence=spectrum[index_columns[mod_seq_column]],
         mass_analyzer=spectrum[index_columns["MASS_ANALYZER"]],
         charge=spectrum[index_columns["PRECURSOR_CHARGE"]],
         mass_tolerance=mass_tolerance,
         unit_mass_tolerance=unit_mass_tolerance,
         fragmentation_method=fragmentation_method,
+        ion_types=ion_types,
+        p_window=p_window,
         custom_mods=custom_mods,
         add_neutral_losses=add_neutral_losses,
     )
@@ -453,11 +507,8 @@ def _annotate_linear_spectrum(
         tmt_n_term,
         unmod_sequence,
         spectrum[index_columns["PRECURSOR_CHARGE"]],
+        p_window_bounds=p_window_bounds,
     )
-
-    ion_types = retrieve_ion_types(fragmentation_method)
-    charge_const = 3
-    vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
 
     if len(matched_peaks) == 0:
         intensity = np.full(vec_length, 0.0)
@@ -466,7 +517,11 @@ def _annotate_linear_spectrum(
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
     intensities, mass = generate_annotation_matrix(
-        matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]], fragmentation_method
+        matched_peaks, 
+        unmod_sequence, 
+        spectrum[index_columns["PRECURSOR_CHARGE"]], 
+        fragmentation_method,
+        ion_df=ion_df,
     )
     return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl
 

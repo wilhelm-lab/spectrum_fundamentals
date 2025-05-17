@@ -223,6 +223,8 @@ def initialize_peaks(  # noqa: C901
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
     fragmentation_method: str = "HCD",
+    ion_types: Optional[list] = None,
+    p_window: Optional[float] = 0.0,
     custom_mods: Optional[Dict[str, float]] = None,
     add_neutral_losses: Optional[bool] = False,
 ) -> Tuple[List[dict], int, str, float, int]:
@@ -246,7 +248,8 @@ def initialize_peaks(  # noqa: C901
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
-    ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
+    if ion_types is None:
+        ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
     modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
 
     fragments_meta_data = []
@@ -276,17 +279,22 @@ def initialize_peaks(  # noqa: C901
     for pos, mod_mass in modification_deltas.items():
         mass_arr[pos] += mod_mass
 
-    n_forward_ions = len(ion_types) // 2
+    forward_ions = np.array([ion in c.FORWARD_IONS for ion in ion_types])
+    n_forward_ions = sum(forward_ions)
     n_fragments = len(sequence) - 1
     sum_array = np.empty(shape=(len(ion_types), n_fragments))
-    np.cumsum(mass_arr[:0:-1], out=sum_array[0])  # this is for the reverse ion-series
-    np.cumsum(mass_arr[:-1], out=sum_array[n_forward_ions])  # this is for the forward ion-series
-    peptide_mass = sum_array[0, -1] + mass_arr[0]  # this is the longest reverse ion + the first residue
+    sum_array[~forward_ions] = np.cumsum(mass_arr[:0:-1])#, out=sum_array[~forward_ions])  # this is for the reverse ion-series
+    sum_array[forward_ions] = np.cumsum(mass_arr[:-1])#, out=sum_array[forward_ions])  # this is for the forward ion-series
+    peptide_mass = mass_arr.sum() #sum_array[0, -1] + mass_arr[0]  # this is the longest reverse ion + the first residue
+
+    # Exclusion window
+    precursor_ion = 1.00727646688 + (peptide_mass + c.ATOM_MASSES['O'] + 2*c.ATOM_MASSES['H']) / max_charge
+    window = [precursor_ion - p_window, precursor_ion + p_window]
 
     # get offset for all needed ions
     deltas = get_ion_delta(ion_types)
-    np.add(sum_array[0], deltas[:n_forward_ions], out=sum_array[:n_forward_ions])
-    np.add(sum_array[n_forward_ions], deltas[n_forward_ions:], out=sum_array[n_forward_ions:])
+    sum_array[~forward_ions] = np.add(sum_array[~forward_ions], deltas[~forward_ions])#, out=sum_array[~forward_ions])
+    sum_array[forward_ions] = np.add(sum_array[forward_ions], deltas[forward_ions])#, out=sum_array[forward_ions])
 
     # calculate for m/z for charges 1, 2, 3
     # shape of ion_mzs: (n_ions, n_fragments, max_charge)
@@ -298,6 +306,7 @@ def initialize_peaks(  # noqa: C901
     for ion_type in range(len(ion_types)):
         for number in range(n_fragments):
             for charge in range(max_charge):
+                char = "" if charge == 0 else f"^{charge+1}"
                 fragments_meta_data.append(
                     {
                         "ion_type": ion_types[ion_type],  # ion type
@@ -308,6 +317,7 @@ def initialize_peaks(  # noqa: C901
                         "max_mass": max_mzs[ion_type, number, charge],  # max mz
                         "neutral_loss": "",
                         "fragment_score": 100,
+                        "full_name": f"{ion_types[ion_type]}{number+1}{char}",
                     }
                 )
                 if not add_neutral_losses:
@@ -339,6 +349,7 @@ def initialize_peaks(  # noqa: C901
         sequence,
         (peptide_mass + c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"]),
         expected_nl_count,
+        window,
     )
 
 

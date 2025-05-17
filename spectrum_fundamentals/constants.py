@@ -469,8 +469,8 @@ class RescoreType(Enum):
 #############
 # ION TYPES #
 #############
-FORWARD_IONS = ["a", "b", "c"]
-BACKWARDS_IONS = ["x", "y", "z", "z_r"]  #
+FORWARD_IONS = ["a", "A", "b", "c", "C"]
+BACKWARDS_IONS = ["x", "X", "y", "z", "Z"]  #
 IONS = FORWARD_IONS + BACKWARDS_IONS
 
 FRAGMENTATION_TO_IONS_BY_PAIRS = {
@@ -502,12 +502,15 @@ FRAGMENTATION_TO_IONS_BY_DIRECTION = {
 
 ION_DELTAS = {
     "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
+    "A": -ATOM_MASSES["O"] - ATOM_MASSES["C"] + ATOM_MASSES["H"],
     "b": 0.0,
-    "c": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
+    "c": 2 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
+    "C": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
     "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
+    "X": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"] + ATOM_MASSES["H"],
     "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
-    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
-    "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
+    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"],
+    "Z": ATOM_MASSES["O"] - ATOM_MASSES["N"] + ATOM_MASSES["H"],
 }
 
 ############################
