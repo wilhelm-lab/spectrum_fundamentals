@@ -57,7 +57,6 @@ Jinja2 = ">=3.0.1"
 mypy = ">=0.910"
 pyupgrade = ">=2.31.0"
 sphinx-click = "^6.0.0"
-sphinx-rtd-theme = "^3.0.2"
 
 [tool.poetry.scripts]
 spectrum_fundamentals = "spectrum_fundamentals.__main__:main"
