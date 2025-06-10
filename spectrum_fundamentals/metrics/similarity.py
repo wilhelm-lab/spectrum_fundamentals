@@ -47,6 +47,7 @@ class SimilarityMetrics(Metric):
         predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
         charge: int = 0,
         xl: bool = False,
+        cms2: bool = False,
     ) -> np.ndarray:
         """
         Calculate spectral angle.
@@ -56,14 +57,15 @@ class SimilarityMetrics(Metric):
                                      position >= peptide length), array of length 174
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything
-        :param xl: whether operating on cleavable crosslinked or linear peptides
+        :param xl: whether operating on crosslinked or linear peptides
+        :param cms2: whether operating on cleavable crosslinked or non-cleavable peptides
         :raises ValueError: if charge is smaller than 1 or larger than 5
         :return: SA values
         """
         if charge != 0:
             if not 1 <= charge <= 5:
                 raise ValueError("Charge must be between 1 to 5.")
-            masks = constants.MASK_DICT_XL if xl else constants.MASK_DICT
+            masks = constants.MASK_DICT_XL if cms2 else constants.MASK_DICT
             boolean_array = masks[charge]
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities = scipy.sparse.csr_matrix(observed_intensities)
@@ -200,6 +202,7 @@ class SimilarityMetrics(Metric):
         charge: int = 0,
         method: str = "pearson",
         xl: bool = False,
+        cms2: bool = False
     ) -> List[float]:
         """
         Calculate correlation between observed and predicted.
@@ -211,6 +214,7 @@ class SimilarityMetrics(Metric):
         :param charge: to filter by the peak charges, 0 means everything
         :param method: either pearson or spearman
         :param xl: wheter or not to use xl mode
+        :param cms2: cleavable crosslinked peptide or not
         :raises ValueError: if charge is smaller than 1 or larger than 5
 
         :return: calculated correlations
@@ -221,7 +225,7 @@ class SimilarityMetrics(Metric):
         if charge != 0:
             if not 1 <= charge <= 5:
                 raise ValueError("Charge must be between 1 to 5.")
-            masks = constants.MASK_DICT_XL if xl else constants.MASK_DICT
+            masks = constants.MASK_DICT_XL if cms2 else constants.MASK_DICT
             boolean_array = masks[charge]
             boolean_array = scipy.sparse.csr_matrix(boolean_array)
             observed_intensities_array = observed_intensities.multiply(boolean_array).toarray()
@@ -395,43 +399,48 @@ class SimilarityMetrics(Metric):
 
         return cos_values
 
-    def calc(self, all_features: bool, xl: bool = False):
+    def calc(self, all_features: bool, xl: bool = False, cms2: bool = False):
         """
         Adds columns with spectral angle feature to metrics_val dataframe.
 
         :param all_features: if True, calculate all metrics
         :param xl: whether calculating for crosslinked or linear peptides
+        :param cms2: whether cleavable crosslinked peptide or not
         """
         if xl:
             if self.true_intensities is not None and self.pred_intensities is not None:
+                if cms2:
+                    max_length=348
+                else:
+                    max_length=174
                 true_intensities_a = (
-                    self.true_intensities[:, :348] if self.true_intensities.shape[1] >= 348 else self.true_intensities
+                    self.true_intensities[:, :max_length] if self.true_intensities.shape[1] >= max_length else self.true_intensities
                 )
-                true_intensities_b = self.true_intensities[:, 348:] if self.true_intensities.shape[1] >= 348 else None
+                true_intensities_b = self.true_intensities[:, max_length:] if self.true_intensities.shape[1] >= max_length else None
                 pred_intensities_a = (
-                    self.pred_intensities[:, :348] if self.pred_intensities.shape[1] >= 348 else self.pred_intensities
+                    self.pred_intensities[:, :max_length] if self.pred_intensities.shape[1] >= max_length else self.pred_intensities
                 )
-                pred_intensities_b = self.pred_intensities[:, 348:] if self.pred_intensities.shape[1] >= 348 else None
+                pred_intensities_b = self.pred_intensities[:, max_length:] if self.pred_intensities.shape[1] >= max_length else None
 
                 if true_intensities_a is not None and pred_intensities_a is not None:
                     self.metrics_val["spectral_angle_a"] = SimilarityMetrics.spectral_angle(
-                        true_intensities_a, pred_intensities_a, 0
+                        true_intensities_a, pred_intensities_a, 0, xl=xl, cms2=cms2
                     )
                     self.metrics_val["pearson_corr_a"] = SimilarityMetrics.correlation(
-                        true_intensities_a, pred_intensities_a, 0
+                        true_intensities_a, pred_intensities_a, 0, xl=xl, cms2=cms2
                     )
                     if all_features:
-                        self._calc_additional_metrics(true_intensities_a, pred_intensities_a, key_suffix="_a")
+                        self._calc_additional_metrics(true_intensities_a, pred_intensities_a, key_suffix="_a", cms2=cms2)
 
                 if true_intensities_b is not None and pred_intensities_b is not None:
                     self.metrics_val["spectral_angle_b"] = SimilarityMetrics.spectral_angle(
-                        true_intensities_b, pred_intensities_b, 0
+                        true_intensities_b, pred_intensities_b, 0, xl=xl, cms2=cms2
                     )
                     self.metrics_val["pearson_corr_b"] = SimilarityMetrics.correlation(
-                        true_intensities_b, pred_intensities_b, 0
+                        true_intensities_b, pred_intensities_b, 0, xl=xl, cms2=cms2
                     )
                     if all_features:
-                        self._calc_additional_metrics(true_intensities_b, pred_intensities_b, key_suffix="_b")
+                        self._calc_additional_metrics(true_intensities_b, pred_intensities_b, key_suffix="_b", cms2=cms2)
 
                 if true_intensities_a is not None and true_intensities_b is not None:
                     self.metrics_val["spectral_angle"] = (
@@ -454,6 +463,7 @@ class SimilarityMetrics(Metric):
         true_intensities: Union[np.ndarray, scipy.sparse.spmatrix],
         pred_intensities: Union[np.ndarray, scipy.sparse.spmatrix],
         key_suffix: str = "",
+        cms2: bool = False,
     ):
         self.metrics_val[f"spectral_entropy_similarity{key_suffix}"] = SimilarityMetrics.spectral_entropy_similarity(
             true_intensities, pred_intensities
@@ -500,22 +510,22 @@ class SimilarityMetrics(Metric):
             # TODO: fix self.mz for XL mode
 
             self.metrics_val[f"spearman_corr{key_suffix}"] = SimilarityMetrics.correlation(
-                true_intensities, pred_intensities, 0, "spearman", xl=True
+                true_intensities, pred_intensities, 0, "spearman", xl=True, cms2=cms2
             )
 
             for i, col_name_spectral_angle in enumerate(col_names_spectral_angle):
                 self.metrics_val[col_name_spectral_angle] = SimilarityMetrics.spectral_angle(
-                    true_intensities, pred_intensities, i + 1, xl=True
+                    true_intensities, pred_intensities, i + 1, xl=True, cms2=cms2
                 )
 
             for i, col_name_pearson_corr in enumerate(col_names_pearson_corr):
                 self.metrics_val[col_name_pearson_corr] = SimilarityMetrics.correlation(
-                    true_intensities, pred_intensities, i + 1, "pearson", xl=True
+                    true_intensities, pred_intensities, i + 1, "pearson", xl=True, cms2=cms2
                 )
 
             for i, col_name_spearman_corr in enumerate(col_names_spearman_corr):
                 self.metrics_val[col_name_spearman_corr] = SimilarityMetrics.correlation(
-                    true_intensities, pred_intensities, i + 1, "spearman", xl=True
+                    true_intensities, pred_intensities, i + 1, "spearman", xl=True, cms2=cms2
                 )
         else:
             self.metrics_val[f"spearman_corr{key_suffix}"] = SimilarityMetrics.correlation(

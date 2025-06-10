@@ -118,11 +118,11 @@ def xisearch_to_internal(
     # Check the crosslinker type and apply modification accordingly
     modification = XISEARCH_VAR_MODS.get(xl.lower())
     if modification is None:
-        raise ValueError(f"Unknown crosslinker type provided: {xl}. Only 'DSSO' and 'DSBU' are supported.")
+        raise ValueError(f"Unknown crosslinker type provided: {xl}. Only 'DSSO', 'DSS', 'BS3' and 'DSBU' are supported.")
 
     split_seq = [x for x in seq]
     add_mod_sequence(split_seq, mod, mod_positions)
-    split_seq[crosslinker_position - 1] += modification
+    split_seq[int(crosslinker_position) - 1] += modification
     return "".join(split_seq)
 
 

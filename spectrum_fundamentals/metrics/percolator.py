@@ -60,6 +60,7 @@ class Percolator(Metric):
         additional_columns: Optional[Union[str, list]] = None,
         neutral_loss_flag: Optional[bool] = False,
         drop_miss_cleavage_flag: Optional[bool] = False,
+        cms2: bool = False 
     ):
         """Initialize a Percolator obj."""
         super().__init__(pred_intensities, true_intensities, mz, "CROSSLINKER_TYPE" in metadata.columns)
@@ -72,6 +73,7 @@ class Percolator(Metric):
         self.fdr_cutoff = fdr_cutoff
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
+        self.cms2 = cms2
 
         self.base_columns = [
             "raw_file",
@@ -456,9 +458,9 @@ class Percolator(Metric):
             # add additional features
             self.add_additional_features()
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
-            fragments_ratio.calc(xl=self.xl)
+            fragments_ratio.calc(xl=self.xl, cms2=self.cms2)
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
-            similarity.calc(self.all_features_flag, xl=self.xl)
+            similarity.calc(self.all_features_flag, xl=self.xl, cms2=self.cms2)
 
             self.metrics_val = pd.concat(
                 [self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1
