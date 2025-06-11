@@ -29,7 +29,7 @@ def _get_modifications(peptide_sequence: str, custom_mods: Optional[Dict[str, fl
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :return: modification_deltas
     """
-    modification_deltas = {}
+    modification_deltas: dict[int, float] = {}
     offset = 1  # shift position of mod start in seq by one to the left to reflect position of aa
     if peptide_sequence.startswith("["):  # n-term mod => seq must be [UNIMOD:xyz]-X...
         offset = 2  # need to add one more offset, because of the dash '-', n_terminal stored at -1
@@ -44,7 +44,10 @@ def _get_modifications(peptide_sequence: str, custom_mods: Optional[Dict[str, fl
 
     for match in matches:
         start_pos, end_pos = match.span()
-        modification_deltas[start_pos - offset] = mod_masses[match.group()]
+        if (start_pos - offset) in modification_deltas.keys():
+            modification_deltas[start_pos - offset] += mod_masses[match.group()]
+        else:
+            modification_deltas[start_pos - offset] = mod_masses[match.group()]
         offset += end_pos - start_pos
 
     return modification_deltas
