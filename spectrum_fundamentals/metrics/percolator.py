@@ -60,7 +60,7 @@ class Percolator(Metric):
         additional_columns: Optional[Union[str, list]] = None,
         neutral_loss_flag: Optional[bool] = False,
         drop_miss_cleavage_flag: Optional[bool] = False,
-        cms2: bool = False 
+        cms2: bool = False,
     ):
         """Initialize a Percolator obj."""
         super().__init__(pred_intensities, true_intensities, mz, "CROSSLINKER_TYPE" in metadata.columns)

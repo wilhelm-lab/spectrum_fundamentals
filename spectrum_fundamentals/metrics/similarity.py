@@ -202,7 +202,7 @@ class SimilarityMetrics(Metric):
         charge: int = 0,
         method: str = "pearson",
         xl: bool = False,
-        cms2: bool = False
+        cms2: bool = False,
     ) -> List[float]:
         """
         Calculate correlation between observed and predicted.
@@ -399,7 +399,7 @@ class SimilarityMetrics(Metric):
 
         return cos_values
 
-    def calc(self, all_features: bool, xl: bool = False, cms2: bool = False):
+    def calc(self, all_features: bool, xl: bool = False, cms2: bool = False):  # noqa: C901
         """
         Adds columns with spectral angle feature to metrics_val dataframe.
 
@@ -410,17 +410,25 @@ class SimilarityMetrics(Metric):
         if xl:
             if self.true_intensities is not None and self.pred_intensities is not None:
                 if cms2:
-                    max_length=348
+                    max_length = 348
                 else:
-                    max_length=174
+                    max_length = 174
                 true_intensities_a = (
-                    self.true_intensities[:, :max_length] if self.true_intensities.shape[1] >= max_length else self.true_intensities
+                    self.true_intensities[:, :max_length]
+                    if self.true_intensities.shape[1] >= max_length
+                    else self.true_intensities
                 )
-                true_intensities_b = self.true_intensities[:, max_length:] if self.true_intensities.shape[1] >= max_length else None
+                true_intensities_b = (
+                    self.true_intensities[:, max_length:] if self.true_intensities.shape[1] >= max_length else None
+                )
                 pred_intensities_a = (
-                    self.pred_intensities[:, :max_length] if self.pred_intensities.shape[1] >= max_length else self.pred_intensities
+                    self.pred_intensities[:, :max_length]
+                    if self.pred_intensities.shape[1] >= max_length
+                    else self.pred_intensities
                 )
-                pred_intensities_b = self.pred_intensities[:, max_length:] if self.pred_intensities.shape[1] >= max_length else None
+                pred_intensities_b = (
+                    self.pred_intensities[:, max_length:] if self.pred_intensities.shape[1] >= max_length else None
+                )
 
                 if true_intensities_a is not None and pred_intensities_a is not None:
                     self.metrics_val["spectral_angle_a"] = SimilarityMetrics.spectral_angle(
@@ -430,7 +438,9 @@ class SimilarityMetrics(Metric):
                         true_intensities_a, pred_intensities_a, 0, xl=xl, cms2=cms2
                     )
                     if all_features:
-                        self._calc_additional_metrics(true_intensities_a, pred_intensities_a, key_suffix="_a", cms2=cms2)
+                        self._calc_additional_metrics(
+                            true_intensities_a, pred_intensities_a, key_suffix="_a", cms2=cms2
+                        )
 
                 if true_intensities_b is not None and pred_intensities_b is not None:
                     self.metrics_val["spectral_angle_b"] = SimilarityMetrics.spectral_angle(
@@ -440,7 +450,9 @@ class SimilarityMetrics(Metric):
                         true_intensities_b, pred_intensities_b, 0, xl=xl, cms2=cms2
                     )
                     if all_features:
-                        self._calc_additional_metrics(true_intensities_b, pred_intensities_b, key_suffix="_b", cms2=cms2)
+                        self._calc_additional_metrics(
+                            true_intensities_b, pred_intensities_b, key_suffix="_b", cms2=cms2
+                        )
 
                 if true_intensities_a is not None and true_intensities_b is not None:
                     self.metrics_val["spectral_angle"] = (
