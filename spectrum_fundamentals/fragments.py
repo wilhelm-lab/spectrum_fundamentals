@@ -44,7 +44,10 @@ def _get_modifications(peptide_sequence: str, custom_mods: Optional[Dict[str, fl
 
     for match in matches:
         start_pos, end_pos = match.span()
-        modification_deltas[start_pos - offset] = mod_masses[match.group()]
+        if (start_pos - offset) in modification_deltas.keys():
+            modification_deltas[start_pos - offset] += mod_masses[match.group()]
+        else:
+            modification_deltas[start_pos - offset] = mod_masses[match.group()]
         offset += end_pos - start_pos
 
     return modification_deltas
