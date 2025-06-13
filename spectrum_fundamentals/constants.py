@@ -132,6 +132,8 @@ XISEARCH_VAR_MODS = {
     "cm": "[UNIMOD:4]",
     "dsso": "[UNIMOD:1896]",
     "dsbu": "[UNIMOD:1884]",
+    "dss": "[UNIMOD:1898]",
+    "bs3": "[UNIMOD:1898]",
 }
 
 #######################
