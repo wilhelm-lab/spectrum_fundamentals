@@ -329,7 +329,7 @@ class TestCalc:
         observed_intensities = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0], xl=True)
 
         fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities)
-        fragments_ratio.calc(xl=True)
+        fragments_ratio.calc(xl=True, cms2=True)
 
         # counting metrics - peptide_a
         np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_a"][0], 4)
