@@ -307,7 +307,7 @@ def internal_to_mod_names(
     :param sequences: List[str] of sequences
     :return: List[Tuple[str, str] of mod summary and mod sequences
     """
-    match_list = []
+    match_list: List[Tuple[str, int]] = []
     pos = [0]
     offset = [0]
 
