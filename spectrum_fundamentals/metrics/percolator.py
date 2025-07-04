@@ -60,6 +60,7 @@ class Percolator(Metric):
         additional_columns: Optional[Union[str, list]] = None,
         neutral_loss_flag: Optional[bool] = False,
         drop_miss_cleavage_flag: Optional[bool] = False,
+        cms2: bool = False,
     ):
         """Initialize a Percolator obj."""
         super().__init__(pred_intensities, true_intensities, mz, "CROSSLINKER_TYPE" in metadata.columns)
@@ -72,6 +73,7 @@ class Percolator(Metric):
         self.fdr_cutoff = fdr_cutoff
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
+        self.cms2 = cms2
 
         self.base_columns = [
             "raw_file",
@@ -108,24 +110,25 @@ class Percolator(Metric):
         :param sample_size: number of samples
         :return: RT Index
         """
-        # bin retention times
-        # print(retention_time_df['RETENTION_TIME'])
+        # Calculate bin edges using Freedman–Diaconis rule
         min_rt = retention_time_df["RETENTION_TIME"].min() * 0.99
         max_rt = retention_time_df["RETENTION_TIME"].max() * 1.01
         bin_width = (
             2
             * scipy.stats.iqr(retention_time_df["RETENTION_TIME"])
             / len(retention_time_df["RETENTION_TIME"]) ** (1 / 3)
-        )  # Freedman–Diaconis rule
+        )
         break_points = np.arange(min_rt, max_rt, bin_width)
+
         retention_time_df["rt_bin_index"] = np.digitize(retention_time_df["RETENTION_TIME"], break_points)
 
         # sample a subset in each bin. Arbitrary target is 5000 datapoints spread over the bin counts
         points_per_bin = int(np.floor(sample_size / len(break_points)))
-        retention_time_df = retention_time_df.groupby("rt_bin_index").apply(
-            lambda x: pd.DataFrame.sample(x, n=min(points_per_bin, len(x)), replace=False)
+
+        retention_time_df = retention_time_df.groupby("rt_bin_index", group_keys=False).apply(
+            lambda x: x.sample(n=min(points_per_bin, len(x)), replace=False)
         )
-        return retention_time_df.reset_index(level=0, drop=True).index
+        return retention_time_df.index
 
     @staticmethod
     def get_aligned_predicted_retention_times(
@@ -201,17 +204,17 @@ class Percolator(Metric):
         :raises NotImplementedError: If there is only one unique value for ScanNr in the scores_df.
         :return: numpy array of delta scores
         """
-        # TODO: sort after grouping for better efficiency
-        scores_df = scores_df.sort_values(by=scoring_feature, ascending=True)
-        groups = scores_df.groupby(["ScanNr"])
-        t = groups.apply(lambda scores_df_: scores_df_[scoring_feature] - scores_df_[scoring_feature].shift(1))
-        # apply doesnt work for one group only
-        if len(groups) == 1:
+        if scores_df["ScanNr"].nunique() == 1:
             raise NotImplementedError
-        scores_df["delta_" + scoring_feature] = pd.Series(t.reset_index(level=0, drop=True))
-        scores_df.fillna(0, inplace=True)
-        scores_df.sort_index(inplace=True)
-        return scores_df["delta_" + scoring_feature].to_numpy()
+
+        return (
+            scores_df.sort_values(by=[scoring_feature])
+            .groupby("ScanNr")[scoring_feature]
+            .diff(periods=1)
+            .fillna(0)
+            .sort_index()
+            .to_numpy()
+        )
 
     @staticmethod
     def get_specid(metadata_subset: Union[pd.Series, Tuple]) -> str:
@@ -458,9 +461,9 @@ class Percolator(Metric):
             # add additional features
             self.add_additional_features()
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
-            fragments_ratio.calc(xl=self.xl, ion_dict=ion_dict, featured_ions=featured_ions)
+            fragments_ratio.calc(xl=self.xl, ion_dict=ion_dict, featured_ions=featured_ions, cms2=self.cms2)
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
-            similarity.calc(self.all_features_flag, xl=self.xl)
+            similarity.calc(self.all_features_flag, xl=self.xl, cms2=self.cms2)
 
             self.metrics_val = pd.concat(
                 [self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1

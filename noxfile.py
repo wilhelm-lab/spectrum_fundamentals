@@ -18,7 +18,7 @@ except ImportError:
     sys.exit(1)
 
 package = "spectrum_fundamentals"
-python_versions = ["3.9", "3.10"]
+python_versions = ["3.10", "3.11", "3.12", "3.13"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
@@ -135,7 +135,7 @@ def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or ["spectrum_fundamentals", "tests", "docs/conf.py"]
     session.install(".")
-    session.install("mypy", "pytest", "types-pkg-resources", "types-requests", "types-attrs")
+    session.install("mypy", "pytest", "types-requests", "types-attrs")
     session.run("mypy", *args)
 
 
