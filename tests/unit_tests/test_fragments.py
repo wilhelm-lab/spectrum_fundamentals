@@ -21,7 +21,7 @@ class TestInitializePeaks(unittest.TestCase):
         expected_mass_s = 799.3599646700001
         expected_nl_annotated = 0
 
-        actual_list_out, actual_tmt_n_term, actual_peptide_sequence, actual_calc_mass_s, actual_nl_annotated = (
+        actual_list_out, actual_tmt_n_term, actual_peptide_sequence, actual_calc_mass_s, actual_nl_annotated, window = (
             fragments.initialize_peaks(
                 sequence="PEPTIDE",
                 mass_analyzer="FTMS",
@@ -35,6 +35,7 @@ class TestInitializePeaks(unittest.TestCase):
         self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
         assert_almost_equal(actual_calc_mass_s, expected_mass_s, decimal=5)
         self.assertEqual(actual_nl_annotated, expected_nl_annotated)
+        # TODO: Add window
 
     def test_initialize_peaks_hcd_cid(self):
         """Test initialize_peaks for HCD / CID input."""

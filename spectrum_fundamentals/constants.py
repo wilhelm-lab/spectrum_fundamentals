@@ -1,6 +1,7 @@
 from enum import Enum
-
+from pathlib import Path
 import numpy as np
+import pandas as pd
 
 #####################
 # GENERAL CONSTANTS #
@@ -471,49 +472,114 @@ class RescoreType(Enum):
 #############
 # ION TYPES #
 #############
-FORWARD_IONS = ["a", "A", "b", "c", "C"]
-BACKWARDS_IONS = ["x", "X", "y", "z", "Z"]  #
+FORWARD_IONS = ["a", "A", "b", "c", "C"]  # a,a+1,b,c-1,c
+BACKWARDS_IONS = ["x", "X", "y", "z", "Z"]  # x,x+1,y,z,z+1
 IONS = FORWARD_IONS + BACKWARDS_IONS
 
+# TODO: ECD, EID, UVPD ions were given as in paper for rescoring
 FRAGMENTATION_TO_IONS_BY_PAIRS = {
-    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
-    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
-    "ETHCD": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
-    "ETCID": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
-    "UVPD": [
-        BACKWARDS_IONS[0],
-        FORWARD_IONS[0],
-        BACKWARDS_IONS[1],
-        FORWARD_IONS[1],
-        BACKWARDS_IONS[2],
-        FORWARD_IONS[2],
-    ],  # y,b,z,c,x,a
+    "HCD": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
+    "CID": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
+    # TODO: correct ions
+    "ECD": IONS,
+    "EID": IONS,
+    "ETHCD": IONS,
+    "ETCID": IONS,
+    "UVPD": IONS
+    # "ETD": IONS, 
+    # "ECD": [
+    #     FORWARD_IONS[1],
+    #     FORWARD_IONS[2],
+    #     FORWARD_IONS[3],
+    #     FORWARD_IONS[4],
+    #     BACKWARDS_IONS[2],
+    #     BACKWARDS_IONS[3],
+    #     BACKWARDS_IONS[4],
+    # ],  # a+1,b,c-1,c,y,z,z+1
+    # "EID": [
+    #     FORWARD_IONS[0],
+    #     FORWARD_IONS[1],
+    #     FORWARD_IONS[2],
+    #     FORWARD_IONS[3],
+    #     BACKWARDS_IONS[0],
+    #     BACKWARDS_IONS[1],
+    #     BACKWARDS_IONS[3],
+    #     BACKWARDS_IONS[4],
+    #     ], # a,a+1,b,c,y,x,x+1,z,z+1
+    # "ETHCD": IONS,
+    # "ETCID": IONS,  
+    # "UVPD": [
+    #     FORWARD_IONS[0],
+    #     FORWARD_IONS[1],
+    #     FORWARD_IONS[2],
+    #     FORWARD_IONS[3],
+    #     BACKWARDS_IONS[2],
+    #     BACKWARDS_IONS[3],
+    # ], # a,a+1,b,c,y,z 
 }
 
+# TODO: Needs to be changed for multifrag
 FRAGMENTATION_TO_IONS_BY_DIRECTION = {
-    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
-    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
-    "ETHCD": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
-    "ETCID": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
-    "UVPD": BACKWARDS_IONS[:-1] + FORWARD_IONS,  # y,z,x,b,c,a
+    "HCD": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
+    "CID": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
+    # TODO: correct ions
+    "ECD": IONS,
+    "EID": IONS,
+    "ETHCD": IONS,
+    "ETCID": IONS,
+    "UVPD": IONS    
+    # "ETD": IONS, 
+    # "ECD": [
+    #     FORWARD_IONS[1],
+    #     FORWARD_IONS[2],
+    #     FORWARD_IONS[3],
+    #     FORWARD_IONS[4],
+    #     BACKWARDS_IONS[2],
+    #     BACKWARDS_IONS[3],
+    #     BACKWARDS_IONS[4],
+    # ],  # a+1,b,c-1,c,y,z,z+1
+    # "EID": [
+    #     FORWARD_IONS[0],
+    #     FORWARD_IONS[1],
+    #     FORWARD_IONS[2],
+    #     FORWARD_IONS[3],
+    #     BACKWARDS_IONS[0],
+    #     BACKWARDS_IONS[1],
+    #     BACKWARDS_IONS[3],
+    #     BACKWARDS_IONS[4],
+    #     ], # a,a+1,b,c,y,x,x+1,z,z+1
+    # "ETHCD": IONS, 
+    # "ETCID": IONS,  
+    # "UVPD": [
+    #     FORWARD_IONS[0],
+    #     FORWARD_IONS[1],
+    #     FORWARD_IONS[2],
+    #     FORWARD_IONS[3],
+    #     BACKWARDS_IONS[2],
+    #     BACKWARDS_IONS[3],
+    # ], # a,a+1,b,c,y,z 
 }
 
 ION_DELTAS = {
-    "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
-    "A": -ATOM_MASSES["O"] - ATOM_MASSES["C"] + ATOM_MASSES["H"],
-    "b": 0.0,
-    "c": 2 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
-    "C": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
-    "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
-    "X": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"] + ATOM_MASSES["H"],
-    "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
-    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"],
-    "Z": ATOM_MASSES["O"] - ATOM_MASSES["N"] + ATOM_MASSES["H"],
+    "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],  # a
+    "A": -ATOM_MASSES["O"] - ATOM_MASSES["C"] + ATOM_MASSES["H"],  # a+1
+    "b": 0.0,  # b
+    "c": 2 * ATOM_MASSES["H"] + ATOM_MASSES["N"],  # c-1
+    "C": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],  # c
+    "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],  # x
+    "X": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"] + ATOM_MASSES["H"],  # x+1
+    "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],  # y
+    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"],  # z
+    "Z": ATOM_MASSES["O"] - ATOM_MASSES["N"] + ATOM_MASSES["H"],  # z+1
 }
+
+############################
+# ION TYPES FOR MULTIFRAG  #
+############################
+
+DEFAULT_HDF_PATH = Path(__file__).parent / "ions/ion_dict.csv"
+ION_DIC: pd.DataFrame = pd.read_csv(DEFAULT_HDF_PATH, index_col="ion")
+
 
 ############################
 # GENERATION OF ANNOTATION #

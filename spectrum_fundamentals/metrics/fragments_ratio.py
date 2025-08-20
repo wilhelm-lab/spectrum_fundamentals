@@ -141,9 +141,10 @@ class FragmentsRatio(Metric):
 
     def calc(self, 
         xl: bool=False, 
-        ion_dict: pd.DataFrame=None,
-        featured_ions: List[str]=None,
-        cms2: bool = False
+        cms2: bool = False,
+        multifrag: bool = False,
+        fragmentation_method: str = "HCD",
+        featured_ions = Optional[List],       
     ):
         """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
         if self.true_intensities is None or self.pred_intensities is None:
@@ -491,9 +492,14 @@ class FragmentsRatio(Metric):
                 self.metrics_val["count_observed_but_not_predicted_y_b"] / num_predicted_ions_y_b
             )
         
-        elif ion_dict is not None:
-            unique_ions = ion_dict['ion'].unique() if featured_ions is None else featured_ions
-            ION_MASKS = {ion: (ion_dict['ion'] == ion).to_numpy().astype(int) for ion in unique_ions}
+        elif multifrag:
+            ion_dict = constants.ION_DIC
+            if featured_ions:
+                ions = featured_ions
+            else:
+                ions = constants.FRAGMENTATION_TO_IONS_BY_DIRECTION[fragmentation_method]
+                
+            ION_MASKS = {ion: (ion_dict['type'] == ion).to_numpy().astype(int) for ion in ions}
             
             mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
             observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
@@ -501,14 +507,6 @@ class FragmentsRatio(Metric):
             observation_state = FragmentsRatio.get_observation_state(
                 observed_boolean, predicted_boolean, mask_observed_valid
             )
-            
-            # counting metrics
-            # - count_predicted
-            # - count_observed
-            # - count_not_observed_and_not_predicted
-            # - count_observed_and_predicted
-            # - count_observed_but_not_predicted
-            # - count_not_observed_but_predicted
             
             self.metrics_val["count_predicted"] = FragmentsRatio.count_with_ion_mask(predicted_boolean)
             self.metrics_val["count_observed"] = FragmentsRatio.count_with_ion_mask(observed_boolean)

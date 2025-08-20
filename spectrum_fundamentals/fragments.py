@@ -226,11 +226,11 @@ def initialize_peaks(  # noqa: C901
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
     fragmentation_method: str = "HCD",
-    ion_types: Optional[list] = None,
+    multifrag: Optional[bool] = False, # TODO: multifrag
     p_window: Optional[float] = 0.0,
     custom_mods: Optional[Dict[str, float]] = None,
     add_neutral_losses: Optional[bool] = False,
-) -> Tuple[List[dict], int, str, float, int]:
+) -> Tuple[List[dict], int, str, float, int, List[float]]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 
@@ -251,8 +251,14 @@ def initialize_peaks(  # noqa: C901
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)
-    if ion_types is None:
+    if multifrag:
+        ion_df = c.ION_DIC
+        ion_list = ion_df.index.to_list()
+    # if ion_df is not None: # TODO: multifrag
+        ion_types = list(np.sort(ion_df['type'].unique())) # TODO: multifrag Ask from constants 
+    else:
         ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
+
     modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
 
     fragments_meta_data = []
@@ -306,34 +312,47 @@ def initialize_peaks(  # noqa: C901
     min_mzs, max_mzs = get_min_max_mass(mass_analyzer, ion_mzs, mass_tolerance, unit_mass_tolerance)
 
     # write mz together with min and max value in output list with one dictionary for each ion
-    for ion_type in range(len(ion_types)):
+    for idx, ion_type in enumerate(ion_types):
         for number in range(n_fragments):
             for charge in range(max_charge):
-                char = "" if charge == 0 else f"^{charge+1}"
-                fragments_meta_data.append(
-                    {
-                        "ion_type": ion_types[ion_type],  # ion type
-                        "no": number + 1,  # no
-                        "charge": charge + 1,  # charge
-                        "mass": ion_mzs[ion_type, number, charge],  # mz
-                        "min_mass": min_mzs[ion_type, number, charge],  # min mz
-                        "max_mass": max_mzs[ion_type, number, charge],  # max mz
-                        "neutral_loss": "",
-                        "fragment_score": 100,
-                        "full_name": f"{ion_types[ion_type]}{number+1}{char}",
-                    }
-                )
+                fragment = {
+                    "ion_type": ion_type,  # ion type
+                    "no": number + 1,  # no
+                    "charge": charge + 1,  # charge
+                    "mass": ion_mzs[idx, number, charge],  # mz
+                    "min_mass": min_mzs[idx, number, charge],  # min mz
+                    "max_mass": max_mzs[idx, number, charge],  # max mz
+                    "neutral_loss": "",
+                    "fragment_score": 100,
+                }
+                if multifrag:
+                    # key = (ion_type, number + 1, charge + 1)
+                    # full_name = lookup.get(key)
+                    
+                    # if full_name is None: # There are ion types which are not exist in the ion_df, it causes error later in matching peaks
+
+                    #     continue
+                    # fragment['full_name'] = full_name
+    
+                    char = "" if charge == 0 else f"^{charge+1}"
+                    ion = f"{ion_type}{number+1}{char}"
+                    if ion in ion_list: 
+                        fragment["full_name"] = ion
+                    else:
+                        continue                    
+
+                fragments_meta_data.append(fragment)                                 
                 if not add_neutral_losses:
                     continue
-                for nl in nl_ions[ion_type][number]:
+                for nl in nl_ions[idx][number]:
                     nl_score, nl_mass = _calculate_nl_score_mass(nl)
-                    ion_mass = sum_array[ion_type, number] - nl_mass
+                    ion_mass = sum_array[idx, number] - nl_mass
                     ion_mz = (ion_mass + (charge + 1) * c.PARTICLE_MASSES["PROTON"]) / (charge + 1)
                     min_mz, max_mz = get_min_max_mass(mass_analyzer, ion_mz, mass_tolerance, unit_mass_tolerance)
                     expected_nl_count += 1
                     fragments_meta_data.append(
                         {
-                            "ion_type": ion_types[ion_type],  # ion type
+                            "ion_type": ion_type,  # ion type
                             "no": number + 1,  # no
                             "charge": charge + 1,  # charge
                             "mass": ion_mz,  # mz
@@ -343,6 +362,7 @@ def initialize_peaks(  # noqa: C901
                             "fragment_score": 100 - nl_score,
                         }
                     )
+                    
 
     fragments_meta_data = sorted(fragments_meta_data, key=itemgetter("mass"))
 
@@ -413,10 +433,10 @@ def initialize_peaks_xl(
         # the crosslinker is returned! This needs to be fixed, because mass is used as CALCULATED_MASS in
         # percolator!
 
-        list_out_s, tmt_n_term_s, peptide_sequence, _, _ = initialize_peaks(
+        list_out_s, tmt_n_term_s, peptide_sequence, _, _, _ = initialize_peaks(
             sequence_s, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance, custom_mods=custom_mods
         )
-        list_out_l, tmt_n_term_l, peptide_sequence, _, _ = initialize_peaks(
+        list_out_l, tmt_n_term_l, peptide_sequence, _, _, _ = initialize_peaks(
             sequence_l, mass_analyzer, charge, mass_tolerance, unit_mass_tolerance, custom_mods=custom_mods
         )
 
@@ -451,7 +471,7 @@ def initialize_peaks_xl(
         sequence_mass = compute_peptide_mass(sequence_without_crosslinker)
         sequence_beta_mass = compute_peptide_mass(sequence_beta_without_crosslinker)
 
-        list_out, tmt_n_term, peptide_sequence, _, _ = initialize_peaks(
+        list_out, tmt_n_term, peptide_sequence, _, _, _ = initialize_peaks(
             sequence,
             mass_analyzer,
             charge,

@@ -2,6 +2,7 @@ import enum
 import logging
 from typing import Optional, Tuple, Union, List
 
+import math
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
@@ -13,6 +14,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from . import fragments_ratio as fr
 from . import similarity as sim
 from .metric import Metric
+from .. import constants
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,7 @@ class Percolator(Metric):
         neutral_loss_flag: Optional[bool] = False,
         drop_miss_cleavage_flag: Optional[bool] = False,
         cms2: bool = False,
+        featured_ions: Optional[List] = None
     ):
         """Initialize a Percolator obj."""
         super().__init__(pred_intensities, true_intensities, mz, "CROSSLINKER_TYPE" in metadata.columns)
@@ -74,6 +77,7 @@ class Percolator(Metric):
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
         self.cms2 = cms2
+        self.featured_ions = featured_ions
 
         self.base_columns = [
             "raw_file",
@@ -390,7 +394,6 @@ class Percolator(Metric):
         scores_df["Label"] = self.target_decoy_labels
         # scores_df['Sequence'] = self.metadata['SEQUENCE']
         scores_df = scores_df.sort_values(feature_name, ascending=False)
-        logger.debug(scores_df.head(100))
 
         scores_df["fdr"] = Percolator.calculate_fdrs(scores_df["Label"])
         # filter for targets only
@@ -449,8 +452,8 @@ class Percolator(Metric):
         self.metrics_val = self.metrics_val[new_columns]
 
     def calc(self, 
-        ion_dict: pd.DataFrame=None, 
-        featured_ions: List[str]=None
+        multifrag: bool = False,
+        fragmentation_method: str = "HCD",
     ):  # noqa: C901
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
@@ -461,7 +464,13 @@ class Percolator(Metric):
             # add additional features
             self.add_additional_features()
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
-            fragments_ratio.calc(xl=self.xl, ion_dict=ion_dict, featured_ions=featured_ions, cms2=self.cms2)
+            fragments_ratio.calc(
+                xl=self.xl, 
+                cms2=self.cms2, 
+                multifrag=multifrag, 
+                featured_ions=self.featured_ions,
+                fragmentation_method=fragmentation_method
+            )
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
             similarity.calc(self.all_features_flag, xl=self.xl, cms2=self.cms2)
 
@@ -524,6 +533,12 @@ class Percolator(Metric):
         else:
             self.add_additional_features()
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
+            
+        if 'Annotated_Ions_MSF' in self.metadata.columns:
+                self.metrics_val['annotated_ions'] = self.metadata["Annotated_Ions_MSF"]
+                self.metrics_val['delta_mass_ppm'] = abs(self.metadata["MZ_diff_MSF"]*1000000/self.metrics_val['Mass'])
+                self.metrics_val['next_score'] = self.metadata["NEXT_SCORE"]
+                self.metrics_val['log10_evalue'] = self.metadata["EXPECT"].apply(lambda x: math.log10(x))
 
         self.add_percolator_metadata_columns()
         if self.input_type == "rescore":
