@@ -325,15 +325,7 @@ def initialize_peaks(  # noqa: C901
                     "neutral_loss": "",
                     "fragment_score": 100,
                 }
-                if multifrag:
-                    # key = (ion_type, number + 1, charge + 1)
-                    # full_name = lookup.get(key)
-                    
-                    # if full_name is None: # There are ion types which are not exist in the ion_df, it causes error later in matching peaks
-
-                    #     continue
-                    # fragment['full_name'] = full_name
-    
+                if multifrag:   
                     char = "" if charge == 0 else f"^{charge+1}"
                     ion = f"{ion_type}{number+1}{char}"
                     if ion in ion_list: 

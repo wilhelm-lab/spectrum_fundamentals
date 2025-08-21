@@ -16,8 +16,8 @@ def match_peaks(
     peaks_masses: np.ndarray,
     tmt_n_term: int,
     unmod_sequence: str,
-    multifrag: Optional[bool] = False, # TODO: multifrag
     charge: int,
+    multifrag: Optional[bool] = False, # TODO: multifrag    
     p_window_bounds: Optional[List] = None,
 ) -> Tuple[List[Dict[str, Union[str, int, float]]], int]:
     """
