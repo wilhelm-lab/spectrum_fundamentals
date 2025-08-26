@@ -227,7 +227,7 @@ def initialize_peaks(  # noqa: C901
     xl_pos: int = -1,
     fragmentation_method: str = "HCD",
     multifrag: Optional[bool] = False, # TODO: multifrag
-    p_window: Optional[float] = 0.0,
+    p_window: Optional[float] = 1.2,
     custom_mods: Optional[Dict[str, float]] = None,
     add_neutral_losses: Optional[bool] = False,
 ) -> Tuple[List[dict], int, str, float, int, List[float]]:
@@ -250,13 +250,14 @@ def initialize_peaks(  # noqa: C901
     """
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
-    max_charge = min(3, charge)
+    
     if multifrag:
         ion_df = c.ION_DIC
         ion_list = ion_df.index.to_list()
-    # if ion_df is not None: # TODO: multifrag
-        ion_types = list(np.sort(ion_df['type'].unique())) # TODO: multifrag Ask from constants 
+        ion_types = list(np.sort(ion_df['type'].unique()))
+        max_charge = charge # there are 3+ charges
     else:
+        max_charge = min(3, charge)
         ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
 
     modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
