@@ -480,84 +480,66 @@ IONS = FORWARD_IONS + BACKWARDS_IONS
 FRAGMENTATION_TO_IONS_BY_PAIRS = {
     "HCD": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
     "CID": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
-    # TODO: correct ions
-    "ECD": IONS,
-    "EID": IONS,
-    "ETHCD": IONS,
-    "ETCID": IONS,
-    "UVPD": IONS
-    # "ETD": IONS, 
-    # "ECD": [
-    #     FORWARD_IONS[1],
-    #     FORWARD_IONS[2],
-    #     FORWARD_IONS[3],
-    #     FORWARD_IONS[4],
-    #     BACKWARDS_IONS[2],
-    #     BACKWARDS_IONS[3],
-    #     BACKWARDS_IONS[4],
-    # ],  # a+1,b,c-1,c,y,z,z+1
-    # "EID": [
-    #     FORWARD_IONS[0],
-    #     FORWARD_IONS[1],
-    #     FORWARD_IONS[2],
-    #     FORWARD_IONS[3],
-    #     BACKWARDS_IONS[0],
-    #     BACKWARDS_IONS[1],
-    #     BACKWARDS_IONS[3],
-    #     BACKWARDS_IONS[4],
-    #     ], # a,a+1,b,c,y,x,x+1,z,z+1
-    # "ETHCD": IONS,
-    # "ETCID": IONS,  
-    # "UVPD": [
-    #     FORWARD_IONS[0],
-    #     FORWARD_IONS[1],
-    #     FORWARD_IONS[2],
-    #     FORWARD_IONS[3],
-    #     BACKWARDS_IONS[2],
-    #     BACKWARDS_IONS[3],
-    # ], # a,a+1,b,c,y,z 
+    "ETCID": [
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        FORWARD_IONS[4],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+        BACKWARDS_IONS[4],
+    ],  # a+1,b,c-1,c,y,z,z+1
+    "ECD": [
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        FORWARD_IONS[4],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+        BACKWARDS_IONS[4],
+    ],  # a+1,b,c-1,c,y,z,z+1
+    "EID": IONS, # a,a+1,b,c,y,x,x+1,z,z+1
+    "UVPD": [
+        FORWARD_IONS[0],
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+    ], # a,a+1,b,c,y,z 
 }
 
 # TODO: Needs to be changed for multifrag
 FRAGMENTATION_TO_IONS_BY_DIRECTION = {
     "HCD": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
     "CID": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
-    # TODO: correct ions
-    "ECD": IONS,
-    "EID": IONS,
-    "ETHCD": IONS,
-    "ETCID": IONS,
-    "UVPD": IONS    
-    # "ETD": IONS, 
-    # "ECD": [
-    #     FORWARD_IONS[1],
-    #     FORWARD_IONS[2],
-    #     FORWARD_IONS[3],
-    #     FORWARD_IONS[4],
-    #     BACKWARDS_IONS[2],
-    #     BACKWARDS_IONS[3],
-    #     BACKWARDS_IONS[4],
-    # ],  # a+1,b,c-1,c,y,z,z+1
-    # "EID": [
-    #     FORWARD_IONS[0],
-    #     FORWARD_IONS[1],
-    #     FORWARD_IONS[2],
-    #     FORWARD_IONS[3],
-    #     BACKWARDS_IONS[0],
-    #     BACKWARDS_IONS[1],
-    #     BACKWARDS_IONS[3],
-    #     BACKWARDS_IONS[4],
-    #     ], # a,a+1,b,c,y,x,x+1,z,z+1
-    # "ETHCD": IONS, 
-    # "ETCID": IONS,  
-    # "UVPD": [
-    #     FORWARD_IONS[0],
-    #     FORWARD_IONS[1],
-    #     FORWARD_IONS[2],
-    #     FORWARD_IONS[3],
-    #     BACKWARDS_IONS[2],
-    #     BACKWARDS_IONS[3],
-    # ], # a,a+1,b,c,y,z 
+    "ETCID": [
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        FORWARD_IONS[4],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+        BACKWARDS_IONS[4],
+    ],  # a+1,b,c-1,c,y,z,z+1
+    "ECD": [
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        FORWARD_IONS[4],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+        BACKWARDS_IONS[4],
+    ],  # a+1,b,c-1,c,y,z,z+1
+    "EID": IONS, # a,a+1,b,c,y,x,x+1,z,z+1
+    "UVPD": [
+        FORWARD_IONS[0],
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+    ], # a,a+1,b,c,y,z 
 }
 
 ION_DELTAS = {
