@@ -450,12 +450,38 @@ class Percolator(Metric):
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
+        
+    def _deduplicate_intensities( mz: np.array, intensities: np.array) -> np.array:
+        """Take highest intensity prediction for ions with same mz, return new array"""
+        n, m = intensities.shape
+        mz_row = mz.toarray()
+        intensity_row = intensities.toarray()
+
+        for row in range(n):
+            
+            u, c = np.unique(mz_row[row], return_counts=True)
+            dup = u[(c > 1) & (u > EPSILON)]
+            for val in dup:
+                mask = mz_row[row] == val
+                if np.any(mask):
+                    temp_max_idx = np.argmax(intensity_row[row][mask])   
+                    indices = np.where(mask)[0]                     
+                    max_idx = indices[temp_max_idx]                 
+                    other_indices = indices[indices != max_idx]    
+                    intensities[row, other_indices] = 0.0
+
+        return intensities
 
     def calc(self, 
         multifrag: bool = False,
         fragmentation_method: str = "HCD",
     ):  # noqa: C901
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
+        
+        # TODO: find best place to do deduplication for multifrag
+        if multifrag:
+            self.pred_intensities = self.deduplicate_multifrag(self.mz, self.pred_intensities)
+                    
         self.add_common_features()
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
         np.random.seed(1)
