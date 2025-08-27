@@ -451,7 +451,7 @@ class Percolator(Metric):
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
         
-    def _deduplicate_intensities( mz: np.array, intensities: np.array) -> np.array:
+    def _deduplicate_intensities(self, mz, intensities):
         """Take highest intensity prediction for ions with same mz, return new array"""
         n, m = intensities.shape
         mz_row = mz.toarray()
@@ -460,7 +460,7 @@ class Percolator(Metric):
         for row in range(n):
             
             u, c = np.unique(mz_row[row], return_counts=True)
-            dup = u[(c > 1) & (u > EPSILON)]
+            dup = u[(c > 1) & (u > constants.EPSILON)]
             for val in dup:
                 mask = mz_row[row] == val
                 if np.any(mask):
@@ -480,7 +480,7 @@ class Percolator(Metric):
         
         # TODO: find best place to do deduplication for multifrag
         if multifrag:
-            self.pred_intensities = self.deduplicate_multifrag(self.mz, self.pred_intensities)
+            self.pred_intensities = self._deduplicate_intensities(self.mz, self.pred_intensities)
                     
         self.add_common_features()
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
