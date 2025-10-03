@@ -345,6 +345,7 @@ def generate_annotation_matrix(
         available_peaks = ion_df[mask].index.tolist()
         full_name_col = matched_peaks.columns.get_loc("full_name")
     else:        
+        ion_df = None
         charge_const = 3        
         vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
         
