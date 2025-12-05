@@ -485,7 +485,7 @@ class FragmentsRatio(Metric):
 
         else:
             mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
-            observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
+            observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid, cutoff=0.05)
             predicted_boolean = FragmentsRatio.make_boolean(self.pred_intensities, mask_observed_valid, cutoff=0.05)
             observation_state = FragmentsRatio.get_observation_state(
                 observed_boolean, predicted_boolean, mask_observed_valid

@@ -82,7 +82,7 @@ def match_peaks(
     for row in row_list:
         row["intensity"] = float(row["intensity"]) / max_intensity
         temp_list.append(row)
-    return temp_list, count_annotated_nl
+    return temp_list, count_annotated_nl, max_intensity
 
 
 def handle_multiple_matches(
@@ -178,6 +178,7 @@ def annotate_spectra(
             "removed_peaks",
             "ANNOTATED_NL_COUNT",
             "EXPECTED_NL_COUNT",
+            "MOST_INTESE_PEAK",
         ]
     else:
         results_df.columns = [
@@ -446,7 +447,7 @@ def _annotate_linear_spectrum(
         custom_mods=custom_mods,
         add_neutral_losses=add_neutral_losses,
     )
-    matched_peaks, count_annotated_nl = match_peaks(
+    matched_peaks, count_annotated_nl, max_annotated_intensity = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
         spectrum[index_columns["MZ"]],
@@ -468,7 +469,7 @@ def _annotate_linear_spectrum(
     intensities, mass = generate_annotation_matrix(
         matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]], fragmentation_method
     )
-    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl
+    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl, max_annotated_intensity
 
 
 def _annotate_crosslinked_spectrum(
@@ -516,7 +517,7 @@ def _annotate_crosslinked_spectrum(
             array_size = 348
         inputs.append(custom_mods)
         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks_xl(*inputs)
-        matched_peaks, annotated_nl = match_peaks(
+        matched_peaks, annotated_nl, _ = match_peaks(
             fragments_meta_data,
             np.array(spectrum[index_columns["INTENSITIES"]]),
             np.array(spectrum[index_columns["MZ"]]),  # Convert to numpy array

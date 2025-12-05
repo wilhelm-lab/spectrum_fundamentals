@@ -1,8 +1,12 @@
 import enum
 import logging
+import math
+from math import log10
+from pathlib import Path
 from typing import Optional, Tuple, Union
 
 import numpy as np
+import pickle
 import pandas as pd
 import scipy.optimize as opt
 import scipy.stats
@@ -61,6 +65,7 @@ class Percolator(Metric):
         neutral_loss_flag: Optional[bool] = False,
         drop_miss_cleavage_flag: Optional[bool] = False,
         cms2: bool = False,
+        rt_model_file: Optional[Path] = None,
     ):
         """Initialize a Percolator obj."""
         super().__init__(pred_intensities, true_intensities, mz, "CROSSLINKER_TYPE" in metadata.columns)
@@ -74,6 +79,7 @@ class Percolator(Metric):
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
         self.cms2 = cms2
+        self.rt_model_file = rt_model_file
 
         self.base_columns = [
             "raw_file",
@@ -128,6 +134,11 @@ class Percolator(Metric):
         retention_time_df = retention_time_df.groupby("rt_bin_index", group_keys=False).apply(
             lambda x: x.sample(n=min(points_per_bin, len(x)), replace=False)
         )
+        # grouped = retention_time_df.groupby("rt_bin_index", group_keys=False)
+        # retention_time_df = grouped.apply(
+        #     lambda g: g.sample(n=min(points_per_bin, len(g)), replace=False)
+        #     )
+
         return retention_time_df.index
 
     @staticmethod
@@ -135,6 +146,7 @@ class Percolator(Metric):
         observed_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_all: Union[np.ndarray, pd.Series],
+        rt_model_file: Path,
         curve_fitting_method: str = "lowess",
     ) -> np.ndarray:
         """
@@ -159,6 +171,16 @@ class Percolator(Metric):
         discard_percentage = 0.1  # in percents, so 0.1 = 0.1% (not 10%!)
         median_abs_error = 1.0
 
+        # If a saved model exists, load and use it directly
+        if curve_fitting_method == "spline" and rt_model_file.exists():
+            with open(rt_model_file, "rb") as f:
+                spline_model = pickle.load(f)
+            spline_model = interpolate.BSpline(spline_model.t, spline_model.c, spline_model.k)
+            logger.info(f"Loaded existing spline model from: {rt_model_file}")
+            aligned_rts_predicted = spline_model(predicted_retention_times_all)
+            return aligned_rts_predicted
+
+        # Otherwise, fit a new model
         while discard_percentage < 50.0 and median_abs_error > 0.02:
             params = fit_func(predicted_rts, observed_rts)
             aligned_rts_predicted = params[0]
@@ -179,8 +201,17 @@ class Percolator(Metric):
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
 
+        # Fit and save the model ---
         if curve_fitting_method == "spline":
-            aligned_rts_predicted = interpolate.BSpline(*params[1:])(predicted_retention_times_all)
+            t, c, k = params[1:]
+            spline_model = interpolate.BSpline(t, c, k)
+            aligned_rts_predicted = spline_model(predicted_retention_times_all)
+
+            # Save spline model as .pkl
+            with open(rt_model_file, "wb") as f:
+                pickle.dump(spline_model, f)
+            logger.info(f"Spline model saved to: {rt_model_file}")
+
         elif curve_fitting_method == "lowess":
             lowess_model = lowess.Lowess()
             lowess_model.fit(predicted_rts, observed_rts, frac=frac, robust_iters=it)
@@ -457,7 +488,12 @@ class Percolator(Metric):
         if self.input_type == "rescore":
             # add additional features
             self.add_additional_features()
-            fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
+            self.metrics_val["MOST_INTESE_PEAK"] = self.metadata["MOST_INTESE_PEAK"].fillna(1)
+            fragments_ratio = fr.FragmentsRatio(
+                self.pred_intensities,
+                self.true_intensities,
+                most_intense_peaks=self.metadata["MOST_INTESE_PEAK"].values,
+            )
             fragments_ratio.calc(xl=self.xl, cms2=self.cms2)
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
             similarity.calc(self.all_features_flag, xl=self.xl, cms2=self.cms2)
@@ -478,29 +514,37 @@ class Percolator(Metric):
             if self.xl:
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:
-                lda_failed = False
-                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+                lda_failed = True
                 current_fdr = self.fdr_cutoff
-                while len(idxs_below_lda_fdr) <= 500:
-                    current_fdr += 0.01
-                    idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
-                    if current_fdr >= 0.1:
-                        lda_failed = True
-                        break
-                if lda_failed:
+                if self.rt_model_file.exists():
+                    # Model file exists — sample directly
                     sampled_idxs = Percolator.sample_balanced_over_bins(
                         self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
                     )
                 else:
-                    sampled_idxs = Percolator.sample_balanced_over_bins(
-                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
+                    lda_failed = False
+                    # Model file missing — attempt LDA filtering
+                    idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
+                    while len(idxs_below_lda_fdr) <= 500 and current_fdr < 0.1:
+                        current_fdr += 0.01
+                        idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
+                    if len(idxs_below_lda_fdr) <= 500:
+                        lda_failed = True
+                    # Choose samples depending on LDA outcome
+                    data_for_sampling = (
+                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
+                        if lda_failed
+                        else self.metadata.iloc[idxs_below_lda_fdr, :][["RETENTION_TIME", "PREDICTED_IRT"]]
                     )
 
+                    sampled_idxs = Percolator.sample_balanced_over_bins(data_for_sampling)
+                # Final alignment step
                 file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
                 aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
                     file_sample["RETENTION_TIME"],
                     file_sample["PREDICTED_IRT"],
                     self.metadata["PREDICTED_IRT"],
+                    self.rt_model_file,
                     self.regression_method,
                 )
 
@@ -509,6 +553,25 @@ class Percolator(Metric):
                 self.metrics_val["iRT"] = aligned_predicted_rts
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
                 self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
+
+                self.metrics_val["sum_observed_and_predicted"] = self.metrics_val[
+                    ["sum_observed_and_predicted", "MOST_INTESE_PEAK"]
+                ].apply(
+                    lambda x: (
+                        log10(x["sum_observed_and_predicted"] * x["MOST_INTESE_PEAK"])
+                        if x["sum_observed_and_predicted"] > 0
+                        else 0
+                    ),
+                    axis=1,
+                )
+                self.metrics_val["observed_intensity"] = self.metrics_val[
+                    ["observed_intensity", "MOST_INTESE_PEAK"]
+                ].apply(
+                    lambda x: (
+                        log10(x["observed_intensity"] * x["MOST_INTESE_PEAK"]) if x["observed_intensity"] > 0 else 0
+                    ),
+                    axis=1,
+                )
                 if lda_failed:
                     median_abs_error = np.median(self.metrics_val["abs_rt_diff"])
                 else:
