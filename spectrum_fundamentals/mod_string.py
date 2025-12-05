@@ -200,6 +200,23 @@ def internal_without_mods(sequences: List[str]) -> List[str]:
     return [re.sub(regex, "", seq) for seq in sequences]
 
 
+def internal_without_mods_keep_loc(sequences: List[str], keep_unimod: str = None) -> List[str]:
+    """
+    Remove all UNIMOD IDs and brackets from the sequence, except for the specified UNIMOD ID.
+
+    :param sequences: List[str] of sequences
+    :param keep_unimod: The UNIMOD ID to keep (as a string), or None to remove all
+    :return: List[str] of modified sequences
+    """
+    if keep_unimod is None:
+        # Remove all UNIMOD IDs and brackets
+        regex = r"\[UNIMOD:[^\]]*\]|\-"
+    else:
+        # Remove all UNIMOD IDs and brackets except the specified one
+        regex = r"\[UNIMOD:(?!" + re.escape(keep_unimod) + r"\])[^\]]*\]|\-"
+    return [re.sub(regex, "", seq) for seq in sequences]
+
+
 def internal_to_mod_mass(sequences: List[str], custom_mods: Optional[Dict[str, float]] = None) -> List[str]:
     """
     Function to exchange the internal mod identifiers with the masses of the specific modifiction.
@@ -366,7 +383,7 @@ def add_permutations(
     """
     modified_sequence = modified_sequence.replace("UNIMOD", "unimod")
     sequence = modified_sequence.replace("[unimod:" + str(unimod_id) + "]", "")
-    modifications = len(re.findall("unimod:" + str(unimod_id), modified_sequence))
+    modifications = len(re.findall("unimod:" + str(unimod_id) + r"\]", modified_sequence))
     if modifications == 0:
         modified_sequence = modified_sequence.replace("unimod", "UNIMOD")
         return [modified_sequence]
@@ -506,3 +523,42 @@ def _to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[
     regex = re.compile("|".join(map(custom_regex_escape, mods.keys())))
 
     return [regex.sub(lambda match: find_replacement(match), seq) for seq in sequences]
+
+
+def extract_aa_mod(peptide):
+    """
+    Extract all modifications from a peptide string in UNIMOD ProForma standard.
+
+    :param peptide: peptide string
+    :return: list of found modifications
+    """
+    pattern = r"(\[UNIMOD:\d+\]-)|([A-Z]\[UNIMOD:\d+\])"
+
+    results = re.findall(pattern, peptide)
+    found_mods = []
+    for result in results:
+        if result[0] == "":
+            found_mods.append(result[1])
+        elif result[1] == "":
+            found_mods.append(result[0])
+        else:
+            found_mods.append(result[0])
+            found_mods.append(result[1])
+    return found_mods
+
+
+def get_mod_comb(mods_aa: dict):
+    """
+    Get all combinations of modifications for each amino acid.
+
+    :param mods_aa: dictionary with modifications as keys and list of amino acids as values
+    :return: list of modification and amino acid combinations
+    """
+    mod_aa_comb = []
+    for key in mods_aa.keys():
+        for aa in mods_aa[key]:
+            if aa == "n-term":
+                mod_aa_comb.append("[" + "UNIMOD:" + key + "]-")
+            else:
+                mod_aa_comb.append(aa + "[" + "UNIMOD:" + key + "]")
+    return mod_aa_comb

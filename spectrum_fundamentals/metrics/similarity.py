@@ -443,9 +443,9 @@ class SimilarityMetrics(Metric):
                 self.metrics_val["spectral_angle"] = SimilarityMetrics.spectral_angle(
                     self.true_intensities, self.pred_intensities, 0
                 )
-                self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
-                    self.true_intensities, self.pred_intensities, 0, "pearson"
-                )
+                # self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
+                #    self.true_intensities, self.pred_intensities, 0, "pearson"
+                # )
                 if all_features:
                     self._calc_additional_metrics(self.true_intensities, self.pred_intensities)
 

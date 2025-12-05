@@ -1,5 +1,7 @@
 import enum
 import logging
+import math
+from math import log10
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -9,6 +11,9 @@ import scipy.stats
 from moepy import lowess
 from scipy import interpolate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
+import spectrum_fundamentals.constants as c
+from spectrum_fundamentals.mod_string import get_mod_comb, internal_without_mods_keep_loc
 
 from . import fragments_ratio as fr
 from . import similarity as sim
@@ -72,7 +77,6 @@ class Percolator(Metric):
         self.fdr_cutoff = fdr_cutoff
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
-
         self.base_columns = [
             "raw_file",
             "scan_number",
@@ -127,7 +131,7 @@ class Percolator(Metric):
         )
         return retention_time_df.reset_index(level=0, drop=True).index
 
-    @staticmethod
+    @staticmethod  # noqa S112, B036
     def get_aligned_predicted_retention_times(
         observed_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
         predicted_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
@@ -157,8 +161,11 @@ class Percolator(Metric):
         median_abs_error = 1.0
         total_discarded_percentage = 0.1
 
-        while total_discarded_percentage < 40.0 and len(observed_rts) >= 10 and median_abs_error > 0.02:
-            params = fit_func(predicted_rts, observed_rts)
+        while total_discarded_percentage < 40.0 and len(observed_rts) >= 5 and median_abs_error > 0.02:
+            try:
+                params = fit_func(predicted_rts, observed_rts)
+            except ValueError:
+                continue
             aligned_rts_predicted = params[0]
 
             abs_errors = np.abs(aligned_rts_predicted - observed_rts)
@@ -174,6 +181,9 @@ class Percolator(Metric):
 
                 discard_percentage *= 1.2
                 total_discarded_percentage += discard_percentage
+
+        if len(observed_rts) < 3 or "params" not in locals():
+            return predicted_retention_times_all
 
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
@@ -447,6 +457,55 @@ class Percolator(Metric):
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
 
+    @staticmethod
+    def create_modified_ions_mask(starting_index):
+        """
+        Create modified ions mask starting from the given index.
+
+        :param starting_index: starting index
+        :return: modified ions mask
+        """
+        total_length = 174
+        array = np.zeros(total_length)
+        array[starting_index:] = 1
+        return array
+
+    def _find_phospho_positions(self):
+        all_positions = []
+        new_phoshpo_sequences = internal_without_mods_keep_loc(self.metadata["MODIFIED_SEQUENCE"].values, "21")
+        for peptide in new_phoshpo_sequences:
+            positions = []
+            index = 0
+            while "[UNIMOD:21]" in peptide:
+                index = peptide.find("[UNIMOD:21]", index)
+                if index == -1:
+                    break
+                positions.append(index - peptide[:index].count("[UNIMOD:21]") * len("[UNIMOD:21]"))
+                index += len("[UNIMOD:21]")
+            all_positions.append(positions)
+        return all_positions
+
+    def get_first_b_and_y_modified_ion(self):
+        """Get first b and y modified ion masks for phospho peptides.
+
+        :return: b and y ions masks
+        """
+        all_phospho_sites_positions = self._find_phospho_positions()
+        b_ions_mask = []
+        y_ions_mask = []
+        for position, length in zip(all_phospho_sites_positions, self.metrics_val["sequence_length"]):
+            if len(position) == 0:
+                b_ions_mask.append(c.B_ION_MASK)
+                y_ions_mask.append(c.Y_ION_MASK)
+            else:
+
+                mod_b_ions_mask = Percolator.create_modified_ions_mask(position[0] * 6 - 3)
+                b_ions_mask.append(c.B_ION_MASK * mod_b_ions_mask)
+                mod_y_ions_mask = Percolator.create_modified_ions_mask((length - position[-1]) * 6)
+                y_ions_mask.append(c.Y_ION_MASK * mod_y_ions_mask)
+
+        return b_ions_mask, y_ions_mask
+
     def calc(self):  # noqa: C901
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         self.add_common_features()
@@ -454,11 +513,32 @@ class Percolator(Metric):
         np.random.seed(1)
         # add Prosit or Andromeda features
         self.add_additional_features()
+        """aa_mod_combinations = []
+        for seq in self.metadata['MODIFIED_SEQUENCE']:
+            aa_mod_combinations.append(extract_aa_mod(seq))"""
+        aa_mod_combinations = get_mod_comb(c.MOD_COMB)
+        for aa_mod in aa_mod_combinations:
+            self.metrics_val[aa_mod] = self.metadata["MODIFIED_SEQUENCE"].apply(
+                lambda x: x.count(aa_mod) if aa_mod in x else 0  # noqa: B023
+            )
+        # self.metadata['AA_MOD_COMBINATIONS'] = aa_mod_combinations
+        # all_combinations = set([item for sublist in self.metadata['AA_MOD_COMBINATIONS'] for item in sublist])
 
         if self.input_type == "rescore":
             # add additional features
-            fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
+            self.metrics_val["MOST_INTESE_PEAK"] = self.metadata["MOST_INTESE_PEAK"].fillna(1)
+            # self.metrics_val['MOST_INTESE_PEAK'] = self.metadata['MOST_INTESE_PEAK']
+            fragments_ratio = fr.FragmentsRatio(
+                self.pred_intensities,
+                self.true_intensities,
+                most_intense_peaks=self.metadata["MOST_INTESE_PEAK"].values,
+            )
             fragments_ratio.calc(xl=self.xl)
+            b_ions_mask, y_ions_mask = self.get_first_b_and_y_modified_ion()
+            if self.neutral_loss_flag:
+                fragments_ratio.calc(
+                    xl=self.xl, b_mask_mod=np.array(b_ions_mask), y_mask_mod=np.array(y_ions_mask), suffix="_mod"
+                )
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
             similarity.calc(self.all_features_flag, xl=self.xl)
 
@@ -468,11 +548,18 @@ class Percolator(Metric):
             if self.neutral_loss_flag:
                 self.metrics_val["ANNOTATED_NL_COUNT"] = self.metadata["ANNOTATED_NL_COUNT"]
                 self.metrics_val["EXPECTED_NL_COUNT"] = self.metadata["EXPECTED_NL_COUNT"]
-                columns_to_remove = []
-                for col in self.metrics_val.columns:
-                    if "vs_predicted" in col:
-                        columns_to_remove.append(col)
-                self.metrics_val.drop(columns=columns_to_remove, inplace=True)
+                self.metrics_val["NL_FRACTION"] = self.metrics_val.apply(
+                    lambda x: x["ANNOTATED_NL_COUNT"] / x["EXPECTED_NL_COUNT"] if x["EXPECTED_NL_COUNT"] > 0 else 0,
+                    axis=1,
+                )
+                self.metrics_val["NL_NOT_POSSIBLE"] = self.metrics_val.apply(
+                    lambda x: 1 if x["EXPECTED_NL_COUNT"] == 0 else 0, axis=1
+                )
+                # columns_to_remove = []
+                # for col in self.metrics_val.columns:
+                #    if "vs_predicted" in col:
+                #        columns_to_remove.append(col)
+                # self.metrics_val.drop(columns=columns_to_remove, inplace=True)
             if self.drop_miss_cleavage_flag:
                 self.metrics_val.drop(columns=["missedCleavages", "KR"], inplace=True)
             if self.xl:
@@ -487,7 +574,7 @@ class Percolator(Metric):
                 current_fdr = self.fdr_cutoff
                 while (
                     not lda_failed
-                    and len(idxs_below_lda_fdr) <= 500
+                    and len(idxs_below_lda_fdr) <= 200
                     and (len(idxs_below_lda_fdr) / len(self.target_decoy_labels)) < 0.5
                 ):
                     current_fdr += 0.01
@@ -495,14 +582,30 @@ class Percolator(Metric):
                     if current_fdr >= 0.1:
                         lda_failed = True
                         break
+
+                if len(self.metadata[self.metadata["PROTEINS"].str.contains("QC:")]) > 0:
+                    lda_filter = (
+                        self.metadata["MODIFIED_SEQUENCE"].str.match(r"^(?!.*UNIMOD(?!:737|:411|:4|:267)).*$")
+                    ) & (self.metadata["PROTEINS"].str.contains("QC:") & (~self.metadata["REVERSE"]))
+                else:
+                    lda_filter = (
+                        self.metadata["MODIFIED_SEQUENCE"].str.match(r"^(?!.*UNIMOD(?!:737|:411|:4|:267)).*$")
+                    ) & (~self.metadata["REVERSE"])
+
                 if lda_failed:
                     sampled_idxs = Percolator.sample_balanced_over_bins(
-                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
+                        self.metadata[lda_filter][["RETENTION_TIME", "PREDICTED_IRT"]]
                     )
                 else:
-                    sampled_idxs = Percolator.sample_balanced_over_bins(
-                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
-                    )
+                    try:
+                        sampled_idxs = Percolator.sample_balanced_over_bins(
+                            self.metadata.iloc[idxs_below_lda_fdr, :][lda_filter][["RETENTION_TIME", "PREDICTED_IRT"]]
+                        )
+                    except ValueError:
+                        lda_failed = True
+                        sampled_idxs = Percolator.sample_balanced_over_bins(
+                            self.metadata[lda_filter][["RETENTION_TIME", "PREDICTED_IRT"]]
+                        )
 
                 file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
 
@@ -518,12 +621,61 @@ class Percolator(Metric):
                 self.metrics_val["iRT"] = aligned_predicted_rts
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
                 self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
+
+                # unmod_rescore_dir = new_rescore_dir.replace('localize_mod','score_unmod')
+
+                if self.neutral_loss_flag:
+                    self.metrics_val["sum_observed_and_predicted_mod"] = self.metrics_val[
+                        ["sum_observed_and_predicted_mod", "MOST_INTESE_PEAK"]
+                    ].apply(
+                        lambda x: (
+                            log10(x["sum_observed_and_predicted_mod"] * x["MOST_INTESE_PEAK"])
+                            if x["sum_observed_and_predicted_mod"] > 0
+                            else 0
+                        ),
+                        axis=1,
+                    )
+                    self.metrics_val["observed_intensity_mod"] = self.metrics_val[
+                        ["observed_intensity_mod", "MOST_INTESE_PEAK"]
+                    ].apply(
+                        lambda x: (
+                            log10(x["observed_intensity_mod"] * x["MOST_INTESE_PEAK"])
+                            if x["observed_intensity_mod"] > 0
+                            else 0
+                        ),
+                        axis=1,
+                    )
+
+                    self.metrics_val["sum_observed_and_predicted"] = self.metrics_val[
+                        ["sum_observed_and_predicted", "MOST_INTESE_PEAK"]
+                    ].apply(
+                        lambda x: (
+                            log10(x["sum_observed_and_predicted"] * x["MOST_INTESE_PEAK"])
+                            if x["sum_observed_and_predicted"] > 0
+                            else 0
+                        ),
+                        axis=1,
+                    )
+
+                    self.metrics_val["observed_intensity"] = self.metrics_val[
+                        ["observed_intensity", "MOST_INTESE_PEAK"]
+                    ].apply(
+                        lambda x: (
+                            log10(x["observed_intensity"] * x["MOST_INTESE_PEAK"]) if x["observed_intensity"] > 0 else 0
+                        ),
+                        axis=1,
+                    )
+
                 if lda_failed:
-                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"])
-                    delta_95_error = np.percentile(self.metrics_val["abs_rt_diff"], 95)
+                    self.metrics_val["lda_scores"] = 0
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"][lda_filter])
+                    delta_95_error = np.percentile(self.metrics_val["abs_rt_diff"][lda_filter], 95)
                 else:
-                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
-                    delta_95_error = np.percentile(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr], 95)
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr][lda_filter])
+                    delta_95_error = np.percentile(
+                        self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr][lda_filter], 95
+                    )
+                self.metrics_val.drop("lda_scores", axis=1, inplace=True)
 
                 logger.info(
                     "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
@@ -533,21 +685,45 @@ class Percolator(Metric):
                     "Delta 95 absolute error predicted vs observed retention time on targets < 1% FDR: "
                     f"{delta_95_error}"
                 )
+                self.metrics_val["andromeda"] = self.metadata["SCORE"]
+                if "Annotated_Ions_MSF" in self.metadata.columns:
+                    self.metrics_val["delta_mass_ppm"] = abs(
+                        self.metadata["MZ_diff_MSF"] * 1000000 / self.metrics_val["Mass"]
+                    )
+                    self.metrics_val["next_score"] = self.metadata["NEXT_SCORE"]
+                    self.metrics_val["log10_evalue"] = self.metadata["EXPECT"].apply(lambda x: math.log10(x))
+                self.metrics_val.drop(columns=["MOST_INTESE_PEAK"], inplace=True)
                 # if 'lda_scores' in self.metrics_val.columns:
                 #    self.metrics_val.drop(columns=['lda_scores'],inplace=True)
         else:
+
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
+            if "Annotated_Ions_MSF" in self.metadata.columns:
+
+                self.metrics_val["annotated_ions"] = self.metadata["Annotated_Ions_MSF"]
+                self.metrics_val["delta_mass_ppm"] = abs(
+                    self.metadata["MZ_diff_MSF"] * 1000000 / self.metrics_val["Mass"]
+                )
+                self.metrics_val["next_score"] = self.metadata["NEXT_SCORE"]
+                self.metrics_val["log10_evalue"] = self.metadata["EXPECT"].apply(lambda x: math.log10(x))
+
+        """for aa_comb in all_combinations:
+            aa_comb_values = self.metadata['AA_MOD_COMBINATIONS'].apply(lambda x: x.count(aa_comb) if aa_comb in x else 0)
+            self.metrics_val[aa_comb] = aa_comb_values"""
 
         self.add_percolator_metadata_columns()
+
         if self.input_type == "rescore":
             # TODO: only add this feature if they are not all zero
             # self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr',
             # 'spectral_angle']], 'spectral_angle')
+            # self.metrics_val.drop(columns=['sum_observed_and_predicted','observed_intensity'],inplace=True)
             pass
         else:
             self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
                 self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
             )
+        self.metrics_val.drop("Mass", axis=1, inplace=True)
 
         self._reorder_columns_for_percolator()
 

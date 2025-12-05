@@ -21,6 +21,7 @@ class Metric:
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         xl: bool = False,
+        most_intense_peaks: Optional[np.ndarray] = None,
     ):
         """
         Initialize a Metric object.
@@ -29,12 +30,14 @@ class Metric:
         :param true_intensities: observed intensities
         :param mz: observed mz values
         :param xl: whether the metric is used for crosslinked or linear peptides
+        :param most_intense_peaks: array with most intense peak per spectrum, used for normalization
         """
         self.pred_intensities = pred_intensities
         self.true_intensities = true_intensities
         self.mz = mz
         self.metrics_val = pd.DataFrame()
         self.xl = xl
+        self.most_intense_peaks = most_intense_peaks
 
     @abstractmethod
     def calc(self, all_features: bool):

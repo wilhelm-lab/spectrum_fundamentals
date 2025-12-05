@@ -1,4 +1,5 @@
 import enum
+import logging
 from typing import Optional, Union
 
 import numpy as np
@@ -6,6 +7,8 @@ import scipy.sparse
 
 from .. import constants
 from .metric import Metric
+
+logger = logging.getLogger(__name__)
 
 
 class ObservationState(enum.IntEnum):
@@ -53,9 +56,50 @@ class FragmentsRatio(Metric):
 
         if ion_mask is None:
             ion_mask = scipy.sparse.csr_matrix(np.ones((array_size, 1)))
+        elif ion_mask.ndim > 1:
+            multiplied_array = boolean_array.toarray() * ion_mask
+            return np.array([np.sum(sub_array > 0) for sub_array in multiplied_array])
         else:
             ion_mask = scipy.sparse.csr_matrix(ion_mask).T
         return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
+
+    @staticmethod
+    def sum_with_ion_mask(
+        boolean_array: scipy.sparse.csr_matrix,
+        ion_mask: Optional[Union[np.ndarray, scipy.sparse.spmatrix]] = None,
+        xl: bool = False,
+        most_intense_peaks: np.ndarray = None,
+    ) -> np.ndarray:
+        """
+        Count the number of ions.
+
+        :param boolean_array: boolean array with True for observed/predicted peaks and \
+                              False for missing observed/predicted peaks, array of length 174
+        :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
+                         integer array of length 174 for linear and 348 for crosslinked peptides, or a list of integers,
+                         or a scipy.sparse.csr_matrix or scipy.sparse._csc.csc_matrix.
+        :param xl: whether to process with crosslinked or linear peptides
+        :param most_intense_peaks: array with most intense peak per spectrum, used for normalization
+        :return: number of observed/predicted peaks not masked by ion_mask
+        """
+        if xl:
+            array_size = 348
+        else:
+            array_size = 174
+
+        # most_intense_peaks = most_intense_peaks[:, np.newaxis]
+        # boolean_array = boolean_array.multiply(1/most_intense_peaks)
+        # boolean_array = boolean_array.tocsr()
+
+        if ion_mask is None:
+            ion_mask = scipy.sparse.csr_matrix(np.ones((array_size, 1)))
+        elif ion_mask.ndim > 1:
+            multiplied_array = boolean_array.toarray() * ion_mask
+            return np.sum(multiplied_array, axis=1)
+        else:
+            ion_mask = scipy.sparse.csr_matrix(ion_mask).T
+        dot_matrix = scipy.sparse.csr_matrix.dot(boolean_array, ion_mask)
+        return np.asarray(dot_matrix.sum(axis=1)).flatten()
 
     @staticmethod
     def count_observation_states(
@@ -78,6 +122,36 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask, xl=xl)
 
     @staticmethod
+    def sum_observation_states(
+        observation_state: scipy.sparse.csr_matrix,
+        test_state: int,
+        boolean_array: scipy.sparse.csr_matrix,
+        ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        xl: bool = False,
+        most_intense_peaks: np.ndarray = None,
+    ) -> np.ndarray:
+        """
+        Count the number of observation states.
+
+        :param observation_state: integer observation_state, array of length 174
+        :param test_state: integer for the test observation state
+        :param boolean_array: boolean array with True for observed/predicted peaks and \
+                                False for missing observed/predicted peaks, array of length 174
+        :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
+                         integer array of length 174
+        :param xl: whether or not the function is executed with xl mode
+        :param most_intense_peaks: array with most intense peak per spectrum, used for normalization
+        :return: number of observation states equal to test_state per row
+        """
+        state_boolean = observation_state == test_state
+        state_int = state_boolean.astype(float)
+
+        observed_intensities = scipy.sparse.csr_matrix.multiply(boolean_array, state_int)
+        return FragmentsRatio.sum_with_ion_mask(
+            observed_intensities, ion_mask, xl=xl, most_intense_peaks=most_intense_peaks
+        )
+
+    @staticmethod
     def get_mask_observed_valid(observed_mz: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:
         """
         Creates a mask out of an observed m/z array with True for invalid entries and \
@@ -89,6 +163,17 @@ class FragmentsRatio(Metric):
         return observed_mz > 0
 
     @staticmethod
+    def get_mask_observed_int(observed_mask: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:
+        """
+        Creates a mask out of an observed m/z array with True for invalid entries and \
+        False for valid entries in the observed intensities array.
+
+        :param observed_mask: observed m/z, array of length 174
+        :return: boolean array, array of length 174
+        """
+        return observed_mask.astype(float)
+
+    @staticmethod
     def make_boolean(
         intensities: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix, cutoff: float = 2e-7
     ) -> scipy.sparse.csr_matrix:
@@ -96,12 +181,32 @@ class FragmentsRatio(Metric):
         Transform array of intensities into boolean array with True if > cutoff and False otherwise.
 
         :param intensities: observed or predicted intensities, array of length 174
-        :param mask: mask with True for invalid values in the observed intensities array, boolean array of length 174
+        :param mask: mask with True for valid values in the observed intensities array, boolean array of length 174
         :param cutoff: minimum intensity value to be considered a peak, for observed intensities use the default cutoff of 0.0, \
                        for predicted intensities, set a cutoff, e.g. 0.05
         :return: boolean array, array of length 174
         """
         intensities_above_cutoff = (intensities > cutoff).multiply(mask)
+        return intensities_above_cutoff
+
+    @staticmethod
+    def make_float(
+        intensities: scipy.sparse.csr_matrix, mask: scipy.sparse.csr_matrix, cutoff: float = 2e-7
+    ) -> scipy.sparse.csr_matrix:
+        """
+        Transform array of intensities into float array with 0 if < cutoff and original value otherwise.
+
+        :param intensities: observed or predicted intensities, array of length 174
+        :param mask: mask with 1 for valid values in the observed intensities array, boolean array of length 174
+        :param cutoff: minimum intensity value to be considered a peak, for observed intensities use the default cutoff of 0.0, \
+                       for predicted intensities, set a cutoff, e.g. 0.05
+        :return: boolean array, array of length 174
+        """
+        intensities_fil = intensities.copy()
+        intensities_fil.data = np.where(intensities_fil.data > cutoff, intensities_fil.data, 0)
+        intensities_fil.eliminate_zeros()
+
+        intensities_above_cutoff = intensities_fil.multiply(mask)
         return intensities_above_cutoff
 
     @staticmethod
@@ -136,8 +241,19 @@ class FragmentsRatio(Metric):
         )
         return observation_state
 
-    def calc(self, xl: bool = False):
-        """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
+    # noqa: B008
+    def calc(
+        self, xl: bool = False, b_mask_mod: list = np.array([]), y_mask_mod: list = np.array([]), suffix: str = ""
+    ):
+        """
+        Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe.
+
+        :param xl: whether the metric is used for crosslinked or linear peptides
+        :param b_mask_mod: mask for modified b ions
+        :param y_mask_mod: mask for modified y ions
+        :param suffix: suffix to add to column names
+        :return: None
+        """
         if self.true_intensities is None or self.pred_intensities is None:
             return None
         if xl:
@@ -420,164 +536,206 @@ class FragmentsRatio(Metric):
             )
 
         else:
+
             mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
             observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
             predicted_boolean = FragmentsRatio.make_boolean(self.pred_intensities, mask_observed_valid, cutoff=0.05)
+
+            mask_observed_valid_int = FragmentsRatio.get_mask_observed_int(mask_observed_valid)
+            observed_float = FragmentsRatio.make_float(self.true_intensities, mask_observed_valid_int)
+            predicted_float = FragmentsRatio.make_float(self.pred_intensities, mask_observed_valid_int, cutoff=0.05)
+
+            if len(b_mask_mod) == 0:
+                b_mask_mod = constants.B_ION_MASK
+                y_mask_mod = constants.Y_ION_MASK
+            else:
+                observed_boolean = observed_boolean.multiply(scipy.sparse.csr_matrix(b_mask_mod + y_mask_mod))
+                predicted_boolean = predicted_boolean.multiply(scipy.sparse.csr_matrix(b_mask_mod + y_mask_mod))
+                observed_float = observed_float.multiply(scipy.sparse.csr_matrix(b_mask_mod + y_mask_mod))
+                predicted_float = predicted_float.multiply(scipy.sparse.csr_matrix(b_mask_mod + y_mask_mod))
+
             observation_state = FragmentsRatio.get_observation_state(
                 observed_boolean, predicted_boolean, mask_observed_valid
             )
+
             valid_ions = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid))
-            valid_ions_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.B_ION_MASK))
-            valid_ions_y = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.Y_ION_MASK))
+            valid_ions_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, b_mask_mod))
+            valid_ions_y = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, y_mask_mod))
+            logger.info("in_fragments")
+            logger.info(self.most_intense_peaks)
+            self.metrics_val["observed_intensity" + suffix] = FragmentsRatio.sum_with_ion_mask(
+                observed_float, most_intense_peaks=self.most_intense_peaks
+            )
+            # self.metrics_val['predicted_intensity'+ suffix] = FragmentsRatio.sum_with_ion_mask(predicted_float)
+            self.metrics_val["sum_observed_and_predicted" + suffix] = FragmentsRatio.sum_observation_states(
+                observation_state,
+                ObservationState.OBS_AND_PRED,
+                observed_float,
+                most_intense_peaks=self.most_intense_peaks,
+            )
 
             # counting metrics
-            self.metrics_val["count_predicted"] = FragmentsRatio.count_with_ion_mask(predicted_boolean)
-            self.metrics_val["count_predicted_b"] = FragmentsRatio.count_with_ion_mask(
-                predicted_boolean, constants.B_ION_MASK
+            self.metrics_val["count_predicted" + suffix] = FragmentsRatio.count_with_ion_mask(predicted_boolean)
+            self.metrics_val["count_predicted_b" + suffix] = FragmentsRatio.count_with_ion_mask(
+                predicted_boolean, b_mask_mod
             )
-            self.metrics_val["count_predicted_y"] = FragmentsRatio.count_with_ion_mask(
-                predicted_boolean, constants.Y_ION_MASK
-            )
-
-            self.metrics_val["count_observed"] = FragmentsRatio.count_with_ion_mask(observed_boolean)
-            self.metrics_val["count_observed_b"] = FragmentsRatio.count_with_ion_mask(
-                observed_boolean, constants.B_ION_MASK
-            )
-            self.metrics_val["count_observed_y"] = FragmentsRatio.count_with_ion_mask(
-                observed_boolean, constants.Y_ION_MASK
+            self.metrics_val["count_predicted_y" + suffix] = FragmentsRatio.count_with_ion_mask(
+                predicted_boolean, y_mask_mod
             )
 
-            self.metrics_val["count_observed_and_predicted"] = FragmentsRatio.count_observation_states(
+            self.metrics_val["count_observed" + suffix] = FragmentsRatio.count_with_ion_mask(observed_boolean)
+            self.metrics_val["count_observed_b" + suffix] = FragmentsRatio.count_with_ion_mask(
+                observed_boolean, b_mask_mod
+            )
+            self.metrics_val["count_observed_y" + suffix] = FragmentsRatio.count_with_ion_mask(
+                observed_boolean, y_mask_mod
+            )
+
+            self.metrics_val["count_observed_and_predicted" + suffix] = FragmentsRatio.count_observation_states(
                 observation_state, ObservationState.OBS_AND_PRED
             )
-            self.metrics_val["count_observed_and_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state, ObservationState.OBS_AND_PRED, constants.B_ION_MASK
+            self.metrics_val["count_observed_and_predicted_b" + suffix] = FragmentsRatio.count_observation_states(
+                observation_state, ObservationState.OBS_AND_PRED, b_mask_mod
             )
-            self.metrics_val["count_observed_and_predicted_y"] = FragmentsRatio.count_observation_states(
-                observation_state, ObservationState.OBS_AND_PRED, constants.Y_ION_MASK
+            self.metrics_val["count_observed_and_predicted_y" + suffix] = FragmentsRatio.count_observation_states(
+                observation_state, ObservationState.OBS_AND_PRED, y_mask_mod
             )
 
-            self.metrics_val["count_not_observed_and_not_predicted"] = FragmentsRatio.count_observation_states(
+            self.metrics_val["count_not_observed_and_not_predicted" + suffix] = FragmentsRatio.count_observation_states(
                 observation_state, ObservationState.NOT_OBS_AND_NOT_PRED
             )
-            self.metrics_val["count_not_observed_and_not_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state, ObservationState.NOT_OBS_AND_NOT_PRED, constants.B_ION_MASK
+            self.metrics_val["count_not_observed_and_not_predicted_b" + suffix] = (
+                FragmentsRatio.count_observation_states(
+                    observation_state, ObservationState.NOT_OBS_AND_NOT_PRED, b_mask_mod
+                )
             )
-            self.metrics_val["count_not_observed_and_not_predicted_y"] = FragmentsRatio.count_observation_states(
-                observation_state, ObservationState.NOT_OBS_AND_NOT_PRED, constants.Y_ION_MASK
+            self.metrics_val["count_not_observed_and_not_predicted_y" + suffix] = (
+                FragmentsRatio.count_observation_states(
+                    observation_state, ObservationState.NOT_OBS_AND_NOT_PRED, y_mask_mod
+                )
             )
 
-            self.metrics_val["count_observed_but_not_predicted"] = FragmentsRatio.count_observation_states(
+            self.metrics_val["count_observed_but_not_predicted" + suffix] = FragmentsRatio.count_observation_states(
                 observation_state, ObservationState.OBS_BUT_NOT_PRED
             )
-            self.metrics_val["count_observed_but_not_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state, ObservationState.OBS_BUT_NOT_PRED, constants.B_ION_MASK
+            self.metrics_val["count_observed_but_not_predicted_b" + suffix] = FragmentsRatio.count_observation_states(
+                observation_state, ObservationState.OBS_BUT_NOT_PRED, b_mask_mod
             )
-            self.metrics_val["count_observed_but_not_predicted_y"] = FragmentsRatio.count_observation_states(
-                observation_state, ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK
+            self.metrics_val["count_observed_but_not_predicted_y" + suffix] = FragmentsRatio.count_observation_states(
+                observation_state, ObservationState.OBS_BUT_NOT_PRED, y_mask_mod
             )
 
-            self.metrics_val["count_not_observed_but_predicted"] = FragmentsRatio.count_observation_states(
+            self.metrics_val["count_not_observed_but_predicted" + suffix] = FragmentsRatio.count_observation_states(
                 observation_state, ObservationState.NOT_OBS_BUT_PRED
             )
-            self.metrics_val["count_not_observed_but_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state, ObservationState.NOT_OBS_BUT_PRED, constants.B_ION_MASK
+            self.metrics_val["count_not_observed_but_predicted_b" + suffix] = FragmentsRatio.count_observation_states(
+                observation_state, ObservationState.NOT_OBS_BUT_PRED, b_mask_mod
             )
-            self.metrics_val["count_not_observed_but_predicted_y"] = FragmentsRatio.count_observation_states(
-                observation_state, ObservationState.NOT_OBS_BUT_PRED, constants.Y_ION_MASK
+            self.metrics_val["count_not_observed_but_predicted_y" + suffix] = FragmentsRatio.count_observation_states(
+                observation_state, ObservationState.NOT_OBS_BUT_PRED, y_mask_mod
             )
 
             # fractional count metrics
-            self.metrics_val["fraction_predicted"] = self.metrics_val["count_predicted"].values / valid_ions
-            self.metrics_val["fraction_predicted_b"] = self.metrics_val["count_predicted_b"] / valid_ions_b
-            self.metrics_val["fraction_predicted_y"] = self.metrics_val["count_predicted_y"] / valid_ions_y
-
-            self.metrics_val["fraction_observed"] = self.metrics_val["count_observed"] / valid_ions
-            self.metrics_val["fraction_observed_b"] = self.metrics_val["count_observed_b"] / valid_ions_b
-            self.metrics_val["fraction_observed_y"] = self.metrics_val["count_observed_y"] / valid_ions_y
-
-            self.metrics_val["fraction_observed_and_predicted"] = (
-                self.metrics_val["count_observed_and_predicted"] / valid_ions
+            self.metrics_val["fraction_predicted" + suffix] = (
+                self.metrics_val["count_predicted" + suffix].values / valid_ions
             )
-            self.metrics_val["fraction_observed_and_predicted_b"] = (
-                self.metrics_val["count_observed_and_predicted_b"] / valid_ions_b
+            self.metrics_val["fraction_predicted_b" + suffix] = (
+                self.metrics_val["count_predicted_b" + suffix] / valid_ions_b
             )
-            self.metrics_val["fraction_observed_and_predicted_y"] = (
-                self.metrics_val["count_observed_and_predicted_y"] / valid_ions_y
+            self.metrics_val["fraction_predicted_y" + suffix] = (
+                self.metrics_val["count_predicted_y" + suffix] / valid_ions_y
             )
 
-            self.metrics_val["fraction_not_observed_and_not_predicted"] = (
-                self.metrics_val["count_not_observed_and_not_predicted"] / valid_ions
+            self.metrics_val["fraction_observed" + suffix] = self.metrics_val["count_observed" + suffix] / valid_ions
+            self.metrics_val["fraction_observed_b" + suffix] = (
+                self.metrics_val["count_observed_b" + suffix] / valid_ions_b
             )
-            self.metrics_val["fraction_not_observed_and_not_predicted_b"] = (
-                self.metrics_val["count_not_observed_and_not_predicted_b"] / valid_ions_b
-            )
-            self.metrics_val["fraction_not_observed_and_not_predicted_y"] = (
-                self.metrics_val["count_not_observed_and_not_predicted_y"] / valid_ions_y
+            self.metrics_val["fraction_observed_y" + suffix] = (
+                self.metrics_val["count_observed_y" + suffix] / valid_ions_y
             )
 
-            self.metrics_val["fraction_observed_but_not_predicted"] = (
-                self.metrics_val["count_observed_but_not_predicted"] / valid_ions
+            self.metrics_val["fraction_observed_and_predicted" + suffix] = (
+                self.metrics_val["count_observed_and_predicted" + suffix] / valid_ions
             )
-            self.metrics_val["fraction_observed_but_not_predicted_b"] = (
-                self.metrics_val["count_observed_but_not_predicted_b"] / valid_ions_b
+            self.metrics_val["fraction_observed_and_predicted_b" + suffix] = (
+                self.metrics_val["count_observed_and_predicted_b" + suffix] / valid_ions_b
             )
-            self.metrics_val["fraction_observed_but_not_predicted_y"] = (
-                self.metrics_val["count_observed_but_not_predicted_y"] / valid_ions_y
+            self.metrics_val["fraction_observed_and_predicted_y" + suffix] = (
+                self.metrics_val["count_observed_and_predicted_y" + suffix] / valid_ions_y
             )
 
-            self.metrics_val["fraction_not_observed_but_predicted"] = (
-                self.metrics_val["count_not_observed_but_predicted"] / valid_ions
+            self.metrics_val["fraction_not_observed_and_not_predicted" + suffix] = (
+                self.metrics_val["count_not_observed_and_not_predicted" + suffix] / valid_ions
             )
-            self.metrics_val["fraction_not_observed_but_predicted_b"] = (
-                self.metrics_val["count_not_observed_but_predicted_b"] / valid_ions_b
+            self.metrics_val["fraction_not_observed_and_not_predicted_b" + suffix] = (
+                self.metrics_val["count_not_observed_and_not_predicted_b" + suffix] / valid_ions_b
             )
-            self.metrics_val["fraction_not_observed_but_predicted_y"] = (
-                self.metrics_val["count_not_observed_but_predicted_y"] / valid_ions_y
+            self.metrics_val["fraction_not_observed_and_not_predicted_y" + suffix] = (
+                self.metrics_val["count_not_observed_and_not_predicted_y" + suffix] / valid_ions_y
+            )
+
+            self.metrics_val["fraction_observed_but_not_predicted" + suffix] = (
+                self.metrics_val["count_observed_but_not_predicted" + suffix] / valid_ions
+            )
+            self.metrics_val["fraction_observed_but_not_predicted_b" + suffix] = (
+                self.metrics_val["count_observed_but_not_predicted_b" + suffix] / valid_ions_b
+            )
+            self.metrics_val["fraction_observed_but_not_predicted_y" + suffix] = (
+                self.metrics_val["count_observed_but_not_predicted_y" + suffix] / valid_ions_y
+            )
+
+            self.metrics_val["fraction_not_observed_but_predicted" + suffix] = (
+                self.metrics_val["count_not_observed_but_predicted" + suffix] / valid_ions
+            )
+            self.metrics_val["fraction_not_observed_but_predicted_b" + suffix] = (
+                self.metrics_val["count_not_observed_but_predicted_b" + suffix] / valid_ions_b
+            )
+            self.metrics_val["fraction_not_observed_but_predicted_y" + suffix] = (
+                self.metrics_val["count_not_observed_but_predicted_y" + suffix] / valid_ions_y
             )
 
             # fractional count metrics relative to predictions
-            num_predicted_ions = np.maximum(1, self.metrics_val["count_predicted"])
-            num_predicted_ions_b = np.maximum(1, self.metrics_val["count_predicted_b"])
-            num_predicted_ions_y = np.maximum(1, self.metrics_val["count_predicted_y"])
+            num_predicted_ions = np.maximum(1, self.metrics_val["count_predicted" + suffix])
+            num_predicted_ions_b = np.maximum(1, self.metrics_val["count_predicted_b" + suffix])
+            num_predicted_ions_y = np.maximum(1, self.metrics_val["count_predicted_y" + suffix])
 
-            self.metrics_val["fraction_observed_and_predicted_vs_predicted"] = (
-                self.metrics_val["count_observed_and_predicted"] / num_predicted_ions
+            self.metrics_val["fraction_observed_and_predicted_vs_predicted" + suffix] = (
+                self.metrics_val["count_observed_and_predicted" + suffix] / num_predicted_ions
             )
-            self.metrics_val["fraction_observed_and_predicted_b_vs_predicted_b"] = (
-                self.metrics_val["count_observed_and_predicted_b"] / num_predicted_ions_b
+            self.metrics_val["fraction_observed_and_predicted_b_vs_predicted_b" + suffix] = (
+                self.metrics_val["count_observed_and_predicted_b" + suffix] / num_predicted_ions_b
             )
-            self.metrics_val["fraction_observed_and_predicted_y_vs_predicted_y"] = (
-                self.metrics_val["count_observed_and_predicted_y"] / num_predicted_ions_y
-            )
-
-            self.metrics_val["fraction_not_observed_and_not_predicted_vs_predicted"] = (
-                self.metrics_val["count_not_observed_and_not_predicted"] / num_predicted_ions
-            )
-            self.metrics_val["fraction_not_observed_and_not_predicted_b_vs_predicted_b"] = (
-                self.metrics_val["count_not_observed_and_not_predicted_b"] / num_predicted_ions_b
-            )
-            self.metrics_val["fraction_not_observed_and_not_predicted_y_vs_predicted_y"] = (
-                self.metrics_val["count_not_observed_and_not_predicted_y"] / num_predicted_ions_y
+            self.metrics_val["fraction_observed_and_predicted_y_vs_predicted_y" + suffix] = (
+                self.metrics_val["count_observed_and_predicted_y" + suffix] / num_predicted_ions_y
             )
 
-            self.metrics_val["fraction_observed_but_not_predicted_vs_predicted"] = (
-                self.metrics_val["count_observed_but_not_predicted"] / num_predicted_ions
+            self.metrics_val["fraction_not_observed_and_not_predicted_vs_predicted" + suffix] = (
+                self.metrics_val["count_not_observed_and_not_predicted" + suffix] / num_predicted_ions
             )
-            self.metrics_val["fraction_observed_but_not_predicted_b_vs_predicted_b"] = (
-                self.metrics_val["count_observed_but_not_predicted_b"] / num_predicted_ions_b
+            self.metrics_val["fraction_not_observed_and_not_predicted_b_vs_predicted_b" + suffix] = (
+                self.metrics_val["count_not_observed_and_not_predicted_b" + suffix] / num_predicted_ions_b
             )
-            self.metrics_val["fraction_observed_but_not_predicted_y_vs_predicted_y"] = (
-                self.metrics_val["count_observed_but_not_predicted_y"] / num_predicted_ions_y
+            self.metrics_val["fraction_not_observed_and_not_predicted_y_vs_predicted_y" + suffix] = (
+                self.metrics_val["count_not_observed_and_not_predicted_y" + suffix] / num_predicted_ions_y
+            )
+
+            self.metrics_val["fraction_observed_but_not_predicted_vs_predicted" + suffix] = (
+                self.metrics_val["count_observed_but_not_predicted" + suffix] / num_predicted_ions
+            )
+            self.metrics_val["fraction_observed_but_not_predicted_b_vs_predicted_b" + suffix] = (
+                self.metrics_val["count_observed_but_not_predicted_b" + suffix] / num_predicted_ions_b
+            )
+            self.metrics_val["fraction_observed_but_not_predicted_y_vs_predicted_y" + suffix] = (
+                self.metrics_val["count_observed_but_not_predicted_y" + suffix] / num_predicted_ions_y
             )
 
             # not needed, as these are simply (1 - fraction_observed_and_predicted_vs_predicted)
-            self.metrics_val["fraction_not_observed_but_predicted_vs_predicted"] = (
-                self.metrics_val["count_not_observed_but_predicted"] / num_predicted_ions
+            self.metrics_val["fraction_not_observed_but_predicted_vs_predicted" + suffix] = (
+                self.metrics_val["count_not_observed_but_predicted" + suffix] / num_predicted_ions
             )
-            self.metrics_val["fraction_not_observed_but_predicted_b_vs_predicted"] = (
-                self.metrics_val["count_not_observed_but_predicted_b"] / num_predicted_ions_b
+            self.metrics_val["fraction_not_observed_but_predicted_b_vs_predicted" + suffix] = (
+                self.metrics_val["count_not_observed_but_predicted_b" + suffix] / num_predicted_ions_b
             )
-            self.metrics_val["fraction_not_observed_but_predicted_y_vs_predicted"] = (
-                self.metrics_val["count_not_observed_but_predicted_y"] / num_predicted_ions_y
+            self.metrics_val["fraction_not_observed_but_predicted_y_vs_predicted" + suffix] = (
+                self.metrics_val["count_not_observed_but_predicted_y" + suffix] / num_predicted_ions_y
             )

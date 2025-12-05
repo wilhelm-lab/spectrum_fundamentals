@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from spectrum_fundamentals import constants
 from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl, retrieve_ion_types
@@ -56,7 +57,12 @@ def match_peaks(
                 continue
             if (
                 not (fragment["ion_type"][0] == "b" and fragment_no == 1)
-                or (unmod_sequence[0] == "R" or unmod_sequence[0] == "H" or unmod_sequence[0] == "K")
+                or (
+                    unmod_sequence[0] == "R"
+                    or unmod_sequence[0] == "H"
+                    or unmod_sequence[0] == "K"
+                    or unmod_sequence[0] == "S"
+                )
                 or (tmt_n_term == 2)
             ):
                 # For now only counting neutral loss peaks this can change with different models later
@@ -82,7 +88,8 @@ def match_peaks(
     for row in row_list:
         row["intensity"] = float(row["intensity"]) / max_intensity
         temp_list.append(row)
-    return temp_list, count_annotated_nl
+    max_intensity_overall = max_intensity
+    return temp_list, count_annotated_nl, max_intensity_overall
 
 
 def handle_multiple_matches(
@@ -155,7 +162,7 @@ def annotate_spectra(
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
-    for row in un_annot_spectra.values:
+    for row in tqdm(un_annot_spectra.values):
         results = parallel_annotate(
             row,
             index_columns,
@@ -178,6 +185,7 @@ def annotate_spectra(
             "removed_peaks",
             "ANNOTATED_NL_COUNT",
             "EXPECTED_NL_COUNT",
+            "MOST_INTESE_PEAK",
         ]
     else:
         results_df.columns = [
@@ -338,11 +346,13 @@ def generate_annotation_matrix(
     exp_mass_col = matched_peaks.columns.get_loc("exp_mass")
 
     for peak in matched_peaks.values:
+
         ion_type_index = ion_types.index(peak[ion_type].split("-", 1)[0])
         peak_pos = ((peak[no_col] - 1) * charge_const * len(ion_types)) + (peak[charge_col] - 1) + 3 * ion_type_index
 
         if peak_pos >= constants.VEC_LENGTH:
             continue
+
         intensity[peak_pos] = peak[intensity_col]
         mass[peak_pos] = peak[exp_mass_col]
 
@@ -446,7 +456,7 @@ def _annotate_linear_spectrum(
         custom_mods=custom_mods,
         add_neutral_losses=add_neutral_losses,
     )
-    matched_peaks, count_annotated_nl = match_peaks(
+    matched_peaks, count_annotated_nl, max_annotated_intensity = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
         spectrum[index_columns["MZ"]],
@@ -465,10 +475,12 @@ def _annotate_linear_spectrum(
         return intensity, mass, calc_mass, 0, 0, 0
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
+
     intensities, mass = generate_annotation_matrix(
         matched_peaks, unmod_sequence, spectrum[index_columns["PRECURSOR_CHARGE"]], fragmentation_method
     )
-    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl
+
+    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl, max_annotated_intensity
 
 
 def _annotate_crosslinked_spectrum(
@@ -516,7 +528,7 @@ def _annotate_crosslinked_spectrum(
             array_size = 348
         inputs.append(custom_mods)
         fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass = initialize_peaks_xl(*inputs)
-        matched_peaks, annotated_nl = match_peaks(
+        matched_peaks, annotated_nl, _ = match_peaks(
             fragments_meta_data,
             np.array(spectrum[index_columns["INTENSITIES"]]),
             np.array(spectrum[index_columns["MZ"]]),  # Convert to numpy array
