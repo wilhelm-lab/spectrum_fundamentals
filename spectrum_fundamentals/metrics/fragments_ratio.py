@@ -58,6 +58,44 @@ class FragmentsRatio(Metric):
         return scipy.sparse.csr_matrix.dot(boolean_array, ion_mask).toarray().flatten()
 
     @staticmethod
+    def sum_with_ion_mask(
+        boolean_array: scipy.sparse.csr_matrix,
+        ion_mask: Optional[Union[np.ndarray, scipy.sparse.spmatrix]] = None,
+        xl: bool = False,
+        most_intense_peaks: np.ndarray = None,
+    ) -> np.ndarray:
+        """
+        Count the number of ions.
+
+        :param boolean_array: boolean array with True for observed/predicted peaks and \
+                              False for missing observed/predicted peaks, array of length 174
+        :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
+                         integer array of length 174 for linear and 348 for crosslinked peptides, or a list of integers,
+                         or a scipy.sparse.csr_matrix or scipy.sparse._csc.csc_matrix.
+        :param xl: whether to process with crosslinked or linear peptides
+        :param most_intense_peaks: array with most intense peak per spectrum, used for normalization
+        :return: number of observed/predicted peaks not masked by ion_mask
+        """
+        if xl:
+            array_size = 348
+        else:
+            array_size = 174
+
+        # most_intense_peaks = most_intense_peaks[:, np.newaxis]
+        # boolean_array = boolean_array.multiply(1/most_intense_peaks)
+        # boolean_array = boolean_array.tocsr()
+
+        if ion_mask is None:
+            ion_mask = scipy.sparse.csr_matrix(np.ones((array_size, 1)))
+        elif ion_mask.ndim > 1:
+            multiplied_array = boolean_array.toarray() * ion_mask
+            return np.sum(multiplied_array, axis=1)
+        else:
+            ion_mask = scipy.sparse.csr_matrix(ion_mask).T
+        dot_matrix = scipy.sparse.csr_matrix.dot(boolean_array, ion_mask)
+        return np.asarray(dot_matrix.sum(axis=1)).flatten()
+
+    @staticmethod
     def count_observation_states(
         observation_state: scipy.sparse.csr_matrix,
         test_state: int,
@@ -78,6 +116,36 @@ class FragmentsRatio(Metric):
         return FragmentsRatio.count_with_ion_mask(state_boolean, ion_mask, cms2=cms2)
 
     @staticmethod
+    def sum_observation_states(
+        observation_state: scipy.sparse.csr_matrix,
+        test_state: int,
+        boolean_array: scipy.sparse.csr_matrix,
+        ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        xl: bool = False,
+        most_intense_peaks: np.ndarray = None,
+    ) -> np.ndarray:
+        """
+        Count the number of observation states.
+
+        :param observation_state: integer observation_state, array of length 174
+        :param test_state: integer for the test observation state
+        :param boolean_array: boolean array with True for observed/predicted peaks and \
+                                False for missing observed/predicted peaks, array of length 174
+        :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
+                         integer array of length 174
+        :param xl: whether or not the function is executed with xl mode
+        :param most_intense_peaks: array with most intense peak per spectrum, used for normalization
+        :return: number of observation states equal to test_state per row
+        """
+        state_boolean = observation_state == test_state
+        state_int = state_boolean.astype(float)
+
+        observed_intensities = scipy.sparse.csr_matrix.multiply(boolean_array, state_int)
+        return FragmentsRatio.sum_with_ion_mask(
+            observed_intensities, ion_mask, xl=xl, most_intense_peaks=most_intense_peaks
+        )
+
+    @staticmethod
     def get_mask_observed_valid(observed_mz: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:
         """
         Creates a mask out of an observed m/z array with True for invalid entries and \
@@ -87,6 +155,17 @@ class FragmentsRatio(Metric):
         :return: boolean array, array of length 174
         """
         return observed_mz > 0
+
+    @staticmethod
+    def get_mask_observed_int(observed_mask: scipy.sparse.csr_matrix) -> scipy.sparse.csr_matrix:
+        """
+        Creates a mask out of an observed m/z array with True for invalid entries and \
+        False for valid entries in the observed intensities array.
+
+        :param observed_mask: observed m/z, array of length 174
+        :return: boolean array, array of length 174
+        """
+        return observed_mask.astype(float)
 
     @staticmethod
     def make_boolean(
@@ -487,12 +566,29 @@ class FragmentsRatio(Metric):
             mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
             observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid, cutoff=0.05)
             predicted_boolean = FragmentsRatio.make_boolean(self.pred_intensities, mask_observed_valid, cutoff=0.05)
+
+            mask_observed_valid_int = FragmentsRatio.get_mask_observed_int(mask_observed_valid)
+            observed_float = FragmentsRatio.make_float(self.true_intensities, mask_observed_valid_int)
+            predicted_float = FragmentsRatio.make_float(self.pred_intensities, mask_observed_valid_int, cutoff=0.05)
+
             observation_state = FragmentsRatio.get_observation_state(
                 observed_boolean, predicted_boolean, mask_observed_valid
             )
             valid_ions = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid))
             valid_ions_b = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.B_ION_MASK))
             valid_ions_y = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, constants.Y_ION_MASK))
+
+            self.metrics_val["predicted_intensity"] = FragmentsRatio.sum_with_ion_mask(predicted_float)
+            self.metrics_val["observed_intensity"] = FragmentsRatio.sum_with_ion_mask(
+                observed_float, most_intense_peaks=self.most_intense_peaks
+            )
+
+            self.metrics_val["sum_observed_and_predicted"] = FragmentsRatio.sum_observation_states(
+                observation_state,
+                ObservationState.OBS_AND_PRED,
+                observed_float,
+                most_intense_peaks=self.most_intense_peaks,
+            )
 
             # counting metrics
             self.metrics_val["count_predicted"] = FragmentsRatio.count_with_ion_mask(predicted_boolean)
