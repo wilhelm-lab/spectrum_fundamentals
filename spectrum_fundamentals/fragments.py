@@ -243,6 +243,8 @@ def initialize_peaks(  # noqa: C901
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
     :param xl_pos: the position of the crosslinker for non-cleavable XL
     :param fragmentation_method: fragmentation method that was used
+    :param multifrag: flag to indicate whether to annotate multifrag or not
+    :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param add_neutral_losses: Flag to indicate whether to annotate neutral losses or not
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence,
@@ -289,7 +291,7 @@ def initialize_peaks(  # noqa: C901
         mass_arr[pos] += mod_mass
 
     forward_ions = np.array([ion in c.FORWARD_IONS for ion in ion_types])
-    n_forward_ions = sum(forward_ions)
+    # n_forward_ions = sum(forward_ions)
     n_fragments = len(sequence) - 1
     sum_array = np.empty(shape=(len(ion_types), n_fragments))
     sum_array[~forward_ions] = np.cumsum(

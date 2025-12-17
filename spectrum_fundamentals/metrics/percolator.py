@@ -452,7 +452,7 @@ class Percolator(Metric):
         self.metrics_val = self.metrics_val[new_columns]
 
     def _deduplicate_intensities(self, mz, intensities):
-        """Take highest intensity prediction for ions with same mz, return new array"""
+        """Take highest intensity prediction for ions with same mz, return new array."""
         n, m = intensities.shape
         mz_row = mz.toarray()
         intensity_row = intensities.toarray()
@@ -472,14 +472,12 @@ class Percolator(Metric):
 
         return intensities
 
-    def calc(
+    def calc(  # noqa: C901
         self,
         multifrag: bool = False,
         fragmentation_method: str = "HCD",
-    ):  # noqa: C901
+    ):
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
-
-        # TODO: find best place to do deduplication for multifrag
         if multifrag:
             self.pred_intensities = self._deduplicate_intensities(self.mz, self.pred_intensities)
 

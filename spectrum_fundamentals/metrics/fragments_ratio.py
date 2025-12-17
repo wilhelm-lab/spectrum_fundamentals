@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 
-simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
-
 from .. import constants
 from .metric import Metric
+
+simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 
 class ObservationState(enum.IntEnum):
@@ -501,7 +501,7 @@ class FragmentsRatio(Metric):
             else:
                 ions = constants.FRAGMENTATION_TO_IONS_BY_DIRECTION[fragmentation_method]
 
-            ION_MASKS = {ion: (ion_dict["type"] == ion).to_numpy().astype(int) for ion in ions}
+            ION_MASKS = {ion: (ion_dict["type"] == ion).to_numpy().astype(int) for ion in ions}  # noqa: N806
 
             mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
             observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
@@ -592,7 +592,7 @@ class FragmentsRatio(Metric):
             self.metrics_val["fraction_observed_but_not_predicted_vs_predicted"] = (
                 self.metrics_val["count_observed_but_not_predicted"].values / num_predicted_ions
             )
-            for ion, mask in ION_MASKS.items():
+            for ion, _ in ION_MASKS.items():
                 num_predicted_ions = np.maximum(1, self.metrics_val[f"count_predicted_{ion}"])
                 self.metrics_val[f"fraction_observed_and_predicted_{ion}_vs_predicted_{ion}"] = (
                     self.metrics_val[f"count_observed_and_predicted_{ion}"].values / num_predicted_ions
@@ -610,7 +610,7 @@ class FragmentsRatio(Metric):
             self.metrics_val["fraction_not_observed_but_predicted_vs_predicted"] = (
                 self.metrics_val["count_not_observed_but_predicted"].values / num_predicted_ions
             )
-            for ion, mask in ION_MASKS.items():
+            for ion, _ in ION_MASKS.items():
                 num_predicted_ions = np.maximum(1, self.metrics_val[f"count_predicted_{ion}"])
                 self.metrics_val[f"fraction_not_observed_but_predicted_{ion}_vs_predicted"] = (
                     self.metrics_val[f"count_not_observed_but_predicted_{ion}"].values / num_predicted_ions

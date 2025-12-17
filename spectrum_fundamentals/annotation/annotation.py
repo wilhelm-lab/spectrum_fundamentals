@@ -10,7 +10,7 @@ from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_x
 logger = logging.getLogger(__name__)
 
 
-def match_peaks(
+def match_peaks(  # noqa: C901
     fragments_meta_data: List[dict],
     peaks_intensity: np.ndarray,
     peaks_masses: np.ndarray,
@@ -29,6 +29,8 @@ def match_peaks(
     :param tmt_n_term: Flag to check if there is tmt modification on n_terminus 1: no_tmt, 2:tmt
     :param unmod_sequence: Unmodified peptide sequence
     :param charge: Precursor charge
+    :param multifrag: Flag to check if it is a multifrag spectrum
+    :param p_window_bounds: peak exclusion window min and max boundries for multifrag, dedicated to remove precursor peaks (da)
     :return: List of matched/annotated peaks
     """
     start_peak = 0
@@ -164,8 +166,11 @@ def annotate_spectra(
     :param mass_tolerance: mass tolerance to calculate min and max mass
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param fragmentation_method: fragmentation method that was used
+    :param multifrag: flag to indicate whether to use multifrag or not
+    :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param annotate_neutral_loss: flag to indicate whether to annotate neutral losses or not
+    :param featured_ions: list of featured ions to annotate
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
@@ -315,7 +320,7 @@ def generate_annotation_matrix_xl(
     return intensity, mass
 
 
-def generate_annotation_matrix(
+def generate_annotation_matrix(  # noqa: C901
     matched_peaks: pd.DataFrame,
     unmod_seq: str,
     charge: int,
@@ -330,6 +335,8 @@ def generate_annotation_matrix(
     :param unmod_seq: Un modified peptide sequence
     :param charge: Precursor charge
     :param fragmentation_method: fragmentation method that was used
+    :param multifrag: flag to indicate whether to annotate multifrag or not
+    :param featured_ions: list of ions to be annotated
     :return: numpy array of intensities and numpy array of masses
     """
     if featured_ions is None:
@@ -379,8 +386,8 @@ def generate_annotation_matrix(
             try:
                 # Skip redundant ions
                 peak_pos = ion_df.index[ion_df["ion"] == peak[full_name_col]][0]
-            except:
-                # logger.info(f"fullname {peak[full_name_col]}")
+            except Exception:
+                Warning(f"Peak {peak[full_name_col]} not found in ion_df")
                 continue
         else:
             ion_type_index = ion_types.index(peak[ion_type].split("-", 1)[0])
@@ -436,6 +443,9 @@ def parallel_annotate(
     :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param fragmentation_method: fragmentation method that was used
+    :param multifrag: flag to indicate whether to annotate multifrag or not
+    :param featured_ions: list of ions to be annotated
+    :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
     :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
@@ -486,6 +496,9 @@ def _annotate_linear_spectrum(
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param fragmentation_method: fragmentation method that was used
     :param add_neutral_losses: flag to indicate whether to annotate neutral losses or not
+    :param multifrag: flag to indicate whether to annotate multifrag or not
+    :param featured_ions: list of ions to be annotated
+    :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
     :return: Annotated spectrum
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
