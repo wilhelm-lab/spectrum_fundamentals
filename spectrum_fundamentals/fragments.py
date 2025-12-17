@@ -254,7 +254,7 @@ def initialize_peaks(  # noqa: C901
         ion_df = c.ION_DIC
         ion_list = ion_df.index.to_list()
         ion_types = list(np.sort(ion_df["type"].unique()))
-        max_charge = charge # there are 3+ charges
+        max_charge = charge  # there are 3+ charges
     else:
         max_charge = min(3, charge)
         ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
