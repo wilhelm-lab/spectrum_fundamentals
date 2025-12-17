@@ -477,7 +477,6 @@ FORWARD_IONS = ["a", "A", "b", "c", "C"]  # a,a+1,b,c-1,c
 BACKWARDS_IONS = ["x", "X", "y", "z", "Z"]  # x,x+1,y,z,z+1
 IONS = FORWARD_IONS + BACKWARDS_IONS
 
-# TODO: ECD, EID, UVPD ions were given as in paper for rescoring
 FRAGMENTATION_TO_IONS_BY_PAIRS = {
     "HCD": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
     "CID": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
@@ -510,7 +509,6 @@ FRAGMENTATION_TO_IONS_BY_PAIRS = {
     ],  # a,a+1,b,c,y,z
 }
 
-# TODO: Needs to be changed for multifrag
 FRAGMENTATION_TO_IONS_BY_DIRECTION = {
     "HCD": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
     "CID": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
