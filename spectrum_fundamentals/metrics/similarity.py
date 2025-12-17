@@ -88,13 +88,12 @@ class SimilarityMetrics(Metric):
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
-        # observed_non_zero_mask = observed_intensities > constants.EPSILON
-        # fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, predicted_non_zero_mask)
+        observed_non_zero_mask = observed_intensities > constants.EPSILON
+        fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, predicted_non_zero_mask)
 
-        # dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized) * (
-        #     fragments_in_common > 0
-        # )
-        dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized)
+        dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized) * (
+            fragments_in_common > 0
+        )
 
         arccos = np.arccos(dot_product)
         sa = 1 - 2 * arccos / np.pi
