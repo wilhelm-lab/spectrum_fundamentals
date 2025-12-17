@@ -17,7 +17,7 @@ def match_peaks(
     tmt_n_term: int,
     unmod_sequence: str,
     charge: int,
-    multifrag: Optional[bool] = False, # TODO: multifrag    
+    multifrag: Optional[bool] = False,
     p_window_bounds: Optional[List] = None,
 ) -> Tuple[List[Dict[str, Union[str, int, float]]], int]:
     """
@@ -141,7 +141,7 @@ def annotate_spectra(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
-    multifrag: Optional[bool] = False, # TODO: multifrag
+    multifrag: Optional[bool] = False,
     p_window: Optional[float] = 0.0,
     annotate_neutral_loss: Optional[bool] = False,
     featured_ions: Optional[List[str]] = None,
@@ -178,7 +178,7 @@ def annotate_spectra(
             mass_tolerance,
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
-            multifrag=multifrag, # TODO: multifrag
+            multifrag=multifrag,
             p_window=p_window,
             custom_mods=custom_mods,
             annotate_neutral_losses=annotate_neutral_loss,
@@ -408,7 +408,7 @@ def parallel_annotate(
     unit_mass_tolerance: Optional[str] = None,
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
-    multifrag: Optional[bool] = False, # TODO: multifrag
+    multifrag: Optional[bool] = False,
     featured_ions: Optional[List[str]] = None,
     p_window: Optional[float] = 0.0,
     annotate_neutral_losses: Optional[bool] = False,
@@ -448,7 +448,7 @@ def parallel_annotate(
             mass_tolerance,
             unit_mass_tolerance,
             fragmentation_method=fragmentation_method,
-            multifrag=multifrag, # TODO: multifrag
+            multifrag=multifrag,
             p_window=p_window,
             custom_mods=custom_mods,
             add_neutral_losses=annotate_neutral_losses,
@@ -469,7 +469,7 @@ def _annotate_linear_spectrum(
     unit_mass_tolerance: Optional[str],
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
-    multifrag: Optional[bool] = False, # TODO: multifrag
+    multifrag: Optional[bool] = False,
     featured_ions: Optional[List[str]] = None,
     p_window: Optional[float] = 0.0,
     add_neutral_losses: Optional[bool] = False,
@@ -492,8 +492,7 @@ def _annotate_linear_spectrum(
     
     if multifrag:
         ion_df = constants.ION_DIC
-    # if ion_df is not None: # TODO: multifrag
-        ion_types = list(np.sort(ion_df['type'].unique())) # TODO: multifrag Ask from constants 
+        ion_types = list(np.sort(ion_df['type'].unique()))
         vec_length = len(ion_df)
     else:
         ion_types = retrieve_ion_types(fragmentation_method)
@@ -507,7 +506,7 @@ def _annotate_linear_spectrum(
         mass_tolerance=mass_tolerance,
         unit_mass_tolerance=unit_mass_tolerance,
         fragmentation_method=fragmentation_method,
-        multifrag=multifrag, # TODO: multifrag
+        multifrag=multifrag,
         p_window=p_window,
         custom_mods=custom_mods,
         add_neutral_losses=add_neutral_losses,
