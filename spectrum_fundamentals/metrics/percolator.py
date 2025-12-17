@@ -1,8 +1,8 @@
 import enum
 import logging
-from typing import Optional, Tuple, Union, List
-
 import math
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
@@ -11,10 +11,10 @@ from moepy import lowess
 from scipy import interpolate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
+from .. import constants
 from . import fragments_ratio as fr
 from . import similarity as sim
 from .metric import Metric
-from .. import constants
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class Percolator(Metric):
         neutral_loss_flag: Optional[bool] = False,
         drop_miss_cleavage_flag: Optional[bool] = False,
         cms2: bool = False,
-        featured_ions: Optional[List] = None
+        featured_ions: Optional[List] = None,
     ):
         """Initialize a Percolator obj."""
         super().__init__(pred_intensities, true_intensities, mz, "CROSSLINKER_TYPE" in metadata.columns)
@@ -450,7 +450,7 @@ class Percolator(Metric):
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
-        
+
     def _deduplicate_intensities(self, mz, intensities):
         """Take highest intensity prediction for ions with same mz, return new array"""
         n, m = intensities.shape
@@ -458,30 +458,31 @@ class Percolator(Metric):
         intensity_row = intensities.toarray()
 
         for row in range(n):
-            
+
             u, c = np.unique(mz_row[row], return_counts=True)
             dup = u[(c > 1) & (u > constants.EPSILON)]
             for val in dup:
                 mask = mz_row[row] == val
                 if np.any(mask):
-                    temp_max_idx = np.argmax(intensity_row[row][mask])   
-                    indices = np.where(mask)[0]                     
-                    max_idx = indices[temp_max_idx]                 
-                    other_indices = indices[indices != max_idx]    
+                    temp_max_idx = np.argmax(intensity_row[row][mask])
+                    indices = np.where(mask)[0]
+                    max_idx = indices[temp_max_idx]
+                    other_indices = indices[indices != max_idx]
                     intensities[row, other_indices] = 0.0
 
         return intensities
 
-    def calc(self, 
+    def calc(
+        self,
         multifrag: bool = False,
         fragmentation_method: str = "HCD",
     ):  # noqa: C901
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
-        
+
         # TODO: find best place to do deduplication for multifrag
         if multifrag:
             self.pred_intensities = self._deduplicate_intensities(self.mz, self.pred_intensities)
-                    
+
         self.add_common_features()
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
         np.random.seed(1)
@@ -491,11 +492,11 @@ class Percolator(Metric):
             self.add_additional_features()
             fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
             fragments_ratio.calc(
-                xl=self.xl, 
-                cms2=self.cms2, 
-                multifrag=multifrag, 
+                xl=self.xl,
+                cms2=self.cms2,
+                multifrag=multifrag,
                 featured_ions=self.featured_ions,
-                fragmentation_method=fragmentation_method
+                fragmentation_method=fragmentation_method,
             )
             similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
             similarity.calc(self.all_features_flag, xl=self.xl, cms2=self.cms2)
@@ -559,12 +560,12 @@ class Percolator(Metric):
         else:
             self.add_additional_features()
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
-            
-        if 'Annotated_Ions_MSF' in self.metadata.columns:
-                self.metrics_val['annotated_ions'] = self.metadata["Annotated_Ions_MSF"]
-                self.metrics_val['delta_mass_ppm'] = abs(self.metadata["MZ_diff_MSF"]*1000000/self.metrics_val['Mass'])
-                self.metrics_val['next_score'] = self.metadata["NEXT_SCORE"]
-                self.metrics_val['log10_evalue'] = self.metadata["EXPECT"].apply(lambda x: math.log10(x))
+
+        if "Annotated_Ions_MSF" in self.metadata.columns:
+            self.metrics_val["annotated_ions"] = self.metadata["Annotated_Ions_MSF"]
+            self.metrics_val["delta_mass_ppm"] = abs(self.metadata["MZ_diff_MSF"] * 1000000 / self.metrics_val["Mass"])
+            self.metrics_val["next_score"] = self.metadata["NEXT_SCORE"]
+            self.metrics_val["log10_evalue"] = self.metadata["EXPECT"].apply(lambda x: math.log10(x))
 
         self.add_percolator_metadata_columns()
         if self.input_type == "rescore":

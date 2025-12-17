@@ -1,10 +1,11 @@
 import enum
-from typing import Optional, Union, List
+from typing import List, Optional, Union
+from warnings import simplefilter
 
 import numpy as np
-import scipy.sparse
 import pandas as pd
-from warnings import simplefilter
+import scipy.sparse
+
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 from .. import constants
@@ -139,12 +140,13 @@ class FragmentsRatio(Metric):
         )
         return observation_state
 
-    def calc(self, 
-        xl: bool=False, 
+    def calc(
+        self,
+        xl: bool = False,
         cms2: bool = False,
         multifrag: bool = False,
         fragmentation_method: str = "HCD",
-        featured_ions = Optional[List],       
+        featured_ions=Optional[List],
     ):
         """Adds columns with count, fraction and fraction_predicted features to metrics_val dataframe."""
         if self.true_intensities is None or self.pred_intensities is None:
@@ -491,23 +493,23 @@ class FragmentsRatio(Metric):
             self.metrics_val["fraction_observed_but_not_predicted_y_vs_predicted_y_b"] = (
                 self.metrics_val["count_observed_but_not_predicted_y_b"] / num_predicted_ions_y_b
             )
-        
+
         elif multifrag:
             ion_dict = constants.ION_DIC
             if featured_ions:
                 ions = featured_ions
             else:
                 ions = constants.FRAGMENTATION_TO_IONS_BY_DIRECTION[fragmentation_method]
-                
-            ION_MASKS = {ion: (ion_dict['type'] == ion).to_numpy().astype(int) for ion in ions}
-            
+
+            ION_MASKS = {ion: (ion_dict["type"] == ion).to_numpy().astype(int) for ion in ions}
+
             mask_observed_valid = FragmentsRatio.get_mask_observed_valid(self.true_intensities)
             observed_boolean = FragmentsRatio.make_boolean(self.true_intensities, mask_observed_valid)
             predicted_boolean = FragmentsRatio.make_boolean(self.pred_intensities, mask_observed_valid, cutoff=0.05)
             observation_state = FragmentsRatio.get_observation_state(
                 observed_boolean, predicted_boolean, mask_observed_valid
             )
-            
+
             self.metrics_val["count_predicted"] = FragmentsRatio.count_with_ion_mask(predicted_boolean)
             self.metrics_val["count_observed"] = FragmentsRatio.count_with_ion_mask(observed_boolean)
             self.metrics_val["count_observed_and_predicted"] = FragmentsRatio.count_observation_states(
@@ -523,17 +525,15 @@ class FragmentsRatio(Metric):
                 observation_state, ObservationState.NOT_OBS_BUT_PRED
             )
             for ion, mask in ION_MASKS.items():
-                self.metrics_val[f"count_predicted_{ion}"] = FragmentsRatio.count_with_ion_mask(
-                    predicted_boolean, mask
-                )
-                self.metrics_val[f"count_observed_{ion}"] = FragmentsRatio.count_with_ion_mask(
-                    observed_boolean, mask
-                )
+                self.metrics_val[f"count_predicted_{ion}"] = FragmentsRatio.count_with_ion_mask(predicted_boolean, mask)
+                self.metrics_val[f"count_observed_{ion}"] = FragmentsRatio.count_with_ion_mask(observed_boolean, mask)
                 self.metrics_val[f"count_observed_and_predicted_{ion}"] = FragmentsRatio.count_observation_states(
                     observation_state, ObservationState.OBS_AND_PRED, mask
                 )
-                self.metrics_val[f"count_not_observed_and_not_predicted_{ion}"] = FragmentsRatio.count_observation_states(
-                    observation_state, ObservationState.NOT_OBS_AND_NOT_PRED, mask
+                self.metrics_val[f"count_not_observed_and_not_predicted_{ion}"] = (
+                    FragmentsRatio.count_observation_states(
+                        observation_state, ObservationState.NOT_OBS_AND_NOT_PRED, mask
+                    )
                 )
                 self.metrics_val[f"count_observed_but_not_predicted_{ion}"] = FragmentsRatio.count_observation_states(
                     observation_state, ObservationState.OBS_BUT_NOT_PRED, mask
@@ -541,9 +541,9 @@ class FragmentsRatio(Metric):
                 self.metrics_val[f"count_not_observed_but_predicted_{ion}"] = FragmentsRatio.count_observation_states(
                     observation_state, ObservationState.NOT_OBS_BUT_PRED, mask
                 )
-            
+
             # fractional count metrics
-            
+
             valid_ions = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid))
             self.metrics_val["fraction_predicted"] = self.metrics_val["count_predicted"].values / valid_ions
             self.metrics_val["fraction_observed"] = self.metrics_val["count_observed"].values / valid_ions
@@ -561,8 +561,12 @@ class FragmentsRatio(Metric):
             )
             for ion, mask in ION_MASKS.items():
                 valid_ions = np.maximum(1, FragmentsRatio.count_with_ion_mask(mask_observed_valid, mask))
-                self.metrics_val[f"fraction_predicted_{ion}"] = self.metrics_val[f"count_predicted_{ion}"].values / valid_ions
-                self.metrics_val[f"fraction_observed_{ion}"] = self.metrics_val[f"count_observed_{ion}"].values / valid_ions
+                self.metrics_val[f"fraction_predicted_{ion}"] = (
+                    self.metrics_val[f"count_predicted_{ion}"].values / valid_ions
+                )
+                self.metrics_val[f"fraction_observed_{ion}"] = (
+                    self.metrics_val[f"count_observed_{ion}"].values / valid_ions
+                )
                 self.metrics_val[f"fraction_observed_and_predicted_{ion}"] = (
                     self.metrics_val[f"count_observed_and_predicted_{ion}"].values / valid_ions
                 )
@@ -575,9 +579,9 @@ class FragmentsRatio(Metric):
                 self.metrics_val[f"fraction_not_observed_but_predicted_{ion}"] = (
                     self.metrics_val[f"count_not_observed_but_predicted_{ion}"].values / valid_ions
                 )
-            
+
             # fractional count metrics relative to predictions
-            
+
             num_predicted_ions = np.maximum(1, self.metrics_val["count_predicted"])
             self.metrics_val["fraction_observed_and_predicted_vs_predicted"] = (
                 self.metrics_val["count_observed_and_predicted"].values / num_predicted_ions
@@ -598,10 +602,10 @@ class FragmentsRatio(Metric):
                 )
                 self.metrics_val[f"fraction_observed_but_not_predicted_{ion}_vs_predicted_{ion}"] = (
                     self.metrics_val[f"count_observed_but_not_predicted_{ion}"].values / num_predicted_ions
-                )               
+                )
 
             # not needed, as these are simply (1 - fraction_observed_and_predicted_vs_predicted)
-            
+
             num_predicted_ions = np.maximum(1, self.metrics_val["count_predicted"])
             self.metrics_val["fraction_not_observed_but_predicted_vs_predicted"] = (
                 self.metrics_val["count_not_observed_but_predicted"].values / num_predicted_ions

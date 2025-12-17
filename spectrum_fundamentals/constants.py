@@ -1,5 +1,6 @@
 from enum import Enum
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -498,7 +499,7 @@ FRAGMENTATION_TO_IONS_BY_PAIRS = {
         BACKWARDS_IONS[3],
         BACKWARDS_IONS[4],
     ],  # a+1,b,c-1,c,y,z,z+1
-    "EID": IONS, # a,a+1,b,c,y,x,x+1,z,z+1
+    "EID": IONS,  # a,a+1,b,c,y,x,x+1,z,z+1
     "UVPD": [
         FORWARD_IONS[0],
         FORWARD_IONS[1],
@@ -506,7 +507,7 @@ FRAGMENTATION_TO_IONS_BY_PAIRS = {
         FORWARD_IONS[3],
         BACKWARDS_IONS[2],
         BACKWARDS_IONS[3],
-    ], # a,a+1,b,c,y,z 
+    ],  # a,a+1,b,c,y,z
 }
 
 # TODO: Needs to be changed for multifrag
@@ -531,7 +532,7 @@ FRAGMENTATION_TO_IONS_BY_DIRECTION = {
         BACKWARDS_IONS[3],
         BACKWARDS_IONS[4],
     ],  # a+1,b,c-1,c,y,z,z+1
-    "EID": IONS, # a,a+1,b,c,y,x,x+1,z,z+1
+    "EID": IONS,  # a,a+1,b,c,y,x,x+1,z,z+1
     "UVPD": [
         FORWARD_IONS[0],
         FORWARD_IONS[1],
@@ -539,7 +540,7 @@ FRAGMENTATION_TO_IONS_BY_DIRECTION = {
         FORWARD_IONS[3],
         BACKWARDS_IONS[2],
         BACKWARDS_IONS[3],
-    ], # a,a+1,b,c,y,z 
+    ],  # a,a+1,b,c,y,z
 }
 
 ION_DELTAS = {
