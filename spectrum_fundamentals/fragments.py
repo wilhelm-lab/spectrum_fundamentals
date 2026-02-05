@@ -336,8 +336,8 @@ def initialize_peaks(  # noqa: C901
                     "fragment_score": 100,
                 }
                 if multifrag:
-                    char = "" if charge == 0 else f"^{charge+1}"
-                    ion = f"{ion_type}{number+1}{char}"
+                    char = "" if charge == 0 else f"^{charge + 1}"
+                    ion = f"{ion_type}{number + 1}{char}"
                     if ion in ion_list:
                         fragment["full_name"] = ion
                     else:
