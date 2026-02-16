@@ -8,8 +8,8 @@ from numpy import absolute, mean, std
 from scipy import spatial
 from sklearn.metrics import mean_squared_error
 
-from .. import constants
-from .metric import Metric
+from spectrum_fundamentals import constants
+from spectrum_fundamentals.metrics.metric import Metric
 
 
 def get_metric_func(metric: str):

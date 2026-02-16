@@ -9,7 +9,7 @@ import pandas as pd
 
 import spectrum_fundamentals.constants as c
 
-from .mod_string import internal_without_mods
+from spectrum_fundamentals.mod_string import internal_without_mods
 
 logger = logging.getLogger(__name__)
 
@@ -333,7 +333,7 @@ def initialize_peaks(  # noqa: C901
                     "min_mass": min_mzs[idx, number, charge],  # min mz
                     "max_mass": max_mzs[idx, number, charge],  # max mz
                     "neutral_loss": "",
-                    "fragment_score": 100,
+                    "fragment_score": c.FRAGMENT_SCORE[ion_type], #TODO: try and fix this
                 }
                 if multifrag:
                     char = "" if charge == 0 else f"^{charge + 1}"

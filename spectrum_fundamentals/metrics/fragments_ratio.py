@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 
-from .. import constants
-from .metric import Metric
+from spectrum_fundamentals import constants
+from spectrum_fundamentals.metrics.metric import Metric
 
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 

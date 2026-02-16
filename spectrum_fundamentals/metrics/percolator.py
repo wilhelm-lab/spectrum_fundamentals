@@ -11,10 +11,10 @@ from moepy import lowess
 from scipy import interpolate
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-from .. import constants
-from . import fragments_ratio as fr
-from . import similarity as sim
-from .metric import Metric
+from spectrum_fundamentals import constants
+from spectrum_fundamentals.metrics import fragments_ratio as fr
+from spectrum_fundamentals.metrics import similarity as sim
+from spectrum_fundamentals.metrics.metric import Metric
 
 logger = logging.getLogger(__name__)
 
