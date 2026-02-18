@@ -8,6 +8,9 @@ import spectrum_fundamentals.constants as constants
 import spectrum_fundamentals.metrics.fragments_ratio as fr
 
 
+ION_MASK = fr.FragmentsRatio().ion_mask
+
+
 class TestObservationState:
     """Class to test observation state."""
 
@@ -74,12 +77,18 @@ class TestCountIons:
     def test_count_ions_b(self):
         """Test count b ions predicted."""
         predicted_boolean = get_padded_array([True, False, False, False, False])
-        np.testing.assert_equal(fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, constants.B_ION_MASK), 0)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, ION_MASK["b"]),
+            0,
+        )
 
     def test_count_ions_y(self):
         """Test count y ions predicted."""
         predicted_boolean = get_padded_array([True, False, False, False, False])
-        np.testing.assert_equal(fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, constants.Y_ION_MASK), 1)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, ION_MASK["y"]),
+            1,
+        )
 
 
 class TestCountObservedAndPredicted:
@@ -113,7 +122,7 @@ class TestCountObservedAndPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.OBS_AND_PRED, constants.B_ION_MASK
+                observation_state, fr.ObservationState.OBS_AND_PRED, ION_MASK["b"]
             ),
             1,
         )
@@ -131,7 +140,7 @@ class TestCountObservedAndPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.OBS_AND_PRED, constants.Y_ION_MASK
+                observation_state, fr.ObservationState.OBS_AND_PRED, ION_MASK["y"]
             ),
             0,
         )
@@ -170,7 +179,7 @@ class TestCountNotObservedAndNotPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, constants.B_ION_MASK
+                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, ION_MASK["b"]
             ),
             1,
         )
@@ -189,7 +198,7 @@ class TestCountNotObservedAndNotPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, constants.Y_ION_MASK
+                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, ION_MASK["b"]
             ),
             1,
         )
@@ -230,7 +239,7 @@ class TestCountNotObservedButPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, constants.B_ION_MASK
+                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, ION_MASK["b"]
             ),
             2,
         )
@@ -250,7 +259,7 @@ class TestCountNotObservedButPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, constants.Y_ION_MASK
+                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, ION_MASK["y"]
             ),
             1,
         )
@@ -293,7 +302,7 @@ class TestCountObservedButNotPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, constants.B_ION_MASK
+                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, ION_MASK["b"]
             ),
             2,
         )
@@ -315,7 +324,7 @@ class TestCountObservedButNotPredicted:
 
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK
+                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, ION_MASK["b"]
             ),
             2,
         )
@@ -331,8 +340,8 @@ class TestCalc:
         predicted_intensities = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0], xl=True)
         observed_intensities = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0], xl=True)
 
-        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities)
-        fragments_ratio.calc(xl=True, cms2=True)
+        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities, xl=True, cms2=True)
+        fragments_ratio.calc()
 
         # counting metrics - peptide_a
         np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_a"][0], 4)
@@ -495,7 +504,7 @@ class TestCalc:
         #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
         predicted_intensities = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
         observed_intensities = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0])
-        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities)
+        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities, task="default")
         fragments_ratio.calc()
 
         # counting metrics
@@ -589,8 +598,13 @@ class TestCalc:
         observed_intensities = get_padded_array(data_csv["observed"].to_numpy(), multifrag=True)
 
         ions = ["A", "a", "b", "C", "c", "X", "x", "y", "Z", "z"]
-        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities)
-        fragments_ratio.calc(multifrag=True, fragmentation_method="UVPD", featured_ions=ions)
+        fragments_ratio = fr.FragmentsRatio(
+            predicted_intensities,
+            observed_intensities,
+            task="multifrag",
+            featured_ions=ions,
+        )
+        fragments_ratio.calc()
 
         # counting metrics
         np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted"][0], 40)

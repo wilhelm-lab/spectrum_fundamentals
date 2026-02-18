@@ -472,13 +472,9 @@ class Percolator(Metric):
 
         return intensities
 
-    def calc(  # noqa: C901
-        self,
-        multifrag: bool = False,
-        fragmentation_method: str = "HCD",
-    ):
+    def calc(self):
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
-        if multifrag:
+        if self.task == "multifrag":
             self.pred_intensities = self._deduplicate_intensities(self.mz, self.pred_intensities)
 
         self.add_common_features()
@@ -488,16 +484,21 @@ class Percolator(Metric):
         if self.input_type == "rescore":
             # add additional features
             self.add_additional_features()
-            fragments_ratio = fr.FragmentsRatio(self.pred_intensities, self.true_intensities)
-            fragments_ratio.calc(
+            fragments_ratio = fr.FragmentsRatio(
+                self.pred_intensities,
+                self.true_intensities,
                 xl=self.xl,
                 cms2=self.cms2,
-                multifrag=multifrag,
+                task=self.task,
                 featured_ions=self.featured_ions,
-                fragmentation_method=fragmentation_method,
             )
-            similarity = sim.SimilarityMetrics(self.pred_intensities, self.true_intensities, self.mz)
-            similarity.calc(self.all_features_flag, xl=self.xl, cms2=self.cms2)
+            fragments_ratio.calc()
+            similarity = sim.SimilarityMetrics(
+                self.pred_intensities, self.true_intensities, self.mz, xl=self.xl, cms2=self.cms2
+            )
+            similarity.calc(
+                self.all_features_flag,
+            )
 
             self.metrics_val = pd.concat(
                 [self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1

@@ -1,7 +1,6 @@
 from enum import Enum
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 #####################
@@ -19,63 +18,6 @@ VEC_LENGTH = (
 VEC_LENGTH_CMS2 = (SEQ_LEN - 1) * 2 * 3 * 2
 # peptide of length 30 can have 29 b, y, b_short, y_short, b_long and y_long ions, each with charge 1+, 2+ and 3+
 # we do not annotate fragments wth charge 3+. All fragmets with charge 3+ convert to -1
-
-
-#############
-# ALPHABETS #
-#############
-
-AA_ALPHABET = {
-    "A": 1,
-    "C": 24,
-    "D": 3,
-    "E": 4,
-    "F": 5,
-    "G": 6,
-    "H": 7,
-    "I": 8,
-    "K": 9,
-    "L": 10,
-    "M": 11,
-    "N": 12,
-    "P": 13,
-    "Q": 14,
-    "R": 15,
-    "S": 16,
-    "T": 17,
-    "V": 18,
-    "W": 19,
-    "Y": 20,
-}
-
-TERMINAL_ALPHABET = {"[]-": 30, "-[]": 31}  # unmodified n terminus  # unmodified c terminus
-
-ALPHABET_MODS = {
-    "M[UNIMOD:35]": 21,
-    "C[UNIMOD:4]": 2,
-    "K[UNIMOD:737]": 22,
-    "K[UNIMOD:2016]": 22,
-    "K[UNIMOD:214]": 22,
-    "K[UNIMOD:730]": 22,
-    "K[UNIMOD:1896]": 22,
-    "K[UNIMOD:1898]": 22,
-    "K[UNIMOD:1884]": 23,
-    "K[UNIMOD:1881]": 24,
-    "K[UNIMOD:1882]": 25,
-    "K[UNIMOD:1885]": 26,
-    "K[UNIMOD:1886]": 27,
-    "S[UNIMOD:21]": 25,
-    "T[UNIMOD:21]": 26,
-    "Y[UNIMOD:21]": 27,
-    "S[UNIMOD:23]": 16,
-    "T[UNIMOD:23]": 17,
-    "Y[UNIMOD:23]": 20,
-    "[UNIMOD:1]-": 32,
-    "K[UNIMOD:259]": 9,
-    "R[UNIMOD:267]": 15,
-}
-
-ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS, **TERMINAL_ALPHABET}
 
 ######################
 # MaxQuant constants #
@@ -351,45 +293,40 @@ Unimod_Neutral_losses = {7: ["CHNO"], 21: ["H3O4P"]}
 # HELPERS FOR FRAGMENT MZ CALCULATION #
 #######################################
 
-# Array containing masses --- at index one is mass for A, etc.
-# these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
-VEC_MZ = np.zeros(max(ALPHABET.values()) + 1)
-for a, i in ALPHABET.items():
-    VEC_MZ[i] = AA_MOD[a]
-
 # small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
 EPSILON = 1e-7
 
-B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], SEQ_LEN - 1)
-Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], SEQ_LEN - 1)
-SINGLE_CHARGED_MASK = np.tile([1, 0, 0, 1, 0, 0], SEQ_LEN - 1)
-DOUBLE_CHARGED_MASK = np.tile([0, 1, 0, 0, 1, 0], SEQ_LEN - 1)
-TRIPLE_CHARGED_MASK = np.tile([0, 0, 1, 0, 0, 1], SEQ_LEN - 1)
+# TODO: fix this
+FRAGMENT_SCORE = {"b": 100, "a": 100, "c": 90}
 
-B_ION_MASK_XL = np.tile([0, 0, 0, 1, 1, 1], (SEQ_LEN - 1) * 2)
-Y_ION_MASK_XL = np.tile([1, 1, 1, 0, 0, 0], (SEQ_LEN - 1) * 2)
-SINGLE_CHARGED_MASK_XL = np.tile([1, 0, 0, 1, 0, 0], (SEQ_LEN - 1) * 2)
-DOUBLE_CHARGED_MASK_XL = np.tile([0, 1, 0, 0, 1, 0], (SEQ_LEN - 1) * 2)
-TRIPLE_CHARGED_MASK_XL = np.tile([0, 0, 1, 0, 0, 1], (SEQ_LEN - 1) * 2)
+# B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], SEQ_LEN - 1)
+# Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], SEQ_LEN - 1)
+# SINGLE_CHARGED_MASK = np.tile([1, 0, 0, 1, 0, 0], SEQ_LEN - 1)
+# DOUBLE_CHARGED_MASK = np.tile([0, 1, 0, 0, 1, 0], SEQ_LEN - 1)
+# TRIPLE_CHARGED_MASK = np.tile([0, 0, 1, 0, 0, 1], SEQ_LEN - 1)
+
+# B_ION_MASK_XL = np.tile([0, 0, 0, 1, 1, 1], (SEQ_LEN - 1) * 2)
+# Y_ION_MASK_XL = np.tile([1, 1, 1, 0, 0, 0], (SEQ_LEN - 1) * 2)
+# SINGLE_CHARGED_MASK_XL = np.tile([1, 0, 0, 1, 0, 0], (SEQ_LEN - 1) * 2)
+# DOUBLE_CHARGED_MASK_XL = np.tile([0, 1, 0, 0, 1, 0], (SEQ_LEN - 1) * 2)
+# TRIPLE_CHARGED_MASK_XL = np.tile([0, 0, 1, 0, 0, 1], (SEQ_LEN - 1) * 2)
+
+# MASK_DICT = {
+#     1: SINGLE_CHARGED_MASK,
+#     2: DOUBLE_CHARGED_MASK,
+#     3: TRIPLE_CHARGED_MASK,
+#     4: B_ION_MASK,
+#     5: Y_ION_MASK,
+# }
 
 
-MASK_DICT = {
-    1: SINGLE_CHARGED_MASK,
-    2: DOUBLE_CHARGED_MASK,
-    3: TRIPLE_CHARGED_MASK,
-    4: B_ION_MASK,
-    5: Y_ION_MASK,
-}
-
-
-MASK_DICT_XL = {
-    1: SINGLE_CHARGED_MASK_XL,
-    2: DOUBLE_CHARGED_MASK_XL,
-    3: TRIPLE_CHARGED_MASK_XL,
-    4: B_ION_MASK_XL,
-    5: Y_ION_MASK_XL,
-}
-
+# MASK_DICT_XL = {
+#     1: SINGLE_CHARGED_MASK_XL,
+#     2: DOUBLE_CHARGED_MASK_XL,
+#     3: TRIPLE_CHARGED_MASK_XL,
+#     4: B_ION_MASK_XL,
+#     5: Y_ION_MASK_XL,
+# }
 
 SHARED_DATA_COLUMNS = ["RAW_FILE", "SCAN_NUMBER"]
 META_DATA_ONLY_COLUMNS = [
