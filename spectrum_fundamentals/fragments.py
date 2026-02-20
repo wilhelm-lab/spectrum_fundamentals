@@ -324,6 +324,7 @@ def initialize_peaks(  # noqa: C901
     for idx, ion_type in enumerate(ion_types):
         for number in range(n_fragments):
             for charge in range(max_charge):
+                f_score = c.FRAGMENT_SCORE[fragmentation_method][ion_type]
                 fragment = {
                     "ion_type": ion_type,  # ion type
                     "no": number + 1,  # no
@@ -332,7 +333,7 @@ def initialize_peaks(  # noqa: C901
                     "min_mass": min_mzs[idx, number, charge],  # min mz
                     "max_mass": max_mzs[idx, number, charge],  # max mz
                     "neutral_loss": "",
-                    "fragment_score": 100,  # TODO: try and fix this
+                    "fragment_score": f_score,
                 }
                 if multifrag:
                     char = "" if charge == 0 else f"^{charge + 1}"
@@ -360,7 +361,7 @@ def initialize_peaks(  # noqa: C901
                             "min_mass": min_mz,  # min mz
                             "max_mass": max_mz,  # max mz
                             "neutral_loss": nl,
-                            "fragment_score": 100 - nl_score,
+                            "fragment_score": f_score - nl_score,
                         }
                     )
 

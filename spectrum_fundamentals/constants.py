@@ -296,37 +296,80 @@ Unimod_Neutral_losses = {7: ["CHNO"], 21: ["H3O4P"]}
 # small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
 EPSILON = 1e-7
 
-# TODO: fix this
-FRAGMENT_SCORE = {"b": 100, "a": 100, "c": 90}
-
-# B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], SEQ_LEN - 1)
-# Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], SEQ_LEN - 1)
-# SINGLE_CHARGED_MASK = np.tile([1, 0, 0, 1, 0, 0], SEQ_LEN - 1)
-# DOUBLE_CHARGED_MASK = np.tile([0, 1, 0, 0, 1, 0], SEQ_LEN - 1)
-# TRIPLE_CHARGED_MASK = np.tile([0, 0, 1, 0, 0, 1], SEQ_LEN - 1)
-
-# B_ION_MASK_XL = np.tile([0, 0, 0, 1, 1, 1], (SEQ_LEN - 1) * 2)
-# Y_ION_MASK_XL = np.tile([1, 1, 1, 0, 0, 0], (SEQ_LEN - 1) * 2)
-# SINGLE_CHARGED_MASK_XL = np.tile([1, 0, 0, 1, 0, 0], (SEQ_LEN - 1) * 2)
-# DOUBLE_CHARGED_MASK_XL = np.tile([0, 1, 0, 0, 1, 0], (SEQ_LEN - 1) * 2)
-# TRIPLE_CHARGED_MASK_XL = np.tile([0, 0, 1, 0, 0, 1], (SEQ_LEN - 1) * 2)
-
-# MASK_DICT = {
-#     1: SINGLE_CHARGED_MASK,
-#     2: DOUBLE_CHARGED_MASK,
-#     3: TRIPLE_CHARGED_MASK,
-#     4: B_ION_MASK,
-#     5: Y_ION_MASK,
-# }
-
-
-# MASK_DICT_XL = {
-#     1: SINGLE_CHARGED_MASK_XL,
-#     2: DOUBLE_CHARGED_MASK_XL,
-#     3: TRIPLE_CHARGED_MASK_XL,
-#     4: B_ION_MASK_XL,
-#     5: Y_ION_MASK_XL,
-# }
+FRAGMENT_SCORE = {
+    "HCD": {
+        "a": 99,
+        "A": 98,
+        "b": 100,
+        "c": 98,
+        "C": 98,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 98,
+        "Z": 98,
+    },
+    "CID": {
+        "a": 98,
+        "A": 98,
+        "b": 100,
+        "c": 98,
+        "C": 98,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 98,
+        "Z": 98,
+    },
+    "ECD": {
+        "a": 98,
+        "A": 98,
+        "b": 98,
+        "c": 98,
+        "C": 100,
+        "x": 98,
+        "X": 98,
+        "y": 99,
+        "z": 100,
+        "Z": 100,
+    },
+    "EID": {
+        "a": 99,
+        "A": 99,
+        "b": 100,
+        "c": 98,
+        "C": 99,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 99,
+        "Z": 98,
+    },
+    "UVPD": {
+        "a": 99,
+        "A": 99,
+        "b": 100,
+        "c": 98,
+        "C": 98,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 98,
+        "Z": 98,
+    },
+    "ETCID": {
+        "a": 98,
+        "A": 98,
+        "b": 99,
+        "c": 98,
+        "C": 100,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 100,
+        "Z": 100,
+    },
+}
 
 SHARED_DATA_COLUMNS = ["RAW_FILE", "SCAN_NUMBER"]
 META_DATA_ONLY_COLUMNS = [
