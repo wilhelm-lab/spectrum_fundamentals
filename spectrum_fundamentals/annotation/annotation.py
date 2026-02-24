@@ -65,11 +65,18 @@ def match_peaks(  # noqa: C901
                 start_peak += 1
                 continue
 
-            if (
-                not (fragment["ion_type"] in constants.FORWARD_IONS and fragment_no == 1)
-                or (unmod_sequence[0] == "R" or unmod_sequence[0] == "H" or unmod_sequence[0] == "K")
-                or (tmt_n_term == 2)
-            ):
+            if not (
+                # unstable b1: if annotation is b1 and peptide sequence is not starting with R, H, K
+                (
+                    (fragment["ion_type"] == "b" and fragment_no == 1)
+                    and (not unmod_sequence.startswith(("R", "H", "K")))
+                )
+                # unstable a2: if annotation is a2 and contains Q or N or has a Carbamidometylated C
+                or (
+                    (fragment["ion_type"] == "a" and fragment_no == 2)
+                    and (("Q" in unmod_sequence[:2]) or ("N" in unmod_sequence[:2]) or ("C" in unmod_sequence[:2]))
+                )
+            ) or (tmt_n_term == 2):
                 # For now only counting neutral loss peaks this can change with different models later
                 if fragment["neutral_loss"] == "":
                     meta_data = {

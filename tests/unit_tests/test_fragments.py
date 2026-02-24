@@ -51,10 +51,10 @@ class TestInitializePeaks(unittest.TestCase):
 
     def test_initialize_peaks_ecd_etcid_eid_uvpd(self):
         """Test initialize_peaks for ECD/ETCID/EID/UVPD input."""
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_ecd_etcid_eid_uvpd.json", "ECD", True)
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_ecd_etcid_eid_uvpd.json", "ETCID", True)
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_ecd_etcid_eid_uvpd.json", "EID", True)
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_ecd_etcid_eid_uvpd.json", "UVPD", True)
+        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_ecd.json", "ECD", True)
+        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_etcid.json", "ETCID", True)
+        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_eid.json", "EID", True)
+        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_uvpd.json", "UVPD", True)
 
     def _test_xl_outputs(self, expected_input_file: Path, **fragments_input):
 

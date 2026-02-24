@@ -293,25 +293,16 @@ def initialize_peaks(  # noqa: C901
     # n_forward_ions = sum(forward_ions)
     n_fragments = len(sequence) - 1
     sum_array = np.empty(shape=(len(ion_types), n_fragments))
-    sum_array[~forward_ions] = np.cumsum(
-        mass_arr[:0:-1]
-    )  # , out=sum_array[~forward_ions])  # this is for the reverse ion-series
-    sum_array[forward_ions] = np.cumsum(
-        mass_arr[:-1]
-    )  # , out=sum_array[forward_ions])  # this is for the forward ion-series
-    peptide_mass = (
-        mass_arr.sum()
-    )  # sum_array[0, -1] + mass_arr[0]  # this is the longest reverse ion + the first residue
-
+    sum_array[~forward_ions] = np.cumsum(mass_arr[:0:-1])
+    sum_array[forward_ions] = np.cumsum(mass_arr[:-1])
+    peptide_mass = mass_arr.sum()
     # Exclusion window
     precursor_ion = 1.00727646688 + (peptide_mass + c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"]) / max_charge
     window = [precursor_ion - p_window, precursor_ion + p_window]
 
     # get offset for all needed ions
     deltas = get_ion_delta(ion_types)
-    sum_array[~forward_ions] = np.add(
-        sum_array[~forward_ions], deltas[~forward_ions]
-    )  # , out=sum_array[~forward_ions])
+    sum_array[~forward_ions] = np.add(sum_array[~forward_ions], deltas[~forward_ions])
     sum_array[forward_ions] = np.add(sum_array[forward_ions], deltas[forward_ions])  # , out=sum_array[forward_ions])
 
     # calculate for m/z for charges 1, 2, 3
