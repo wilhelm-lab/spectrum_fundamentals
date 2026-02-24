@@ -472,7 +472,7 @@ class Percolator(Metric):
 
         return intensities
 
-    def calc(self):
+    def calc(self):  # noqa: C901
         """Adds percolator metadata and feature columns to metrics_val based on PSM metadata."""
         if self.task == "multifrag":
             self.pred_intensities = self._deduplicate_intensities(self.mz, self.pred_intensities)

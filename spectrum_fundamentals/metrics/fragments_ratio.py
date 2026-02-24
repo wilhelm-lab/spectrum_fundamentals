@@ -45,7 +45,6 @@ class FragmentsRatio(Metric):
         :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
                          integer array of length 174 for linear and 348 for crosslinked peptides, or a list of integers,
                          or a scipy.sparse.csr_matrix or scipy.sparse._csc.csc_matrix.
-        :param cms2: whether to process with cleavable crosslinked or linear peptides
         :return: number of observed/predicted peaks not masked by ion_mask
         """
         if ion_mask is None:

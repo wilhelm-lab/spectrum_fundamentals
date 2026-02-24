@@ -408,8 +408,6 @@ class SimilarityMetrics(Metric):
         Adds columns with spectral angle feature to metrics_val dataframe.
 
         :param all_features: if True, calculate all metrics
-        :param xl: whether calculating for crosslinked or linear peptides
-        :param cms2: whether cleavable crosslinked peptide or not
         """
         if self.xl:
             if self.true_intensities is not None and self.pred_intensities is not None:
