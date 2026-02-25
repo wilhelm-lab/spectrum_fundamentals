@@ -404,9 +404,7 @@ class SimilarityMetrics(Metric):
         return cos_values
 
     def calc(self):  # noqa: C901
-        """
-        Adds columns with spectral angle feature to metrics_val dataframe.
-        """
+        """Adds columns with spectral angle feature to metrics_val dataframe."""
         if self.xl:
             if self.true_intensities is not None and self.pred_intensities is not None:
                 true_intensities_a = (

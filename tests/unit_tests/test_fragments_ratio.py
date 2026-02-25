@@ -7,7 +7,6 @@ import scipy.sparse
 import spectrum_fundamentals.constants as constants
 import spectrum_fundamentals.metrics.fragments_ratio as fr
 
-
 ION_MASK = fr.FragmentsRatio().ion_mask
 
 
