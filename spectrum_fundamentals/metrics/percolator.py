@@ -327,7 +327,7 @@ class Percolator(Metric):
         if isinstance(self.additional_columns, list):
             feature_cols = self.additional_columns
         elif isinstance(self.additional_columns, str) and (self.additional_columns.lower() == "all"):
-            feature_cols = [x for x in self.metadata.columns if x.lower() not in set(BASE_COLUMNS)]
+            feature_cols = [x for x in self.metadata.columns if x.lower() not in set(self.BASE_COLUMNS)]
             feature_cols = [x for x in feature_cols if not x.lower().startswith("unnamed")]  # remove Unnamed cols
 
         for col in feature_cols:
