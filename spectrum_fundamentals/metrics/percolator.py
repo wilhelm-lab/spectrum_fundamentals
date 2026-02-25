@@ -49,6 +49,32 @@ class Percolator(Metric):
     input_type: str
     fdr_cutoff: float
 
+    BASE_COLUMNS = [
+        "raw_file",
+        "scan_number",
+        "modified_sequence",
+        "precursor_charge",
+        "scan_event_number",
+        "mass",
+        "score",
+        "reverse",
+        "sequence",
+        "peptide_length",
+        "fragmentation",
+        "calculated_mass",
+        "sequence_a",
+        "sequence_b",
+        "modified_sequence_a",
+        "modified_sequence_b",
+        "retention_time",
+        "predicted_irt",
+        "instrument_types",
+        "mass_analyzer",
+        "mz_range",
+        "collision_energy",
+        "proteins",
+    ]
+
     def __init__(
         self,
         metadata: pd.DataFrame,
@@ -56,54 +82,36 @@ class Percolator(Metric):
         pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        *,
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
         additional_columns: Optional[Union[str, list]] = None,
-        neutral_loss_flag: Optional[bool] = False,
-        drop_miss_cleavage_flag: Optional[bool] = False,
+        neutral_loss_flag: bool = False,
+        drop_miss_cleavage_flag: bool = False,
+        featured_ions: Optional[List[str]] = None,
         cms2: bool = False,
-        featured_ions: Optional[List] = None,
+        task: str = "default",
     ):
         """Initialize a Percolator obj."""
-        super().__init__(pred_intensities, true_intensities, mz, "CROSSLINKER_TYPE" in metadata.columns)
+        super().__init__(
+            pred_intensities=pred_intensities,
+            true_intensities=true_intensities,
+            mz=mz,
+            xl=("CROSSLINKER_TYPE" in metadata.columns),
+            cms2=cms2,
+            task=task,
+            featured_ions=featured_ions,
+        )
 
         self.metadata = metadata
         self.input_type = input_type
         self.all_features_flag = all_features_flag
-        self.additional_columns = additional_columns
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
-        self.cms2 = cms2
-        self.featured_ions = featured_ions
-
-        self.base_columns = [
-            "raw_file",
-            "scan_number",
-            "modified_sequence",
-            "precursor_charge",
-            "scan_event_number",
-            "mass",
-            "score",
-            "reverse",
-            "sequence",
-            "peptide_length",
-            "fragmentation",
-            "calculated_mass",
-            "sequence_a",
-            "sequence_b",
-            "modified_sequence_a",
-            "modified_sequence_b",
-            "retention_time",
-            "predicted_irt",
-            "instrument_types",
-            "mass_analyzer",
-            "mz_range",
-            "collision_energy",
-            "proteins",
-        ]
+        self.additional_columns = additional_columns
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -319,7 +327,7 @@ class Percolator(Metric):
         if isinstance(self.additional_columns, list):
             feature_cols = self.additional_columns
         elif isinstance(self.additional_columns, str) and (self.additional_columns.lower() == "all"):
-            feature_cols = [x for x in self.metadata.columns if x.lower() not in set(self.base_columns)]
+            feature_cols = [x for x in self.metadata.columns if x.lower() not in set(BASE_COLUMNS)]
             feature_cols = [x for x in feature_cols if not x.lower().startswith("unnamed")]  # remove Unnamed cols
 
         for col in feature_cols:
