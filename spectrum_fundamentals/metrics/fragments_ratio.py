@@ -558,24 +558,21 @@ class FragmentsRatio(Metric):
             self.metrics_val["fraction_observed_but_not_predicted_vs_predicted"] = (
                 self.metrics_val["count_observed_but_not_predicted"].values / num_predicted_ions
             )
-
-            for ion, _ in self.ion_mask.items():
-                num_predicted_ions = np.maximum(1, self.metrics_val[f"count_predicted_{ion}"])
-                self.metrics_val[f"fraction_observed_and_predicted_{ion}_vs_predicted_{ion}"] = (
-                    self.metrics_val[f"count_observed_and_predicted_{ion}"].values / num_predicted_ions
-                )
-                self.metrics_val[f"fraction_not_observed_and_not_predicted_{ion}_vs_predicted_{ion}"] = (
-                    self.metrics_val[f"count_not_observed_and_not_predicted_{ion}"].values / num_predicted_ions
-                )
-                self.metrics_val[f"fraction_observed_but_not_predicted_{ion}_vs_predicted_{ion}"] = (
-                    self.metrics_val[f"count_observed_but_not_predicted_{ion}"].values / num_predicted_ions
-                )
-
             self.metrics_val["fraction_not_observed_but_predicted_vs_predicted"] = (
                 self.metrics_val["count_not_observed_but_predicted"].values / num_predicted_ions
             )
+
             for ion, _ in self.ion_mask.items():
-                num_predicted_ions = np.maximum(1, self.metrics_val[f"count_predicted_{ion}"])
+                num_predicted_ion_specific = np.maximum(1, self.metrics_val[f"count_predicted_{ion}"])
+                self.metrics_val[f"fraction_observed_and_predicted_{ion}_vs_predicted_{ion}"] = (
+                    self.metrics_val[f"count_observed_and_predicted_{ion}"].values / num_predicted_ion_specific
+                )
+                self.metrics_val[f"fraction_not_observed_and_not_predicted_{ion}_vs_predicted_{ion}"] = (
+                    self.metrics_val[f"count_not_observed_and_not_predicted_{ion}"].values / num_predicted_ion_specific
+                )
+                self.metrics_val[f"fraction_observed_but_not_predicted_{ion}_vs_predicted_{ion}"] = (
+                    self.metrics_val[f"count_observed_but_not_predicted_{ion}"].values / num_predicted_ion_specific
+                )
                 self.metrics_val[f"fraction_not_observed_but_predicted_{ion}_vs_predicted"] = (
-                    self.metrics_val[f"count_not_observed_but_predicted_{ion}"].values / num_predicted_ions
+                    self.metrics_val[f"count_not_observed_but_predicted_{ion}"].values / num_predicted_ion_specific
                 )
