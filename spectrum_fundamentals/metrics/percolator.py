@@ -102,11 +102,11 @@ class Percolator(Metric):
             cms2=cms2,
             task=task,
             featured_ions=featured_ions,
+            all_features_flag=all_features_flag,
         )
 
         self.metadata = metadata
         self.input_type = input_type
-        self.all_features_flag = all_features_flag
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
         self.neutral_loss_flag = neutral_loss_flag
@@ -502,11 +502,14 @@ class Percolator(Metric):
             )
             fragments_ratio.calc()
             similarity = sim.SimilarityMetrics(
-                self.pred_intensities, self.true_intensities, self.mz, xl=self.xl, cms2=self.cms2
+                self.pred_intensities,
+                self.true_intensities,
+                self.mz,
+                xl=self.xl,
+                cms2=self.cms2,
+                all_features_flag=self.all_features_flag,
             )
-            similarity.calc(
-                self.all_features_flag,
-            )
+            similarity.calc()
 
             self.metrics_val = pd.concat(
                 [self.metrics_val, fragments_ratio.metrics_val, similarity.metrics_val], axis=1

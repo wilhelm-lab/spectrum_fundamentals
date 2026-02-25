@@ -26,6 +26,7 @@ class Metric:
         mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
         xl: bool = False,
         cms2: bool = False,
+        all_features_flag: bool = False,
         task: str = "default",
         featured_ions: Optional[List[str]] = None,
     ):
@@ -37,6 +38,7 @@ class Metric:
         :param mz: observed mz values
         :param xl: whether the metric is used for crosslinked or linear peptides
         :param cms2: if cross-ling CM
+        :param all_features_flag: if True, calculate all metrics
         :param task: define which workflows will be used
         :param featured_ions: list of ions will be used to generate features
         """
@@ -50,6 +52,8 @@ class Metric:
         if featured_ions is None:
             featured_ions = ["b", "y"]
         self.featured_ions = featured_ions
+        self.max_length = 348 if cms2 else 174
+        self.all_features_flag = all_features_flag
 
         reps = (SEQ_LEN - 1) * (2 if self.cms2 else 1)
         if self.task == "default":
@@ -76,7 +80,7 @@ class Metric:
             }
 
     @abstractmethod
-    def calc(self, all_features: bool):
+    def calc(self):
         """Calculate."""
         pass
 

@@ -403,11 +403,9 @@ class SimilarityMetrics(Metric):
 
         return cos_values
 
-    def calc(self, all_features: bool):  # noqa: C901
+    def calc(self):  # noqa: C901
         """
         Adds columns with spectral angle feature to metrics_val dataframe.
-
-        :param all_features: if True, calculate all metrics
         """
         if self.xl:
             if self.true_intensities is not None and self.pred_intensities is not None:
@@ -439,7 +437,7 @@ class SimilarityMetrics(Metric):
                     self.metrics_val["pearson_corr_a"] = SimilarityMetrics.correlation(
                         true_intensities_a, pred_intensities_a, 0
                     )
-                    if all_features:
+                    if self.all_features_flag:
                         self._calc_additional_metrics(true_intensities_a, pred_intensities_a, key_suffix="_a")
 
                 if true_intensities_b is not None and pred_intensities_b is not None:
@@ -449,7 +447,7 @@ class SimilarityMetrics(Metric):
                     self.metrics_val["pearson_corr_b"] = SimilarityMetrics.correlation(
                         true_intensities_b, pred_intensities_b, 0
                     )
-                    if all_features:
+                    if self.all_features_flag:
                         self._calc_additional_metrics(true_intensities_b, pred_intensities_b, key_suffix="_b")
 
                 if true_intensities_a is not None and true_intensities_b is not None:
@@ -465,7 +463,7 @@ class SimilarityMetrics(Metric):
                 self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
                     self.true_intensities, self.pred_intensities, 0, "pearson"
                 )
-                if all_features:
+                if self.all_features_flag:
                     self._calc_additional_metrics(self.true_intensities, self.pred_intensities)
 
     def _calc_additional_metrics(

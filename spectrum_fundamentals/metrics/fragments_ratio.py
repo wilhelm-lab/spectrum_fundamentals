@@ -58,7 +58,6 @@ class FragmentsRatio(Metric):
         observation_state: scipy.sparse.csr_matrix,
         test_state: int,
         ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        cms2: bool = False,
     ) -> np.ndarray:
         """
         Count the number of observation states.
@@ -67,7 +66,6 @@ class FragmentsRatio(Metric):
         :param test_state: integer for the test observation state
         :param ion_mask: mask with 1s for the ions that should be counted and 0s for ions that should be ignored, \
                          integer array of length 174
-        :param cms2: whether or not the function is executed with cms2 mode
         :return: number of observation states equal to test_state per row
         """
         state_boolean = observation_state == test_state
@@ -213,124 +211,116 @@ class FragmentsRatio(Metric):
                 observed_boolean_b, self.ion_mask["y"] if self.cms2 else self.ion_mask["y"]
             )
             self.metrics_val["count_observed_and_predicted_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.OBS_AND_PRED, cms2=self.cms2
+                observation_state_a,
+                ObservationState.OBS_AND_PRED,
             )
             self.metrics_val["count_observed_and_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.OBS_AND_PRED, cms2=self.cms2
+                observation_state_b,
+                ObservationState.OBS_AND_PRED,
             )
             self.metrics_val["count_observed_and_predicted_b_a"] = FragmentsRatio.count_observation_states(
                 observation_state_a,
                 ObservationState.OBS_AND_PRED,
                 self.ion_mask["b"] if self.cms2 else self.ion_mask["b"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_observed_and_predicted_b_b"] = FragmentsRatio.count_observation_states(
                 observation_state_b,
                 ObservationState.OBS_AND_PRED,
                 self.ion_mask["b"] if self.cms2 else self.ion_mask["b"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_observed_and_predicted_y_a"] = FragmentsRatio.count_observation_states(
                 observation_state_a,
                 ObservationState.OBS_AND_PRED,
                 self.ion_mask["y"] if self.cms2 else self.ion_mask["y"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_observed_and_predicted_y_b"] = FragmentsRatio.count_observation_states(
                 observation_state_b,
                 ObservationState.OBS_AND_PRED,
                 self.ion_mask["y"] if self.cms2 else self.ion_mask["y"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_not_observed_and_not_predicted_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.NOT_OBS_AND_NOT_PRED, cms2=self.cms2
+                observation_state_a,
+                ObservationState.NOT_OBS_AND_NOT_PRED,
             )
             self.metrics_val["count_not_observed_and_not_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.NOT_OBS_AND_NOT_PRED, cms2=self.cms2
+                observation_state_b,
+                ObservationState.NOT_OBS_AND_NOT_PRED,
             )
             self.metrics_val["count_not_observed_and_not_predicted_b_a"] = FragmentsRatio.count_observation_states(
                 observation_state_a,
                 ObservationState.NOT_OBS_AND_NOT_PRED,
                 self.ion_mask["b"] if self.cms2 else self.ion_mask["b"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_not_observed_and_not_predicted_b_b"] = FragmentsRatio.count_observation_states(
                 observation_state_b,
                 ObservationState.NOT_OBS_AND_NOT_PRED,
                 self.ion_mask["b"] if self.cms2 else self.ion_mask["b"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_not_observed_and_not_predicted_y_a"] = FragmentsRatio.count_observation_states(
                 observation_state_a,
                 ObservationState.NOT_OBS_AND_NOT_PRED,
                 self.ion_mask["y"] if self.cms2 else self.ion_mask["y"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_not_observed_and_not_predicted_y_b"] = FragmentsRatio.count_observation_states(
                 observation_state_b,
                 ObservationState.NOT_OBS_AND_NOT_PRED,
                 self.ion_mask["y"] if self.cms2 else self.ion_mask["y"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_observed_but_not_predicted_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.OBS_BUT_NOT_PRED, cms2=self.cms2
+                observation_state_a,
+                ObservationState.OBS_BUT_NOT_PRED,
             )
             self.metrics_val["count_observed_but_not_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.OBS_BUT_NOT_PRED, cms2=self.cms2
+                observation_state_b,
+                ObservationState.OBS_BUT_NOT_PRED,
             )
             self.metrics_val["count_observed_but_not_predicted_b_a"] = FragmentsRatio.count_observation_states(
                 observation_state_a,
                 ObservationState.OBS_BUT_NOT_PRED,
                 self.ion_mask["b"] if self.cms2 else self.ion_mask["b"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_observed_but_not_predicted_b_b"] = FragmentsRatio.count_observation_states(
                 observation_state_b,
                 ObservationState.OBS_BUT_NOT_PRED,
                 self.ion_mask["b"] if self.cms2 else self.ion_mask["b"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_observed_but_not_predicted_y_a"] = FragmentsRatio.count_observation_states(
                 observation_state_a,
                 ObservationState.OBS_BUT_NOT_PRED,
                 self.ion_mask["y"] if self.cms2 else self.ion_mask["y"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_observed_but_not_predicted_y_b"] = FragmentsRatio.count_observation_states(
                 observation_state_b,
                 ObservationState.OBS_BUT_NOT_PRED,
                 self.ion_mask["y"] if self.cms2 else self.ion_mask["y"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_not_observed_but_predicted_a"] = FragmentsRatio.count_observation_states(
-                observation_state_a, ObservationState.NOT_OBS_BUT_PRED, cms2=self.cms2
+                observation_state_a,
+                ObservationState.NOT_OBS_BUT_PRED,
             )
             self.metrics_val["count_not_observed_but_predicted_b"] = FragmentsRatio.count_observation_states(
-                observation_state_b, ObservationState.NOT_OBS_BUT_PRED, cms2=self.cms2
+                observation_state_b,
+                ObservationState.NOT_OBS_BUT_PRED,
             )
             self.metrics_val["count_not_observed_but_predicted_b_a"] = FragmentsRatio.count_observation_states(
                 observation_state_a,
                 ObservationState.NOT_OBS_BUT_PRED,
                 self.ion_mask["b"] if self.cms2 else self.ion_mask["b"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_not_observed_but_predicted_b_b"] = FragmentsRatio.count_observation_states(
                 observation_state_b,
                 ObservationState.NOT_OBS_BUT_PRED,
                 self.ion_mask["b"] if self.cms2 else self.ion_mask["b"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_not_observed_but_predicted_y_a"] = FragmentsRatio.count_observation_states(
                 observation_state_a,
                 ObservationState.NOT_OBS_BUT_PRED,
                 self.ion_mask["y"] if self.cms2 else self.ion_mask["y"],
-                cms2=self.cms2,
             )
             self.metrics_val["count_not_observed_but_predicted_y_b"] = FragmentsRatio.count_observation_states(
                 observation_state_b,
                 ObservationState.NOT_OBS_BUT_PRED,
                 self.ion_mask["y"] if self.cms2 else self.ion_mask["y"],
-                cms2=self.cms2,
             )
             # fractional count metrics
             self.metrics_val["fraction_predicted_a"] = self.metrics_val["count_predicted_a"].values / valid_ions_a
