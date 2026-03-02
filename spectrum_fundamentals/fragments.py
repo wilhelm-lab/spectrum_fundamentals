@@ -225,7 +225,8 @@ def initialize_peaks(  # noqa: C901
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
     fragmentation_method: str = "HCD",
-    multifrag: Optional[bool] = False,  # TODO: multifrag
+    featured_ions: List[str] = ["y", "b"],
+    multifrag: Optional[bool] = False,
     p_window: Optional[float] = 1.2,
     custom_mods: Optional[Dict[str, float]] = None,
     add_neutral_losses: Optional[bool] = False,
@@ -242,6 +243,7 @@ def initialize_peaks(  # noqa: C901
     :param peptide_beta_mass: the mass of the second peptide to be considered for non-cleavable XL
     :param xl_pos: the position of the crosslinker for non-cleavable XL
     :param fragmentation_method: fragmentation method that was used
+    :param featured_ions: list of ions to be annotated
     :param multifrag: flag to indicate whether to annotate multifrag or not
     :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
@@ -251,14 +253,11 @@ def initialize_peaks(  # noqa: C901
     """
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
+    max_charge = min(3, charge)
+
     if multifrag:
         ion_df = c.ION_DIC
         ion_list = ion_df.index.to_list()
-        ion_types = list(np.sort(ion_df["type"].unique()))
-        max_charge = charge  # there are 3+ charges
-    else:
-        max_charge = min(3, charge)
-        ion_types = retrieve_ion_types_for_peak_initialization(fragmentation_method)
 
     modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
 
@@ -289,10 +288,10 @@ def initialize_peaks(  # noqa: C901
     for pos, mod_mass in modification_deltas.items():
         mass_arr[pos] += mod_mass
 
-    forward_ions = np.array([ion in c.FORWARD_IONS for ion in ion_types])
+    forward_ions = np.array([ion in c.FORWARD_IONS for ion in featured_ions])
     # n_forward_ions = sum(forward_ions)
     n_fragments = len(sequence) - 1
-    sum_array = np.empty(shape=(len(ion_types), n_fragments))
+    sum_array = np.empty(shape=(len(featured_ions), n_fragments))
     sum_array[~forward_ions] = np.cumsum(mass_arr[:0:-1])
     sum_array[forward_ions] = np.cumsum(mass_arr[:-1])
     peptide_mass = mass_arr.sum()
@@ -301,7 +300,7 @@ def initialize_peaks(  # noqa: C901
     window = [precursor_ion - p_window, precursor_ion + p_window]
 
     # get offset for all needed ions
-    deltas = get_ion_delta(ion_types)
+    deltas = get_ion_delta(featured_ions)
     sum_array[~forward_ions] = np.add(sum_array[~forward_ions], deltas[~forward_ions])
     sum_array[forward_ions] = np.add(sum_array[forward_ions], deltas[forward_ions])  # , out=sum_array[forward_ions])
 
@@ -312,7 +311,7 @@ def initialize_peaks(  # noqa: C901
     min_mzs, max_mzs = get_min_max_mass(mass_analyzer, ion_mzs, mass_tolerance, unit_mass_tolerance)
 
     # write mz together with min and max value in output list with one dictionary for each ion
-    for idx, ion_type in enumerate(ion_types):
+    for idx, ion_type in enumerate(featured_ions):
         for number in range(n_fragments):
             for charge in range(max_charge):
                 f_score = c.FRAGMENT_SCORE[fragmentation_method][ion_type]

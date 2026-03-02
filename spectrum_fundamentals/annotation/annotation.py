@@ -16,7 +16,6 @@ def match_peaks(  # noqa: C901
     peaks_masses: np.ndarray,
     tmt_n_term: int,
     unmod_sequence: str,
-    charge: int,
     multifrag: Optional[bool] = False,
     p_window_bounds: Optional[List] = None,
 ) -> Tuple[List[Dict[str, Union[str, int, float]]], int]:
@@ -42,6 +41,7 @@ def match_peaks(  # noqa: C901
     matched_peak = False
     count_annotated_nl = 0
     fragment_no: float
+
     for fragment in fragments_meta_data:
         min_mass = fragment["min_mass"]
         max_mass = fragment["max_mass"]
@@ -182,6 +182,8 @@ def annotate_spectra(
     """
     raw_file_annotations = []
     index_columns = {col: un_annot_spectra.columns.get_loc(col) for col in un_annot_spectra.columns}
+    if not featured_ions:
+        featured_ions = retrieve_ion_types(fragmentation_method)
 
     for row in un_annot_spectra.values:
         results = parallel_annotate(
@@ -488,8 +490,8 @@ def _annotate_linear_spectrum(
     unit_mass_tolerance: Optional[str],
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
+    featured_ions: List[str] = ["y", "b"],
     multifrag: Optional[bool] = False,
-    featured_ions: Optional[List[str]] = None,
     p_window: Optional[float] = 0.0,
     add_neutral_losses: Optional[bool] = False,
 ):
@@ -514,12 +516,10 @@ def _annotate_linear_spectrum(
 
     if multifrag:
         ion_df = constants.ION_DIC
-        ion_types = list(np.sort(ion_df["type"].unique()))
         vec_length = len(ion_df)
     else:
-        ion_types = retrieve_ion_types(fragmentation_method)
         charge_const = 3
-        vec_length = (constants.SEQ_LEN - 1) * charge_const * len(ion_types)
+        vec_length = (constants.SEQ_LEN - 1) * charge_const * len(featured_ions)
 
     fragments_meta_data, tmt_n_term, unmod_sequence, calc_mass, expected_nl, p_window_bounds = initialize_peaks(
         sequence=spectrum[index_columns[mod_seq_column]],
@@ -528,6 +528,7 @@ def _annotate_linear_spectrum(
         mass_tolerance=mass_tolerance,
         unit_mass_tolerance=unit_mass_tolerance,
         fragmentation_method=fragmentation_method,
+        featured_ions=featured_ions,
         multifrag=multifrag,
         p_window=p_window,
         custom_mods=custom_mods,
@@ -540,7 +541,6 @@ def _annotate_linear_spectrum(
         spectrum[index_columns["MZ"]],
         tmt_n_term,
         unmod_sequence,
-        spectrum[index_columns["PRECURSOR_CHARGE"]],
         multifrag=multifrag,
         p_window_bounds=p_window_bounds,
     )
@@ -613,7 +613,6 @@ def _annotate_crosslinked_spectrum(
             np.array(spectrum[index_columns["MZ"]]),  # Convert to numpy array
             tmt_n_term,
             unmod_sequence,
-            spectrum[index_columns["PRECURSOR_CHARGE"]],
         )
 
         if len(matched_peaks) == 0:

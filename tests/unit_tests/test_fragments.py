@@ -1,6 +1,7 @@
 import json
 import unittest
 from pathlib import Path
+from typing import List
 
 from numpy.testing import assert_almost_equal
 
@@ -11,7 +12,13 @@ import spectrum_fundamentals.fragments as fragments
 class TestInitializePeaks(unittest.TestCase):
     """Class to test initialize_peaks function."""
 
-    def _test_outputs(self, expected_input_file: Path, fragmentation_method: str, multifrag: bool = False):
+    def _test_outputs(
+        self,
+        expected_input_file: Path,
+        fragmentation_method: str,
+        multifrag: bool = False,
+        featured_ions: List[str] = ["b", "y"],
+    ):
 
         with open(expected_input_file) as file:
             expected_list_out = json.load(file)
@@ -35,6 +42,7 @@ class TestInitializePeaks(unittest.TestCase):
             charge=3,
             fragmentation_method=fragmentation_method,
             multifrag=multifrag,
+            featured_ions=featured_ions,
         )
 
         self.assertEqual(actual_list_out, expected_list_out)
@@ -51,10 +59,30 @@ class TestInitializePeaks(unittest.TestCase):
 
     def test_initialize_peaks_ecd_etcid_eid_uvpd(self):
         """Test initialize_peaks for ECD/ETCID/EID/UVPD input."""
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_ecd.json", "ECD", True)
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_etcid.json", "ETCID", True)
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_eid.json", "EID", True)
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_uvpd.json", "UVPD", True)
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_ecd.json",
+            "ECD",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_etcid.json",
+            "ETCID",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_eid.json",
+            "EID",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_uvpd.json",
+            "UVPD",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
 
     def _test_xl_outputs(self, expected_input_file: Path, **fragments_input):
 
