@@ -225,7 +225,7 @@ def initialize_peaks(  # noqa: C901
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
     fragmentation_method: str = "HCD",
-    featured_ions: List[str] = ["y", "b"],
+    featured_ions: Optional[List[str]] = None,
     multifrag: Optional[bool] = False,
     p_window: Optional[float] = 1.2,
     custom_mods: Optional[Dict[str, float]] = None,
@@ -251,6 +251,8 @@ def initialize_peaks(  # noqa: C901
     :return: List of theoretical peaks, Flag to indicate if there is a tmt on n-terminus, Un modified peptide sequence,
         number of expected nl peaks
     """
+    if featured_ions is None:
+        featured_ions = ["y", "b"]
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
     max_charge = min(3, charge)

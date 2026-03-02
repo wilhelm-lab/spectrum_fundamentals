@@ -27,7 +27,6 @@ def match_peaks(  # noqa: C901
     :param peaks_masses: Experimental peaks masses
     :param tmt_n_term: Flag to check if there is tmt modification on n_terminus 1: no_tmt, 2:tmt
     :param unmod_sequence: Unmodified peptide sequence
-    :param charge: Precursor charge
     :param multifrag: Flag to check if it is a multifrag spectrum
     :param p_window_bounds: peak exclusion window min and max boundries for multifrag, dedicated to remove precursor peaks (da)
     :return: List of matched/annotated peaks
@@ -490,7 +489,7 @@ def _annotate_linear_spectrum(
     unit_mass_tolerance: Optional[str],
     custom_mods: Optional[Dict[str, float]] = None,
     fragmentation_method: str = "HCD",
-    featured_ions: List[str] = ["y", "b"],
+    featured_ions: Optional[List[str]] = None,
     multifrag: Optional[bool] = False,
     p_window: Optional[float] = 0.0,
     add_neutral_losses: Optional[bool] = False,
@@ -513,6 +512,9 @@ def _annotate_linear_spectrum(
     mod_seq_column = "MODIFIED_SEQUENCE"
     if "MODIFIED_SEQUENCE_MSA" in index_columns:
         mod_seq_column = "MODIFIED_SEQUENCE_MSA"
+
+    if featured_ions is None:
+        featured_ions = ["y", "b"]
 
     if multifrag:
         ion_df = constants.ION_DIC

@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import scipy.sparse
@@ -46,7 +46,7 @@ class SimilarityMetrics(Metric):
         observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
         predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
         charge: int = 0,
-        masks: dict = None,
+        masks: Optional[Union[np.ndarray, dict[int, np.ndarray]]] = None,
     ) -> np.ndarray:
         """
         Calculate spectral angle.
@@ -60,8 +60,6 @@ class SimilarityMetrics(Metric):
         :raises ValueError: if charge is smaller than 1 or larger than 3
         :return: SA values
         """
-        # TODO: Temp solution, needs a generic approach
-        # TODO: One can be used Metric directly for masks.
         if masks is not None:
             if charge == 0:
                 mask = masks
@@ -204,7 +202,7 @@ class SimilarityMetrics(Metric):
         predicted_intensities: scipy.sparse.csr_matrix,
         charge: int = 0,
         method: str = "pearson",
-        masks: dict = None,
+        masks: Optional[Union[np.ndarray, dict[int, np.ndarray]]] = None,
     ) -> List[float]:
         """
         Calculate correlation between observed and predicted.
