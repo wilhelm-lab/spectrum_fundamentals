@@ -1,45 +1,37 @@
 version: 2
 updates:
+    # Keep GitHub Actions up to date.
     - package-ecosystem: github-actions
       directory: "/"
       schedule:
           interval: weekly
-      open-pull-requests-limit: 3
       target-branch: development
-      labels:
-          - DEPENDABOT
+      labels: [DEPENDABOT]
       commit-message:
           prefix: "[DEPENDABOT]"
+      # Batch all Actions bumps into a single PR to reduce noise.
+      groups:
+          github-actions:
+              patterns: ["*"]
 
-    - package-ecosystem: pip
-      directory: "/.github/workflows"
-      schedule:
-          interval: weekly
-      open-pull-requests-limit: 3
-      target-branch: development
-      labels:
-          - DEPENDABOT
-      commit-message:
-          prefix: "[DEPENDABOT]"
-
+    # Keep doc dependencies up to date.
     - package-ecosystem: pip
       directory: "/docs"
       schedule:
           interval: weekly
       open-pull-requests-limit: 3
       target-branch: development
-      labels:
-          - DEPENDABOT
+      labels: [DEPENDABOT]
       commit-message:
           prefix: "[DEPENDABOT]"
 
+    # Keep main package and dev dependencies up to date.
     - package-ecosystem: pip
       directory: "/"
       schedule:
           interval: weekly
       open-pull-requests-limit: 3
       target-branch: development
-      labels:
-          - DEPENDABOT
+      labels: [DEPENDABOT]
       commit-message:
           prefix: "[DEPENDABOT]"
