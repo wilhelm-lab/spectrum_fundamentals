@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -11,15 +10,15 @@ class Metric:
 
     # check https://gitlab.lrz.de/proteomics/prosit_tools/oktoberfest/-/blob/develop/oktoberfest/rescoring/annotate.R
     # for all metrics
-    pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]]  # list of lists
-    true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]]  # list of lists
+    pred_intensities: np.ndarray | scipy.sparse.csr_matrix | None  # list of lists
+    true_intensities: np.ndarray | scipy.sparse.csr_matrix | None  # list of lists
     metrics_val: pd.DataFrame
 
     def __init__(
         self,
-        pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        pred_intensities: np.ndarray | scipy.sparse.csr_matrix | None = None,
+        true_intensities: np.ndarray | scipy.sparse.csr_matrix | None = None,
+        mz: np.ndarray | scipy.sparse.csr_matrix | None = None,
         xl: bool = False,
     ):
         """

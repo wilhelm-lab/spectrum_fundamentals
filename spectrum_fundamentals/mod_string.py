@@ -1,15 +1,20 @@
 import difflib
 import re
 from itertools import combinations, repeat
-from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from .constants import MOD_MASSES, MOD_NAMES, OPENMS_VAR_MODS, SPECTRONAUT_MODS, XISEARCH_VAR_MODS
+from .constants import (
+    MOD_MASSES,
+    MOD_NAMES,
+    OPENMS_VAR_MODS,
+    SPECTRONAUT_MODS,
+    XISEARCH_VAR_MODS,
+)
 
 
-def sage_to_internal(sequences: List[str], mods: Dict[str, str]) -> List[str]:
+def sage_to_internal(sequences: list[str], mods: dict[str, str]) -> list[str]:
     """
     Convert mod string from sage to the internal format.
 
@@ -62,7 +67,6 @@ def sage_to_internal(sequences: List[str], mods: Dict[str, str]) -> List[str]:
 
     # Iterate through the input 'sequences'.
     for string in sequences:
-
         # Use 're.sub' to search and replace values within square brackets in the 'string' using the 'replace' function.
         modified_string = re.sub(pattern, replace, string)
 
@@ -93,7 +97,7 @@ def xisearch_to_internal(
     :return: modified sequence
     """
 
-    def add_mod_sequence(split_seq: List[str], mods: str, mod_positions: str):
+    def add_mod_sequence(split_seq: list[str], mods: str, mod_positions: str):
         """
         Apply modifications.
 
@@ -107,7 +111,7 @@ def xisearch_to_internal(
         split_mod = mods.split(";")
         split_mod_positions = mod_positions.split(";")
 
-        for mod, pos in zip(split_mod, split_mod_positions):
+        for mod, pos in zip(split_mod, split_mod_positions, strict=False):
             modification = XISEARCH_VAR_MODS.get(mod)
             pos_mod = int(pos)
             if modification:
@@ -128,26 +132,29 @@ def xisearch_to_internal(
     return "".join(split_seq)
 
 
-def internal_to_spectronaut(sequences: Union[np.ndarray, pd.Series, List[str]]) -> List[str]:
+def internal_to_spectronaut(sequences: np.ndarray | pd.Series | list[str]) -> list[str]:
     """
     Function to translate a modstring from the internal format to the spectronaut format.
 
     :param sequences: List[str] of sequences
     :return: List[str] of modified sequences
     """
-    regex = re.compile("(%s)" % "|".join(map(re.escape, SPECTRONAUT_MODS.keys())))
+    regex = re.compile("({})".format("|".join(map(re.escape, SPECTRONAUT_MODS.keys()))))
     return [regex.sub(lambda mo: SPECTRONAUT_MODS[mo.string[mo.start() : mo.end()]], seq) for seq in sequences]
 
 
-def maxquant_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
+def maxquant_to_internal(sequences: np.ndarray | pd.Series | list[str], mods: dict[str, str]) -> list[str]:
     """
     Function to translate a MaxQuant modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
-        custom variable modifications and standard MAXQUANT var mods. Custom static mods are not visible in the mod string,
-        therefore input needs to change to key = aa and value aa and unimod identifier.
-    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary or custom mods in illegal type format.
+    :param mods: Dictionary of modifications with optional fixed mods
+        (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
+        Custom variable modifications and standard MAXQUANT var mods.
+        Custom static mods are not visible in the mod string, therefore input needs to change to
+        key = aa and value aa and unimod identifier.
+    :raises AssertionError: if illegal modification was provided in the fixed_mods dictionary or
+        custom mods in illegal type format.
     :return: a list of modified sequences
     """
     if not all(isinstance(val, str) for val in mods.values()) or not all(
@@ -179,24 +186,26 @@ def maxquant_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mod
     return [regex.sub(lambda match: find_replacement(match), seq).replace("_", "") for seq in sequences]
 
 
-def msfragger_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
+def msfragger_to_internal(sequences: np.ndarray | pd.Series | list[str], mods: dict[str, str]) -> list[str]:
     """
     Function to translate a MSFragger modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
-        custom static and variable modifications and in case of MSFragger also standard static mods
+    :param mods: Dictionary of modifications with optional fixed mods
+        (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
+        Custom static and variable modifications and in case of MSFragger also standard static mods.
     :return: a list of modified sequences
     """
     return _to_internal(sequences=sequences, mods=mods)
 
 
-def openms_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]] = None) -> List[str]:
+def openms_to_internal(sequences: list[str], fixed_mods: dict[str, str] | None = None) -> list[str]:
     """
     Function to translate a OpenMS modstring to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param fixed_mods: Optional dictionary of modifications with key aa and value mod, e.g. 'M(Oxidation)': 'M(UNIMOD:35)'.
+    :param fixed_mods: Optional dictionary of modifications with key aa and value mod,
+        e.g. 'M(Oxidation)': 'M(UNIMOD:35)'.
         Fixed modifications must be included in the variable modificatons dictionary.
         By default, i.e. if nothing is supplied to fixed_mods, carbamidomethylation on cystein will be included
         in the fixed modifications. If you want to have no fixed modifictions at all, supply fixed_mods={}
@@ -237,7 +246,7 @@ def openms_to_internal(sequences: List[str], fixed_mods: Optional[Dict[str, str]
     return [regex.sub(find_replacement, seq) for seq in sequences]
 
 
-def internal_without_mods(sequences: List[str]) -> List[str]:
+def internal_without_mods(sequences: list[str]) -> list[str]:
     """
     Function to remove any mod identifiers and return the plain AA sequence.
 
@@ -248,7 +257,7 @@ def internal_without_mods(sequences: List[str]) -> List[str]:
     return [re.sub(regex, "", seq) for seq in sequences]
 
 
-def internal_to_mod_mass(sequences: List[str], custom_mods: Optional[Dict[str, float]] = None) -> List[str]:
+def internal_to_mod_mass(sequences: list[str], custom_mods: dict[str, float] | None = None) -> list[str]:
     """
     Function to exchange the internal mod identifiers with the masses of the specific modifiction.
 
@@ -258,15 +267,18 @@ def internal_to_mod_mass(sequences: List[str], custom_mods: Optional[Dict[str, f
     """
     mod_masses = MOD_MASSES | (custom_mods or {})
 
-    regex = re.compile("(%s)" % "|".join(map(re.escape, mod_masses.keys())))
-    replacement_func = lambda match: f"[+{mod_masses[match.string[match.start():match.end()]]}]"
+    regex = re.compile("({})".format("|".join(map(re.escape, mod_masses.keys()))))
+
+    def replacement_func(match: re.Match) -> str:
+        return f"[+{mod_masses[match.string[match.start() : match.end()]]}]"
+
     return [regex.sub(replacement_func, seq) for seq in sequences]
 
 
 def internal_to_msp(
-    sequences: Union[List[str], pd.Series],
-    mods: Dict[str, str],
-) -> List[Tuple[str, str]]:
+    sequences: list[str] | pd.Series,
+    mods: dict[str, str],
+) -> list[tuple[str, str]]:
     """
     Function to translate an internal modstring to modstring and Mods for MSP format.
 
@@ -299,15 +311,15 @@ def internal_to_msp(
 
 
 def internal_to_mod_names(
-    sequences: List[str],
-) -> List[Tuple[str, str]]:
+    sequences: list[str],
+) -> list[tuple[str, str]]:
     """
     Function to translate an internal modstring to MSP format.
 
     :param sequences: List[str] of sequences
     :return: List[Tuple[str, str] of mod summary and mod sequences
     """
-    match_list: List[Tuple[str, int]] = []
+    match_list: list[tuple[str, int]] = []
     pos = [0]
     offset = [0]
 
@@ -340,11 +352,11 @@ def internal_to_mod_names(
         match_list.append((MOD_NAMES[match.string[match.start() : match.end()]], pos[0]))
         return ""
 
-    regex = re.compile("(%s)" % "|".join(map(re.escape, MOD_NAMES.keys())))
+    regex = re.compile("({})".format("|".join(map(re.escape, MOD_NAMES.keys()))))
     return [msp_string_mapper(seq) for seq in sequences]
 
 
-def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: bool = False, filter: bool = False):
+def parse_modstrings(sequences: list[str], alphabet: dict[str, int], translate: bool = False, filter: bool = False):
     """
     Parse modstrings.
 
@@ -379,7 +391,7 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
                 [li[2] for li in difflib.ndiff(sequence, "".join(split_seq)) if li[0] == "-"]
             )
             raise ValueError(
-                f"The element(s) [{not_parsable_elements}] " f"in the sequence [{sequence}] could not be parsed"
+                f"The element(s) [{not_parsable_elements}] in the sequence [{sequence}] could not be parsed"
             )
 
     unimod_pattern = r"[A-Z]\[UNIMOD:\d+\]"
@@ -390,7 +402,7 @@ def parse_modstrings(sequences: List[str], alphabet: Dict[str, int], translate: 
     return map(split_modstring, sequences, repeat(regex_pattern))
 
 
-def get_all_tokens(sequences: List[str]) -> Set[str]:
+def get_all_tokens(sequences: list[str]) -> set[str]:
     """Parse given sequences in UNIMOD ProForma standard into a set of all tokens."""
     pattern = r"[ACDEFGHIKLMNPQRSTVWY](\[UNIMOD:\d+\])?"
     tokens = set()
@@ -400,7 +412,7 @@ def get_all_tokens(sequences: List[str]) -> Set[str]:
 
 
 def add_permutations(
-    modified_sequence: str, unimod_id: int, residues: List[str], allow_one_less_modification: bool = False
+    modified_sequence: str, unimod_id: int, residues: list[str], allow_one_less_modification: bool = False
 ):
     """
     Generate different peptide sequences with moving the modification to all possible residues.
@@ -408,7 +420,8 @@ def add_permutations(
     :param modified_sequence: Peptide sequence
     :param unimod_id: modification unimod id to be used for generating different permutations.
     :param residues: possible amino acids where this mod can exist
-    :param allow_one_less_modification: Flag to indicate if permutations with one less modification should be generated to check
+    :param allow_one_less_modification: Flag to indicate if permutations with one less modification
+        should be generated to check
         whether the modification mass was mistakenly picked as the monoisotopic peak. Mainly used for Citrullination.
     :return: list of possible sequence permutations
     """
@@ -442,7 +455,8 @@ def add_permutations(
 
 def proteomicsdb_to_internal(sequence: str, mods_variable: str = "", mods_fixed: str = "") -> str:
     """
-    Function to create a sequence with UNIMOD modifications from given sequence and it's varaible and fixed modifications.
+    Function to create a sequence with UNIMOD modifications from given sequence and its variable
+    and fixed modifications.
 
     :param sequence: The sequence to modify
     :param mods_variable: the variable modifacations (e.g. "Oxidation@M45")
@@ -516,25 +530,27 @@ def custom_regex_escape(key: str) -> str:
     return key
 
 
-def custom_to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
+def custom_to_internal(sequences: np.ndarray | pd.Series | list[str], mods: dict[str, str]) -> list[str]:
     """
     Function to translate custom modstrings to the Prosit format.
 
     :param sequences: List[str] of sequences
-    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
-        custom static and variable modifications and in case of MSFragger also standard static mods
+    :param mods: Dictionary of modifications with optional fixed mods
+        (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
+        Custom static and variable modifications and in case of MSFragger also standard static mods.
     :return: a list of modified sequences
     """
     return _to_internal(sequences=sequences, mods=mods)
 
 
-def _to_internal(sequences: Union[np.ndarray, pd.Series, List[str]], mods: Dict[str, str]) -> List[str]:
+def _to_internal(sequences: np.ndarray | pd.Series | list[str], mods: dict[str, str]) -> list[str]:
     """
     Function to translate a modstring to the internal Prosit format.
 
     :param sequences: List[str] of sequences
-    :param mods: Dictionary of modifications with optional fixed mods (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
-        custom static and variable modifications and in case of MSFragger also standard static mods
+    :param mods: Dictionary of modifications with optional fixed mods
+        (key aa and value mod, e.g. 'M[147]': '[UNIMOD:35]').
+        Custom static and variable modifications and in case of MSFragger also standard static mods.
     :return: a list of modified sequences
     """
 

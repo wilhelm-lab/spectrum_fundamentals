@@ -1,5 +1,4 @@
 import enum
-from typing import Optional, Union
 
 import numpy as np
 import scipy.sparse
@@ -32,7 +31,7 @@ class FragmentsRatio(Metric):
     @staticmethod
     def count_with_ion_mask(
         boolean_array: scipy.sparse.csr_matrix,
-        ion_mask: Optional[Union[np.ndarray, scipy.sparse.spmatrix]] = None,
+        ion_mask: np.ndarray | scipy.sparse.spmatrix | None = None,
         cms2: bool = False,
     ) -> np.ndarray:
         """
@@ -61,7 +60,7 @@ class FragmentsRatio(Metric):
     def count_observation_states(
         observation_state: scipy.sparse.csr_matrix,
         test_state: int,
-        ion_mask: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        ion_mask: np.ndarray | scipy.sparse.csr_matrix | None = None,
         cms2: bool = False,
     ) -> np.ndarray:
         """
@@ -97,8 +96,8 @@ class FragmentsRatio(Metric):
 
         :param intensities: observed or predicted intensities, array of length 174
         :param mask: mask with True for invalid values in the observed intensities array, boolean array of length 174
-        :param cutoff: minimum intensity value to be considered a peak, for observed intensities use the default cutoff of 0.0, \
-                       for predicted intensities, set a cutoff, e.g. 0.05
+        :param cutoff: minimum intensity value to be considered a peak, for observed intensities use
+                       the default cutoff of 0.0; for predicted intensities, set a cutoff, e.g. 0.05
         :return: boolean array, array of length 174
         """
         intensities_above_cutoff = (intensities > cutoff).multiply(mask)

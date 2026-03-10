@@ -1,5 +1,3 @@
-from typing import List, Union
-
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
@@ -43,8 +41,8 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def spectral_angle(
-        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
-        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        observed_intensities: scipy.sparse.csr_matrix | np.ndarray,
+        predicted_intensities: scipy.sparse.csr_matrix | np.ndarray,
         charge: int = 0,
         xl: bool = False,
         cms2: bool = False,
@@ -105,9 +103,9 @@ class SimilarityMetrics(Metric):
         """
         Compute the l2-norm (sqrt(sum(x^2) ) for each row of the matrix.
 
-        :param matrix: matrix with intensities, constants.EPSILON intensity indicates zero intensity peaks, \
-                       0 intensity indicates invalid peaks (charge state > peptide charge state or position >= peptide length), \
-                       matrix of size (nspectra, 174)
+        :param matrix: matrix with intensities, constants.EPSILON intensity indicates zero intensity peaks,
+                       0 intensity indicates invalid peaks (charge state > peptide charge state or
+                       position >= peptide length), matrix of size (nspectra, 174)
         :return: vector with rowwise norms of the matrix
         """
         # = np.sqrt(np.sum(np.square(matrix), axis=0))
@@ -118,14 +116,14 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def unit_normalization(
-        matrix: Union[scipy.sparse.csr_matrix, np.ndarray],
-    ) -> Union[scipy.sparse.csr_matrix, np.ndarray]:
+        matrix: scipy.sparse.csr_matrix | np.ndarray,
+    ) -> scipy.sparse.csr_matrix | np.ndarray:
         """
         Normalize each row of the matrix such that the norm equals 1.0.
 
-        :param matrix: matrix with intensities, constants.EPSILON intensity indicates zero intensity peaks, \
-                       0 intensity indicates invalid peaks (charge state > peptide charge state or position >= peptide length), \
-                       matrix of size (nspectra, 174)
+        :param matrix: matrix with intensities, constants.EPSILON intensity indicates zero intensity peaks,
+                       0 intensity indicates invalid peaks (charge state > peptide charge state or
+                       position >= peptide length), matrix of size (nspectra, 174)
         :return: normalized matrix
         """
         rowwise_norm = SimilarityMetrics.l2_norm(matrix)
@@ -139,8 +137,8 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def rowwise_dot_product(
-        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
-        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
+        observed_intensities: scipy.sparse.csr_matrix | np.ndarray,
+        predicted_intensities: scipy.sparse.csr_matrix | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate rowwise dot product.
@@ -160,9 +158,9 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def spectral_entropy_similarity(
-        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
-        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
-    ) -> List[float]:
+        observed_intensities: scipy.sparse.csr_matrix | np.ndarray,
+        predicted_intensities: scipy.sparse.csr_matrix | np.ndarray,
+    ) -> list[float]:
         """
         Calculate spectral entropy similarity as defined in Li et al. (Spectral entropy outperforms MS/MS dot product \
         similarity for small-molecule compound identification).
@@ -179,7 +177,7 @@ class SimilarityMetrics(Metric):
             predicted_intensities = predicted_intensities.toarray()
 
         entropies = []
-        for obs, pred in zip(observed_intensities, predicted_intensities):
+        for obs, pred in zip(observed_intensities, predicted_intensities, strict=False):
             valid_ion_mask = pred > constants.EPSILON
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
@@ -203,7 +201,7 @@ class SimilarityMetrics(Metric):
         method: str = "pearson",
         xl: bool = False,
         cms2: bool = False,
-    ) -> List[float]:
+    ) -> list[float]:
         """
         Calculate correlation between observed and predicted.
 
@@ -232,7 +230,7 @@ class SimilarityMetrics(Metric):
             predicted_intensities_array = predicted_intensities.multiply(boolean_array).toarray()
 
         pear_corr = []
-        for obs, pred in zip(observed_intensities_array, predicted_intensities_array):
+        for obs, pred in zip(observed_intensities_array, predicted_intensities_array, strict=False):
             valid_ion_mask = pred > constants.EPSILON
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
@@ -253,7 +251,7 @@ class SimilarityMetrics(Metric):
     @staticmethod
     def cos(
         observed_intensities: scipy.sparse.csr_matrix, predicted_intensities: scipy.sparse.csr_matrix
-    ) -> List[float]:
+    ) -> list[float]:
         """
         Calculate cosine similarity.
 
@@ -273,7 +271,7 @@ class SimilarityMetrics(Metric):
             predicted_normalized = predicted_normalized.toarray()
 
         cos_values = []
-        for obs, pred in zip(observed_normalized, predicted_normalized):
+        for obs, pred in zip(observed_normalized, predicted_normalized, strict=False):
             valid_ion_mask = pred > epsilon
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
@@ -289,7 +287,7 @@ class SimilarityMetrics(Metric):
     @staticmethod
     def abs_diff(
         observed_intensities: scipy.sparse.csr_matrix, predicted_intensities: scipy.sparse.csr_matrix, metric: str
-    ) -> List[float]:
+    ) -> list[float]:
         """
         Calculate several similarity metrics.
 
@@ -312,7 +310,7 @@ class SimilarityMetrics(Metric):
             predicted_normalized = predicted_normalized.toarray()
 
         diff_values = []
-        for obs, pred in zip(observed_normalized, predicted_normalized):
+        for obs, pred in zip(observed_normalized, predicted_normalized, strict=False):
             valid_ion_mask = pred > epsilon
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
@@ -344,11 +342,11 @@ class SimilarityMetrics(Metric):
 
     @staticmethod
     def modified_cosine(
-        observed_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
-        predicted_intensities: Union[scipy.sparse.csr_matrix, np.ndarray],
-        observed_mz: Union[scipy.sparse.csr_matrix, np.ndarray],
-        theoretical_mz: Union[scipy.sparse.csr_matrix, np.ndarray],
-    ) -> List[float]:
+        observed_intensities: scipy.sparse.csr_matrix | np.ndarray,
+        predicted_intensities: scipy.sparse.csr_matrix | np.ndarray,
+        observed_mz: scipy.sparse.csr_matrix | np.ndarray,
+        theoretical_mz: scipy.sparse.csr_matrix | np.ndarray,
+    ) -> list[float]:
         """
         Calculate modified cosine similarity as defined in Chris D. McGann et al. (Real-time spectral library \
         matching for sample multiplexed quantitative proteomics).
@@ -377,7 +375,9 @@ class SimilarityMetrics(Metric):
         cos_values = []
         mz_power = 0.9
         intensity_power = 0.4
-        for obs, pred, obs_mz, th_mz in zip(observed_normalized, predicted_normalized, observed_mz, theoretical_mz):
+        for obs, pred, obs_mz, th_mz in zip(
+            observed_normalized, predicted_normalized, observed_mz, theoretical_mz, strict=False
+        ):
             valid_ion_mask = pred > epsilon
             obs = obs[valid_ion_mask]
             pred = pred[valid_ion_mask]
@@ -472,8 +472,8 @@ class SimilarityMetrics(Metric):
 
     def _calc_additional_metrics(
         self,
-        true_intensities: Union[np.ndarray, scipy.sparse.spmatrix],
-        pred_intensities: Union[np.ndarray, scipy.sparse.spmatrix],
+        true_intensities: np.ndarray | scipy.sparse.spmatrix,
+        pred_intensities: np.ndarray | scipy.sparse.spmatrix,
         key_suffix: str = "",
         cms2: bool = False,
     ):

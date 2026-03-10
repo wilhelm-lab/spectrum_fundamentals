@@ -2,7 +2,7 @@ import itertools
 import logging
 import re
 from operator import itemgetter
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ from .mod_string import internal_without_mods
 logger = logging.getLogger(__name__)
 
 
-def _get_modifications(peptide_sequence: str, custom_mods: Optional[Dict[str, float]] = None) -> Dict[int, float]:
+def _get_modifications(peptide_sequence: str, custom_mods: dict[str, float] | None = None) -> dict[int, float]:
     """
     Get modification masses and position in a peptide sequence.
 
@@ -53,7 +53,7 @@ def _get_modifications(peptide_sequence: str, custom_mods: Optional[Dict[str, fl
     return modification_deltas
 
 
-def compute_peptide_mass(sequence: str, custom_mods: Optional[Dict[str, float]] = None) -> float:
+def compute_peptide_mass(sequence: str, custom_mods: dict[str, float] | None = None) -> float:
     """
     Compute the theoretical mass of the peptide sequence.
 
@@ -89,7 +89,7 @@ def _xl_sanity_check(noncl_xl: int, peptide_beta_mass: float, xl_pos: float):
             raise ValueError("Crosslinker position must be provided if using non cleavable XL mode.")
 
 
-def retrieve_ion_types(fragmentation_method: str) -> List[str]:
+def retrieve_ion_types(fragmentation_method: str) -> list[str]:
     """
     Retrieve the ion types resulting from a fragmentation method in the correct order for dlomix predictions.
 
@@ -106,7 +106,7 @@ def retrieve_ion_types(fragmentation_method: str) -> List[str]:
     return ions
 
 
-def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> List[str]:
+def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> list[str]:
     """
     Retrieve the ion types resulting from a fragmentation method in the correct order for peak initialization.
 
@@ -123,7 +123,7 @@ def retrieve_ion_types_for_peak_initialization(fragmentation_method: str) -> Lis
     return ions
 
 
-def get_ion_delta(ion_types: List[str]) -> np.ndarray:
+def get_ion_delta(ion_types: list[str]) -> np.ndarray:
     """
     Calculate the mass of an ion.
 
@@ -133,7 +133,7 @@ def get_ion_delta(ion_types: List[str]) -> np.ndarray:
     return np.array([c.ION_DELTAS[ion_type] for ion_type in ion_types]).reshape(len(ion_types), 1)
 
 
-def _add_nl(neutral_losses: List[str], nl_dict: dict, start_aa_index: int, end_aa_index: int):
+def _add_nl(neutral_losses: list[str], nl_dict: dict, start_aa_index: int, end_aa_index: int):
     """
     Adds neutral losses (NL) to a dictionary of neutral losses for specific amino acid indices.
 
@@ -220,15 +220,15 @@ def initialize_peaks(  # noqa: C901
     sequence: str,
     mass_analyzer: str,
     charge: int,
-    mass_tolerance: Optional[float] = None,
-    unit_mass_tolerance: Optional[str] = None,
+    mass_tolerance: float | None = None,
+    unit_mass_tolerance: str | None = None,
     noncl_xl: bool = False,
     peptide_beta_mass: float = 0.0,
     xl_pos: int = -1,
     fragmentation_method: str = "HCD",
-    custom_mods: Optional[Dict[str, float]] = None,
-    add_neutral_losses: Optional[bool] = False,
-) -> Tuple[List[dict], int, str, float, int]:
+    custom_mods: dict[str, float] | None = None,
+    add_neutral_losses: bool | None = False,
+) -> tuple[list[dict], int, str, float, int]:
     """
     Generate theoretical peaks for a modified peptide sequence.
 
@@ -350,11 +350,11 @@ def initialize_peaks_xl(
     mass_analyzer: str,
     crosslinker_position: int,
     crosslinker_type: str,
-    mass_tolerance: Optional[float] = None,
-    unit_mass_tolerance: Optional[str] = None,
-    sequence_beta: Optional[str] = None,
-    custom_mods: Optional[Dict[str, float]] = None,
-) -> Tuple[List[dict], int, str, float]:
+    mass_tolerance: float | None = None,
+    unit_mass_tolerance: str | None = None,
+    sequence_beta: str | None = None,
+    custom_mods: dict[str, float] | None = None,
+) -> tuple[list[dict], int, str, float]:
     """
     Generate theoretical peaks for a modified (potentially cleavable cross-linked) peptide sequence.
 
@@ -473,9 +473,9 @@ def initialize_peaks_xl(
 def get_min_max_mass(
     mass_analyzer: str,
     mass: np.ndarray,
-    mass_tolerance: Optional[float] = None,
-    unit_mass_tolerance: Optional[str] = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+    mass_tolerance: float | None = None,
+    unit_mass_tolerance: str | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """Helper function to get min and max mass based on mass analyzer.
 
     If both mass_tolerance and unit_mass_tolerance are provided, the function uses the provided tolerance
@@ -523,8 +523,8 @@ FragmentIonComponent = Literal["ion_type", "position", "charge"]
 
 
 def generate_fragment_ion_annotations(
-    ion_types: List[str], order: Tuple[FragmentIonComponent, FragmentIonComponent, FragmentIonComponent]
-) -> List[Tuple[str, int, int]]:
+    ion_types: list[str], order: tuple[FragmentIonComponent, FragmentIonComponent, FragmentIonComponent]
+) -> list[tuple[str, int, int]]:
     """Generate full list of fragment ions for permitted ion types and specified order.
 
     :param ion_types: List of permitted ion types
@@ -532,7 +532,7 @@ def generate_fragment_ion_annotations(
     :return: List of (ion_type, position, charge) tuples sorted by specified component order
     :raises ValueError: if invalid or unsupported ion types are specified or duplicate order keys are used
     """
-    fragment_ion_components: Dict[str, Union[List[str]]] = {
+    fragment_ion_components: dict[str, list[str]] = {
         "ion_type": ion_types,
         "position": [str(pos) for pos in c.POSITIONS],
         "charge": [str(charge) for charge in c.CHARGES],
@@ -559,7 +559,7 @@ def generate_fragment_ion_annotations(
     return ordered_raw_annotations
 
 
-def format_fragment_ion_annotation(raw_annotation: Tuple[str, int, int]) -> str:
+def format_fragment_ion_annotation(raw_annotation: tuple[str, int, int]) -> str:
     """Transform (ion_type, position, charge) tuple into <ion_type><position>+<charge> string.
 
     :param raw_annotation: `(ion_type, position, charge)` tuple
