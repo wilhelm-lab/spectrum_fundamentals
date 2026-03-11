@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from .constants import MOD_MASSES, MOD_NAMES, OPENMS_VAR_MODS, SPECTRONAUT_MODS, XISEARCH_VAR_MODS
+from spectrum_fundamentals.constants import MOD_MASSES, MOD_NAMES, OPENMS_VAR_MODS, SPECTRONAUT_MODS, XISEARCH_VAR_MODS
 
 
 def sage_to_internal(sequences: List[str], mods: Dict[str, str]) -> List[str]:

@@ -161,7 +161,7 @@
         "min_mass": 114.3965451920033,
         "max_mass": 114.40112114533004,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C3^3"
     },
     {
@@ -172,7 +172,7 @@
         "min_mass": 115.08428784020856,
         "max_mass": 115.08889130379143,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C1"
     },
     {
@@ -183,7 +183,7 @@
         "min_mass": 120.7200088852,
         "max_mass": 120.72483778213333,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z3^3"
     },
     {
@@ -216,7 +216,7 @@
         "min_mass": 122.56577815490961,
         "max_mass": 122.57068088409038,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C2^2"
     },
     {
@@ -227,7 +227,7 @@
         "min_mass": 124.03548400770467,
         "max_mass": 124.04044552629534,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z2^2"
     },
     {
@@ -260,7 +260,7 @@
         "min_mass": 132.03906923279865,
         "max_mass": 132.04435090120134,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z1"
     },
     {
@@ -392,7 +392,7 @@
         "min_mass": 148.07843120747663,
         "max_mass": 148.08435446319004,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C4^3"
     },
     {
@@ -425,7 +425,7 @@
         "min_mass": 154.40189490067334,
         "max_mass": 154.40807109999335,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z4^3"
     },
     {
@@ -513,7 +513,7 @@
         "min_mass": 171.0911896272696,
         "max_mass": 171.0980334117304,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C3^2"
     },
     {
@@ -568,7 +568,7 @@
         "min_mass": 180.57638516706467,
         "max_mass": 180.58360836693535,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z3^2"
     },
     {
@@ -601,7 +601,7 @@
         "min_mass": 185.77236531371662,
         "max_mass": 185.77979635695002,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C5^3"
     },
     {
@@ -612,7 +612,7 @@
         "min_mass": 186.75216921558,
         "max_mass": 186.75963945175334,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z5^3"
     },
     {
@@ -799,7 +799,7 @@
         "min_mass": 221.61401865047964,
         "max_mass": 221.6228833885204,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C4^2"
     },
     {
@@ -821,7 +821,7 @@
         "min_mass": 224.11391280076327,
         "max_mass": 224.12287753657,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C6^3"
     },
     {
@@ -843,7 +843,7 @@
         "min_mass": 229.76550659829337,
         "max_mass": 229.77469740237336,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z6^3"
     },
     {
@@ -865,7 +865,7 @@
         "min_mass": 231.0992141902747,
         "max_mass": 231.10845834372535,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z4^2"
     },
     {
@@ -942,7 +942,7 @@
         "min_mass": 244.12429998834855,
         "max_mass": 244.13406515565143,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C2"
     },
     {
@@ -953,7 +953,7 @@
         "min_mass": 247.06371169393867,
         "max_mass": 247.07359444006136,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z2"
     },
     {
@@ -1052,7 +1052,7 @@
         "min_mass": 278.15491980983956,
         "max_mass": 278.1660462291604,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C5^2"
     },
     {
@@ -1063,7 +1063,7 @@
         "min_mass": 279.6246256626347,
         "max_mass": 279.6358108713654,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z5^2"
     },
     {
@@ -1217,7 +1217,7 @@
         "min_mass": 335.6672410404096,
         "max_mass": 335.6806679985903,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C6^2"
     },
     {
@@ -1239,7 +1239,7 @@
         "min_mass": 341.17512293306856,
         "max_mass": 341.18877021093147,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C3"
     },
     {
@@ -1250,7 +1250,7 @@
         "min_mass": 344.1446317367047,
         "max_mass": 344.1583977972954,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z6^2"
     },
     {
@@ -1283,7 +1283,7 @@
         "min_mass": 360.1455140126587,
         "max_mass": 360.1599201213414,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z3"
     },
     {
@@ -1404,7 +1404,7 @@
         "min_mass": 442.2207809794886,
         "max_mass": 442.23847016451145,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C4"
     },
     {
@@ -1415,7 +1415,7 @@
         "min_mass": 461.1911720590787,
         "max_mass": 461.20962007492136,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z4"
     },
     {
@@ -1514,7 +1514,7 @@
         "min_mass": 555.3025832982084,
         "max_mass": 555.3247958457914,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C5"
     },
     {
@@ -1525,7 +1525,7 @@
         "min_mass": 558.2419950037987,
         "max_mass": 558.2643251302014,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z5"
     },
     {
@@ -1624,7 +1624,7 @@
         "min_mass": 670.3272257593485,
         "max_mass": 670.3540393846513,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "C6"
     },
     {
@@ -1635,7 +1635,7 @@
         "min_mass": 687.2820071519387,
         "max_mass": 687.3094989820614,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 99,
         "full_name": "z6"
     },
     {
