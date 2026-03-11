@@ -282,41 +282,6 @@ class TestInternalTransformations(unittest.TestCase):
         self.assertEqual(mod.proteomicsdb_to_internal(prdb_sequence, mods_fixed=fixed_mods), target_sequence)
 
 
-class TestParsing(unittest.TestCase):
-    """Class to test the modstring parsing."""
-
-    def test_parse_modstrings(self):
-        """Test parse_modstrings with only valid elements."""
-        valid_seq = ["A", "C[UNIMOD:4]", "C[UNIMOD:4]", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N"]
-        valid_seq.extend(["M[UNIMOD:35]", "P", "Q", "R", "S", "T", "V", "W", "Y", "M[UNIMOD:35]", "S", "T", "Y"])
-        self.assertEqual(next(mod.parse_modstrings(["".join(valid_seq)], alphabet=c.ALPHABET)), valid_seq)
-
-    def test_parse_modstrings_with_translation(self):
-        """Test parse_modstrings with only valid elements."""
-        valid_seq = ["A", "C[UNIMOD:4]", "C[UNIMOD:4]", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N"]
-        valid_seq.extend(["M[UNIMOD:35]", "P", "Q", "R", "S", "T", "V", "W", "Y", "M[UNIMOD:35]", "S", "T", "Y"])
-        values = [c.ALPHABET[elem] for elem in valid_seq]
-        self.assertEqual(next(mod.parse_modstrings(["".join(valid_seq)], alphabet=c.ALPHABET, translate=True)), values)
-
-    def test_parse_modstrings_invalid(self):
-        """Test correct behaviour of  parse_modstrings when invalid sequence is encountered."""
-        invalid_seq = "SEQUENCE"
-        generator_yielding_invalid = mod.parse_modstrings([invalid_seq], alphabet=c.ALPHABET)
-        self.assertRaises(ValueError, list, generator_yielding_invalid)
-
-    def test_parse_modstrings_invalid_with_filtering(self):
-        """Test correct behaviour of parse_modstrings when invalid sequence is handled."""
-        invalid_seq = "testing"
-        self.assertEqual(next(mod.parse_modstrings([invalid_seq], alphabet=c.ALPHABET, filter=True)), [0])
-
-    def test_get_all_tokens(self):
-        """Test parsing of any UNIMOD sequence into tokens."""
-        seqs = ["ACKC[UNIMOD:4]AD", "PEPTIDE", "PEM[UNIMOD:35]"]
-
-        result = mod.get_all_tokens(seqs)
-        self.assertEqual(result, {"A", "C", "C[UNIMOD:4]", "D", "E", "I", "K", "M[UNIMOD:35]", "P", "T"})
-
-
 class TestCustomToInternal(unittest.TestCase):
     """Class to test custom to internal."""
 

@@ -11,6 +11,9 @@ documentation = "https://spectrum-fundamentals.readthedocs.io"
 packages = [
     { include = "spectrum_fundamentals" },
 ]
+include = [
+    "spectrum_fundamentals/ions/ion_dict.csv",
+]
 classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

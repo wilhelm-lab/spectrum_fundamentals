@@ -1,8 +1,13 @@
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 import scipy.sparse
 
 import spectrum_fundamentals.constants as constants
 import spectrum_fundamentals.metrics.fragments_ratio as fr
+
+ION_MASK = fr.FragmentsRatio().ion_mask
 
 
 class TestObservationState:
@@ -71,12 +76,18 @@ class TestCountIons:
     def test_count_ions_b(self):
         """Test count b ions predicted."""
         predicted_boolean = get_padded_array([True, False, False, False, False])
-        np.testing.assert_equal(fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, constants.B_ION_MASK), 0)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, ION_MASK["b"]),
+            0,
+        )
 
     def test_count_ions_y(self):
         """Test count y ions predicted."""
         predicted_boolean = get_padded_array([True, False, False, False, False])
-        np.testing.assert_equal(fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, constants.Y_ION_MASK), 1)
+        np.testing.assert_equal(
+            fr.FragmentsRatio.count_with_ion_mask(predicted_boolean, ION_MASK["y"]),
+            1,
+        )
 
 
 class TestCountObservedAndPredicted:
@@ -110,7 +121,7 @@ class TestCountObservedAndPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.OBS_AND_PRED, constants.B_ION_MASK
+                observation_state, fr.ObservationState.OBS_AND_PRED, ION_MASK["b"]
             ),
             1,
         )
@@ -128,7 +139,7 @@ class TestCountObservedAndPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.OBS_AND_PRED, constants.Y_ION_MASK
+                observation_state, fr.ObservationState.OBS_AND_PRED, ION_MASK["y"]
             ),
             0,
         )
@@ -167,7 +178,7 @@ class TestCountNotObservedAndNotPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, constants.B_ION_MASK
+                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, ION_MASK["b"]
             ),
             1,
         )
@@ -186,7 +197,7 @@ class TestCountNotObservedAndNotPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, constants.Y_ION_MASK
+                observation_state, fr.ObservationState.NOT_OBS_AND_NOT_PRED, ION_MASK["b"]
             ),
             1,
         )
@@ -227,7 +238,7 @@ class TestCountNotObservedButPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, constants.B_ION_MASK
+                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, ION_MASK["b"]
             ),
             2,
         )
@@ -247,7 +258,7 @@ class TestCountNotObservedButPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, constants.Y_ION_MASK
+                observation_state, fr.ObservationState.NOT_OBS_BUT_PRED, ION_MASK["y"]
             ),
             1,
         )
@@ -290,7 +301,7 @@ class TestCountObservedButNotPredicted:
         )
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, constants.B_ION_MASK
+                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, ION_MASK["b"]
             ),
             2,
         )
@@ -312,7 +323,7 @@ class TestCountObservedButNotPredicted:
 
         np.testing.assert_equal(
             fr.FragmentsRatio.count_observation_states(
-                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, constants.Y_ION_MASK
+                observation_state, fr.ObservationState.OBS_BUT_NOT_PRED, ION_MASK["b"]
             ),
             2,
         )
@@ -328,8 +339,8 @@ class TestCalc:
         predicted_intensities = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0], xl=True)
         observed_intensities = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0], xl=True)
 
-        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities)
-        fragments_ratio.calc(xl=True, cms2=True)
+        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities, xl=True, cms2=True)
+        fragments_ratio.calc()
 
         # counting metrics - peptide_a
         np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_a"][0], 4)
@@ -492,7 +503,7 @@ class TestCalc:
         #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
         predicted_intensities = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
         observed_intensities = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0])
-        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities)
+        fragments_ratio = fr.FragmentsRatio(predicted_intensities, observed_intensities, task="default")
         fragments_ratio.calc()
 
         # counting metrics
@@ -581,17 +592,374 @@ class TestCalc:
         # np.testing.assert_equal(
         #     fragmentsRatio.metrics_val['fraction_not_observed_but_predicted_y_vs_predicted_y'][0], 1 / 2)
 
+    def test_calc_multifrag(self):
+        """Test calc."""
+        # read data use cols observed and predicted
+        data_csv = pd.read_csv(Path(__file__).parent / "data/fragment_multifrag_predict.csv")
+        predicted_intensities = get_padded_array(data_csv["predicted"].to_numpy(), multifrag=True)
+        observed_intensities = get_padded_array(data_csv["observed"].to_numpy(), multifrag=True)
+
+        ions = ["A", "a", "b", "C", "c", "X", "x", "y", "Z", "z"]
+        fragments_ratio = fr.FragmentsRatio(
+            predicted_intensities,
+            observed_intensities,
+            task="multifrag",
+            featured_ions=ions,
+        )
+        fragments_ratio.calc()
+
+        # counting metrics
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted"][0], 40)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_A"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_a"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_b"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_C"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_c"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_X"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_x"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_y"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_Z"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_predicted_z"][0], 4)
+
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed"][0], 40)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_A"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_a"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_b"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_C"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_c"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_X"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_x"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_y"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_Z"][0], 4)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_z"][0], 4)
+
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted"][0], 20)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_A"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_C"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_c"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_X"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_x"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_y"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_Z"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_and_predicted_z"][0], 2)
+
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted"][0], 20)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_A"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_C"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_c"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_X"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_x"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_y"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_Z"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_and_not_predicted_z"][0], 2)
+
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted"][0], 20)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_A"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_C"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_c"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_X"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_x"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_y"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_Z"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_observed_but_not_predicted_z"][0], 2)
+
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted"][0], 20)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_A"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_a"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_b"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_C"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_c"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_X"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_x"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_y"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_Z"][0], 2)
+        np.testing.assert_equal(fragments_ratio.metrics_val["count_not_observed_but_predicted_z"][0], 2)
+
+        # fractional count metrics
+        valid_ion_number_total = 80
+        valid_ion_number_ions = 8  # each ion has 8 valid fagment
+
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted"][0], 40 / valid_ion_number_total)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_A"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_a"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_b"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_C"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_c"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_X"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_x"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_y"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_Z"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_predicted_z"][0], 4 / valid_ion_number_ions)
+
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed"][0], 40 / valid_ion_number_total)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_A"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_a"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_b"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_C"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_c"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_X"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_x"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_y"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_Z"][0], 4 / valid_ion_number_ions)
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_z"][0], 4 / valid_ion_number_ions)
+
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted"][0], 20 / valid_ion_number_total
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_A"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_a"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_b"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_C"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_c"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_X"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_x"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_y"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_Z"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_z"][0], 2 / valid_ion_number_ions
+        )
+
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted"][0], 20 / valid_ion_number_total
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_A"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_a"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_b"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_C"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_c"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_X"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_x"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_y"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_Z"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_z"][0], 2 / valid_ion_number_ions
+        )
+
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted"][0], 20 / valid_ion_number_total
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_A"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_a"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_b"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_C"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_c"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_X"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_x"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_y"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_Z"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_z"][0], 2 / valid_ion_number_ions
+        )
+
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted"][0], 20 / valid_ion_number_total
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_A"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_a"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_b"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_C"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_c"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_X"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_x"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_y"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_Z"][0], 2 / valid_ion_number_ions
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_but_predicted_z"][0], 2 / valid_ion_number_ions
+        )
+
+        # fractional count metrics relative to predictions
+        np.testing.assert_equal(fragments_ratio.metrics_val["fraction_observed_and_predicted_vs_predicted"][0], 20 / 40)
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_A_vs_predicted_A"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_a_vs_predicted_a"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_b_vs_predicted_b"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_C_vs_predicted_C"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_c_vs_predicted_c"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_X_vs_predicted_X"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_x_vs_predicted_x"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_y_vs_predicted_y"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_Z_vs_predicted_Z"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_and_predicted_z_vs_predicted_z"][0], 2 / 4
+        )
+
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_vs_predicted"][0], 20 / 40
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_A_vs_predicted_A"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_a_vs_predicted_a"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_b_vs_predicted_b"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_C_vs_predicted_C"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_c_vs_predicted_c"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_X_vs_predicted_X"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_x_vs_predicted_x"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_y_vs_predicted_y"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_Z_vs_predicted_Z"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_not_observed_and_not_predicted_z_vs_predicted_z"][0], 2 / 4
+        )
+
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_vs_predicted"][0], 20 / 40
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_A_vs_predicted_A"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_a_vs_predicted_a"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_b_vs_predicted_b"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_C_vs_predicted_C"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_c_vs_predicted_c"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_X_vs_predicted_X"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_x_vs_predicted_x"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_y_vs_predicted_y"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_Z_vs_predicted_Z"][0], 2 / 4
+        )
+        np.testing.assert_equal(
+            fragments_ratio.metrics_val["fraction_observed_but_not_predicted_z_vs_predicted_z"][0], 2 / 4
+        )
+
 
 def assert_equal_sparse(a, b):
     """Check that there are 0 elements for which a != b."""
     assert (a != b).nnz == 0  # checks that there are 0 elements for which a != b
 
 
-def get_padded_array(arr, padding_value=0, xl: bool = False):
+def get_padded_array(arr, padding_value=0, xl: bool = False, multifrag: bool = False):
     """Get padded array."""
     if xl:
         padded_arr = np.pad(arr, (0, constants.VEC_LENGTH_CMS2 - len(arr)), "constant", constant_values=padding_value)
         return scipy.sparse.csr_matrix(np.concatenate([padded_arr, padded_arr]))
+
+    if multifrag:
+        return scipy.sparse.csr_matrix(arr)
 
     else:
         return scipy.sparse.csr_matrix(

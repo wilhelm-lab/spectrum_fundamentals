@@ -18,7 +18,7 @@
         "min_mass": 70.06372456448265,
         "max_mass": 70.06652716951733,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a1"
     },
     {
@@ -29,7 +29,7 @@
         "min_mass": 71.07152944298196,
         "max_mass": 71.07437236101802,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A1"
     },
     {
@@ -62,7 +62,7 @@
         "min_mass": 98.05807926619066,
         "max_mass": 98.06200166780933,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b1"
     },
     {
@@ -73,7 +73,7 @@
         "min_mass": 99.38969076676132,
         "max_mass": 99.39366643390532,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a3^3"
     },
     {
@@ -84,7 +84,7 @@
         "min_mass": 99.72562572626109,
         "max_mass": 99.72961483107224,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A3^3"
     },
     {
@@ -95,7 +95,7 @@
         "min_mass": 100.05549651704666,
         "max_mass": 100.05949881695335,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a2^2"
     },
     {
@@ -106,7 +106,7 @@
         "min_mass": 100.55939895629632,
         "max_mass": 100.56342141270369,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A2^2"
     },
     {
@@ -117,7 +117,7 @@
         "min_mass": 108.72114233399734,
         "max_mass": 108.72549126666934,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b3^3"
     },
     {
@@ -128,7 +128,7 @@
         "min_mass": 114.05267386790067,
         "max_mass": 114.05723606609934,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b2^2"
     },
     {
@@ -161,7 +161,7 @@
         "min_mass": 114.3965451920033,
         "max_mass": 114.40112114533004,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C3^3"
     },
     {
@@ -172,7 +172,7 @@
         "min_mass": 115.08428784020856,
         "max_mass": 115.08889130379143,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C1"
     },
     {
@@ -183,7 +183,7 @@
         "min_mass": 120.7200088852,
         "max_mass": 120.72483778213333,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z3^3"
     },
     {
@@ -194,7 +194,7 @@
         "min_mass": 121.05594384469977,
         "max_mass": 121.06078617930025,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z3^3"
     },
     {
@@ -216,7 +216,7 @@
         "min_mass": 122.56577815490961,
         "max_mass": 122.57068088409038,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C2^2"
     },
     {
@@ -227,7 +227,7 @@
         "min_mass": 124.03548400770467,
         "max_mass": 124.04044552629534,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z2^2"
     },
     {
@@ -238,7 +238,7 @@
         "min_mass": 124.53938644695431,
         "max_mass": 124.5443681220457,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z2^2"
     },
     {
@@ -249,7 +249,7 @@
         "min_mass": 126.0594767837062,
         "max_mass": 126.06451926362715,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y3^3"
     },
     {
@@ -260,7 +260,7 @@
         "min_mass": 132.03906923279865,
         "max_mass": 132.04435090120134,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z1"
     },
     {
@@ -271,7 +271,7 @@
         "min_mass": 132.04468585546397,
         "max_mass": 132.04996774853606,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y2^2"
     },
     {
@@ -282,7 +282,7 @@
         "min_mass": 133.04687411129797,
         "max_mass": 133.05219609270202,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z1"
     },
     {
@@ -293,7 +293,7 @@
         "min_mass": 133.07157678223467,
         "max_mass": 133.07689975176532,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a4^3"
     },
     {
@@ -304,7 +304,7 @@
         "min_mass": 133.40751174173442,
         "max_mass": 133.41284814893226,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A4^3"
     },
     {
@@ -337,7 +337,7 @@
         "min_mass": 142.40302834947067,
         "max_mass": 142.40872458452935,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b4^3"
     },
     {
@@ -381,7 +381,7 @@
         "min_mass": 148.05747292831728,
         "max_mass": 148.06339534568275,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y1"
     },
     {
@@ -392,7 +392,7 @@
         "min_mass": 148.07843120747663,
         "max_mass": 148.08435446319004,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C4^3"
     },
     {
@@ -403,7 +403,7 @@
         "min_mass": 148.58090798940665,
         "max_mass": 148.58685134459333,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a3^2"
     },
     {
@@ -414,7 +414,7 @@
         "min_mass": 149.0848104286563,
         "max_mass": 149.09077394034367,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A3^2"
     },
     {
@@ -425,7 +425,7 @@
         "min_mass": 154.40189490067334,
         "max_mass": 154.40807109999335,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z4^3"
     },
     {
@@ -436,7 +436,7 @@
         "min_mass": 154.73782986017312,
         "max_mass": 154.74401949716025,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z4^3"
     },
     {
@@ -447,7 +447,7 @@
         "min_mass": 159.74136279917954,
         "max_mass": 159.74775258148716,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y4^3"
     },
     {
@@ -458,7 +458,7 @@
         "min_mass": 162.57808534026066,
         "max_mass": 162.58458859373934,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b3^2"
     },
     {
@@ -502,7 +502,7 @@
         "min_mass": 170.76551088847464,
         "max_mass": 170.77234164552533,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a5^3"
     },
     {
@@ -513,7 +513,7 @@
         "min_mass": 171.0911896272696,
         "max_mass": 171.0980334117304,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C3^2"
     },
     {
@@ -524,7 +524,7 @@
         "min_mass": 171.10144584797442,
         "max_mass": 171.10829004269223,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A5^3"
     },
     {
@@ -557,7 +557,7 @@
         "min_mass": 180.09696245571067,
         "max_mass": 180.10416647828933,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b5^3"
     },
     {
@@ -568,7 +568,7 @@
         "min_mass": 180.57638516706467,
         "max_mass": 180.58360836693535,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z3^2"
     },
     {
@@ -579,7 +579,7 @@
         "min_mass": 181.08028760631433,
         "max_mass": 181.0875309626857,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z3^2"
     },
     {
@@ -601,7 +601,7 @@
         "min_mass": 185.77236531371662,
         "max_mass": 185.77979635695002,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C5^3"
     },
     {
@@ -612,7 +612,7 @@
         "min_mass": 186.75216921558,
         "max_mass": 186.75963945175334,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z5^3"
     },
     {
@@ -623,7 +623,7 @@
         "min_mass": 187.0881041750798,
         "max_mass": 187.09558784892025,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z5^3"
     },
     {
@@ -634,7 +634,7 @@
         "min_mass": 188.58558701482397,
         "max_mass": 188.59313058917607,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y3^2"
     },
     {
@@ -645,7 +645,7 @@
         "min_mass": 192.0916371140862,
         "max_mass": 192.09932093324716,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y5^3"
     },
     {
@@ -656,7 +656,7 @@
         "min_mass": 199.10373671262266,
         "max_mass": 199.11170102137737,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a2"
     },
     {
@@ -667,7 +667,7 @@
         "min_mass": 199.10373701261665,
         "max_mass": 199.11170132138335,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a4^2"
     },
     {
@@ -678,7 +678,7 @@
         "min_mass": 199.6076394518663,
         "max_mass": 199.6156239171337,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A4^2"
     },
     {
@@ -689,7 +689,7 @@
         "min_mass": 200.11154159112198,
         "max_mass": 200.11954621287805,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A2"
     },
     {
@@ -744,7 +744,7 @@
         "min_mass": 209.1070583755213,
         "max_mass": 209.11542282514532,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a6^3"
     },
     {
@@ -755,7 +755,7 @@
         "min_mass": 209.44299333502107,
         "max_mass": 209.45137122231222,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A6^3"
     },
     {
@@ -766,7 +766,7 @@
         "min_mass": 213.10091436347068,
         "max_mass": 213.10943857052933,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b4^2"
     },
     {
@@ -777,7 +777,7 @@
         "min_mass": 218.43850994275732,
         "max_mass": 218.44724765790932,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b6^3"
     },
     {
@@ -799,7 +799,7 @@
         "min_mass": 221.61401865047964,
         "max_mass": 221.6228833885204,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C4^2"
     },
     {
@@ -821,7 +821,7 @@
         "min_mass": 224.11391280076327,
         "max_mass": 224.12287753657,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C6^3"
     },
     {
@@ -832,7 +832,7 @@
         "min_mass": 227.09809141433067,
         "max_mass": 227.10717551966934,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b2"
     },
     {
@@ -843,7 +843,7 @@
         "min_mass": 229.76550659829337,
         "max_mass": 229.77469740237336,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z6^3"
     },
     {
@@ -854,7 +854,7 @@
         "min_mass": 230.1014415577931,
         "max_mass": 230.11064579954026,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z6^3"
     },
     {
@@ -865,7 +865,7 @@
         "min_mass": 231.0992141902747,
         "max_mass": 231.10845834372535,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z4^2"
     },
     {
@@ -876,7 +876,7 @@
         "min_mass": 231.60311662952432,
         "max_mass": 231.6123809394757,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z4^2"
     },
     {
@@ -887,7 +887,7 @@
         "min_mass": 235.10497449679954,
         "max_mass": 235.11437888386715,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y6^3"
     },
     {
@@ -898,7 +898,7 @@
         "min_mass": 239.108416038034,
         "max_mass": 239.11798056596606,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y4^2"
     },
     {
@@ -942,7 +942,7 @@
         "min_mass": 244.12429998834855,
         "max_mass": 244.13406515565143,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C2"
     },
     {
@@ -953,7 +953,7 @@
         "min_mass": 247.06371169393867,
         "max_mass": 247.07359444006136,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z2"
     },
     {
@@ -964,7 +964,7 @@
         "min_mass": 248.07151657243796,
         "max_mass": 248.08143963156206,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z2"
     },
     {
@@ -997,7 +997,7 @@
         "min_mass": 255.64463817197662,
         "max_mass": 255.65486416202333,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a5^2"
     },
     {
@@ -1008,7 +1008,7 @@
         "min_mass": 256.1485406112263,
         "max_mass": 256.15878675777367,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A5^2"
     },
     {
@@ -1019,7 +1019,7 @@
         "min_mass": 263.0821153894573,
         "max_mass": 263.0926388845428,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y2"
     },
     {
@@ -1030,7 +1030,7 @@
         "min_mass": 269.64181552283065,
         "max_mass": 269.6526014111693,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b5^2"
     },
     {
@@ -1052,7 +1052,7 @@
         "min_mass": 278.15491980983956,
         "max_mass": 278.1660462291604,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C5^2"
     },
     {
@@ -1063,7 +1063,7 @@
         "min_mass": 279.6246256626347,
         "max_mass": 279.6358108713654,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z5^2"
     },
     {
@@ -1074,7 +1074,7 @@
         "min_mass": 280.12852810188434,
         "max_mass": 280.1397334671157,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z5^2"
     },
     {
@@ -1085,7 +1085,7 @@
         "min_mass": 287.633827510394,
         "max_mass": 287.64533309360604,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y5^2"
     },
     {
@@ -1118,7 +1118,7 @@
         "min_mass": 296.15455965734265,
         "max_mass": 296.1664060766573,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a3"
     },
     {
@@ -1129,7 +1129,7 @@
         "min_mass": 297.16236453584196,
         "max_mass": 297.174251268158,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A3"
     },
     {
@@ -1162,7 +1162,7 @@
         "min_mass": 313.1569594025466,
         "max_mass": 313.1694859314533,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a6^2"
     },
     {
@@ -1173,7 +1173,7 @@
         "min_mass": 313.66086184179625,
         "max_mass": 313.67340852720366,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A6^2"
     },
     {
@@ -1184,7 +1184,7 @@
         "min_mass": 324.14891435905065,
         "max_mass": 324.16188057494935,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b3"
     },
     {
@@ -1195,7 +1195,7 @@
         "min_mass": 327.1541367534006,
         "max_mass": 327.1672231805993,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b6^2"
     },
     {
@@ -1217,7 +1217,7 @@
         "min_mass": 335.6672410404096,
         "max_mass": 335.6806679985903,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C6^2"
     },
     {
@@ -1239,7 +1239,7 @@
         "min_mass": 341.17512293306856,
         "max_mass": 341.18877021093147,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C3"
     },
     {
@@ -1250,7 +1250,7 @@
         "min_mass": 344.1446317367047,
         "max_mass": 344.1583977972954,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z6^2"
     },
     {
@@ -1261,7 +1261,7 @@
         "min_mass": 344.64853417595435,
         "max_mass": 344.6623203930457,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z6^2"
     },
     {
@@ -1272,7 +1272,7 @@
         "min_mass": 352.153833584464,
         "max_mass": 352.16792001953604,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y6^2"
     },
     {
@@ -1283,7 +1283,7 @@
         "min_mass": 360.1455140126587,
         "max_mass": 360.1599201213414,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z3"
     },
     {
@@ -1294,7 +1294,7 @@
         "min_mass": 361.153318891158,
         "max_mass": 361.16776531284205,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z3"
     },
     {
@@ -1327,7 +1327,7 @@
         "min_mass": 376.1639177081773,
         "max_mass": 376.1789645658228,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y3"
     },
     {
@@ -1338,7 +1338,7 @@
         "min_mass": 397.2002177037627,
         "max_mass": 397.2161060302373,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a4"
     },
     {
@@ -1349,7 +1349,7 @@
         "min_mass": 398.20802258226195,
         "max_mass": 398.22395122173805,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A4"
     },
     {
@@ -1382,7 +1382,7 @@
         "min_mass": 425.1945724054707,
         "max_mass": 425.21158052852934,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b4"
     },
     {
@@ -1404,7 +1404,7 @@
         "min_mass": 442.2207809794886,
         "max_mass": 442.23847016451145,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C4"
     },
     {
@@ -1415,7 +1415,7 @@
         "min_mass": 461.1911720590787,
         "max_mass": 461.20962007492136,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z4"
     },
     {
@@ -1426,7 +1426,7 @@
         "min_mass": 462.198976937578,
         "max_mass": 462.2174652664221,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z4"
     },
     {
@@ -1437,7 +1437,7 @@
         "min_mass": 477.2095757545973,
         "max_mass": 477.2286645194028,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y4"
     },
     {
@@ -1470,7 +1470,7 @@
         "min_mass": 510.28202002248264,
         "max_mass": 510.3024317115173,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a5"
     },
     {
@@ -1481,7 +1481,7 @@
         "min_mass": 511.2898249009819,
         "max_mass": 511.310276903018,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A5"
     },
     {
@@ -1492,7 +1492,7 @@
         "min_mass": 538.2763747241906,
         "max_mass": 538.2979062098093,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b5"
     },
     {
@@ -1514,7 +1514,7 @@
         "min_mass": 555.3025832982084,
         "max_mass": 555.3247958457914,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C5"
     },
     {
@@ -1525,7 +1525,7 @@
         "min_mass": 558.2419950037987,
         "max_mass": 558.2643251302014,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z5"
     },
     {
@@ -1536,7 +1536,7 @@
         "min_mass": 559.249799882298,
         "max_mass": 559.2721703217021,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z5"
     },
     {
@@ -1547,7 +1547,7 @@
         "min_mass": 574.2603986993173,
         "max_mass": 574.2833695746828,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y5"
     },
     {
@@ -1580,7 +1580,7 @@
         "min_mass": 625.3066624836226,
         "max_mass": 625.3316752503772,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "a6"
     },
     {
@@ -1591,7 +1591,7 @@
         "min_mass": 626.3144673621218,
         "max_mass": 626.339520441878,
         "neutral_loss": "",
-        "fragment_score": 99,
+        "fragment_score": 98,
         "full_name": "A6"
     },
     {
@@ -1602,7 +1602,7 @@
         "min_mass": 653.3010171853306,
         "max_mass": 653.3271497486693,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 98,
         "full_name": "b6"
     },
     {
@@ -1624,7 +1624,7 @@
         "min_mass": 670.3272257593485,
         "max_mass": 670.3540393846513,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "C6"
     },
     {
@@ -1635,7 +1635,7 @@
         "min_mass": 687.2820071519387,
         "max_mass": 687.3094989820614,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "z6"
     },
     {
@@ -1646,7 +1646,7 @@
         "min_mass": 688.289812030438,
         "max_mass": 688.3173441735621,
         "neutral_loss": "",
-        "fragment_score": 98,
+        "fragment_score": 100,
         "full_name": "Z6"
     },
     {
@@ -1657,7 +1657,7 @@
         "min_mass": 703.3004108474573,
         "max_mass": 703.3285434265428,
         "neutral_loss": "",
-        "fragment_score": 100,
+        "fragment_score": 99,
         "full_name": "y6"
     },
     {

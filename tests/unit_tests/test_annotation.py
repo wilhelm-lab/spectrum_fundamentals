@@ -30,6 +30,25 @@ class TestAnnotationPipeline(unittest.TestCase):
         result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)
 
+    def test_annotate_spectra_multifrag(self):
+        """Test annotate spectra."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input_multifrag.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+
+        expected_result = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_output_multifrag.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        result = annotation.annotate_spectra(spectrum_input, multifrag=True, fragmentation_method="ECD")
+        pd.testing.assert_frame_equal(expected_result, result)
+
     def test_annotate_spectra_with_custom_mods(self):
         """Test annotate spectra."""
         spectrum_input = pd.read_csv(
