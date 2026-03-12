@@ -180,9 +180,14 @@ Every commit on ``main`` corresponds exactly to a published release.
    CI runs automatically on the PR. Merge only when all checks pass.
 
 4. **Publish the draft release** on GitHub.
-   Because ``commitish: main`` is set in ``.github/release-drafter.yml``, the draft
-   already targets ``main``. Simply click **Publish release** — no manual branch selection
-   is needed. This triggers the publish workflow, which:
+
+   .. important::
+
+      Before clicking **Publish release**, open the draft, expand the **Target** dropdown,
+      and change it from ``development`` to ``main``. This ensures the tag ``v<next-version>``
+      is created on ``main``, not on ``development``.
+
+   After setting the target, click **Publish release**. This triggers the publish workflow, which:
 
    - Re-runs the full CI suite as a hard gate.
    - Builds the wheel and sdist with ``poetry build``.
