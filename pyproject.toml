@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spectrum_fundamentals"
-version = "0.9.0"
+version = "0.10.0"
 description = "Fundamental functions, annotation pipeline and constants for oktoberfest"
 authors = ["Wilhelmlab at Technical University of Munich"]
 license = "MIT"
