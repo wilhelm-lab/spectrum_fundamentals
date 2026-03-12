@@ -10,13 +10,6 @@ on:
         branches: ["*"]
     # Allow triggering manually from the Actions tab without pushing a commit.
     workflow_dispatch:
-    # Allow other workflows (e.g. publish) to call this as a reusable workflow.
-    workflow_call:
-
-# Cancel any in-progress run for the same branch when a newer commit is pushed.
-concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
 
 jobs:
     # ------------------------------------------------------------------
