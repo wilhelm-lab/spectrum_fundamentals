@@ -160,21 +160,40 @@ Release Drafter continuously updates a draft GitHub Release with an accumulated 
 from merged PR labels and a suggested next version (e.g. ``0.9.1``). It is a changelog
 generator — it never modifies any file in the repository.
 
-1. **Check the draft release** on GitHub to see the suggested next version.
+**Branch model:** ``development`` is the integration branch; ``main`` is the release branch.
+Every commit on ``main`` corresponds exactly to a published release.
 
-2. **Update** ``pyproject.toml`` to match (only the ``version`` field):
+1. **Check the draft release** on GitHub to see the suggested next version (e.g. ``0.10.0``).
+   The version is inferred automatically from the labels on merged PRs since the last release.
+
+2. **Bump the version on** ``development``:
 
    .. code:: console
 
-      $ poetry version <next-version>   # e.g. poetry version 0.9.1
-
+      $ git checkout development && git pull
+      $ poetry version <next-version>   # e.g. poetry version 0.10.0
       $ git add pyproject.toml
-      $ git commit -m "chore: bump version to $(poetry version -s)"
-      $ git push
+      $ git commit -m "bump version to $(poetry version -s)"
+      $ git push origin development
+
+3. **Open a pull request** ``development → main`` titled ``Release v<next-version>``.
+   CI runs automatically on the PR. Merge only when all checks pass.
 
 4. **Publish the draft release** on GitHub.
-   This triggers the publish workflow, which:
+   Because ``commitish: main`` is set in ``.github/release-drafter.yml``, the draft
+   already targets ``main``. Simply click **Publish release** — no manual branch selection
+   is needed. This triggers the publish workflow, which:
 
-   - Re-runs the full CI suite as a gate.
+   - Re-runs the full CI suite as a hard gate.
    - Builds the wheel and sdist with ``poetry build``.
    - Publishes to PyPI via OIDC Trusted Publishing (no secrets required).
+   - Creates the tag ``v<next-version>`` on ``main``.
+
+5. **Back-merge** ``main`` into ``development`` so that ``development`` contains the
+   release tag commit and stays in sync:
+
+   .. code:: console
+
+      $ git checkout development && git pull
+      $ git merge main --no-ff -m "sync main back to development after release"
+      $ git push origin development
