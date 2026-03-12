@@ -1,9 +1,10 @@
-# Version tokens are resolved by Release Drafter at runtime by scanning merged PR labels
-# since the last published release and applying the version-resolver rules below.
-# $NEXT_VERSION picks the correct bump (major/minor/patch) based on those labels.
-
-name-template: "$NEXT_VERSION"
-tag-template: "v$NEXT_VERSION"
+# commitish: development — the workflow triggers on push to development (where all PRs
+# merge), so Release Drafter scans development to find PR labels and resolve the version.
+# The draft release targets development; before publishing, manually change the "Target"
+# dropdown to main in the GitHub release UI so the tag lands on main.
+commitish: development
+name-template: "$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
 exclude-labels:
     - "skip-changelog"
 
