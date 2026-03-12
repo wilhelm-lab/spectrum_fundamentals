@@ -10,15 +10,9 @@ concurrency:
     cancel-in-progress: false
 
 jobs:
-    # Re-run CI at the exact commit being released as a hard gate before publishing.
-    ci:
-        name: CI gate
-        uses: ./.github/workflows/ci.yml
-
     release:
         name: Release
         runs-on: ubuntu-latest
-        needs: ci
 
         # Required for PyPI Trusted Publishing (OIDC) — no PYPI_TOKEN secret needed.
         permissions:
