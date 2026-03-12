@@ -23,9 +23,9 @@ jobs:
         name: lint
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: actions/setup-python@v5
+            - uses: actions/setup-python@v6
               with:
                   python-version: "3.13"
                   cache: pip
@@ -46,9 +46,9 @@ jobs:
         name: type-check
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: actions/setup-python@v5
+            - uses: actions/setup-python@v6
               with:
                   python-version: "3.13"
                   cache: pip
@@ -74,9 +74,9 @@ jobs:
             matrix:
                 python-version: ["3.10", "3.12", "3.13"]
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
-            - uses: actions/setup-python@v5
+            - uses: actions/setup-python@v6
               with:
                   python-version: ${{ matrix.python-version }}
                   cache: pip
@@ -92,7 +92,7 @@ jobs:
 
             - name: Upload coverage
               if: matrix.python-version == '3.13'
-              uses: codecov/codecov-action@v5
+              uses: codecov/codecov-action@v5.5.2
 
     # ------------------------------------------------------------------
     # Build — verify the sdist/wheel is valid (ubuntu only, single job)
