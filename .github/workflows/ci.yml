@@ -2,6 +2,9 @@ name: CI
 
 on:
     push:
+        # release/* trigger is there just in case someone uses a release branch
+        # but we opt for a simpler approach to release from development and
+        #merge that tagged commit to main instead of creating a separate release branch and then deleting it.
         branches: [main, development, "release/*"]
     pull_request:
         branches: ["*"]

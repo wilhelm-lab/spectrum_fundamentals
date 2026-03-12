@@ -59,8 +59,6 @@ autolabeler:
     - label: enhancement
       branch:
           - /feature\/.+/
-      body:
-          - "/JIRA-[0-9]{1,4}/"
 template: |
     ## Changes
 
