@@ -11,6 +11,7 @@ import inspect
 import os
 import sys
 from datetime import datetime
+from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
 from pathlib import Path
 
@@ -53,7 +54,10 @@ copyright = f"{datetime.now():%Y}, Wilhelmlab at Technical University of Munich"
 # the built documents.
 #
 # Read from installed package metadata — single source of truth is pyproject.toml.
-_pkg_version = _version("spectrum_fundamentals")
+try:
+    _pkg_version = _version("spectrum_fundamentals")
+except PackageNotFoundError:
+    _pkg_version = "unknown"
 # The short X.Y version.
 version = ".".join(_pkg_version.split(".")[:2])
 # The full version, including alpha/beta/rc tags.
