@@ -1,5 +1,12 @@
-name-template: "0.9.0 " # <<COOKIETEMPLE_FORCE_BUMP>>
-tag-template: 0.9.0 # <<COOKIETEMPLE_FORCE_BUMP>>
+# Version tokens are resolved by Release Drafter at runtime by scanning merged PR labels
+# since the last published release and applying the version-resolver rules below.
+# $NEXT_VERSION picks the correct bump (major/minor/patch) based on those labels.
+#
+# commitish: main ensures the draft release (and the tag it creates on publish) always
+# targets main, regardless of which branch triggered the Release Drafter workflow.
+commitish: main
+name-template: "$NEXT_VERSION"
+tag-template: "v$NEXT_VERSION"
 exclude-labels:
     - "skip-changelog"
 
@@ -28,9 +35,17 @@ version-resolver:
     minor:
         labels:
             - minor
+            - feature
+            - enhancement
     patch:
         labels:
             - patch
+            - fix
+            - bugfix
+            - bug
+            - chore
+            - dependencies
+            - build
     default: patch
 autolabeler:
     - label: chore

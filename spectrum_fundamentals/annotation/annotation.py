@@ -1,24 +1,27 @@
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
 from spectrum_fundamentals import constants
-from spectrum_fundamentals.fragments import initialize_peaks, initialize_peaks_xl, retrieve_ion_types
+from spectrum_fundamentals.fragments import (
+    initialize_peaks,
+    initialize_peaks_xl,
+    retrieve_ion_types,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def match_peaks(  # noqa: C901
-    fragments_meta_data: List[dict],
+    fragments_meta_data: list[dict],
     peaks_intensity: np.ndarray,
     peaks_masses: np.ndarray,
     tmt_n_term: int,
     unmod_sequence: str,
-    multifrag: Optional[bool] = False,
-    p_window_bounds: Optional[List] = None,
-) -> Tuple[List[Dict[str, Union[str, int, float]]], int]:
+    multifrag: bool = False,
+    p_window_bounds: list | None = None,
+) -> tuple[list[dict[str, str | int | float]], int]:
     """
     Matching experimental peaks with theoretical fragment ions.
 
@@ -28,7 +31,8 @@ def match_peaks(  # noqa: C901
     :param tmt_n_term: Flag to check if there is tmt modification on n_terminus 1: no_tmt, 2:tmt
     :param unmod_sequence: Unmodified peptide sequence
     :param multifrag: Flag to check if it is a multifrag spectrum
-    :param p_window_bounds: peak exclusion window min and max boundries for multifrag, dedicated to remove precursor peaks (da)
+    :param p_window_bounds: Peak exclusion window minimum and maximum boundaries
+        for multifrag, used to remove precursor peaks (Da).
     :return: List of matched/annotated peaks
     """
     start_peak = 0
@@ -64,18 +68,21 @@ def match_peaks(  # noqa: C901
                 start_peak += 1
                 continue
 
-            if not (
-                # unstable b1: if annotation is b1 and peptide sequence is not starting with R, H, K
-                (
-                    (fragment["ion_type"] == "b" and fragment_no == 1)
-                    and (not unmod_sequence.startswith(("R", "H", "K")))
+            if (
+                not (
+                    # unstable b1: if annotation is b1 and peptide sequence is not starting with R, H, K
+                    (
+                        (fragment["ion_type"] == "b" and fragment_no == 1)
+                        and (not unmod_sequence.startswith(("R", "H", "K")))
+                    )
+                    # unstable a2: if annotation is a2 and contains Q or N or has a Carbamidometylated C
+                    or (
+                        (fragment["ion_type"] == "a" and fragment_no == 2)
+                        and (("Q" in unmod_sequence[:2]) or ("N" in unmod_sequence[:2]) or ("C" in unmod_sequence[:2]))
+                    )
                 )
-                # unstable a2: if annotation is a2 and contains Q or N or has a Carbamidometylated C
-                or (
-                    (fragment["ion_type"] == "a" and fragment_no == 2)
-                    and (("Q" in unmod_sequence[:2]) or ("N" in unmod_sequence[:2]) or ("C" in unmod_sequence[:2]))
-                )
-            ) or (tmt_n_term == 2):
+                or (tmt_n_term == 2)
+            ):
                 # For now only counting neutral loss peaks this can change with different models later
                 if fragment["neutral_loss"] == "":
                     meta_data = {
@@ -106,8 +113,8 @@ def match_peaks(  # noqa: C901
 
 
 def handle_multiple_matches(
-    matched_peaks: List[Dict[str, Union[str, int, float]]], sort_by: str = "mass_diff"
-) -> Tuple[pd.DataFrame, int]:
+    matched_peaks: list[dict[str, str | int | float]], sort_by: str = "mass_diff"
+) -> tuple[pd.DataFrame, int]:
     """
     Resolve cases where multiple peaks have been matched to the same fragment ion.
 
@@ -118,7 +125,8 @@ def handle_multiple_matches(
     :param matched_peaks: A list of dictionaries, each representing a matched peak. Each dictionary must contain the
                           following keys: 'ion_type', 'no', 'charge', 'exp_mass', 'theoretical_mass', and 'intensity'.
     :param sort_by: A string indicating the criterion to use when sorting matched peaks. Valid options are:
-                    'mass_diff' (sort by absolute difference between experimental and theoretical mass, ascending order),
+                    'mass_diff' (sort by absolute difference between experimental and theoretical mass,
+                    ascending order),
                     'intensity' (sort by intensity, descending order), and 'exp_mass' (sort by experimental mass,
                     descending order).
     :raises ValueError: If an unsupported value is passed to `sort_by`.
@@ -145,22 +153,23 @@ def handle_multiple_matches(
 
 def annotate_spectra(
     un_annot_spectra: pd.DataFrame,
-    mass_tolerance: Optional[float] = None,
-    unit_mass_tolerance: Optional[str] = None,
-    custom_mods: Optional[Dict[str, float]] = None,
+    mass_tolerance: float | None = None,
+    unit_mass_tolerance: str | None = None,
+    custom_mods: dict[str, float] | None = None,
     fragmentation_method: str = "HCD",
-    multifrag: Optional[bool] = False,
-    p_window: Optional[float] = 0.0,
-    annotate_neutral_loss: Optional[bool] = False,
-    featured_ions: Optional[List[str]] = None,
+    multifrag: bool = False,
+    p_window: float = 0.0,
+    annotate_neutral_loss: bool = False,
+    featured_ions: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
 
-    This function takes a DataFrame of raw peaks and metadata, and for each spectrum, it calls the `parallel_annotate` function
-    to annotate the spectrum and extract the necessary information. If there are any redundant peaks found in the annotation
-    process, the function removes them and logs the information. Finally, it returns a Pandas DataFrame containing the annotated
-    spectra with meta data.
+    This function takes a DataFrame of raw peaks and metadata, and for each spectrum, it calls the
+    `parallel_annotate` function to annotate the spectrum and extract the necessary information.
+    If there are any redundant peaks found in the annotation process, the function removes them and
+    logs the information. Finally, it returns a Pandas DataFrame containing the annotated spectra
+    with meta data.
 
     The returned DataFrame has the following columns:
     - INTENSITIES: a NumPy array containing the intensity values of each peak in the annotated spectrum
@@ -227,7 +236,8 @@ def annotate_spectra(
 
 def peak_pos_xl_cms2(unmod_seq: str, crosslinker_position: int) -> np.ndarray:
     """
-    Determines the positions of all potential normal and xl fragments within the vector generated by generate_annotation_matrix.
+    Determines the positions of all potential normal and xl fragments within the vector generated by
+    ``generate_annotation_matrix``.
 
     This function is used only for cleavable crosslinked peptides.
 
@@ -258,7 +268,6 @@ def peak_pos_xl_cms2(unmod_seq: str, crosslinker_position: int) -> np.ndarray:
             xl_mask_array[[x - 174 for x in peaks_ylong]] = 0.0
 
         if len(unmod_seq) != crosslinker_position:
-
             # y peaks
             peaks_y = np.tile([0, 1, 2], len(unmod_seq) - crosslinker_position) + np.repeat(
                 np.arange(len(unmod_seq) - crosslinker_position) * 6, 3
@@ -283,7 +292,7 @@ def peak_pos_xl_cms2(unmod_seq: str, crosslinker_position: int) -> np.ndarray:
 
 def generate_annotation_matrix_xl(
     matched_peaks: pd.DataFrame, unmod_seq: str, crosslinker_position: int
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the xl_prosit format from matched peaks.
 
@@ -333,9 +342,9 @@ def generate_annotation_matrix(  # noqa: C901
     unmod_seq: str,
     charge: int,
     fragmentation_method: str = "HCD",
-    multifrag: Optional[bool] = False,
-    featured_ions: Optional[List[str]] = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+    multifrag: bool = False,
+    featured_ions: list[str] | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Generate the annotation matrix in the prosit format from matched peaks.
 
@@ -420,21 +429,20 @@ def generate_annotation_matrix(  # noqa: C901
 
 def parallel_annotate(
     spectrum: np.ndarray,
-    index_columns: Dict[str, int],
-    mass_tolerance: Optional[float] = None,
-    unit_mass_tolerance: Optional[str] = None,
-    custom_mods: Optional[Dict[str, float]] = None,
+    index_columns: dict[str, int],
+    mass_tolerance: float | None = None,
+    unit_mass_tolerance: str | None = None,
+    custom_mods: dict[str, float] | None = None,
     fragmentation_method: str = "HCD",
-    multifrag: Optional[bool] = False,
-    featured_ions: Optional[List[str]] = None,
-    p_window: Optional[float] = 0.0,
-    annotate_neutral_losses: Optional[bool] = False,
-) -> Optional[
-    Union[
-        Tuple[np.ndarray, np.ndarray, float, int, int, int],
-        Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, int, int],
-    ]
-]:
+    multifrag: bool = False,
+    featured_ions: list[str] | None = None,
+    p_window: float = 0.0,
+    annotate_neutral_losses: bool = False,
+) -> (
+    tuple[np.ndarray, np.ndarray, float, int, int, int]
+    | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, int, int]
+    | None
+):
     """
     Perform parallel annotation of a spectrum.
 
@@ -442,8 +450,9 @@ def parallel_annotate(
     It starts by initializing the peaks and extracting necessary data from the spectrum.
     It then matches the peaks to the spectrum and generates an annotation matrix based on the matched peaks.
     If there are multiple matches found, it removes the redundant matches.
-    Finally, it returns annotated spectrum with meta data including intensity values, masses, calculated masses,
-    and any peaks that were removed. The function is designed to run in different threads to speed up the annotation pipeline.
+    Finally, it returns annotated spectrum with meta data including intensity values, masses, calculated
+    masses, and any peaks that were removed. The function is designed to run in different threads to
+    speed up the annotation pipeline.
 
     :param spectrum: a np.ndarray that contains the spectrum to be annotated
     :param index_columns: a dictionary that contains the index columns of the spectrum
@@ -484,15 +493,15 @@ def parallel_annotate(
 
 def _annotate_linear_spectrum(
     spectrum: np.ndarray,
-    index_columns: Dict[str, int],
-    mass_tolerance: Optional[float],
-    unit_mass_tolerance: Optional[str],
-    custom_mods: Optional[Dict[str, float]] = None,
+    index_columns: dict[str, int],
+    mass_tolerance: float | None,
+    unit_mass_tolerance: str | None,
+    custom_mods: dict[str, float] | None = None,
     fragmentation_method: str = "HCD",
-    featured_ions: Optional[List[str]] = None,
-    multifrag: Optional[bool] = False,
-    p_window: Optional[float] = 0.0,
-    add_neutral_losses: Optional[bool] = False,
+    featured_ions: list[str] | None = None,
+    multifrag: bool = False,
+    p_window: float = 0.0,
+    add_neutral_losses: bool = False,
 ):
     """
     Annotate a linear peptide spectrum.
@@ -566,11 +575,11 @@ def _annotate_linear_spectrum(
 
 def _annotate_crosslinked_spectrum(
     spectrum: np.ndarray,
-    index_columns: Dict[str, int],
+    index_columns: dict[str, int],
     crosslinker_type: str,
-    mass_tolerance: Optional[float] = None,
-    unit_mass_tolerance: Optional[str] = None,
-    custom_mods: Optional[Dict[str, float]] = None,
+    mass_tolerance: float | None = None,
+    unit_mass_tolerance: str | None = None,
+    custom_mods: dict[str, float] | None = None,
 ):
     """
     Annotate a crosslinked peptide spectrum.
@@ -634,6 +643,10 @@ def _annotate_crosslinked_spectrum(
 
         return intensities, mass, removed_peaks, calc_mass
 
+    intensities_a, mass_a, removed_peaks_a, calc_mass_a = _xl_annotation_workflow(seq_id="AB", non_cl_xl=non_cl_xl)
+    intensities_b, mass_b, removed_peaks_b, calc_mass_b = _xl_annotation_workflow(seq_id="BA", non_cl_xl=non_cl_xl)
+
+    return intensities_a, intensities_b, mass_a, mass_b, calc_mass_a, calc_mass_b, removed_peaks_a, removed_peaks_b
     intensities_a, mass_a, removed_peaks_a, calc_mass_a = _xl_annotation_workflow(seq_id="AB", non_cl_xl=non_cl_xl)
     intensities_b, mass_b, removed_peaks_b, calc_mass_b = _xl_annotation_workflow(seq_id="BA", non_cl_xl=non_cl_xl)
 

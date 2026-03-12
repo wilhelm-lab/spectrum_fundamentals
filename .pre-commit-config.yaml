@@ -1,64 +1,27 @@
 repos:
-    - repo: local
+    # ruff replaces: black (formatting), flake8 (linting), isort (imports),
+    # pyupgrade, pep8-naming, flake8-bugbear, flake8-bandit, flake8-docstrings.
+    # Each hook manages its own isolated environment; no system tools required.
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.9.0
       hooks:
-          - id: black
-            name: black
-            entry: black
-            language: system
-            types: [python]
-            require_serial: true
+          - id: ruff
+            args: [--fix]
+          - id: ruff-format
+
+    # General file-health hooks (no build tools needed).
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v5.0.0
+      hooks:
           - id: check-added-large-files
-            name: Check for added large files
-            entry: check-added-large-files
-            language: system
           - id: check-toml
-            name: Check Toml
-            entry: check-toml
-            language: system
-            types: [toml]
           - id: check-yaml
-            name: Check Yaml
-            entry: check-yaml
-            language: system
-            types: [yaml]
           - id: end-of-file-fixer
-            name: Fix End of Files
-            entry: end-of-file-fixer
-            language: system
-            types: [text]
-            stages: [pre-commit, pre-push, manual]
             exclude: docs/
-          - id: flake8
-            name: flake8
-            entry: flake8
-            language: system
-            types: [python]
-            require_serial: true
-          - id: pyupgrade
-            name: pyupgrade
-            description: Automatically upgrade syntax for newer versions.
-            entry: pyupgrade
-            language: system
-            types: [python]
-            args: [--py38-plus]
           - id: trailing-whitespace
-            name: Trim Trailing Whitespace
-            entry: trailing-whitespace-fixer
-            language: system
-            types: [text]
-            stages: [pre-commit, pre-push, manual]
+
+    # Opinionated formatter for YAML / JSON / Markdown / JS / CSS.
     - repo: https://github.com/pre-commit/mirrors-prettier
       rev: v2.5.1
       hooks:
           - id: prettier
-    - repo: https://github.com/pycqa/isort
-      rev: 5.12.0
-      hooks:
-          - id: isort
-            name: isort (python)
-          - id: isort
-            name: isort (cython)
-            types: [cython]
-          - id: isort
-            name: isort (pyi)
-            types: [pyi]

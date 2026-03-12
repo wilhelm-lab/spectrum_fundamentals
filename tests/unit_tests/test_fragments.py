@@ -1,7 +1,6 @@
 import json
 import unittest
 from pathlib import Path
-from typing import List, Optional
 
 from numpy.testing import assert_almost_equal
 
@@ -17,7 +16,7 @@ class TestInitializePeaks(unittest.TestCase):
         expected_input_file: Path,
         fragmentation_method: str,
         multifrag: bool = False,
-        featured_ions: Optional[List[str]] = None,
+        featured_ions: list[str] | None = None,
     ):
         if featured_ions is None:
             featured_ions = ["y", "b"]
@@ -87,7 +86,6 @@ class TestInitializePeaks(unittest.TestCase):
         )
 
     def _test_xl_outputs(self, expected_input_file: Path, **fragments_input):
-
         with open(expected_input_file) as file:
             expected_list_out = json.load(file)
 

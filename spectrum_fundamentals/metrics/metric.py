@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,20 +14,20 @@ class Metric:
 
     # check https://gitlab.lrz.de/proteomics/prosit_tools/oktoberfest/-/blob/develop/oktoberfest/rescoring/annotate.R
     # for all metrics
-    pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]]  # list of lists
-    true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]]  # list of lists
+    pred_intensities: np.ndarray | scipy.sparse.csr_matrix | None  # list of lists
+    true_intensities: np.ndarray | scipy.sparse.csr_matrix | None  # list of lists
     metrics_val: pd.DataFrame
 
     def __init__(
         self,
-        pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        pred_intensities: np.ndarray | scipy.sparse.csr_matrix | None = None,
+        true_intensities: np.ndarray | scipy.sparse.csr_matrix | None = None,
+        mz: np.ndarray | scipy.sparse.csr_matrix | None = None,
         xl: bool = False,
         cms2: bool = False,
         all_features_flag: bool = False,
         task: str = "default",
-        featured_ions: Optional[List[str]] = None,
+        featured_ions: list[str] | None = None,
     ):
         """
         Initialize a Metric object.
@@ -57,7 +56,6 @@ class Metric:
 
         reps = (SEQ_LEN - 1) * (2 if self.cms2 else 1)
         if self.task == "default":
-
             b = np.tile([0, 0, 0, 1, 1, 1], reps)
             y = np.tile([1, 1, 1, 0, 0, 0], reps)
 

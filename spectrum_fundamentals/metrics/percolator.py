@@ -1,7 +1,6 @@
 import enum
 import logging
 import math
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -79,17 +78,17 @@ class Percolator(Metric):
         self,
         metadata: pd.DataFrame,
         input_type: str,
-        pred_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        true_intensities: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
-        mz: Optional[Union[np.ndarray, scipy.sparse.csr_matrix]] = None,
+        pred_intensities: np.ndarray | scipy.sparse.csr_matrix | None = None,
+        true_intensities: np.ndarray | scipy.sparse.csr_matrix | None = None,
+        mz: np.ndarray | scipy.sparse.csr_matrix | None = None,
         *,
         all_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
-        additional_columns: Optional[Union[str, list]] = None,
+        additional_columns: str | list | None = None,
         neutral_loss_flag: bool = False,
         drop_miss_cleavage_flag: bool = False,
-        featured_ions: Optional[List[str]] = None,
+        featured_ions: list[str] | None = None,
         cms2: bool = False,
         task: str = "default",
     ):
@@ -144,9 +143,9 @@ class Percolator(Metric):
 
     @staticmethod
     def get_aligned_predicted_retention_times(
-        observed_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
-        predicted_retention_times_fdr_filtered: Union[np.ndarray, pd.Series],
-        predicted_retention_times_all: Union[np.ndarray, pd.Series],
+        observed_retention_times_fdr_filtered: np.ndarray | pd.Series,
+        predicted_retention_times_fdr_filtered: np.ndarray | pd.Series,
+        predicted_retention_times_all: np.ndarray | pd.Series,
         curve_fitting_method: str = "lowess",
     ) -> np.ndarray:
         """
@@ -229,12 +228,13 @@ class Percolator(Metric):
         )
 
     @staticmethod
-    def get_specid(metadata_subset: Union[pd.Series, Tuple]) -> str:
+    def get_specid(metadata_subset: pd.Series | tuple) -> str:
         """
         Create a unique identifier used as spectrum id in percolator, this is not parsed by percolator but functions \
         as a key to map percolator results back to our internal representation.
 
-        :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence, charge and optionally scan_event_number)
+        :param metadata_subset: tuple of (raw_file, scan_number, modified_sequence,
+            charge and optionally scan_event_number)
         :return: percolator spectrum id
         """
         return "-".join([f"{elem}" for elem in metadata_subset])
@@ -260,7 +260,7 @@ class Percolator(Metric):
         return sequence.count("K") + sequence.count("R")
 
     @staticmethod
-    def calculate_mass_difference(metadata_subset: Tuple[float, float]) -> float:
+    def calculate_mass_difference(metadata_subset: tuple[float, float]) -> float:
         """
         Calculate mass difference.
 
@@ -271,7 +271,7 @@ class Percolator(Metric):
         return calculated_mass - experimental_mass
 
     @staticmethod
-    def calculate_mass_difference_ppm(metadata_subset: Tuple[float, float]) -> float:
+    def calculate_mass_difference_ppm(metadata_subset: tuple[float, float]) -> float:
         """
         Calculate mass difference in ppm.
 
@@ -423,7 +423,7 @@ class Percolator(Metric):
         return np.sort(scores_df.index[: len(accepted_indices)])
 
     @staticmethod
-    def calculate_fdrs(sorted_labels: Union[pd.Series, np.ndarray]) -> np.ndarray:
+    def calculate_fdrs(sorted_labels: pd.Series | np.ndarray) -> np.ndarray:
         """
         Calculate FDR.
 
@@ -466,7 +466,6 @@ class Percolator(Metric):
         intensity_row = intensities.toarray()
 
         for row in range(n):
-
             u, c = np.unique(mz_row[row], return_counts=True)
             dup = u[(c > 1) & (u > constants.EPSILON)]
             for val in dup:
@@ -623,7 +622,7 @@ def spline(knots: int, x: np.ndarray, y: np.ndarray):
     return yfit, t, c, k
 
 
-def logistic(x: Union[pd.Series, np.ndarray], a: float, b: float, c: float, d: float):
+def logistic(x: pd.Series | np.ndarray, a: float, b: float, c: float, d: float):
     """Calculates logistic regression function."""
     exponent = np.clip(-c * (x - d), -700, 700)  # make this stable, i.e. avoid 0.0 or inf
     return a / (1.0 + np.exp(exponent)) + b

@@ -4,20 +4,34 @@ on:
     release:
         types: [published]
 
+# Never cancel a release publish once started.
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
+
 jobs:
+    # Re-run CI at the exact commit being released as a hard gate before publishing.
+    ci:
+        name: CI gate
+        uses: ./.github/workflows/ci.yml
+
     release:
         name: Release
         runs-on: ubuntu-latest
+        needs: ci
+
+        # Required for PyPI Trusted Publishing (OIDC) — no PYPI_TOKEN secret needed.
+        permissions:
+            id-token: write
         steps:
             - name: Check out the repository
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 2
+              uses: actions/checkout@v6
 
             - name: Set up Python
-              uses: actions/setup-python@v5.6.0
+              uses: actions/setup-python@v6
               with:
                   python-version: "3.13"
+                  cache: pip
 
             - name: Install Poetry
               run: |
@@ -25,13 +39,7 @@ jobs:
                   poetry --version
 
             - name: Build package
-              run: |
-                  poetry build --ansi
+              run: poetry build --ansi
 
             - name: Publish package on PyPI
-              uses: pypa/gh-action-pypi-publish@v1.12.4
-              with:
-                  # TODO COOKIETEMPLE: Configure your PyPI Token to enable automatic deployment to PyPi on releases
-                  # https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
-                  user: __token__
-                  password: ${{ secrets.PYPI_TOKEN }}
+              uses: pypa/gh-action-pypi-publish@v1.13.0

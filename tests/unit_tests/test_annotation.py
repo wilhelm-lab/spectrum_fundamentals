@@ -110,7 +110,8 @@ class TestAnnotationPipeline(unittest.TestCase):
 
     def test_handle_multiple_matches(self):
         """Test handle_multiple_matches function."""
-        # Example input data with multiple matches. They don't make biological sense but it tests the mathematical correctness.
+        # Example input data with multiple matches. They don't make biological sense but it tests
+        # the mathematical correctness.
         matched_peaks = [
             {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 200, "theoretical_mass": 198, "intensity": 0.05},
             {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 205, "theoretical_mass": 198, "intensity": 0.01},
