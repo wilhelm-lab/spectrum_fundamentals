@@ -28,13 +28,32 @@ class TestAnnotationPipeline(unittest.TestCase):
         result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)
 
-    # def test_annotate_spectra_with_custom_mods(self):
-    #     """Test annotate spectra."""
-    #     spectrum_input = pd.read_csv(
-    #         Path(__file__).parent / "data/spectrum_input.csv",
-    #         index_col=0,
-    #         converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
-    #     )
+    def test_annotate_spectra_multifrag(self):
+        """Test annotate spectra."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input_multifrag.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+
+        expected_result = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_output_multifrag.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        result = annotation.annotate_spectra(spectrum_input, multifrag=True, fragmentation_method="ECD")
+        pd.testing.assert_frame_equal(expected_result, result)
+
+    def test_annotate_spectra_with_custom_mods(self):
+        """Test annotate spectra."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
 
     #     expected_result = pd.read_csv(
     #         Path(__file__).parent / "data/spectrum_output.csv",
@@ -89,7 +108,8 @@ class TestAnnotationPipeline(unittest.TestCase):
 
     def test_handle_multiple_matches(self):
         """Test handle_multiple_matches function."""
-        # Example input data with multiple matches. They don't make biological sense but it tests the mathematical correctness.
+        # Example input data with multiple matches. They don't make biological sense but it tests
+        # the mathematical correctness.
         matched_peaks = [
             {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 200, "theoretical_mass": 198, "intensity": 0.05},
             {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 205, "theoretical_mass": 198, "intensity": 0.01},

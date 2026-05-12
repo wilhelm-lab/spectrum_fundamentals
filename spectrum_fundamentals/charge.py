@@ -1,9 +1,7 @@
-from typing import List, Optional, Union
-
 import numpy as np
 
 
-def indices_to_one_hot(labels: Union[int, List[int], np.ndarray], classes: Optional[int] = None) -> np.ndarray:
+def indices_to_one_hot(labels: int | list[int] | np.ndarray, classes: int | None = None) -> np.ndarray:
     """
     Convert a single or a list of labels to one-hot encoding.
 

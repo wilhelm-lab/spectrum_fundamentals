@@ -11,7 +11,15 @@ import spectrum_fundamentals.fragments as fragments
 class TestInitializePeaks(unittest.TestCase):
     """Class to test initialize_peaks function."""
 
-    def _test_outputs(self, expected_input_file: Path, fragmentation_method: str):
+    def _test_outputs(
+        self,
+        expected_input_file: Path,
+        fragmentation_method: str,
+        multifrag: bool = False,
+        featured_ions: list[str] | None = None,
+    ):
+        if featured_ions is None:
+            featured_ions = ["y", "b"]
 
         with open(expected_input_file) as file:
             expected_list_out = json.load(file)
@@ -20,14 +28,22 @@ class TestInitializePeaks(unittest.TestCase):
         expected_peptide_sequence = "PEPTIDE"
         expected_mass_s = 799.3599646700001
         expected_nl_annotated = 0
+        expected_window = [266.26059802354666, 268.66059802354664]
 
-        actual_list_out, actual_tmt_n_term, actual_peptide_sequence, actual_calc_mass_s, actual_nl_annotated = (
-            fragments.initialize_peaks(
-                sequence="PEPTIDE",
-                mass_analyzer="FTMS",
-                charge=3,
-                fragmentation_method=fragmentation_method,
-            )
+        (
+            actual_list_out,
+            actual_tmt_n_term,
+            actual_peptide_sequence,
+            actual_calc_mass_s,
+            actual_nl_annotated,
+            actual_window,
+        ) = fragments.initialize_peaks(
+            sequence="PEPTIDE",
+            mass_analyzer="FTMS",
+            charge=3,
+            fragmentation_method=fragmentation_method,
+            multifrag=multifrag,
+            featured_ions=featured_ions,
         )
 
         self.assertEqual(actual_list_out, expected_list_out)
@@ -35,28 +51,41 @@ class TestInitializePeaks(unittest.TestCase):
         self.assertEqual(actual_peptide_sequence, expected_peptide_sequence)
         assert_almost_equal(actual_calc_mass_s, expected_mass_s, decimal=5)
         self.assertEqual(actual_nl_annotated, expected_nl_annotated)
+        self.assertEqual(actual_window, expected_window)
 
     def test_initialize_peaks_hcd_cid(self):
         """Test initialize_peaks for HCD / CID input."""
         self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_hcd_cid.json", "HCD")
         self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_hcd_cid.json", "CID")
 
-    def test_initialize_peaks_etd_ecd(self):
-        """Test initialize_peaks for ETD / ECD input."""
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_etd_ecd.json", "ETD")
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_etd_ecd.json", "ECD")
-
-    def test_initialize_peaks_ethcd_etcid(self):
-        """Test initialize_peaks for ETCID / ETHCD input."""
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_ethcd_etcid.json", "ETHCD")
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_ethcd_etcid.json", "ETCID")
-
-    def test_initialize_peaks_uvpd(self):
-        """Test initialize_peaks with basic input, but for all six ion types for UVPD."""
-        self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_uvpd.json", "UVPD")
+    def test_initialize_peaks_ecd_etcid_eid_uvpd(self):
+        """Test initialize_peaks for ECD/ETCID/EID/UVPD input."""
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_ecd.json",
+            "ECD",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_etcid.json",
+            "ETCID",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_eid.json",
+            "EID",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_uvpd.json",
+            "UVPD",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
 
     def _test_xl_outputs(self, expected_input_file: Path, **fragments_input):
-
         with open(expected_input_file) as file:
             expected_list_out = json.load(file)
 
@@ -109,17 +138,9 @@ class TestFragmentationMethod(unittest.TestCase):
         """Test retrieving ion types for HCD."""
         assert fragments.retrieve_ion_types("HCD") == ["y", "b"]
 
-    def test_get_ion_types_etd(self):
-        """Test retrieving ion types for ETD."""
-        assert fragments.retrieve_ion_types("ETD") == ["z_r", "c"]
-
     def test_get_ion_types_etcid(self):
         """Test retrieving ion types for ETCID."""
-        assert fragments.retrieve_ion_types("ETCID") == ["y", "b", "z_r", "c"]
-
-    def test_get_ion_types_lower_case(self):
-        """Test lower case fragmentation method."""
-        assert fragments.retrieve_ion_types("uvpd") == ["x", "a", "y", "b", "z", "c"]
+        assert fragments.retrieve_ion_types("ETCID") == ["A", "b", "c", "C", "y", "z", "Z"]
 
     def test_invalid_fragmentation_method(self):
         """Test if error is raised for invalid fragmentation method."""
@@ -133,17 +154,9 @@ class TestFragmentationMethodForPeakInitialization(unittest.TestCase):
         """Test retrieving ion types for HCD."""
         assert fragments.retrieve_ion_types_for_peak_initialization("HCD") == ["y", "b"]
 
-    def test_get_ion_types_etd(self):
-        """Test retrieving ion types for ETD."""
-        assert fragments.retrieve_ion_types_for_peak_initialization("ETD") == ["z_r", "c"]
-
     def test_get_ion_types_etcid(self):
         """Test retrieving ion types for ETCID."""
-        assert fragments.retrieve_ion_types_for_peak_initialization("ETCID") == ["y", "z_r", "b", "c"]
-
-    def test_get_ion_types_lower_case(self):
-        """Test lower case fragmentation method."""
-        assert fragments.retrieve_ion_types_for_peak_initialization("uvpd") == ["x", "y", "z", "a", "b", "c"]
+        assert fragments.retrieve_ion_types_for_peak_initialization("ETCID") == ["A", "b", "c", "C", "y", "z", "Z"]
 
     def test_invalid_fragmentation_method(self):
         """Test if error is raised for invalid fragmentation method."""

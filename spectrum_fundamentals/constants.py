@@ -1,6 +1,7 @@
 from enum import Enum
+from pathlib import Path
 
-import numpy as np
+import pandas as pd
 
 #####################
 # GENERAL CONSTANTS #
@@ -17,63 +18,6 @@ VEC_LENGTH = (
 VEC_LENGTH_CMS2 = (SEQ_LEN - 1) * 2 * 3 * 2
 # peptide of length 30 can have 29 b, y, b_short, y_short, b_long and y_long ions, each with charge 1+, 2+ and 3+
 # we do not annotate fragments wth charge 3+. All fragmets with charge 3+ convert to -1
-
-
-#############
-# ALPHABETS #
-#############
-
-AA_ALPHABET = {
-    "A": 1,
-    "C": 24,
-    "D": 3,
-    "E": 4,
-    "F": 5,
-    "G": 6,
-    "H": 7,
-    "I": 8,
-    "K": 9,
-    "L": 10,
-    "M": 11,
-    "N": 12,
-    "P": 13,
-    "Q": 14,
-    "R": 15,
-    "S": 16,
-    "T": 17,
-    "V": 18,
-    "W": 19,
-    "Y": 20,
-}
-
-TERMINAL_ALPHABET = {"[]-": 30, "-[]": 31}  # unmodified n terminus  # unmodified c terminus
-
-ALPHABET_MODS = {
-    "M[UNIMOD:35]": 21,
-    "C[UNIMOD:4]": 2,
-    "K[UNIMOD:737]": 22,
-    "K[UNIMOD:2016]": 22,
-    "K[UNIMOD:214]": 22,
-    "K[UNIMOD:730]": 22,
-    "K[UNIMOD:1896]": 22,
-    "K[UNIMOD:1898]": 22,
-    "K[UNIMOD:1884]": 23,
-    "K[UNIMOD:1881]": 24,
-    "K[UNIMOD:1882]": 25,
-    "K[UNIMOD:1885]": 26,
-    "K[UNIMOD:1886]": 27,
-    "S[UNIMOD:21]": 25,
-    "T[UNIMOD:21]": 26,
-    "Y[UNIMOD:21]": 27,
-    "S[UNIMOD:23]": 16,
-    "T[UNIMOD:23]": 17,
-    "Y[UNIMOD:23]": 20,
-    "[UNIMOD:1]-": 32,
-    "K[UNIMOD:259]": 9,
-    "R[UNIMOD:267]": 15,
-}
-
-ALPHABET = {**AA_ALPHABET, **ALPHABET_MODS, **TERMINAL_ALPHABET}
 
 ######################
 # MaxQuant constants #
@@ -349,45 +293,83 @@ Unimod_Neutral_losses = {7: ["CHNO"], 21: ["H3O4P"]}
 # HELPERS FOR FRAGMENT MZ CALCULATION #
 #######################################
 
-# Array containing masses --- at index one is mass for A, etc.
-# these are only used for prosit_grpc, oktoberfest uses the masses from MOD_MASSES
-VEC_MZ = np.zeros(max(ALPHABET.values()) + 1)
-for a, i in ALPHABET.items():
-    VEC_MZ[i] = AA_MOD[a]
-
 # small positive intensity to distinguish invalid ion (=0) from missing peak (=EPSILON)
 EPSILON = 1e-7
 
-B_ION_MASK = np.tile([0, 0, 0, 1, 1, 1], SEQ_LEN - 1)
-Y_ION_MASK = np.tile([1, 1, 1, 0, 0, 0], SEQ_LEN - 1)
-SINGLE_CHARGED_MASK = np.tile([1, 0, 0, 1, 0, 0], SEQ_LEN - 1)
-DOUBLE_CHARGED_MASK = np.tile([0, 1, 0, 0, 1, 0], SEQ_LEN - 1)
-TRIPLE_CHARGED_MASK = np.tile([0, 0, 1, 0, 0, 1], SEQ_LEN - 1)
-
-B_ION_MASK_XL = np.tile([0, 0, 0, 1, 1, 1], (SEQ_LEN - 1) * 2)
-Y_ION_MASK_XL = np.tile([1, 1, 1, 0, 0, 0], (SEQ_LEN - 1) * 2)
-SINGLE_CHARGED_MASK_XL = np.tile([1, 0, 0, 1, 0, 0], (SEQ_LEN - 1) * 2)
-DOUBLE_CHARGED_MASK_XL = np.tile([0, 1, 0, 0, 1, 0], (SEQ_LEN - 1) * 2)
-TRIPLE_CHARGED_MASK_XL = np.tile([0, 0, 1, 0, 0, 1], (SEQ_LEN - 1) * 2)
-
-
-MASK_DICT = {
-    1: SINGLE_CHARGED_MASK,
-    2: DOUBLE_CHARGED_MASK,
-    3: TRIPLE_CHARGED_MASK,
-    4: B_ION_MASK,
-    5: Y_ION_MASK,
+FRAGMENT_SCORE = {
+    "HCD": {
+        "a": 99,
+        "A": 98,
+        "b": 100,
+        "c": 98,
+        "C": 98,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 98,
+        "Z": 98,
+    },
+    "CID": {
+        "a": 98,
+        "A": 98,
+        "b": 100,
+        "c": 98,
+        "C": 98,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 98,
+        "Z": 98,
+    },
+    "ECD": {
+        "a": 98,
+        "A": 98,
+        "b": 98,
+        "c": 98,
+        "C": 100,
+        "x": 98,
+        "X": 98,
+        "y": 99,
+        "z": 100,
+        "Z": 100,
+    },
+    "EID": {
+        "a": 99,
+        "A": 99,
+        "b": 100,
+        "c": 98,
+        "C": 99,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 99,
+        "Z": 98,
+    },
+    "UVPD": {
+        "a": 99,
+        "A": 99,
+        "b": 100,
+        "c": 98,
+        "C": 98,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 98,
+        "Z": 98,
+    },
+    "ETCID": {
+        "a": 98,
+        "A": 98,
+        "b": 99,
+        "c": 98,
+        "C": 100,
+        "x": 98,
+        "X": 98,
+        "y": 100,
+        "z": 100,
+        "Z": 100,
+    },
 }
-
-
-MASK_DICT_XL = {
-    1: SINGLE_CHARGED_MASK_XL,
-    2: DOUBLE_CHARGED_MASK_XL,
-    3: TRIPLE_CHARGED_MASK_XL,
-    4: B_ION_MASK_XL,
-    5: Y_ION_MASK_XL,
-}
-
 
 SHARED_DATA_COLUMNS = ["RAW_FILE", "SCAN_NUMBER"]
 META_DATA_ONLY_COLUMNS = [
@@ -473,46 +455,94 @@ class RescoreType(Enum):
 #############
 # ION TYPES #
 #############
-FORWARD_IONS = ["a", "b", "c"]
-BACKWARDS_IONS = ["x", "y", "z", "z_r"]  #
+FORWARD_IONS = ["a", "A", "b", "c", "C"]  # a,a+1,b,c-1,c
+BACKWARDS_IONS = ["x", "X", "y", "z", "Z"]  # x,x+1,y,z,z+1
 IONS = FORWARD_IONS + BACKWARDS_IONS
 
 FRAGMENTATION_TO_IONS_BY_PAIRS = {
-    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
-    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
-    "ETHCD": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
-    "ETCID": [BACKWARDS_IONS[1], FORWARD_IONS[1], BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # y,b,z_r,c
-    "UVPD": [
-        BACKWARDS_IONS[0],
-        FORWARD_IONS[0],
-        BACKWARDS_IONS[1],
+    "HCD": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
+    "CID": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
+    "ETCID": [
         FORWARD_IONS[1],
-        BACKWARDS_IONS[2],
         FORWARD_IONS[2],
-    ],  # y,b,z,c,x,a
+        FORWARD_IONS[3],
+        FORWARD_IONS[4],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+        BACKWARDS_IONS[4],
+    ],  # a+1,b,c-1,c,y,z,z+1
+    "ECD": [
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        FORWARD_IONS[4],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+        BACKWARDS_IONS[4],
+    ],  # a+1,b,c-1,c,y,z,z+1
+    "EID": IONS,  # a,a+1,b,c,y,x,x+1,z,z+1
+    "UVPD": [
+        FORWARD_IONS[0],
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+    ],  # a,a+1,b,c,y,z
 }
 
 FRAGMENTATION_TO_IONS_BY_DIRECTION = {
-    "HCD": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "CID": [BACKWARDS_IONS[1], FORWARD_IONS[1]],  # y,b
-    "ETD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
-    "ECD": [BACKWARDS_IONS[-1], FORWARD_IONS[2]],  # z_r,c
-    "ETHCD": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
-    "ETCID": [BACKWARDS_IONS[1], BACKWARDS_IONS[-1]] + FORWARD_IONS[1:],  # y,z_r,b,c
-    "UVPD": BACKWARDS_IONS[:-1] + FORWARD_IONS,  # y,z,x,b,c,a
+    "HCD": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
+    "CID": [BACKWARDS_IONS[2], FORWARD_IONS[2]],  # y,b
+    "ETCID": [
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        FORWARD_IONS[4],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+        BACKWARDS_IONS[4],
+    ],  # a+1,b,c-1,c,y,z,z+1
+    "ECD": [
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        FORWARD_IONS[4],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+        BACKWARDS_IONS[4],
+    ],  # a+1,b,c-1,c,y,z,z+1
+    "EID": IONS,  # a,a+1,b,c,y,x,x+1,z,z+1
+    "UVPD": [
+        FORWARD_IONS[0],
+        FORWARD_IONS[1],
+        FORWARD_IONS[2],
+        FORWARD_IONS[3],
+        BACKWARDS_IONS[2],
+        BACKWARDS_IONS[3],
+    ],  # a,a+1,b,c,y,z
 }
 
 ION_DELTAS = {
-    "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],
-    "b": 0.0,
-    "c": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],
-    "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],
-    "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],
-    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"] - ATOM_MASSES["H"],
-    "z_r": ATOM_MASSES["O"] - ATOM_MASSES["N"],
+    "a": -ATOM_MASSES["O"] - ATOM_MASSES["C"],  # a
+    "A": -ATOM_MASSES["O"] - ATOM_MASSES["C"] + ATOM_MASSES["H"],  # a+1
+    "b": 0.0,  # b
+    "c": 2 * ATOM_MASSES["H"] + ATOM_MASSES["N"],  # c-1
+    "C": 3 * ATOM_MASSES["H"] + ATOM_MASSES["N"],  # c
+    "x": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"],  # x
+    "X": 2 * ATOM_MASSES["O"] + ATOM_MASSES["C"] + ATOM_MASSES["H"],  # x+1
+    "y": ATOM_MASSES["O"] + 2 * ATOM_MASSES["H"],  # y
+    "z": ATOM_MASSES["O"] - ATOM_MASSES["N"],  # z
+    "Z": ATOM_MASSES["O"] - ATOM_MASSES["N"] + ATOM_MASSES["H"],  # z+1
 }
+
+############################
+# ION TYPES FOR MULTIFRAG  #
+############################
+
+DEFAULT_HDF_PATH = Path(__file__).parent / "ions/ion_dict.csv"
+ION_DIC: pd.DataFrame = pd.read_csv(DEFAULT_HDF_PATH, index_col="ion")
+
 
 ############################
 # GENERATION OF ANNOTATION #
