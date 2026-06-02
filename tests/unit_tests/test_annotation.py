@@ -108,6 +108,56 @@ class TestAnnotationPipeline(unittest.TestCase):
         result = annotation.annotate_spectra(spectrum_input)
         pd.testing.assert_frame_equal(expected_result, result)
 
+    def test_annotate_spectra_matching_method_nearest_is_default(self):
+        """matching_method='nearest' must reproduce the default behaviour exactly."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        default = annotation.annotate_spectra(spectrum_input.copy())
+        explicit = annotation.annotate_spectra(spectrum_input.copy(), matching_method="nearest")
+        pd.testing.assert_frame_equal(default, explicit)
+
+    def test_annotate_spectra_global_ransac_runs(self):
+        """The global_ransac resolver runs end-to-end and yields a valid matrix."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        default = annotation.annotate_spectra(spectrum_input.copy())
+        result = annotation.annotate_spectra(
+            spectrum_input.copy(),
+            matching_method="global_ransac",
+            mass_tolerance=20,
+            unit_mass_tolerance="ppm",
+            matching_method_params={"unique_peak": False},
+        )
+        # same shape/columns as the default path, finite intensities
+        self.assertEqual(len(result), len(default))
+        self.assertListEqual(list(result.columns), list(default.columns))
+        self.assertFalse(np.isnan(np.stack(result["INTENSITIES"].values)).any())
+
+    def test_annotate_spectra_unknown_matching_method_raises(self):
+        """An unregistered matching_method surfaces as a ValueError."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        with self.assertRaises(ValueError):
+            annotation.annotate_spectra(spectrum_input, matching_method="not_a_matcher")
+
     def test_handle_multiple_matches(self):
         """Test handle_multiple_matches function."""
         # Example input data with multiple matches. They don't make biological sense but it tests

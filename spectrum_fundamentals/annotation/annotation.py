@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from spectrum_fundamentals import constants
+from spectrum_fundamentals.annotation.matchers import resolve_matches
 from spectrum_fundamentals.fragments import (
     initialize_peaks,
     initialize_peaks_xl,
@@ -161,6 +162,8 @@ def annotate_spectra(
     p_window: float = 0.0,
     annotate_neutral_loss: bool = False,
     featured_ions: list[str] | None = None,
+    matching_method: str = "nearest",
+    matching_method_params: dict | None = None,
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -186,6 +189,12 @@ def annotate_spectra(
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param annotate_neutral_loss: flag to indicate whether to annotate neutral losses or not
     :param featured_ions: list of featured ions to annotate
+    :param matching_method: name of the candidate-resolver registered in ``annotation.matchers``.
+        Defaults to ``"nearest"`` (legacy closest-m/z behaviour). Only used by the linear path;
+        the cross-link path always uses the legacy resolver.
+    :param matching_method_params: optional keyword arguments forwarded to the resolver
+        (e.g. ``{"unique_peak": False, "residual_threshold_ppm": 8}`` for ``global_ransac``).
+        Ignored by resolvers that don't accept them.
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
@@ -205,6 +214,8 @@ def annotate_spectra(
             custom_mods=custom_mods,
             annotate_neutral_losses=annotate_neutral_loss,
             featured_ions=featured_ions,
+            matching_method=matching_method,
+            matching_method_params=matching_method_params,
         )
         if not results:
             continue
@@ -438,6 +449,8 @@ def parallel_annotate(
     featured_ions: list[str] | None = None,
     p_window: float = 0.0,
     annotate_neutral_losses: bool = False,
+    matching_method: str = "nearest",
+    matching_method_params: dict | None = None,
 ) -> (
     tuple[np.ndarray, np.ndarray, float, int, int, int]
     | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, int, int]
@@ -464,6 +477,8 @@ def parallel_annotate(
     :param featured_ions: list of ions to be annotated
     :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
     :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
+    :param matching_method: name of the candidate-resolver registered in ``annotation.matchers``.
+    :param matching_method_params: optional keyword arguments forwarded to the resolver.
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -482,6 +497,8 @@ def parallel_annotate(
             custom_mods=custom_mods,
             add_neutral_losses=annotate_neutral_losses,
             featured_ions=featured_ions,
+            matching_method=matching_method,
+            matching_method_params=matching_method_params,
         )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
@@ -502,6 +519,8 @@ def _annotate_linear_spectrum(
     multifrag: bool = False,
     p_window: float = 0.0,
     add_neutral_losses: bool = False,
+    matching_method: str = "nearest",
+    matching_method_params: dict | None = None,
 ):
     """
     Annotate a linear peptide spectrum.
@@ -516,6 +535,11 @@ def _annotate_linear_spectrum(
     :param multifrag: flag to indicate whether to annotate multifrag or not
     :param featured_ions: list of ions to be annotated
     :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
+    :param matching_method: name of the resolver in ``annotation.matchers`` to use for
+        collapsing candidate matches to one peak per fragment slot. Defaults to ``"nearest"``,
+        which reproduces the legacy ``handle_multiple_matches(sort_by="mass_diff")`` behaviour.
+    :param matching_method_params: optional keyword arguments forwarded to the resolver. These
+        take precedence over the mass-tolerance values passed automatically (see below).
     :return: Annotated spectrum
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
@@ -561,7 +585,23 @@ def _annotate_linear_spectrum(
         mass = np.full(vec_length, 0.0)
         return intensity, mass, calc_mass, 0, 0, 0
 
-    matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
+    # Pass the matching tolerance so tolerance-aware resolvers (e.g. global_ransac)
+    # can scale their inlier band to the instrument. Explicit matching_method_params
+    # win on key collisions.
+    resolver_kwargs: dict = {
+        "mass_tolerance": mass_tolerance,
+        "unit_mass_tolerance": unit_mass_tolerance,
+    }
+    if matching_method_params:
+        resolver_kwargs.update(matching_method_params)
+    matched_peaks, removed_peaks = resolve_matches(
+        method=matching_method,
+        candidates=matched_peaks,
+        peaks_masses=spectrum[index_columns["MZ"]],
+        peaks_intensity=spectrum[index_columns["INTENSITIES"]],
+        unmod_sequence=unmod_sequence,
+        **resolver_kwargs,
+    )
     intensities, mass = generate_annotation_matrix(
         matched_peaks,
         unmod_sequence,
