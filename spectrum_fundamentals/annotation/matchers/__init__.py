@@ -26,6 +26,8 @@ from collections.abc import Callable
 import numpy as np
 import pandas as pd
 
+from .dp_calibrated import dp_calibrated_resolver
+from .dp_ladder import dp_ladder_resolver
 from .global_ransac import global_ransac_resolver
 from .nearest import nearest_resolver
 
@@ -34,6 +36,8 @@ Resolver = Callable[..., tuple[pd.DataFrame, int]]
 MATCHERS: dict[str, Resolver] = {
     "nearest": nearest_resolver,
     "global_ransac": global_ransac_resolver,
+    "dp_ladder": dp_ladder_resolver,
+    "dp_calibrated": dp_calibrated_resolver,
 }
 
 

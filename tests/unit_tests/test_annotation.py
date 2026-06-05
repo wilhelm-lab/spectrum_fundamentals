@@ -145,6 +145,51 @@ class TestAnnotationPipeline(unittest.TestCase):
         self.assertListEqual(list(result.columns), list(default.columns))
         self.assertFalse(np.isnan(np.stack(result["INTENSITIES"].values)).any())
 
+    def test_annotate_spectra_dp_ladder_runs(self):
+        """The dp_ladder resolver runs end-to-end and yields a valid matrix."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        default = annotation.annotate_spectra(spectrum_input.copy())
+        result = annotation.annotate_spectra(
+            spectrum_input.copy(),
+            matching_method="dp_ladder",
+            mass_tolerance=20,
+            unit_mass_tolerance="ppm",
+            matching_method_params={"ladder_weight": 2.0, "intensity_weight": 0.1},
+        )
+        # same shape/columns as the default path, finite intensities
+        self.assertEqual(len(result), len(default))
+        self.assertListEqual(list(result.columns), list(default.columns))
+        self.assertFalse(np.isnan(np.stack(result["INTENSITIES"].values)).any())
+
+    def test_annotate_spectra_dp_calibrated_runs(self):
+        """The dp_calibrated resolver runs end-to-end and yields a valid matrix."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        default = annotation.annotate_spectra(spectrum_input.copy())
+        result = annotation.annotate_spectra(
+            spectrum_input.copy(),
+            matching_method="dp_calibrated",
+            mass_tolerance=20,
+            unit_mass_tolerance="ppm",
+            matching_method_params={"iterations": 2, "ladder_weight": 1.0},
+        )
+        self.assertEqual(len(result), len(default))
+        self.assertListEqual(list(result.columns), list(default.columns))
+        self.assertFalse(np.isnan(np.stack(result["INTENSITIES"].values)).any())
+
     def test_annotate_spectra_unknown_matching_method_raises(self):
         """An unregistered matching_method surfaces as a ValueError."""
         spectrum_input = pd.read_csv(
