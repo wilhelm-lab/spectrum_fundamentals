@@ -53,9 +53,7 @@ def resolve_matches(
     try:
         resolver = MATCHERS[method]
     except KeyError as exc:
-        raise ValueError(
-            f"Unknown matching_method '{method}'. Available: {sorted(MATCHERS)}"
-        ) from exc
+        raise ValueError(f"Unknown matching_method '{method}'. Available: {sorted(MATCHERS)}") from exc
     return resolver(
         candidates=candidates,
         peaks_masses=peaks_masses,

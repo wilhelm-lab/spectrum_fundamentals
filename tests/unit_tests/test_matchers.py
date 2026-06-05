@@ -28,14 +28,38 @@ def _ppm(theoretical_mass: float, error_ppm: float) -> float:
 def _line_candidates(error_ppm: float = 3.0) -> list[dict]:
     """Four fragment slots whose true peaks all sit on a constant ppm drift line."""
     return [
-        {"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 200.0,
-         "exp_mass": _ppm(200.0, error_ppm), "intensity": 0.5},
-        {"ion_type": "y", "no": 1, "charge": 1, "theoretical_mass": 400.0,
-         "exp_mass": _ppm(400.0, error_ppm), "intensity": 0.7},
-        {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 600.0,
-         "exp_mass": _ppm(600.0, error_ppm), "intensity": 0.4},
-        {"ion_type": "y", "no": 2, "charge": 1, "theoretical_mass": 800.0,
-         "exp_mass": _ppm(800.0, error_ppm), "intensity": 0.6},
+        {
+            "ion_type": "b",
+            "no": 1,
+            "charge": 1,
+            "theoretical_mass": 200.0,
+            "exp_mass": _ppm(200.0, error_ppm),
+            "intensity": 0.5,
+        },
+        {
+            "ion_type": "y",
+            "no": 1,
+            "charge": 1,
+            "theoretical_mass": 400.0,
+            "exp_mass": _ppm(400.0, error_ppm),
+            "intensity": 0.7,
+        },
+        {
+            "ion_type": "b",
+            "no": 2,
+            "charge": 1,
+            "theoretical_mass": 600.0,
+            "exp_mass": _ppm(600.0, error_ppm),
+            "intensity": 0.4,
+        },
+        {
+            "ion_type": "y",
+            "no": 2,
+            "charge": 1,
+            "theoretical_mass": 800.0,
+            "exp_mass": _ppm(800.0, error_ppm),
+            "intensity": 0.6,
+        },
     ]
 
 
@@ -78,27 +102,21 @@ class TestResolveMatchesDispatch(unittest.TestCase):
             "global_ransac", cands, None, None, "PEPTIDE", residual_threshold_ppm=5.0, random_state=0
         )
         direct, _ = global_ransac_resolver(cands, residual_threshold_ppm=5.0, random_state=0)
-        pd.testing.assert_frame_equal(
-            via_registry.reset_index(drop=True), direct.reset_index(drop=True)
-        )
+        pd.testing.assert_frame_equal(via_registry.reset_index(drop=True), direct.reset_index(drop=True))
 
     def test_dispatch_dp_ladder(self):
         """The dp_ladder matcher is reachable through the registry."""
         cands = _line_candidates()
         via_registry, _ = resolve_matches("dp_ladder", cands, None, None, "PEPTIDE", ppm_scale=10.0)
         direct, _ = dp_ladder_resolver(cands, ppm_scale=10.0)
-        pd.testing.assert_frame_equal(
-            via_registry.reset_index(drop=True), direct.reset_index(drop=True)
-        )
+        pd.testing.assert_frame_equal(via_registry.reset_index(drop=True), direct.reset_index(drop=True))
 
     def test_dispatch_dp_calibrated(self):
         """The dp_calibrated matcher is reachable through the registry."""
         cands = _line_candidates()
         via_registry, _ = resolve_matches("dp_calibrated", cands, None, None, "PEPTIDE", ppm_scale=10.0)
         direct, _ = dp_calibrated_resolver(cands, ppm_scale=10.0)
-        pd.testing.assert_frame_equal(
-            via_registry.reset_index(drop=True), direct.reset_index(drop=True)
-        )
+        pd.testing.assert_frame_equal(via_registry.reset_index(drop=True), direct.reset_index(drop=True))
 
 
 class TestGlobalRansacResolver(unittest.TestCase):
@@ -115,10 +133,22 @@ class TestGlobalRansacResolver(unittest.TestCase):
         """The fit keeps the on-line matches and rejects peaks off the drift line."""
         cands = _line_candidates(error_ppm=3.0)
         noise = [
-            {"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 200.0,
-             "exp_mass": _ppm(200.0, -18.0), "intensity": 0.9},  # same slot as a real match, far off
-            {"ion_type": "y", "no": 2, "charge": 1, "theoretical_mass": 800.0,
-             "exp_mass": _ppm(800.0, 19.0), "intensity": 0.2},   # same slot, far off
+            {
+                "ion_type": "b",
+                "no": 1,
+                "charge": 1,
+                "theoretical_mass": 200.0,
+                "exp_mass": _ppm(200.0, -18.0),
+                "intensity": 0.9,
+            },  # same slot as a real match, far off
+            {
+                "ion_type": "y",
+                "no": 2,
+                "charge": 1,
+                "theoretical_mass": 800.0,
+                "exp_mass": _ppm(800.0, 19.0),
+                "intensity": 0.2,
+            },  # same slot, far off
         ]
         df, dropped = global_ransac_resolver(cands + noise, residual_threshold_ppm=5.0)
 
@@ -135,17 +165,33 @@ class TestGlobalRansacResolver(unittest.TestCase):
         """unique_peak controls whether one observed peak may fill several slots."""
         shared = _ppm(800.0, 2.0)
         cands = [
-            {"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 200.0,
-             "exp_mass": _ppm(200.0, 2.0), "intensity": 0.5},
-            {"ion_type": "y", "no": 1, "charge": 1, "theoretical_mass": 400.0,
-             "exp_mass": _ppm(400.0, 2.0), "intensity": 0.5},
-            {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 600.0,
-             "exp_mass": _ppm(600.0, 2.0), "intensity": 0.5},
+            {
+                "ion_type": "b",
+                "no": 1,
+                "charge": 1,
+                "theoretical_mass": 200.0,
+                "exp_mass": _ppm(200.0, 2.0),
+                "intensity": 0.5,
+            },
+            {
+                "ion_type": "y",
+                "no": 1,
+                "charge": 1,
+                "theoretical_mass": 400.0,
+                "exp_mass": _ppm(400.0, 2.0),
+                "intensity": 0.5,
+            },
+            {
+                "ion_type": "b",
+                "no": 2,
+                "charge": 1,
+                "theoretical_mass": 600.0,
+                "exp_mass": _ppm(600.0, 2.0),
+                "intensity": 0.5,
+            },
             # two distinct slots that matched the same observed peak
-            {"ion_type": "b", "no": 4, "charge": 1, "theoretical_mass": 800.0,
-             "exp_mass": shared, "intensity": 0.5},
-            {"ion_type": "y", "no": 7, "charge": 2, "theoretical_mass": 800.0008,
-             "exp_mass": shared, "intensity": 0.5},
+            {"ion_type": "b", "no": 4, "charge": 1, "theoretical_mass": 800.0, "exp_mass": shared, "intensity": 0.5},
+            {"ion_type": "y", "no": 7, "charge": 2, "theoretical_mass": 800.0008, "exp_mass": shared, "intensity": 0.5},
         ]
         unique_df, _ = global_ransac_resolver(cands, residual_threshold_ppm=5.0, unique_peak=True)
         reuse_df, _ = global_ransac_resolver(cands, residual_threshold_ppm=5.0, unique_peak=False)
@@ -159,8 +205,16 @@ class TestGlobalRansacResolver(unittest.TestCase):
 
     def test_fallback_below_min_samples(self):
         """Fewer valid candidates than min_samples defers to nearest."""
-        single = [{"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 200.0,
-                   "exp_mass": _ppm(200.0, 3.0), "intensity": 0.5}]
+        single = [
+            {
+                "ion_type": "b",
+                "no": 1,
+                "charge": 1,
+                "theoretical_mass": 200.0,
+                "exp_mass": _ppm(200.0, 3.0),
+                "intensity": 0.5,
+            }
+        ]
         df, dropped = global_ransac_resolver(single, min_samples=2)
         self.assertEqual(len(df), 1)
         self.assertEqual(dropped, 0)
@@ -168,12 +222,9 @@ class TestGlobalRansacResolver(unittest.TestCase):
     def test_nonfinite_rows_dropped(self):
         """NaN/inf/non-positive masses are dropped and counted in n_dropped."""
         cands = _line_candidates(error_ppm=3.0) + [
-            {"ion_type": "b", "no": 3, "charge": 1, "theoretical_mass": np.nan,
-             "exp_mass": 300.0, "intensity": 0.1},
-            {"ion_type": "b", "no": 4, "charge": 1, "theoretical_mass": np.inf,
-             "exp_mass": 400.0, "intensity": 0.1},
-            {"ion_type": "y", "no": 5, "charge": 1, "theoretical_mass": -10.0,
-             "exp_mass": 500.0, "intensity": 0.1},
+            {"ion_type": "b", "no": 3, "charge": 1, "theoretical_mass": np.nan, "exp_mass": 300.0, "intensity": 0.1},
+            {"ion_type": "b", "no": 4, "charge": 1, "theoretical_mass": np.inf, "exp_mass": 400.0, "intensity": 0.1},
+            {"ion_type": "y", "no": 5, "charge": 1, "theoretical_mass": -10.0, "exp_mass": 500.0, "intensity": 0.1},
         ]
         df, dropped = global_ransac_resolver(cands, residual_threshold_ppm=5.0)
         self.assertEqual(len(df), 4)  # only the four valid on-line slots survive
@@ -231,8 +282,14 @@ class TestGlobalRansacResolver(unittest.TestCase):
 def _b_ladder(error_ppm: float = 8.0) -> list[dict]:
     """Four singly-charged b ions on a constant ppm drift line (theo 200..500)."""
     return [
-        {"ion_type": "b", "no": k + 1, "charge": 1, "theoretical_mass": theo,
-         "exp_mass": _ppm(theo, error_ppm), "intensity": inten}
+        {
+            "ion_type": "b",
+            "no": k + 1,
+            "charge": 1,
+            "theoretical_mass": theo,
+            "exp_mass": _ppm(theo, error_ppm),
+            "intensity": inten,
+        }
         for k, (theo, inten) in enumerate([(200.0, 0.5), (300.0, 0.7), (400.0, 0.4), (500.0, 0.6)])
     ]
 
@@ -266,8 +323,14 @@ class TestDPLadderResolver(unittest.TestCase):
         # b3 gets a second candidate that is closer in absolute ppm (+1) but off
         # the local +8 ppm drift line.
         cands.append(
-            {"ion_type": "b", "no": 3, "charge": 1, "theoretical_mass": 400.0,
-             "exp_mass": _ppm(400.0, 1.0), "intensity": 0.9}
+            {
+                "ion_type": "b",
+                "no": 3,
+                "charge": 1,
+                "theoretical_mass": 400.0,
+                "exp_mass": _ppm(400.0, 1.0),
+                "intensity": 0.9,
+            }
         )
         near_df, _ = nearest_resolver(cands)
         near_b3 = near_df[(near_df["ion_type"] == "b") & (near_df["no"] == 3)]["exp_mass"].iloc[0]
@@ -281,8 +344,14 @@ class TestDPLadderResolver(unittest.TestCase):
         """A lone in-window peak that breaks the ladder gap is dropped as noise."""
         cands = _b_ladder(error_ppm=8.0)
         cands.append(
-            {"ion_type": "b", "no": 5, "charge": 1, "theoretical_mass": 600.0,
-             "exp_mass": _ppm(600.0, 19.0), "intensity": 0.3}  # in 20 ppm window, off the line
+            {
+                "ion_type": "b",
+                "no": 5,
+                "charge": 1,
+                "theoretical_mass": 600.0,
+                "exp_mass": _ppm(600.0, 19.0),
+                "intensity": 0.3,
+            }  # in 20 ppm window, off the line
         )
         dp_df, dropped = dp_ladder_resolver(cands)  # defaults: skip_penalty=1, ladder_weight=2
         self.assertEqual(len(dp_df), 4)  # the four on-line slots
@@ -303,10 +372,8 @@ class TestDPLadderResolver(unittest.TestCase):
         the ladder's monotonic m/z constraint forces uniqueness."""
         shared = 250.0
         cands = [
-            {"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 249.999,
-             "exp_mass": shared, "intensity": 0.5},
-            {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 250.001,
-             "exp_mass": shared, "intensity": 0.5},
+            {"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 249.999, "exp_mass": shared, "intensity": 0.5},
+            {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 250.001, "exp_mass": shared, "intensity": 0.5},
         ]
         dp_df, _ = dp_ladder_resolver(cands)
         self.assertFalse(dp_df["exp_mass"].duplicated().any())
@@ -316,14 +383,24 @@ class TestDPLadderResolver(unittest.TestCase):
         """unique_peak resolves a peak claimed by both a b ladder and a y ladder."""
         shared = _ppm(400.0, 2.0)
         cands = [
-            {"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 200.0,
-             "exp_mass": _ppm(200.0, 2.0), "intensity": 0.5},
-            {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 400.0,
-             "exp_mass": shared, "intensity": 0.5},
-            {"ion_type": "y", "no": 1, "charge": 1, "theoretical_mass": 400.0001,
-             "exp_mass": shared, "intensity": 0.5},
-            {"ion_type": "y", "no": 2, "charge": 1, "theoretical_mass": 600.0,
-             "exp_mass": _ppm(600.0, 2.0), "intensity": 0.5},
+            {
+                "ion_type": "b",
+                "no": 1,
+                "charge": 1,
+                "theoretical_mass": 200.0,
+                "exp_mass": _ppm(200.0, 2.0),
+                "intensity": 0.5,
+            },
+            {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 400.0, "exp_mass": shared, "intensity": 0.5},
+            {"ion_type": "y", "no": 1, "charge": 1, "theoretical_mass": 400.0001, "exp_mass": shared, "intensity": 0.5},
+            {
+                "ion_type": "y",
+                "no": 2,
+                "charge": 1,
+                "theoretical_mass": 600.0,
+                "exp_mass": _ppm(600.0, 2.0),
+                "intensity": 0.5,
+            },
         ]
         unique_df, _ = dp_ladder_resolver(cands, unique_peak=True)
         reuse_df, _ = dp_ladder_resolver(cands, unique_peak=False)
@@ -343,10 +420,8 @@ class TestDPLadderResolver(unittest.TestCase):
     def test_nonfinite_rows_dropped(self):
         """NaN/inf/non-positive masses are dropped and counted."""
         cands = _b_ladder(error_ppm=3.0) + [
-            {"ion_type": "b", "no": 6, "charge": 1, "theoretical_mass": np.nan,
-             "exp_mass": 600.0, "intensity": 0.1},
-            {"ion_type": "y", "no": 7, "charge": 1, "theoretical_mass": -5.0,
-             "exp_mass": 700.0, "intensity": 0.1},
+            {"ion_type": "b", "no": 6, "charge": 1, "theoretical_mass": np.nan, "exp_mass": 600.0, "intensity": 0.1},
+            {"ion_type": "y", "no": 7, "charge": 1, "theoretical_mass": -5.0, "exp_mass": 700.0, "intensity": 0.1},
         ]
         df, dropped = dp_ladder_resolver(cands)
         self.assertEqual(len(df), 4)
@@ -414,9 +489,7 @@ class TestDpCalibratedResolver(unittest.TestCase):
     def test_drift_is_calibrated_away(self):
         """A constant +12 ppm drift is captured by the fit: every matched peak
         ends up ~on the line (dev_from_line ~ 0) and the ladder is matched in full."""
-        df, dropped = dp_calibrated_resolver(
-            _b_ladder(error_ppm=12.0), mass_tolerance=20, unit_mass_tolerance="ppm"
-        )
+        df, dropped = dp_calibrated_resolver(_b_ladder(error_ppm=12.0), mass_tolerance=20, unit_mass_tolerance="ppm")
         self.assertEqual(len(df), 4)
         self.assertEqual(dropped, 0)
         self.assertIn("dev_from_line", df.columns)
@@ -430,8 +503,14 @@ class TestDpCalibratedResolver(unittest.TestCase):
         peak where 'closest to theoretical' would grab a near-zero-ppm noise peak."""
         cands = _b_ladder(error_ppm=12.0)
         cands.append(
-            {"ion_type": "b", "no": 3, "charge": 1, "theoretical_mass": 400.0,
-             "exp_mass": _ppm(400.0, 1.0), "intensity": 0.9}  # near theoretical, off the drift line
+            {
+                "ion_type": "b",
+                "no": 3,
+                "charge": 1,
+                "theoretical_mass": 400.0,
+                "exp_mass": _ppm(400.0, 1.0),
+                "intensity": 0.9,
+            }  # near theoretical, off the drift line
         )
         # nearest grabs the +1 ppm peak; dp_calibrated keeps the on-line +12 peak
         near_df, _ = nearest_resolver(cands)
@@ -444,8 +523,16 @@ class TestDpCalibratedResolver(unittest.TestCase):
 
     def test_falls_back_to_raw_ladder_when_no_line(self):
         """Too few candidates to fit a drift line -> raw ladder DP, still matches."""
-        single = [{"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 200.0,
-                   "exp_mass": _ppm(200.0, 3.0), "intensity": 0.5}]
+        single = [
+            {
+                "ion_type": "b",
+                "no": 1,
+                "charge": 1,
+                "theoretical_mass": 200.0,
+                "exp_mass": _ppm(200.0, 3.0),
+                "intensity": 0.5,
+            }
+        ]
         df, dropped = dp_calibrated_resolver(single, min_samples=2)
         self.assertEqual(len(df), 1)
         self.assertEqual(dropped, 0)
@@ -455,20 +542,42 @@ class TestDpCalibratedResolver(unittest.TestCase):
     def test_min_inlier_fraction_forces_raw_ladder(self):
         """A fit that explains too few slots is rejected; emission stays raw."""
         cands = [
-            {"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 200.0,
-             "exp_mass": _ppm(200.0, 15.0), "intensity": 0.5},
-            {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 300.0,
-             "exp_mass": _ppm(300.0, 15.0), "intensity": 0.5},
-            {"ion_type": "b", "no": 3, "charge": 1, "theoretical_mass": 400.0,
-             "exp_mass": _ppm(400.0, 15.0), "intensity": 0.5},
-            {"ion_type": "b", "no": 4, "charge": 1, "theoretical_mass": 500.0,
-             "exp_mass": _ppm(500.0, 1.0), "intensity": 0.5},  # off the +15 line
+            {
+                "ion_type": "b",
+                "no": 1,
+                "charge": 1,
+                "theoretical_mass": 200.0,
+                "exp_mass": _ppm(200.0, 15.0),
+                "intensity": 0.5,
+            },
+            {
+                "ion_type": "b",
+                "no": 2,
+                "charge": 1,
+                "theoretical_mass": 300.0,
+                "exp_mass": _ppm(300.0, 15.0),
+                "intensity": 0.5,
+            },
+            {
+                "ion_type": "b",
+                "no": 3,
+                "charge": 1,
+                "theoretical_mass": 400.0,
+                "exp_mass": _ppm(400.0, 15.0),
+                "intensity": 0.5,
+            },
+            {
+                "ion_type": "b",
+                "no": 4,
+                "charge": 1,
+                "theoretical_mass": 500.0,
+                "exp_mass": _ppm(500.0, 1.0),
+                "intensity": 0.5,
+            },  # off the +15 line
         ]
         # Tight inlier band so no sloped line can absorb the off-line point:
         # the best consensus covers only 3/4 slots, below the 1.0 floor.
-        df, _ = dp_calibrated_resolver(
-            cands, ppm_scale=20, residual_threshold_ppm=2.0, min_inlier_fraction=1.0
-        )
+        df, _ = dp_calibrated_resolver(cands, ppm_scale=20, residual_threshold_ppm=2.0, min_inlier_fraction=1.0)
         # line rejected -> dev_from_line == raw ppm_residual on whatever was matched
         self.assertGreaterEqual(len(df), 1)
         self.assertTrue(np.allclose(df["dev_from_line"].to_numpy(), df["ppm_residual"].to_numpy()))
@@ -486,14 +595,24 @@ class TestDpCalibratedResolver(unittest.TestCase):
     def test_unique_peak_dedup_across_ladders(self):
         shared = _ppm(400.0, 2.0)
         cands = [
-            {"ion_type": "b", "no": 1, "charge": 1, "theoretical_mass": 200.0,
-             "exp_mass": _ppm(200.0, 2.0), "intensity": 0.5},
-            {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 400.0,
-             "exp_mass": shared, "intensity": 0.5},
-            {"ion_type": "y", "no": 1, "charge": 1, "theoretical_mass": 400.0001,
-             "exp_mass": shared, "intensity": 0.5},
-            {"ion_type": "y", "no": 2, "charge": 1, "theoretical_mass": 600.0,
-             "exp_mass": _ppm(600.0, 2.0), "intensity": 0.5},
+            {
+                "ion_type": "b",
+                "no": 1,
+                "charge": 1,
+                "theoretical_mass": 200.0,
+                "exp_mass": _ppm(200.0, 2.0),
+                "intensity": 0.5,
+            },
+            {"ion_type": "b", "no": 2, "charge": 1, "theoretical_mass": 400.0, "exp_mass": shared, "intensity": 0.5},
+            {"ion_type": "y", "no": 1, "charge": 1, "theoretical_mass": 400.0001, "exp_mass": shared, "intensity": 0.5},
+            {
+                "ion_type": "y",
+                "no": 2,
+                "charge": 1,
+                "theoretical_mass": 600.0,
+                "exp_mass": _ppm(600.0, 2.0),
+                "intensity": 0.5,
+            },
         ]
         unique_df, _ = dp_calibrated_resolver(cands, mass_tolerance=20, unit_mass_tolerance="ppm", unique_peak=True)
         reuse_df, _ = dp_calibrated_resolver(cands, mass_tolerance=20, unit_mass_tolerance="ppm", unique_peak=False)
@@ -502,10 +621,8 @@ class TestDpCalibratedResolver(unittest.TestCase):
 
     def test_nonfinite_rows_dropped(self):
         cands = _b_ladder(error_ppm=3.0) + [
-            {"ion_type": "b", "no": 6, "charge": 1, "theoretical_mass": np.nan,
-             "exp_mass": 600.0, "intensity": 0.1},
-            {"ion_type": "y", "no": 7, "charge": 1, "theoretical_mass": -5.0,
-             "exp_mass": 700.0, "intensity": 0.1},
+            {"ion_type": "b", "no": 6, "charge": 1, "theoretical_mass": np.nan, "exp_mass": 600.0, "intensity": 0.1},
+            {"ion_type": "y", "no": 7, "charge": 1, "theoretical_mass": -5.0, "exp_mass": 700.0, "intensity": 0.1},
         ]
         df, dropped = dp_calibrated_resolver(cands, mass_tolerance=20, unit_mass_tolerance="ppm")
         self.assertEqual(len(df), 4)
@@ -515,9 +632,7 @@ class TestDpCalibratedResolver(unittest.TestCase):
     def test_nonfinite_intensity_does_not_poison_cost(self):
         cands = _b_ladder(error_ppm=3.0)
         cands[2]["intensity"] = np.nan
-        df, _ = dp_calibrated_resolver(
-            cands, mass_tolerance=20, unit_mass_tolerance="ppm", intensity_weight=0.5
-        )
+        df, _ = dp_calibrated_resolver(cands, mass_tolerance=20, unit_mass_tolerance="ppm", intensity_weight=0.5)
         self.assertEqual(len(df), 4)
         self.assertTrue(((df["ion_type"] == "b") & (df["no"] == 3)).any())
 

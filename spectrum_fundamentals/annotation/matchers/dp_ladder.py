@@ -137,16 +137,17 @@ def dp_ladder_resolver(
     if n_invalid:
         logger.warning(
             "dp_ladder: dropping %d/%d candidate rows with non-finite or non-positive mass",
-            n_invalid, n_input,
+            n_invalid,
+            n_input,
         )
         df = df.loc[valid].reset_index(drop=True)
 
     if len(df) == 0:
         return pd.DataFrame(columns=df.columns), n_input
 
-    df["ppm_residual"] = 1e6 * (df["exp_mass"].to_numpy() - df["theoretical_mass"].to_numpy()) / df[
-        "theoretical_mass"
-    ].to_numpy()
+    df["ppm_residual"] = (
+        1e6 * (df["exp_mass"].to_numpy() - df["theoretical_mass"].to_numpy()) / df["theoretical_mass"].to_numpy()
+    )
 
     n_slots = df[_SLOT_COLUMNS].drop_duplicates().shape[0]
 
@@ -162,7 +163,9 @@ def dp_ladder_resolver(
     if min_match_fraction > 0 and matched_slots < min_match_fraction * n_slots:
         logger.info(
             "dp_ladder: matched only %d/%d slots (< %.2f), falling back to nearest",
-            matched_slots, n_slots, min_match_fraction,
+            matched_slots,
+            n_slots,
+            min_match_fraction,
         )
         return _fallback_to_nearest(df, n_input)
 
@@ -187,9 +190,7 @@ def _run_dp_assignment(
     """
     chosen_idx: list[int] = []
     for _, ladder_df in df.groupby(["ion_type", "charge"], sort=False):
-        chosen_idx.extend(
-            _resolve_ladder(ladder_df, scale, skip_penalty, ladder_weight, intensity_weight, emit_col)
-        )
+        chosen_idx.extend(_resolve_ladder(ladder_df, scale, skip_penalty, ladder_weight, intensity_weight, emit_col))
     return chosen_idx
 
 
@@ -295,9 +296,7 @@ def _relax(states: dict, key: Any, cost: float, prev_key: Any, option: Any) -> N
         states[key] = (cost, prev_key, option)
 
 
-def _greedy_unique_peaks(
-    df: pd.DataFrame, chosen_idx: list[int], sort_col: str = "ppm_residual"
-) -> list[int]:
+def _greedy_unique_peaks(df: pd.DataFrame, chosen_idx: list[int], sort_col: str = "ppm_residual") -> list[int]:
     """Enforce one fragment per observed peak across ladders.
 
     Walks the chosen rows in ascending ``|sort_col|`` and keeps a row only while
@@ -348,11 +347,7 @@ def _resolve_ppm_scale(
     :raises ValueError: if an explicit ``ppm_scale`` is not a positive finite number.
     """
     if ppm_scale is not None:
-        if not (
-            isinstance(ppm_scale, numbers.Real)
-            and np.isfinite(float(ppm_scale))
-            and ppm_scale > 0
-        ):
+        if not (isinstance(ppm_scale, numbers.Real) and np.isfinite(float(ppm_scale)) and ppm_scale > 0):
             raise ValueError(f"ppm_scale must be a positive finite number, got {ppm_scale!r}")
         return float(ppm_scale)
 
@@ -374,31 +369,17 @@ def _validate_hyperparameters(
     intensity_weight: float,
     min_match_fraction: float,
 ) -> None:
-    if not (
-        isinstance(skip_penalty, numbers.Real)
-        and np.isfinite(float(skip_penalty))
-        and skip_penalty > 0
-    ):
+    if not (isinstance(skip_penalty, numbers.Real) and np.isfinite(float(skip_penalty)) and skip_penalty > 0):
         raise ValueError(f"skip_penalty must be a positive finite number, got {skip_penalty!r}")
-    if not (
-        isinstance(ladder_weight, numbers.Real)
-        and np.isfinite(float(ladder_weight))
-        and ladder_weight >= 0
-    ):
+    if not (isinstance(ladder_weight, numbers.Real) and np.isfinite(float(ladder_weight)) and ladder_weight >= 0):
         raise ValueError(f"ladder_weight must be a non-negative finite number, got {ladder_weight!r}")
     if not (
-        isinstance(intensity_weight, numbers.Real)
-        and np.isfinite(float(intensity_weight))
-        and intensity_weight >= 0
+        isinstance(intensity_weight, numbers.Real) and np.isfinite(float(intensity_weight)) and intensity_weight >= 0
     ):
-        raise ValueError(
-            f"intensity_weight must be a non-negative finite number, got {intensity_weight!r}"
-        )
+        raise ValueError(f"intensity_weight must be a non-negative finite number, got {intensity_weight!r}")
     if not (
         isinstance(min_match_fraction, numbers.Real)
         and np.isfinite(float(min_match_fraction))
         and 0.0 <= min_match_fraction <= 1.0
     ):
-        raise ValueError(
-            f"min_match_fraction must be a number in [0, 1], got {min_match_fraction!r}"
-        )
+        raise ValueError(f"min_match_fraction must be a number in [0, 1], got {min_match_fraction!r}")

@@ -137,7 +137,8 @@ def dp_calibrated_resolver(
     if n_invalid:
         logger.warning(
             "dp_calibrated: dropping %d/%d candidate rows with non-finite or non-positive mass",
-            n_invalid, n_input,
+            n_invalid,
+            n_input,
         )
         df = df.loc[valid].reset_index(drop=True)
     if len(df) == 0:
@@ -159,9 +160,7 @@ def dp_calibrated_resolver(
             df, scale, skip_penalty, ladder_weight, intensity_weight, emit_col="ppm_residual"
         )
     else:
-        chosen_idx = _iterate_dp(
-            df, theo, ppm, line, scale, skip_penalty, ladder_weight, intensity_weight, iterations
-        )
+        chosen_idx = _iterate_dp(df, theo, ppm, line, scale, skip_penalty, ladder_weight, intensity_weight, iterations)
 
     if unique_peak:
         chosen_idx = _greedy_unique_peaks(df, chosen_idx, sort_col="dev_from_line")
@@ -170,7 +169,9 @@ def dp_calibrated_resolver(
     if min_match_fraction > 0 and matched_slots < min_match_fraction * n_slots:
         logger.info(
             "dp_calibrated: matched only %d/%d slots (< %.2f), falling back to nearest",
-            matched_slots, n_slots, min_match_fraction,
+            matched_slots,
+            n_slots,
+            min_match_fraction,
         )
         return _fallback_to_nearest(df, n_input)
 
@@ -224,7 +225,9 @@ def _trustworthy_line(
     if inlier_slots < min_inlier_fraction * n_slots:
         logger.info(
             "dp_calibrated: calibration fit explains only %d/%d slots (< %.2f), using raw ladder DP",
-            inlier_slots, n_slots, min_inlier_fraction,
+            inlier_slots,
+            n_slots,
+            min_inlier_fraction,
         )
         return None
     return a, b

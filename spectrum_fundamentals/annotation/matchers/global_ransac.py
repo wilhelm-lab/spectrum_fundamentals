@@ -93,9 +93,7 @@ def global_ransac_resolver(
         ``full_name`` column is preserved when present.
     """
     _validate_hyperparameters(min_samples, max_trials, min_inlier_fraction)
-    residual_threshold = _resolve_residual_threshold(
-        residual_threshold_ppm, mass_tolerance, unit_mass_tolerance
-    )
+    residual_threshold = _resolve_residual_threshold(residual_threshold_ppm, mass_tolerance, unit_mass_tolerance)
 
     if not candidates:
         return pd.DataFrame(), 0
@@ -104,9 +102,7 @@ def global_ransac_resolver(
     df = pd.DataFrame(candidates)
     missing = [c for c in _REQUIRED_COLUMNS if c not in df.columns]
     if missing:
-        raise ValueError(
-            f"global_ransac: candidate rows missing required columns {missing}"
-        )
+        raise ValueError(f"global_ransac: candidate rows missing required columns {missing}")
 
     # Drop rows that can't yield a finite ppm residual. sklearn's RANSAC raises
     # on NaN/inf in y, and a non-positive theoretical_mass would divide-by-zero
@@ -120,7 +116,8 @@ def global_ransac_resolver(
     if n_invalid:
         logger.warning(
             "global_ransac: dropping %d/%d candidate rows with non-finite or non-positive mass",
-            n_invalid, n_input,
+            n_invalid,
+            n_input,
         )
         df = df.loc[valid].reset_index(drop=True)
 
@@ -133,7 +130,8 @@ def global_ransac_resolver(
     if len(df) < min_samples:
         logger.info(
             "global_ransac: %d valid candidates < min_samples=%d, falling back to nearest",
-            len(df), min_samples,
+            len(df),
+            min_samples,
         )
         return _fallback_to_nearest(df, n_input)
 
@@ -179,7 +177,9 @@ def global_ransac_resolver(
     if inlier_slots < min_inlier_fraction * n_slots:
         logger.info(
             "global_ransac: fit kept inliers for only %d/%d slots (< %.2f), falling back to nearest",
-            inlier_slots, n_slots, min_inlier_fraction,
+            inlier_slots,
+            n_slots,
+            min_inlier_fraction,
         )
         return _fallback_to_nearest(df, n_input)
 
@@ -254,10 +254,7 @@ def _resolve_residual_threshold(
             and np.isfinite(float(residual_threshold_ppm))
             and residual_threshold_ppm > 0
         ):
-            raise ValueError(
-                f"residual_threshold_ppm must be a positive finite number, "
-                f"got {residual_threshold_ppm!r}"
-            )
+            raise ValueError(f"residual_threshold_ppm must be a positive finite number, got {residual_threshold_ppm!r}")
         return float(residual_threshold_ppm)
 
     if (
@@ -272,22 +269,14 @@ def _resolve_residual_threshold(
     return _DEFAULT_RESIDUAL_THRESHOLD_PPM
 
 
-def _validate_hyperparameters(
-    min_samples: int, max_trials: int, min_inlier_fraction: float
-) -> None:
+def _validate_hyperparameters(min_samples: int, max_trials: int, min_inlier_fraction: float) -> None:
     if not (isinstance(min_samples, numbers.Integral) and min_samples >= 2):
-        raise ValueError(
-            f"min_samples must be an integer >= 2, got {min_samples!r}"
-        )
+        raise ValueError(f"min_samples must be an integer >= 2, got {min_samples!r}")
     if not (isinstance(max_trials, numbers.Integral) and max_trials >= 1):
-        raise ValueError(
-            f"max_trials must be an integer >= 1, got {max_trials!r}"
-        )
+        raise ValueError(f"max_trials must be an integer >= 1, got {max_trials!r}")
     if not (
         isinstance(min_inlier_fraction, numbers.Real)
         and np.isfinite(float(min_inlier_fraction))
         and 0.0 <= min_inlier_fraction <= 1.0
     ):
-        raise ValueError(
-            f"min_inlier_fraction must be a number in [0, 1], got {min_inlier_fraction!r}"
-        )
+        raise ValueError(f"min_inlier_fraction must be a number in [0, 1], got {min_inlier_fraction!r}")
