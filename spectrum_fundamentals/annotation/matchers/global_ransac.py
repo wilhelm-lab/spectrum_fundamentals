@@ -127,7 +127,8 @@ def global_ransac_resolver(
     if len(df) == 0:
         return pd.DataFrame(columns=df.columns), n_input
 
-    df["ppm_residual"] = 1e6 * (df["exp_mass"].to_numpy() - df["theoretical_mass"].to_numpy()) / df["theoretical_mass"].to_numpy()
+    theo_masses = df["theoretical_mass"].to_numpy()
+    df["ppm_residual"] = 1e6 * (df["exp_mass"].to_numpy() - theo_masses) / theo_masses
 
     if len(df) < min_samples:
         logger.info(
