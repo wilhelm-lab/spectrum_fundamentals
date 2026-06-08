@@ -28,7 +28,9 @@ class TestAnnotationPipeline(unittest.TestCase):
         spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
 
         result = annotation.annotate_spectra(spectrum_input)
-        pd.testing.assert_frame_equal(expected_result, result)
+        # Only assert columns present in legacy expected output.
+        # New per-PSM metrics (sc_features etc.) are tested separately.
+        pd.testing.assert_frame_equal(expected_result, result[expected_result.columns])
 
     def test_annotate_spectra_multifrag(self):
         """Test annotate spectra."""
@@ -47,7 +49,9 @@ class TestAnnotationPipeline(unittest.TestCase):
         spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
 
         result = annotation.annotate_spectra(spectrum_input, multifrag=True, fragmentation_method="ECD")
-        pd.testing.assert_frame_equal(expected_result, result)
+        # Only assert columns present in legacy expected output.
+        # New per-PSM metrics (sc_features etc.) are tested separately.
+        pd.testing.assert_frame_equal(expected_result, result[expected_result.columns])
 
     def test_annotate_spectra_with_custom_mods(self):
         """Test annotate spectra."""
@@ -67,7 +71,9 @@ class TestAnnotationPipeline(unittest.TestCase):
         custom_mods = {"[UNIMOD:4]": 57.0215, "[UNIMOD:35]": 15.99}
 
         result = annotation.annotate_spectra(un_annot_spectra=spectrum_input, custom_mods=custom_mods)
-        pd.testing.assert_frame_equal(expected_result, result)
+        # Only assert columns present in legacy expected output.
+        # New per-PSM metrics (sc_features etc.) are tested separately.
+        pd.testing.assert_frame_equal(expected_result, result[expected_result.columns])
 
     def test_annotate_spectra_noncl_xl(self):
         """Test annotate spectra non cleavable crosslinked peptides."""
@@ -106,7 +112,9 @@ class TestAnnotationPipeline(unittest.TestCase):
         spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
 
         result = annotation.annotate_spectra(spectrum_input)
-        pd.testing.assert_frame_equal(expected_result, result)
+        # Only assert columns present in legacy expected output.
+        # New per-PSM metrics (sc_features etc.) are tested separately.
+        pd.testing.assert_frame_equal(expected_result, result[expected_result.columns])
 
     def test_annotate_spectra_matching_method_nearest_is_default(self):
         """matching_method='nearest' must reproduce the default behaviour exactly."""
@@ -287,3 +295,23 @@ class TestAnnotationPipeline(unittest.TestCase):
             matched_peaks,
             sort_by="illegal",
         )
+        
+    def test_annotate_spectra_returns_sc_features(self):
+        """annotate_spectra always returns sc_features dict with ppm_error stats per PSM."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        result = annotation.annotate_spectra(spectrum_input)
+
+        # sc_features column must always be present
+        self.assertIn("sc_features", result.columns)
+
+        # every PSM must contain exactly the expected keys
+        expected_keys = {"mean_ppm_error", "max_ppm_error", "std_ppm_error"}
+        for sc_feat in result["sc_features"]:
+            self.assertEqual(set(sc_feat.keys()), expected_keys)
