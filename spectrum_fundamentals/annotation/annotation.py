@@ -590,7 +590,7 @@ def _annotate_linear_spectrum(
             "mean_ppm_error": float("nan"),
             "max_ppm_error": float("nan"),
             "std_ppm_error": float("nan"),
-        } #nan for ppm_error values
+        }  # nan for ppm_error values
         return intensity, mass, calc_mass, 0, 0, 0, sc_features
 
     # Pass the matching tolerance so tolerance-aware resolvers (e.g. global_ransac)
