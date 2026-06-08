@@ -230,6 +230,7 @@ def annotate_spectra(
             "removed_peaks",
             "ANNOTATED_NL_COUNT",
             "EXPECTED_NL_COUNT",
+            "sc_features",
         ]
     else:
         results_df.columns = [
@@ -452,7 +453,7 @@ def parallel_annotate(
     matching_method: str = "nearest",
     matching_method_params: dict | None = None,
 ) -> (
-    tuple[np.ndarray, np.ndarray, float, int, int, int]
+    tuple[np.ndarray, np.ndarray, float, int, int, int, dict]
     | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, int, int]
     | None
 ):
@@ -479,8 +480,10 @@ def parallel_annotate(
     :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
     :param matching_method: name of the candidate-resolver registered in ``annotation.matchers``.
     :param matching_method_params: optional keyword arguments forwarded to the resolver.
-    :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
-             and any removed peaks (List[str])
+    :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray),
+         calculated mass (float), removed peaks (int), annotated NL count (int),
+         expected NL count (int), mean_ppm_error (float), max_ppm_error (float),
+         std_ppm_error (float)
     """
     xl_type_col = index_columns.get("CROSSLINKER_TYPE")
     if xl_type_col is None:
@@ -583,7 +586,12 @@ def _annotate_linear_spectrum(
     if len(matched_peaks) == 0:
         intensity = np.full(vec_length, 0.0)
         mass = np.full(vec_length, 0.0)
-        return intensity, mass, calc_mass, 0, 0, 0
+        sc_features = {
+            "mean_ppm_error": float("nan"),
+            "max_ppm_error": float("nan"),
+            "std_ppm_error": float("nan"),
+        } #nan for ppm_error values
+        return intensity, mass, calc_mass, 0, 0, 0, sc_features
 
     # Pass the matching tolerance so tolerance-aware resolvers (e.g. global_ransac)
     # can scale their inlier band to the instrument. Explicit matching_method_params
@@ -602,6 +610,27 @@ def _annotate_linear_spectrum(
         unmod_sequence=unmod_sequence,
         **resolver_kwargs,
     )
+
+    # Extract ppm_error summary stats before generate_annotation_matrix()
+    # discards the matched_peaks DataFrame. These are passed up the call
+    # chain and stored in the Spectra object for use as Percolator features.
+    if "ppm_error" in matched_peaks.columns and len(matched_peaks) > 0:
+        # sc_features: extensible dict for single-cell rescoring features.
+        # Add new per-PSM scalar features here as needed.
+        sc_features = {
+            "mean_ppm_error": float(matched_peaks["ppm_error"].mean()),
+            "max_ppm_error": float(matched_peaks["ppm_error"].max()),
+            "std_ppm_error": float(matched_peaks["ppm_error"].std(ddof=0)),
+        }
+    else:
+        # NaN signals missing data, not a perfect match (0.0 would be misleading).
+        # TODO: handle NaN downstream in percolator.py before passing to Percolator.
+        sc_features = {
+            "mean_ppm_error": float("nan"),
+            "max_ppm_error": float("nan"),
+            "std_ppm_error": float("nan"),
+        }
+
     intensities, mass = generate_annotation_matrix(
         matched_peaks,
         unmod_sequence,
@@ -610,7 +639,7 @@ def _annotate_linear_spectrum(
         multifrag=multifrag,
         featured_ions=featured_ions,
     )
-    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl
+    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl, sc_features
 
 
 def _annotate_crosslinked_spectrum(

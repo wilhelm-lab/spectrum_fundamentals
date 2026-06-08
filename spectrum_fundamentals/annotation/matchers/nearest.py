@@ -22,6 +22,8 @@ def nearest_resolver(
     if len(df) == 0:
         return df, 0
     df["mass_diff"] = (df["exp_mass"] - df["theoretical_mass"]).abs()
+    df["ppm_error"] = df["mass_diff"] / df["theoretical_mass"] * 1e6
+    # ^ Scale-invariant mass deviation in ppm — used as rescoring feature for Percolator.
     df = df.sort_values(by="mass_diff", ascending=True)
     original_length = len(df.index)
     df = df.drop_duplicates(subset=["ion_type", "no", "charge"], keep="first")

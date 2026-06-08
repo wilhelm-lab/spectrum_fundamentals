@@ -17,7 +17,7 @@ Resolver signature::
 
 Returns ``(matched_peaks_df, n_dropped)``. The DataFrame must contain the
 columns consumed downstream by ``generate_annotation_matrix``:
-``ion_type, no, charge, exp_mass, theoretical_mass, intensity`` (plus
+``ion_type, no, charge, exp_mass, theoretical_mass, intensity, ppm_error (optional)`` (plus
 ``full_name`` when ``multifrag=True``).
 """
 
