@@ -77,7 +77,6 @@ class TestNearestResolver(unittest.TestCase):
         legacy_df, legacy_dropped = annotation.handle_multiple_matches(matched_peaks, sort_by="mass_diff")
         resolver_df, resolver_dropped = nearest_resolver(matched_peaks)
 
-        pd.testing.assert_frame_equal(legacy_df, resolver_df)
         # ppm_error and future sc_features columns are not part of the legacy
         # handle_multiple_matches output — only compare the shared columns.
         pd.testing.assert_frame_equal(legacy_df, resolver_df[legacy_df.columns])
