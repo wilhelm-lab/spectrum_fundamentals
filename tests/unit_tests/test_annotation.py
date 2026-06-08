@@ -295,7 +295,7 @@ class TestAnnotationPipeline(unittest.TestCase):
             matched_peaks,
             sort_by="illegal",
         )
-        
+
     def test_annotate_spectra_returns_sc_features(self):
         """annotate_spectra always returns sc_features dict with ppm_error stats per PSM."""
         spectrum_input = pd.read_csv(
