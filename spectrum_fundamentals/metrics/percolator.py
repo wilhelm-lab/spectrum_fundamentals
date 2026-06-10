@@ -312,6 +312,7 @@ class Percolator(Metric):
             for feature in ["mean_ppm_error", "max_ppm_error", "std_ppm_error"]:
                 if feature in self.metadata.columns:
                     self.metrics_val[feature] = self.metadata[feature]
+                    self.metrics_val[feature] = self.metrics_val[feature].fillna(self.metrics_val[feature].median())
 
         self.metrics_val["Charge1"] = (self.metadata["PRECURSOR_CHARGE"] == 1).astype(int)
         self.metrics_val["Charge2"] = (self.metadata["PRECURSOR_CHARGE"] == 2).astype(int)
