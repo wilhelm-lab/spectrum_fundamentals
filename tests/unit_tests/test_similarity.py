@@ -278,6 +278,57 @@ class TestSpectralAngleMultipleRows:
         )
 
 
+class TestSpectralAngleNoiseAware:
+    """Tests for the noise-aware / detection-aware spectral angle (DA-SA)."""
+
+    def test_disabled_by_default(self):
+        """DA-SA must be off unless explicitly enabled via the environment."""
+        assert sim._noise_aware_sa_config() is None
+
+    def test_reduces_to_spectral_angle_when_all_detectable(self):
+        """With tau -> 0 every fragment is detectable, so DA-SA == standard SA."""
+        z = constants.EPSILON
+        observed = get_padded_array([1.0, z, 4.0, 3.0], padding_value=z)
+        predicted = get_padded_array([2.0, 1.0, 3.0, 4.0], padding_value=z)
+        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)
+        da = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.0, s=1e-6)
+        np.testing.assert_almost_equal(da, sa)
+
+    def test_missing_low_peak_relaxed(self):
+        """Missing predicted peaks below the detectability threshold are not penalised."""
+        z = constants.EPSILON
+        # base peak 1.0 observed; four weak predicted peaks (<=0.25, all < tau) missing.
+        observed = get_padded_array([1.0, z, z, z, z], padding_value=z)
+        predicted = get_padded_array([1.0, 0.25, 0.22, 0.20, 0.18], padding_value=z)
+        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
+        # hard threshold above the weak peaks -> they are dropped -> no penalty at all.
+        da_hard = sim.SimilarityMetrics.spectral_angle_noise_aware(
+            observed, predicted, tau=0.30, mode="hard_pred"
+        )[0]
+        # soft threshold -> penalty strongly reduced but not necessarily zero.
+        da_soft = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.30, s=0.06)[0]
+        assert sa < 0.8  # standard SA is dragged down by the four "missing" weak peaks
+        np.testing.assert_almost_equal(da_hard, 1.0)
+        assert da_soft > sa + 0.1
+
+    def test_missing_high_peak_still_punished(self):
+        """A missing high-intensity predicted peak is still penalised (≈ standard SA)."""
+        z = constants.EPSILON
+        observed = get_padded_array([1.0, z, 0.25, 0.22], padding_value=z)
+        predicted = get_padded_array([1.0, 0.70, 0.25, 0.22], padding_value=z)
+        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
+        da = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.30, s=0.06)[0]
+        np.testing.assert_almost_equal(da, sa, decimal=2)
+
+    def test_no_observed_fragments_is_zero(self):
+        """No observed fragments -> SA of 0, like the standard metric."""
+        z = constants.EPSILON
+        observed = get_padded_array([z, z, z, z], padding_value=z)
+        predicted = get_padded_array([1.0, 0.5, 0.3, 0.2], padding_value=z)
+        da = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.05)
+        np.testing.assert_almost_equal(da, 0.0)
+
+
 def get_padded_array(arr, padding_value: int = 0) -> np.ndarray:
     """Get padded array."""
     return np.array([np.pad(arr, (0, constants.VEC_LENGTH - len(arr)), "constant", constant_values=padding_value)])

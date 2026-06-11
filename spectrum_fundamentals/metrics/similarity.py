@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
@@ -8,6 +10,31 @@ from sklearn.metrics import mean_squared_error
 
 from spectrum_fundamentals import constants
 from spectrum_fundamentals.metrics.metric import Metric
+
+
+def _noise_aware_sa_config() -> dict | None:
+    """
+    Read noise-aware ("detection-aware") spectral-angle settings from the environment.
+
+    Returns ``None`` unless ``DASA_ENABLE`` is truthy, so the default behaviour of the
+    package is completely unchanged (no extra feature column is added). When enabled,
+    a ``spectral_angle_noise_aware`` feature is emitted alongside ``spectral_angle``.
+    See :func:`SimilarityMetrics.spectral_angle_noise_aware` and
+    ``mp26_single_cell_proteomics/notes/noise_aware_spectral_angle_proposal.md``.
+
+    Env vars: ``DASA_ENABLE`` (0/1), ``DASA_MODE`` (soft_pred|hard_pred|noise_floor),
+    ``DASA_TAU``, ``DASA_S``, ``DASA_BETA``.
+
+    :return: dict of kwargs for ``spectral_angle_noise_aware``, or ``None`` if disabled
+    """
+    if os.environ.get("DASA_ENABLE", "0").strip().lower() not in ("1", "true", "yes", "on"):
+        return None
+    return {
+        "mode": os.environ.get("DASA_MODE", "soft_pred"),
+        "tau": float(os.environ.get("DASA_TAU", "0.05")),
+        "s": float(os.environ.get("DASA_S", "0.02")),
+        "beta": float(os.environ.get("DASA_BETA", "1.0")),
+    }
 
 
 def get_metric_func(metric: str):
@@ -98,6 +125,85 @@ class SimilarityMetrics(Metric):
         sa = 1 - 2 * arccos / np.pi
         sa = np.nan_to_num(sa)
         return sa
+
+    @staticmethod
+    def spectral_angle_noise_aware(
+        observed_intensities: scipy.sparse.csr_matrix | np.ndarray,
+        predicted_intensities: scipy.sparse.csr_matrix | np.ndarray,
+        tau: float = 0.05,
+        s: float = 0.02,
+        mode: str = "soft_pred",
+        beta: float = 1.0,
+    ) -> np.ndarray:
+        """
+        Calculate a noise-aware ("detection-aware") spectral angle (DA-SA).
+
+        Identical to :func:`spectral_angle` except that a predicted fragment which is
+        *not observed* is discounted from the comparison in proportion to its
+        detectability ``d in [0, 1]``. In low-input (single-cell) spectra, weak
+        predicted peaks are expected to fall within noise, so their absence is barely
+        penalised, while strong predicted peaks are penalised as usual. The metric
+        reduces exactly to :func:`spectral_angle` when every fragment is detectable
+        (``d = 1``). Design notes:
+        ``mp26_single_cell_proteomics/notes/noise_aware_spectral_angle_proposal.md``.
+
+        :param observed_intensities: observed intensities, constants.EPSILON indicates a \
+                                     missing (valid but unobserved) peak, 0 indicates an \
+                                     invalid peak, array of shape (n, 174)
+        :param predicted_intensities: predicted intensities, same shape/encoding
+        :param tau: detectability threshold on predicted relative intensity (soft_pred/hard_pred)
+        :param s: softness of the sigmoid transition (soft_pred)
+        :param mode: "soft_pred" (sigmoid in predicted intensity), "hard_pred" (step at tau), \
+                     or "noise_floor" (per-spectrum noise floor on the expected intensity)
+        :param beta: transition width relative to the noise floor (noise_floor mode)
+        :raises ValueError: if mode is unknown
+        :return: noise-aware SA values, array of shape (n,)
+        """
+        if isinstance(observed_intensities, scipy.sparse.csr_matrix):
+            observed_intensities = observed_intensities.toarray()
+        if isinstance(predicted_intensities, scipy.sparse.csr_matrix):
+            predicted_intensities = predicted_intensities.toarray()
+        observed = np.asarray(observed_intensities, dtype=float)
+        predicted = np.asarray(predicted_intensities, dtype=float)
+
+        pred_pos = predicted > constants.EPSILON  # fragments Prosit predicts
+        obs_pos = observed > constants.EPSILON  # fragments actually observed
+        matched = pred_pos & obs_pos  # predicted AND observed
+        missing = pred_pos & ~obs_pos  # predicted but missing (the relaxed case)
+
+        # Per-fragment detectability; only applied to missing peaks below.
+        if mode == "hard_pred":
+            d = (predicted >= tau).astype(float)
+        elif mode == "soft_pred":
+            d = 1.0 / (1.0 + np.exp(-(predicted - tau) / s))
+        elif mode == "noise_floor":
+            # LS scale A per spectrum so that on matched peaks observed ~= A * predicted.
+            num = np.sum(observed * matched * predicted, axis=1)
+            den = np.sum((predicted * matched) ** 2, axis=1)
+            scale = np.divide(num, den, out=np.zeros_like(num), where=den > 0)
+            expected = scale[:, np.newaxis] * predicted
+            obs_for_floor = np.where(matched, observed, np.nan)
+            has_match = matched.any(axis=1)
+            nu = np.full(observed.shape[0], constants.EPSILON)
+            if has_match.any():  # nanquantile warns on all-NaN rows; only feed valid rows
+                nu[has_match] = np.nanquantile(obs_for_floor[has_match], 0.10, axis=1)
+            nu = nu[:, np.newaxis]
+            d = 1.0 / (1.0 + np.exp(-(expected - nu) / (beta * nu + 1e-12)))
+        else:
+            raise ValueError(f"Unknown noise-aware SA mode {mode}")
+
+        # Effective predicted norm: matched peaks count fully, missing peaks count by d.
+        p2 = predicted**2
+        eff_pred_norm = np.sqrt(np.sum(p2 * matched, axis=1) + np.sum(d * p2 * missing, axis=1))
+        obs_norm = np.sqrt(np.sum((observed * matched) ** 2, axis=1))
+        dot = np.sum(observed * matched * predicted, axis=1)
+
+        denom = obs_norm * eff_pred_norm
+        cos = np.divide(dot, denom, out=np.zeros_like(dot), where=denom > 0)
+        cos = np.clip(cos, 0.0, 1.0) * (np.sum(matched, axis=1) > 0)
+
+        sa = 1 - 2 * np.arccos(cos) / np.pi
+        return np.nan_to_num(sa)
 
     @staticmethod
     def l2_norm(matrix) -> np.ndarray:
@@ -456,6 +562,11 @@ class SimilarityMetrics(Metric):
                 self.metrics_val["spectral_angle"] = SimilarityMetrics.spectral_angle(
                     self.true_intensities, self.pred_intensities, 0
                 )
+                dasa_config = _noise_aware_sa_config()
+                if dasa_config is not None:
+                    self.metrics_val["spectral_angle_noise_aware"] = SimilarityMetrics.spectral_angle_noise_aware(
+                        self.true_intensities, self.pred_intensities, **dasa_config
+                    )
                 self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
                     self.true_intensities, self.pred_intensities, 0, "pearson"
                 )
