@@ -302,9 +302,7 @@ class TestSpectralAngleNoiseAware:
         predicted = get_padded_array([1.0, 0.25, 0.22, 0.20, 0.18], padding_value=z)
         sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
         # hard threshold above the weak peaks -> they are dropped -> no penalty at all.
-        da_hard = sim.SimilarityMetrics.spectral_angle_noise_aware(
-            observed, predicted, tau=0.30, mode="hard_pred"
-        )[0]
+        da_hard = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.30, mode="hard_pred")[0]
         # soft threshold -> penalty strongly reduced but not necessarily zero.
         da_soft = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.30, s=0.06)[0]
         assert sa < 0.8  # standard SA is dragged down by the four "missing" weak peaks
@@ -327,6 +325,34 @@ class TestSpectralAngleNoiseAware:
         predicted = get_padded_array([1.0, 0.5, 0.3, 0.2], padding_value=z)
         da = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.05)
         np.testing.assert_almost_equal(da, 0.0)
+
+
+class TestSpectralAngleNoB1:
+    """Tests for SA with b1 ions excluded."""
+
+    def test_b1_excluded(self):
+        """b1 ions (indices 3,4,5) should not affect the score even if predicted."""
+        z = constants.EPSILON
+        # b1 predicted but not observed (idx 3) — standard SA would penalise this
+        observed = get_padded_array([1.0, 2.0, 3.0, z], padding_value=z)
+        predicted = get_padded_array([1.0, 2.0, 3.0, 1.0], padding_value=z)
+        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
+        mask = np.ones((1, constants.VEC_LENGTH))
+        mask[:, 3:6] = 0
+        sa_no_b1 = sim.SimilarityMetrics.spectral_angle(observed, predicted, masks=mask)[0]
+        # without b1 exclusion, missing b1 drags score down
+        assert sa_no_b1 > sa
+
+    def test_non_b1_ions_unaffected(self):
+        """Ions at positions other than b1 are not affected by the mask."""
+        # values only at indices 0,1,2 (y1+1, y1+2, y1+3) — no b1
+        observed = get_padded_array([1.0, 2.0, 3.0])
+        predicted = get_padded_array([1.0, 2.0, 3.0])
+        mask = np.ones((1, constants.VEC_LENGTH))
+        mask[:, 3:6] = 0
+        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
+        sa_no_b1 = sim.SimilarityMetrics.spectral_angle(observed, predicted, masks=mask)[0]
+        np.testing.assert_almost_equal(sa_no_b1, sa)
 
 
 def get_padded_array(arr, padding_value: int = 0) -> np.ndarray:
