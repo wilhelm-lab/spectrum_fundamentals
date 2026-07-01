@@ -307,6 +307,9 @@ class Percolator(Metric):
             self.metrics_val["KR"] = self.metadata["SEQUENCE"].apply(Percolator.count_arginines_and_lysines)
             self.metrics_val["sequence_length"] = self.metadata["SEQUENCE"].apply(lambda x: len(x))
             self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
+            self.metrics_val["ExpMass"] = (
+                self.metadata["Mass"] + self.metadata["PRECURSOR_CHARGE"] * constants.MASSES["PROTON"]
+            ) / self.metadata["PRECURSOR_CHARGE"]
 
         self.metrics_val["Charge1"] = (self.metadata["PRECURSOR_CHARGE"] == 1).astype(int)
         self.metrics_val["Charge2"] = (self.metadata["PRECURSOR_CHARGE"] == 2).astype(int)
@@ -415,10 +418,8 @@ class Percolator(Metric):
             )
             return np.array([])
 
-        logger.info(
-            f"Found {len(accepted_indices)} (out of {len(scores_df.index)}) targets below {fdr_cutoff} \
-            FDR using {feature_name} as feature"
-        )
+        logger.info(f"Found {len(accepted_indices)} (out of {len(scores_df.index)}) targets below {fdr_cutoff} \
+            FDR using {feature_name} as feature")
 
         return np.sort(scores_df.index[: len(accepted_indices)])
 
