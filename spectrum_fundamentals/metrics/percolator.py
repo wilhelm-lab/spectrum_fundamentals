@@ -307,9 +307,7 @@ class Percolator(Metric):
             self.metrics_val["KR"] = self.metadata["SEQUENCE"].apply(Percolator.count_arginines_and_lysines)
             self.metrics_val["sequence_length"] = self.metadata["SEQUENCE"].apply(lambda x: len(x))
             self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
-            self.metrics_val["ExpMass"] = (
-                self.metadata["MASS"] + self.metadata["PRECURSOR_CHARGE"] * constants.MASSES["PROTON"]
-            ) / self.metadata["PRECURSOR_CHARGE"]
+            
 
         self.metrics_val["Charge1"] = (self.metadata["PRECURSOR_CHARGE"] == 1).astype(int)
         self.metrics_val["Charge2"] = (self.metadata["PRECURSOR_CHARGE"] == 2).astype(int)
@@ -322,6 +320,9 @@ class Percolator(Metric):
         )
         self.metrics_val["HCD"] = (self.metadata["FRAGMENTATION"] == "HCD").astype(int)
         self.metrics_val["CID"] = (self.metadata["FRAGMENTATION"] == "CID").astype(int)
+        self.metrics_val["ExpMass"] = (
+                self.metadata["MASS"] + self.metadata["PRECURSOR_CHARGE"] * constants.MASSES["PROTON"]
+            ) / self.metadata["PRECURSOR_CHARGE"]
 
     def add_additional_features(self):
         """Add additional features from custom serch results if specified."""
@@ -454,7 +455,7 @@ class Percolator(Metric):
 
     def _reorder_columns_for_percolator(self):
         all_columns = self.metrics_val.columns
-        first_columns = ["SpecId", "Label", "ScanNr", "filename"]
+        first_columns = ["SpecId", "Label", "ScanNr", "filename","ExpMass"]
         last_columns = ["Peptide", "Proteins"]
         mid_columns = list(set(all_columns) - set(first_columns) - set(last_columns))
         new_columns = first_columns + sorted(mid_columns) + last_columns
