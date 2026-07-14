@@ -571,7 +571,7 @@ class SimilarityMetrics(Metric):
                 # Excluding them avoids unfairly penalising PSMs for their absence.
                 # Vector layout: for pos in [1..29]: for ion in [y,b]: for charge in [1,2,3]
                 # => b1+1=idx3, b1+2=idx4, b1+3=idx5
-                b1_exclusion_mask = np.ones((1, constants.VEC_LENGTH))
+                b1_exclusion_mask = np.ones((1, self.true_intensities.shape[1]))
                 b1_exclusion_mask[:, 3:6] = 0
                 self.metrics_val["spectral_angle_no_b1"] = SimilarityMetrics.spectral_angle(
                     self.true_intensities, self.pred_intensities, 0, masks=b1_exclusion_mask
