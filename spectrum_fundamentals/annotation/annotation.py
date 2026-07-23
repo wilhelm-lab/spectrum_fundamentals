@@ -633,7 +633,7 @@ def _annotate_linear_spectrum(
             "mean_ppm_error": float("nan"),
             "max_ppm_error": float("nan"),
             "std_ppm_error": float("nan"),
-            "intensity_features": float("nan"),
+            "intensity_coverage": float("nan"),
         }
 
     intensities, mass = generate_annotation_matrix(
