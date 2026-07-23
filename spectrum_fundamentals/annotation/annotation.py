@@ -590,6 +590,7 @@ def _annotate_linear_spectrum(
             "mean_ppm_error": float("nan"),
             "max_ppm_error": float("nan"),
             "std_ppm_error": float("nan"),
+            "intensity_coverage": float("nan"),
         }  # nan for ppm_error values
         return intensity, mass, calc_mass, 0, 0, 0, sc_features
 
@@ -621,6 +622,9 @@ def _annotate_linear_spectrum(
             "mean_ppm_error": float(matched_peaks["ppm_error"].mean()),
             "max_ppm_error": float(matched_peaks["ppm_error"].max()),
             "std_ppm_error": float(matched_peaks["ppm_error"].std(ddof=0)),
+            "intensity_coverage": float(matched_peaks["intensity"].sum() / spectrum[index_columns["INTENSITIES"]].sum())
+            if spectrum[index_columns["INTENSITIES"]].sum() > 0
+            else float("nan"),
         }
     else:
         # NaN signals missing data, not a perfect match (0.0 would be misleading).
@@ -629,6 +633,7 @@ def _annotate_linear_spectrum(
             "mean_ppm_error": float("nan"),
             "max_ppm_error": float("nan"),
             "std_ppm_error": float("nan"),
+            "intensity_features": float("nan"),
         }
 
     intensities, mass = generate_annotation_matrix(

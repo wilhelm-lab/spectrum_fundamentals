@@ -312,6 +312,24 @@ class TestAnnotationPipeline(unittest.TestCase):
         self.assertIn("sc_features", result.columns)
 
         # every PSM must contain exactly the expected keys
-        expected_keys = {"mean_ppm_error", "max_ppm_error", "std_ppm_error"}
+        expected_keys = {"mean_ppm_error", "max_ppm_error", "std_ppm_error", "intensity_coverage"}
         for sc_feat in result["sc_features"]:
             self.assertEqual(set(sc_feat.keys()), expected_keys)
+
+    def test_intensity_coverage_is_between_0_and_1(self):
+        """intensity_coverage must be in [0, 1] for matched spectra."""
+        spectrum_input = pd.read_csv(
+            Path(__file__).parent / "data/spectrum_input.csv",
+            index_col=0,
+            converters={"INTENSITIES": literal_eval, "MZ": literal_eval},
+        )
+        spectrum_input["INTENSITIES"] = spectrum_input["INTENSITIES"].map(lambda intensities: np.array(intensities))
+        spectrum_input["MZ"] = spectrum_input["MZ"].map(lambda mz: np.array(mz))
+
+        result = annotation.annotate_spectra(spectrum_input)
+
+        for sc_feat in result["sc_features"]:
+            cov = sc_feat["intensity_coverage"]
+            if not (cov != cov):  # skip NaN
+                self.assertGreaterEqual(cov, 0.0)
+                self.assertLessEqual(cov, 1.0)

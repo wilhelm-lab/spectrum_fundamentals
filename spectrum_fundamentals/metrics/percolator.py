@@ -309,7 +309,7 @@ class Percolator(Metric):
             self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
             # ppm_error features: per-PSM peak matching quality metrics. Only added if available
             # TODO: handle NaN values before passing to Percolator (see annotation.py).
-            for feature in ["mean_ppm_error", "max_ppm_error", "std_ppm_error"]:
+            for feature in ["mean_ppm_error", "max_ppm_error", "std_ppm_error", "intensity_coverage"]:
                 if feature in self.metadata.columns:
                     self.metrics_val[feature] = self.metadata[feature]
                     self.metrics_val[feature] = self.metrics_val[feature].fillna(self.metrics_val[feature].median())
