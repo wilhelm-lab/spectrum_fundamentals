@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from spectrum_fundamentals import constants
 from spectrum_fundamentals.annotation import annotation
 
 
@@ -311,10 +312,16 @@ class TestAnnotationPipeline(unittest.TestCase):
         # sc_features column must always be present
         self.assertIn("sc_features", result.columns)
 
-        # every PSM must contain exactly the expected keys
-        expected_keys = {"mean_ppm_error", "max_ppm_error", "std_ppm_error", "intensity_coverage"}
+        # every PSM must contain exactly the expected keys (ppm_error + intensity + peak-coverage)
+        expected_keys = set(constants.SC_FEATURE_KEYS)
         for sc_feat in result["sc_features"]:
             self.assertEqual(set(sc_feat.keys()), expected_keys)
+            # peak-coverage features are fractions in [0, 1] (or NaN when undefined)
+            for key in constants.PEAK_COVERAGE_FEATURES:
+                value = sc_feat[key]
+                if not np.isnan(value):
+                    self.assertGreaterEqual(value, 0.0)
+                    self.assertLessEqual(value, 1.0)
 
     def test_intensity_coverage_is_between_0_and_1(self):
         """intensity_coverage must be in [0, 1] for matched spectra."""
@@ -333,3 +340,70 @@ class TestAnnotationPipeline(unittest.TestCase):
             if not (cov != cov):  # skip NaN
                 self.assertGreaterEqual(cov, 0.0)
                 self.assertLessEqual(cov, 1.0)
+
+
+class TestPeakCoverageFeatures(unittest.TestCase):
+    """Unit tests for the peak-coverage sc_features helpers."""
+
+    def test_count_within_ppm(self):
+        """_count_within_ppm counts query peaks near any reference peak."""
+        ref = np.array([200.0, 500.0])
+        # 200.003 is 15 ppm from 200.0 (within); 300.0 is far from both.
+        self.assertEqual(annotation._count_within_ppm(np.array([200.003, 300.0]), ref, 20.0), 1)
+        # 200.006 is 30 ppm from 200.0 -> outside a 20 ppm window.
+        self.assertEqual(annotation._count_within_ppm(np.array([200.006]), ref, 20.0), 0)
+        # empty inputs -> 0, no error
+        self.assertEqual(annotation._count_within_ppm(np.array([]), ref, 20.0), 0)
+        self.assertEqual(annotation._count_within_ppm(np.array([200.0]), np.array([]), 20.0), 0)
+
+    def test_peak_coverage_features_thresholds(self):
+        """Threshold-based coverage fractions match a hand-computed example."""
+        peaks_mz = np.array([100.0, 200.0, 300.0, 400.0, 500.0, 600.0])
+        peaks_int = np.array([60.0, 200.0, 30.0, 90.0, 100.0, 12.0])
+        # Matched observed peaks: m/z 200 (int 200) and 500 (int 100).
+        matched_exp_mass = np.array([200.0, 500.0])
+
+        feats = annotation._peak_coverage_features(matched_exp_mass, peaks_mz, peaks_int)
+
+        # min_matched = 100, avg_matched = 150, n_matched = 2, unmatched int = [60, 30, 90, 12]
+        # min50 (thr 50):  competing {60, 90}          -> 2 / (2 + 2) = 0.5
+        # min25 (thr 25):  competing {60, 30, 90}       -> 2 / (2 + 3) = 0.4
+        # min100 (thr 100): competing {}                -> 2 / (2 + 0) = 1.0
+        # avg20 (thr 30):  competing {60, 30, 90}        -> 2 / (2 + 3) = 0.4
+        # all:             2 / 6                          -> 0.3333...
+        # 20ppm: no unmatched peak within 20 ppm of 200/500 -> 2 / 2 = 1.0
+        # intensity_coverage: matched raw (200 + 100) / total raw (492) -> 300 / 492
+        self.assertAlmostEqual(feats["annotated_frac_min50"], 0.5)
+        self.assertAlmostEqual(feats["annotated_frac_min25"], 0.4)
+        self.assertAlmostEqual(feats["annotated_frac_min100"], 1.0)
+        self.assertAlmostEqual(feats["annotated_frac_avg20"], 0.4)
+        self.assertAlmostEqual(feats["annotated_frac_all"], 2.0 / 6.0)
+        self.assertAlmostEqual(feats["annotated_frac_20ppm"], 1.0)
+        self.assertAlmostEqual(feats["intensity_coverage"], 300.0 / 492.0)
+
+    def test_peak_coverage_features_20ppm_window(self):
+        """An unmatched peak within 20 ppm of a matched peak enters the 20ppm denominator."""
+        # 200.003 sits 15 ppm from the matched peak at 200.0.
+        peaks_mz = np.array([200.0, 200.003, 500.0])
+        peaks_int = np.array([100.0, 5.0, 100.0])
+        matched_exp_mass = np.array([200.0, 500.0])
+
+        feats = annotation._peak_coverage_features(matched_exp_mass, peaks_mz, peaks_int)
+
+        # n_matched = 2, one competing unmatched peak within 20 ppm -> 2 / (2 + 1)
+        self.assertAlmostEqual(feats["annotated_frac_20ppm"], 2.0 / 3.0)
+
+    def test_peak_coverage_features_no_matches_returns_nan(self):
+        """No matches (or no observed peaks) -> all coverage features are NaN."""
+        peaks_mz = np.array([100.0, 200.0])
+        peaks_int = np.array([10.0, 20.0])
+
+        feats = annotation._peak_coverage_features(np.array([]), peaks_mz, peaks_int)
+        expected_keys = set(constants.INTENSITY_COVERAGE_FEATURES) | set(constants.PEAK_COVERAGE_FEATURES)
+        self.assertEqual(set(feats.keys()), expected_keys)
+        for value in feats.values():
+            self.assertTrue(np.isnan(value))
+
+        feats_empty = annotation._peak_coverage_features(np.array([200.0]), np.array([]), np.array([]))
+        for value in feats_empty.values():
+            self.assertTrue(np.isnan(value))

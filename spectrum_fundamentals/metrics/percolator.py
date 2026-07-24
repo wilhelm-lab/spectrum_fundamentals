@@ -1,6 +1,7 @@
 import enum
 import logging
 import math
+import os
 
 import numpy as np
 import pandas as pd
@@ -307,9 +308,10 @@ class Percolator(Metric):
             self.metrics_val["KR"] = self.metadata["SEQUENCE"].apply(Percolator.count_arginines_and_lysines)
             self.metrics_val["sequence_length"] = self.metadata["SEQUENCE"].apply(lambda x: len(x))
             self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
-            # ppm_error features: per-PSM peak matching quality metrics. Only added if available
+            # sc_features: per-PSM peak-matching quality metrics (ppm_error + peak-coverage).
+            # Only added if available; canonical list lives in constants.SC_FEATURE_KEYS.
             # TODO: handle NaN values before passing to Percolator (see annotation.py).
-            for feature in ["mean_ppm_error", "max_ppm_error", "std_ppm_error", "intensity_coverage"]:
+            for feature in constants.SC_FEATURE_KEYS:
                 if feature in self.metadata.columns:
                     self.metrics_val[feature] = self.metadata[feature]
                     self.metrics_val[feature] = self.metrics_val[feature].fillna(self.metrics_val[feature].median())
@@ -592,6 +594,18 @@ class Percolator(Metric):
             self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
                 self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
             )
+
+        # Optional feature ablation (env-gated, default off): drop named feature columns from the
+        # percolator feature matrix, so a full Oktoberfest run genuinely excludes those features.
+        # e.g. OKT_DROP_FEATURES="RT pred_RT iRT abs_rt_diff". To remove the spectral angle, also
+        # drop "lda_scores" (it is an LDA combination computed over all features, incl. spectral_angle,
+        # so it would otherwise leak the SA signal back in). Columns absent from this PSM set are ignored.
+        drop_features = os.environ.get("OKT_DROP_FEATURES", "").split()
+        if drop_features:
+            present = [c for c in drop_features if c in self.metrics_val.columns]
+            if present:
+                logger.info(f"OKT_DROP_FEATURES: dropping percolator feature columns {present}")
+                self.metrics_val.drop(columns=present, inplace=True)
 
         self._reorder_columns_for_percolator()
 

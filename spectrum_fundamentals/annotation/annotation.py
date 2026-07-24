@@ -152,6 +152,128 @@ def handle_multiple_matches(
     return matched_peaks_df, (original_length - length_after_matches)
 
 
+def _count_within_ppm(query_mz: np.ndarray, ref_mz: np.ndarray, ppm: float) -> int:
+    """
+    Count how many ``query_mz`` peaks lie within ``ppm`` of any ``ref_mz`` peak.
+
+    Uses a binary search against the sorted reference m/z and checks only the two
+    nearest neighbours, so it is O(n log n) in the number of peaks.
+
+    :param query_mz: m/z of the peaks to test (e.g. unmatched observed peaks)
+    :param ref_mz: m/z of the reference peaks (e.g. matched observed peaks)
+    :param ppm: tolerance window half-width in parts-per-million
+    :return: number of query peaks with a reference peak within ``ppm``
+    """
+    query_mz = np.asarray(query_mz, dtype=float)
+    ref_mz = np.asarray(ref_mz, dtype=float)
+    if len(query_mz) == 0 or len(ref_mz) == 0:
+        return 0
+    ref_sorted = np.sort(ref_mz)
+    pos = np.searchsorted(ref_sorted, query_mz)
+    n_ref = len(ref_sorted)
+    count = 0
+    for q, p in zip(query_mz, pos):
+        best_ppm = np.inf
+        if p < n_ref:
+            best_ppm = min(best_ppm, abs(q - ref_sorted[p]) / ref_sorted[p] * 1e6)
+        if p > 0:
+            best_ppm = min(best_ppm, abs(q - ref_sorted[p - 1]) / ref_sorted[p - 1] * 1e6)
+        if best_ppm <= ppm:
+            count += 1
+    return count
+
+
+def _peak_coverage_features(
+    matched_exp_mass: np.ndarray,
+    peaks_mz: np.ndarray,
+    peaks_intensity: np.ndarray,
+) -> dict[str, float]:
+    """
+    Compute the observed-peak coverage ``sc_features`` for a single PSM.
+
+    Two flavours of coverage are returned, both derived from the set of *distinct*
+    observed peaks that were matched to a fragment ion:
+
+    **Peak-count coverage** (``constants.PEAK_COVERAGE_FEATURES``) — each of the form
+    ``n_annotated / (n_annotated + n_competing)``, where *n_competing* is the number
+    of observed peaks that were **not** matched but pass a significance test:
+
+    - ``annotated_frac_min{50,25,100}``: unmatched intensity is at least
+      {50, 25, 100}% of the *lowest* matched-peak intensity.
+    - ``annotated_frac_avg20``: unmatched intensity is at least 20% of the *mean*
+      matched-peak intensity.
+    - ``annotated_frac_20ppm``: unmatched peak lies within 20 ppm of any matched
+      peak's m/z (a co-isolation / interference proxy).
+    - ``annotated_frac_all``: no significance test — the denominator is simply all
+      observed peaks (``n_annotated / n_total``).
+
+    **Intensity coverage** (``constants.INTENSITY_COVERAGE_FEATURES``):
+
+    - ``intensity_coverage``: summed intensity of the matched observed peaks divided
+      by the summed intensity of all observed peaks. Both numerator and denominator
+      use the same raw (un-normalised) observed intensities, so the ratio is a true
+      fraction in ``[0, 1]``. (Note: this deliberately does **not** use
+      ``matched_peaks["intensity"]``, which is max-normalised inside ``match_peaks``
+      and would also double-count a peak matched to several ions.)
+
+    Matched observed peaks are located by mapping each ``exp_mass`` back to its index
+    in ``peaks_mz``; this is exact because ``exp_mass`` is a verbatim copy of a
+    ``peaks_mz`` value and ``peaks_mz`` is sorted ascending (a precondition of
+    ``match_peaks``).
+
+    :param matched_exp_mass: m/z of the observed peaks that were matched
+        (the ``exp_mass`` column of the resolved matches)
+    :param peaks_mz: m/z of all observed peaks, sorted ascending
+    :param peaks_intensity: intensities of all observed peaks (same order as ``peaks_mz``)
+    :return: mapping of feature name to a value in ``[0, 1]`` (or ``nan`` when there
+        are no observed peaks or no matches)
+    """
+    peaks_mz = np.asarray(peaks_mz, dtype=float)
+    peaks_intensity = np.asarray(peaks_intensity, dtype=float)
+    matched_exp_mass = np.asarray(matched_exp_mass, dtype=float)
+    # match_peaks only ever considers the first len(peaks_intensity) peaks; the m/z
+    # array can be longer (padded). Truncate both to the peaks that were actually
+    # matchable so the mask lines up and matched exp_mass values remain in range.
+    n_total = min(len(peaks_mz), len(peaks_intensity))
+    peaks_mz = peaks_mz[:n_total]
+    peaks_intensity = peaks_intensity[:n_total]
+
+    if n_total == 0 or len(matched_exp_mass) == 0:
+        return dict.fromkeys(constants.INTENSITY_COVERAGE_FEATURES + constants.PEAK_COVERAGE_FEATURES, float("nan"))
+
+    # Map matched exp_mass -> observed-peak index (exact float lookup, see docstring).
+    matched_idx = np.unique(np.searchsorted(peaks_mz, matched_exp_mass))
+    matched_idx = matched_idx[matched_idx < n_total]
+    matched_mask = np.zeros(n_total, dtype=bool)
+    matched_mask[matched_idx] = True
+
+    n_matched = int(matched_mask.sum())
+    matched_int = peaks_intensity[matched_mask]
+    unmatched_int = peaks_intensity[~matched_mask]
+    unmatched_mz = peaks_mz[~matched_mask]
+
+    min_matched = float(matched_int.min())
+    avg_matched = float(matched_int.mean())
+
+    # Intensity coverage: raw matched intensity / raw total intensity (same scale).
+    total_intensity = float(peaks_intensity.sum())
+    intensity_coverage = float(matched_int.sum()) / total_intensity if total_intensity > 0 else float("nan")
+
+    def _frac(n_competing: int) -> float:
+        denom = n_matched + n_competing
+        return n_matched / denom if denom > 0 else float("nan")
+
+    return {
+        "intensity_coverage": intensity_coverage,
+        "annotated_frac_min50": _frac(int((unmatched_int >= 0.50 * min_matched).sum())),
+        "annotated_frac_min25": _frac(int((unmatched_int >= 0.25 * min_matched).sum())),
+        "annotated_frac_min100": _frac(int((unmatched_int >= 1.00 * min_matched).sum())),
+        "annotated_frac_avg20": _frac(int((unmatched_int >= 0.20 * avg_matched).sum())),
+        "annotated_frac_20ppm": _frac(_count_within_ppm(unmatched_mz, peaks_mz[matched_mask], 20.0)),
+        "annotated_frac_all": n_matched / n_total,
+    }
+
+
 def annotate_spectra(
     un_annot_spectra: pd.DataFrame,
     mass_tolerance: float | None = None,
@@ -482,8 +604,8 @@ def parallel_annotate(
     :param matching_method_params: optional keyword arguments forwarded to the resolver.
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray),
          calculated mass (float), removed peaks (int), annotated NL count (int),
-         expected NL count (int), mean_ppm_error (float), max_ppm_error (float),
-         std_ppm_error (float)
+         expected NL count (int), and the sc_features dict of per-PSM rescoring
+         metrics (keys: ``constants.SC_FEATURE_KEYS``)
     """
     xl_type_col = index_columns.get("CROSSLINKER_TYPE")
     if xl_type_col is None:
@@ -586,12 +708,8 @@ def _annotate_linear_spectrum(
     if len(matched_peaks) == 0:
         intensity = np.full(vec_length, 0.0)
         mass = np.full(vec_length, 0.0)
-        sc_features = {
-            "mean_ppm_error": float("nan"),
-            "max_ppm_error": float("nan"),
-            "std_ppm_error": float("nan"),
-            "intensity_coverage": float("nan"),
-        }  # nan for ppm_error values
+        # No matches -> every sc_feature is undefined. NaN (not 0.0) signals missing data.
+        sc_features = dict.fromkeys(constants.SC_FEATURE_KEYS, float("nan"))
         return intensity, mass, calc_mass, 0, 0, 0, sc_features
 
     # Pass the matching tolerance so tolerance-aware resolvers (e.g. global_ransac)
@@ -612,19 +730,16 @@ def _annotate_linear_spectrum(
         **resolver_kwargs,
     )
 
-    # Extract ppm_error summary stats before generate_annotation_matrix()
-    # discards the matched_peaks DataFrame. These are passed up the call
-    # chain and stored in the Spectra object for use as Percolator features.
+    # Extract the sc_features (single-cell rescoring features) before
+    # generate_annotation_matrix() discards the matched_peaks DataFrame. These are
+    # passed up the call chain and stored in the Spectra object for use as
+    # Percolator features. The canonical key list lives in constants.SC_FEATURE_KEYS.
     if "ppm_error" in matched_peaks.columns and len(matched_peaks) > 0:
-        # sc_features: extensible dict for single-cell rescoring features.
-        # Add new per-PSM scalar features here as needed.
+        # ppm_error summary stats of the matched fragments.
         sc_features = {
             "mean_ppm_error": float(matched_peaks["ppm_error"].mean()),
             "max_ppm_error": float(matched_peaks["ppm_error"].max()),
             "std_ppm_error": float(matched_peaks["ppm_error"].std(ddof=0)),
-            "intensity_coverage": float(matched_peaks["intensity"].sum() / spectrum[index_columns["INTENSITIES"]].sum())
-            if spectrum[index_columns["INTENSITIES"]].sum() > 0
-            else float("nan"),
         }
     else:
         # NaN signals missing data, not a perfect match (0.0 would be misleading).
@@ -633,8 +748,19 @@ def _annotate_linear_spectrum(
             "mean_ppm_error": float("nan"),
             "max_ppm_error": float("nan"),
             "std_ppm_error": float("nan"),
-            "intensity_coverage": float("nan"),
         }
+
+    # Coverage features (peak-count coverage + intensity_coverage): what fraction of
+    # the observed peaks / observed intensity got annotated. Computed from the full
+    # observed spectrum + the resolved matches (see _peak_coverage_features).
+    matched_exp_mass = matched_peaks["exp_mass"].to_numpy() if "exp_mass" in matched_peaks.columns else np.array([])
+    sc_features.update(
+        _peak_coverage_features(
+            matched_exp_mass,
+            spectrum[index_columns["MZ"]],
+            spectrum[index_columns["INTENSITIES"]],
+        )
+    )
 
     intensities, mass = generate_annotation_matrix(
         matched_peaks,

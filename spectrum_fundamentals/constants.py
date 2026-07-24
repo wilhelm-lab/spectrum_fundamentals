@@ -19,6 +19,43 @@ VEC_LENGTH_CMS2 = (SEQ_LEN - 1) * 2 * 3 * 2
 # peptide of length 30 can have 29 b, y, b_short, y_short, b_long and y_long ions, each with charge 1+, 2+ and 3+
 # we do not annotate fragments wth charge 3+. All fragmets with charge 3+ convert to -1
 
+##########################################
+# Single-cell rescoring (sc_features)    #
+##########################################
+
+# Per-PSM peak-matching quality features emitted in the ``sc_features`` dict by
+# ``annotation._annotate_linear_spectrum``. This is the single source of truth
+# shared by the producer (annotation.py), the Percolator feature allow-list
+# (metrics/percolator.py) and the AnnData column extraction in oktoberfest
+# (preprocessing.py); keep the three in sync by editing only here.
+
+# Scale-invariant mass-deviation summaries of the matched fragments (ppm).
+PPM_ERROR_FEATURES = ["mean_ppm_error", "max_ppm_error", "std_ppm_error"]
+
+# Fraction of the total observed intensity explained by matched fragments
+# (sum of matched intensities / sum of all observed intensities).
+INTENSITY_COVERAGE_FEATURES = ["intensity_coverage"]
+
+# Peak-coverage features: n_annotated / (n_annotated + n_competing), where a
+# "competing" peak is an observed peak that was NOT annotated but passes a
+# significance test. Higher = more of the significant signal is explained.
+#   *_min50 / *_min25 / *_min100: unmatched intensity >= {50,25,100}% of the
+#       lowest matched-peak intensity.
+#   *_avg20:  unmatched intensity >= 20% of the mean matched-peak intensity.
+#   *_20ppm:  unmatched peak within 20 ppm of any matched peak's m/z.
+#   *_all:    no significance test (denominator is all observed peaks).
+PEAK_COVERAGE_FEATURES = [
+    "annotated_frac_min50",
+    "annotated_frac_min25",
+    "annotated_frac_min100",
+    "annotated_frac_avg20",
+    "annotated_frac_20ppm",
+    "annotated_frac_all",
+]
+
+# Full ordered list of keys present in every ``sc_features`` dict.
+SC_FEATURE_KEYS = PPM_ERROR_FEATURES + INTENSITY_COVERAGE_FEATURES + PEAK_COVERAGE_FEATURES
+
 ######################
 # MaxQuant constants #
 ######################
