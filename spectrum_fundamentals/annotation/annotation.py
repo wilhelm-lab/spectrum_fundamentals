@@ -544,7 +544,7 @@ def _annotate_linear_spectrum(
         add_neutral_losses=add_neutral_losses,
     )
 
-    matched_peaks, count_annotated_nl = match_peaks(
+    matched_peaks, count_annotated_nl, max_annotated_intensity = match_peaks(
         fragments_meta_data,
         spectrum[index_columns["INTENSITIES"]],
         spectrum[index_columns["MZ"]],

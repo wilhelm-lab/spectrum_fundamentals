@@ -1,4 +1,5 @@
 import enum
+from typing import Optional, Union
 from warnings import simplefilter
 
 import numpy as np
