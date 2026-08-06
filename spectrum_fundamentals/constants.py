@@ -136,6 +136,7 @@ MOD_MASSES = {
     "[UNIMOD:267]": 10.008269,  # SILAC Arginine
     "[]": 0.0,
     "[UNIMOD:1]": 42.010565,  # Acetylation
+    "[UNIMOD:121]": 114.042927,  # Ubiquitinylation
     "[UNIMOD:1896]": 158.003765,  # DSSO-crosslinker
     "[UNIMOD:1881]": 54.010565,  # Alkene short fragment of DSSO-crosslinker
     "[UNIMOD:1882]": 85.982635,  # Thiol long fragment of DSSO-crosslinker
@@ -147,6 +148,7 @@ MOD_MASSES = {
     "[UNIMOD:1289]": 70.041865,  # Butyrylation
     "[UNIMOD:1363]": 68.026215,  # Crotonylation
     "[UNIMOD:1848]": 114.031694,  # Glutarylation
+    "[UNIMOD:1849]": 86.036779,  # 2-Hydroxyisobutyrylation
     "[UNIMOD:1914]": -32.008456,  # Oxidation and then loss of oxidized M side chain
     "[UNIMOD:2]": -0.984016,  # Amidation
     "[UNIMOD:21]": 79.966331,  # Phosphorylation
@@ -223,6 +225,9 @@ AA_MOD_MASSES = {
     "K[UNIMOD:1885]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1885]"],
     "K[UNIMOD:1886]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1886]"],
     "K[UNIMOD:1898]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1898]"],
+    "K[UNIMOD:121]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:121]"],
+    "K[UNIMOD:1849]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:1849]"],
+    "K[UNIMOD:747]": AA_MASSES["K"] + MOD_MASSES["[UNIMOD:747]"],
     "[UNIMOD:1]-": MASSES["N_TERMINUS"] + MOD_MASSES["[UNIMOD:1]"],
     "K[UNIMOD:259]": AA_MASSES[
         "K"
