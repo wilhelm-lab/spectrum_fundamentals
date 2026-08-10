@@ -152,35 +152,105 @@ def handle_multiple_matches(
     return matched_peaks_df, (original_length - length_after_matches)
 
 
-def _count_within_ppm(query_mz: np.ndarray, ref_mz: np.ndarray, ppm: float) -> int:
+def _longest_consecutive(positions: set[int]) -> int:
     """
-    Count how many ``query_mz`` peaks lie within ``ppm`` of any ``ref_mz`` peak.
+    Return the length of the longest run of consecutive integers in ``positions``.
 
-    Uses a binary search against the sorted reference m/z and checks only the two
-    nearest neighbours, so it is O(n log n) in the number of peaks.
-
-    :param query_mz: m/z of the peaks to test (e.g. unmatched observed peaks)
-    :param ref_mz: m/z of the reference peaks (e.g. matched observed peaks)
-    :param ppm: tolerance window half-width in parts-per-million
-    :return: number of query peaks with a reference peak within ``ppm``
+    :param positions: fragment positions (``no``) that carried at least one match
+    :return: length of the longest consecutive run, 0 for an empty input
     """
-    query_mz = np.asarray(query_mz, dtype=float)
-    ref_mz = np.asarray(ref_mz, dtype=float)
-    if len(query_mz) == 0 or len(ref_mz) == 0:
+    if not positions:
         return 0
-    ref_sorted = np.sort(ref_mz)
-    pos = np.searchsorted(ref_sorted, query_mz)
-    n_ref = len(ref_sorted)
-    count = 0
-    for q, p in zip(query_mz, pos):
-        best_ppm = np.inf
-        if p < n_ref:
-            best_ppm = min(best_ppm, abs(q - ref_sorted[p]) / ref_sorted[p] * 1e6)
-        if p > 0:
-            best_ppm = min(best_ppm, abs(q - ref_sorted[p - 1]) / ref_sorted[p - 1] * 1e6)
-        if best_ppm <= ppm:
-            count += 1
-    return count
+    best = run = 1
+    ordered = sorted(positions)
+    for prev, cur in zip(ordered, ordered[1:]):
+        run = run + 1 if cur == prev + 1 else 1
+        best = max(best, run)
+    return best
+
+
+def _ion_series_features(matched_peaks: pd.DataFrame, unmod_sequence: str) -> dict[str, float]:
+    """
+    Compute fragment-ion series continuity (``constants.SERIES_FEATURES``).
+
+    A peptide backbone of length *n* has *n-1* cleavage sites, so a b- or y-series can
+    be at most ``len(unmod_sequence) - 1`` long. Charge states are collapsed: position
+    *k* counts as covered if **any** charge state of that ion matched there.
+
+    :param matched_peaks: resolved matches, requires the ``ion_type`` and ``no`` columns
+    :param unmod_sequence: unmodified peptide sequence, used to normalise the run length
+    :return: mapping of feature name to value (NaN when the columns are unavailable)
+    """
+    if "ion_type" not in matched_peaks.columns or "no" not in matched_peaks.columns:
+        return dict.fromkeys(constants.SERIES_FEATURES, float("nan"))
+
+    ion_types = matched_peaks["ion_type"].to_numpy()
+    numbers = matched_peaks["no"].to_numpy()
+    # "b-short"/"b-long" (crosslinking variants) start with the same letter as their
+    # base ion type, so match on the prefix rather than on equality.
+    longest = {}
+    for ion in ("b", "y"):
+        positions = {int(n) for t, n in zip(ion_types, numbers) if isinstance(t, str) and t.startswith(ion)}
+        longest[ion] = _longest_consecutive(positions)
+
+    n_sites = max(len(unmod_sequence) - 1, 1)
+    return {
+        "longest_b_series": float(longest["b"]),
+        "longest_y_series": float(longest["y"]),
+        "longest_series_frac": max(longest["b"], longest["y"]) / n_sites,
+    }
+
+
+def _reporter_features(
+    peaks_mz: np.ndarray,
+    peaks_intensity: np.ndarray,
+    tolerance_ppm: float = 20.0,
+) -> dict[str, float]:
+    """
+    Compute TMT11 reporter-ion features (``constants.REPORTER_FEATURES``).
+
+    Each of the 11 reporter m/z is looked up in the observed peak list within
+    ``tolerance_ppm``; when several peaks fall inside the window the most intense one
+    wins. Channels are deliberately *not* deisotoped or purity-corrected -- these are
+    confidence features, not quantities.
+
+    Returns NaN for every feature when the spectrum carries no peaks in the reporter
+    region at all, which is how a non-TMT run (or a spectrum whose low-m/z range was
+    trimmed upstream) is signalled rather than silently reported as "0 channels".
+
+    :param peaks_mz: m/z of all observed peaks, sorted ascending
+    :param peaks_intensity: intensities of all observed peaks (same order as ``peaks_mz``)
+    :param tolerance_ppm: half-width of the reporter match window in ppm
+    :return: mapping of feature name to value
+    """
+    peaks_mz = np.asarray(peaks_mz, dtype=float)
+    peaks_intensity = np.asarray(peaks_intensity, dtype=float)
+    n_total = min(len(peaks_mz), len(peaks_intensity))
+    peaks_mz, peaks_intensity = peaks_mz[:n_total], peaks_intensity[:n_total]
+
+    reporters = np.asarray(constants.TMT11_REPORTER_MZ, dtype=float)
+    # The reporter region spans the channels plus the match window; if the spectrum has
+    # nothing there we cannot distinguish "no reporters" from "region not acquired".
+    lo, hi = reporters[0] * (1 - 2e-5), reporters[-1] * (1 + 2e-5)
+    if n_total == 0 or not np.any((peaks_mz >= lo) & (peaks_mz <= hi)):
+        return dict.fromkeys(constants.REPORTER_FEATURES, float("nan"))
+
+    # peaks_mz is sorted ascending (precondition of match_peaks), so bracket each
+    # channel with two binary searches rather than scanning the whole spectrum 11 times.
+    half = reporters * tolerance_ppm * 1e-6
+    starts = np.searchsorted(peaks_mz, reporters - half, side="left")
+    stops = np.searchsorted(peaks_mz, reporters + half, side="right")
+    channel_int = np.array(
+        [float(peaks_intensity[a:b].max()) if b > a else 0.0 for a, b in zip(starts, stops)],
+    )
+
+    reporter_sum = float(channel_int.sum())
+    total_intensity = float(peaks_intensity.sum())
+    return {
+        "n_reporter_channels": float((channel_int > 0).sum()),
+        "reporter_intensity_frac": reporter_sum / total_intensity if total_intensity > 0 else float("nan"),
+        "reporter_max_frac": float(channel_int.max()) / reporter_sum if reporter_sum > 0 else float("nan"),
+    }
 
 
 def _peak_coverage_features(
@@ -198,12 +268,8 @@ def _peak_coverage_features(
     ``n_annotated / (n_annotated + n_competing)``, where *n_competing* is the number
     of observed peaks that were **not** matched but pass a significance test:
 
-    - ``annotated_frac_min{50,25,100}``: unmatched intensity is at least
-      {50, 25, 100}% of the *lowest* matched-peak intensity.
     - ``annotated_frac_avg20``: unmatched intensity is at least 20% of the *mean*
       matched-peak intensity.
-    - ``annotated_frac_20ppm``: unmatched peak lies within 20 ppm of any matched
-      peak's m/z (a co-isolation / interference proxy).
     - ``annotated_frac_all``: no significance test — the denominator is simply all
       observed peaks (``n_annotated / n_total``).
 
@@ -250,9 +316,7 @@ def _peak_coverage_features(
     n_matched = int(matched_mask.sum())
     matched_int = peaks_intensity[matched_mask]
     unmatched_int = peaks_intensity[~matched_mask]
-    unmatched_mz = peaks_mz[~matched_mask]
 
-    min_matched = float(matched_int.min())
     avg_matched = float(matched_int.mean())
 
     # Intensity coverage: raw matched intensity / raw total intensity (same scale).
@@ -265,11 +329,7 @@ def _peak_coverage_features(
 
     return {
         "intensity_coverage": intensity_coverage,
-        "annotated_frac_min50": _frac(int((unmatched_int >= 0.50 * min_matched).sum())),
-        "annotated_frac_min25": _frac(int((unmatched_int >= 0.25 * min_matched).sum())),
-        "annotated_frac_min100": _frac(int((unmatched_int >= 1.00 * min_matched).sum())),
         "annotated_frac_avg20": _frac(int((unmatched_int >= 0.20 * avg_matched).sum())),
-        "annotated_frac_20ppm": _frac(_count_within_ppm(unmatched_mz, peaks_mz[matched_mask], 20.0)),
         "annotated_frac_all": n_matched / n_total,
     }
 
@@ -761,6 +821,22 @@ def _annotate_linear_spectrum(
             spectrum[index_columns["INTENSITIES"]],
         )
     )
+
+    # Series continuity: are the matched fragments consecutive, not just numerous?
+    sc_features.update(_ion_series_features(matched_peaks, unmod_sequence))
+
+    # Reporter ions. Only defined for TMT data -- tmt_n_term == 2 is the TMT flag used
+    # throughout this module. NaN for everything else so the column stays honest.
+    if tmt_n_term == 2:
+        sc_features.update(
+            _reporter_features(
+                spectrum[index_columns["MZ"]],
+                spectrum[index_columns["INTENSITIES"]],
+                tolerance_ppm=mass_tolerance if unit_mass_tolerance == "ppm" and mass_tolerance else 20.0,
+            )
+        )
+    else:
+        sc_features.update(dict.fromkeys(constants.REPORTER_FEATURES, float("nan")))
 
     intensities, mass = generate_annotation_matrix(
         matched_peaks,

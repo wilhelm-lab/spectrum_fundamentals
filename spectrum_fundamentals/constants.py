@@ -39,22 +39,63 @@ INTENSITY_COVERAGE_FEATURES = ["intensity_coverage"]
 # Peak-coverage features: n_annotated / (n_annotated + n_competing), where a
 # "competing" peak is an observed peak that was NOT annotated but passes a
 # significance test. Higher = more of the significant signal is explained.
-#   *_min50 / *_min25 / *_min100: unmatched intensity >= {50,25,100}% of the
-#       lowest matched-peak intensity.
 #   *_avg20:  unmatched intensity >= 20% of the mean matched-peak intensity.
-#   *_20ppm:  unmatched peak within 20 ppm of any matched peak's m/z.
 #   *_all:    no significance test (denominator is all observed peaks).
+#
+# Pruned from six variants to these two after the run-25 Percolator weights
+# (FragPipe / Prosit_2025_40PTM): *_avg20 was the only variant to register in the
+# +Prosit model, and *_avg20 / *_all ranked highest of the family in the
+# search-features-only model. The dropped variants (*_min50, *_min25, *_min100,
+# *_20ppm) were mutually redundant thresholds on the same statistic, and *_20ppm
+# carried an essentially zero weight in both models. Recoverable from git history.
 PEAK_COVERAGE_FEATURES = [
-    "annotated_frac_min50",
-    "annotated_frac_min25",
-    "annotated_frac_min100",
     "annotated_frac_avg20",
-    "annotated_frac_20ppm",
     "annotated_frac_all",
 ]
 
+# Fragment-ion series continuity. The count_*/fraction_* features say how MANY ions
+# matched; none of them say whether those ions were CONSECUTIVE. Six contiguous
+# y-ions is far stronger evidence than six scattered ones, and the spectral angle is
+# contiguity-blind (it is a cosine over an intensity vector, order carries no weight).
+#   longest_{b,y}_series: longest run of consecutive fragment positions with at least
+#       one matched charge state.
+#   longest_series_frac:  max(longest_b, longest_y) / (len(peptide) - 1). Percolator is
+#       a linear model and cannot form this ratio from the parts, so it is not redundant
+#       with the raw counts + sequence_length.
+SERIES_FEATURES = ["longest_b_series", "longest_y_series", "longest_series_frac"]
+
+# TMT11-plex reporter-ion m/z (singly charged, monoisotopic); TMT11 = TMT10 + 131C.
+# Only meaningful for TMT data -- the reporter features are NaN otherwise.
+TMT11_REPORTER_MZ = [
+    126.127726,  # 126C
+    127.124761,  # 127N
+    127.131081,  # 127C
+    128.128116,  # 128N
+    128.134436,  # 128C
+    129.131471,  # 129N
+    129.137790,  # 129C
+    130.134825,  # 130N
+    130.141145,  # 130C
+    131.138180,  # 131N
+    131.144499,  # 131C
+]
+
+# Reporter-ion features. Orthogonal to everything Prosit contributes -- the intensity
+# models predict b/y fragments and say nothing about the reporter region. In a carrier-
+# based single-cell design a genuine PSM should show the carrier channel plus signal in
+# at least some single-cell channels.
+#   n_reporter_channels:     how many of the 11 channels carry a peak.
+#   reporter_intensity_frac: summed reporter intensity / total spectrum intensity.
+#   reporter_max_frac:       largest single channel / summed reporter intensity
+#                            (carrier dominance; ~1.0 means only the carrier fired).
+# CAVEAT: these let quantification influence identification. Defensible as a spectrum-
+# quality measure, but it must be stated explicitly whenever these features are used.
+REPORTER_FEATURES = ["n_reporter_channels", "reporter_intensity_frac", "reporter_max_frac"]
+
 # Full ordered list of keys present in every ``sc_features`` dict.
-SC_FEATURE_KEYS = PPM_ERROR_FEATURES + INTENSITY_COVERAGE_FEATURES + PEAK_COVERAGE_FEATURES
+SC_FEATURE_KEYS = (
+    PPM_ERROR_FEATURES + INTENSITY_COVERAGE_FEATURES + PEAK_COVERAGE_FEATURES + SERIES_FEATURES + REPORTER_FEATURES
+)
 
 ######################
 # MaxQuant constants #

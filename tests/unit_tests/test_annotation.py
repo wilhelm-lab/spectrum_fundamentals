@@ -345,17 +345,6 @@ class TestAnnotationPipeline(unittest.TestCase):
 class TestPeakCoverageFeatures(unittest.TestCase):
     """Unit tests for the peak-coverage sc_features helpers."""
 
-    def test_count_within_ppm(self):
-        """_count_within_ppm counts query peaks near any reference peak."""
-        ref = np.array([200.0, 500.0])
-        # 200.003 is 15 ppm from 200.0 (within); 300.0 is far from both.
-        self.assertEqual(annotation._count_within_ppm(np.array([200.003, 300.0]), ref, 20.0), 1)
-        # 200.006 is 30 ppm from 200.0 -> outside a 20 ppm window.
-        self.assertEqual(annotation._count_within_ppm(np.array([200.006]), ref, 20.0), 0)
-        # empty inputs -> 0, no error
-        self.assertEqual(annotation._count_within_ppm(np.array([]), ref, 20.0), 0)
-        self.assertEqual(annotation._count_within_ppm(np.array([200.0]), np.array([]), 20.0), 0)
-
     def test_peak_coverage_features_thresholds(self):
         """Threshold-based coverage fractions match a hand-computed example."""
         peaks_mz = np.array([100.0, 200.0, 300.0, 400.0, 500.0, 600.0])
@@ -365,33 +354,13 @@ class TestPeakCoverageFeatures(unittest.TestCase):
 
         feats = annotation._peak_coverage_features(matched_exp_mass, peaks_mz, peaks_int)
 
-        # min_matched = 100, avg_matched = 150, n_matched = 2, unmatched int = [60, 30, 90, 12]
-        # min50 (thr 50):  competing {60, 90}          -> 2 / (2 + 2) = 0.5
-        # min25 (thr 25):  competing {60, 30, 90}       -> 2 / (2 + 3) = 0.4
-        # min100 (thr 100): competing {}                -> 2 / (2 + 0) = 1.0
+        # avg_matched = 150, n_matched = 2, unmatched int = [60, 30, 90, 12]
         # avg20 (thr 30):  competing {60, 30, 90}        -> 2 / (2 + 3) = 0.4
         # all:             2 / 6                          -> 0.3333...
-        # 20ppm: no unmatched peak within 20 ppm of 200/500 -> 2 / 2 = 1.0
         # intensity_coverage: matched raw (200 + 100) / total raw (492) -> 300 / 492
-        self.assertAlmostEqual(feats["annotated_frac_min50"], 0.5)
-        self.assertAlmostEqual(feats["annotated_frac_min25"], 0.4)
-        self.assertAlmostEqual(feats["annotated_frac_min100"], 1.0)
         self.assertAlmostEqual(feats["annotated_frac_avg20"], 0.4)
         self.assertAlmostEqual(feats["annotated_frac_all"], 2.0 / 6.0)
-        self.assertAlmostEqual(feats["annotated_frac_20ppm"], 1.0)
         self.assertAlmostEqual(feats["intensity_coverage"], 300.0 / 492.0)
-
-    def test_peak_coverage_features_20ppm_window(self):
-        """An unmatched peak within 20 ppm of a matched peak enters the 20ppm denominator."""
-        # 200.003 sits 15 ppm from the matched peak at 200.0.
-        peaks_mz = np.array([200.0, 200.003, 500.0])
-        peaks_int = np.array([100.0, 5.0, 100.0])
-        matched_exp_mass = np.array([200.0, 500.0])
-
-        feats = annotation._peak_coverage_features(matched_exp_mass, peaks_mz, peaks_int)
-
-        # n_matched = 2, one competing unmatched peak within 20 ppm -> 2 / (2 + 1)
-        self.assertAlmostEqual(feats["annotated_frac_20ppm"], 2.0 / 3.0)
 
     def test_peak_coverage_features_no_matches_returns_nan(self):
         """No matches (or no observed peaks) -> all coverage features are NaN."""
@@ -405,5 +374,78 @@ class TestPeakCoverageFeatures(unittest.TestCase):
             self.assertTrue(np.isnan(value))
 
         feats_empty = annotation._peak_coverage_features(np.array([200.0]), np.array([]), np.array([]))
+        for value in feats_empty.values():
+            self.assertTrue(np.isnan(value))
+
+
+class TestIonSeriesFeatures(unittest.TestCase):
+    """Unit tests for the fragment-ion series-continuity sc_features."""
+
+    def test_longest_consecutive(self):
+        """_longest_consecutive finds the longest run of consecutive integers."""
+        self.assertEqual(annotation._longest_consecutive(set()), 0)
+        self.assertEqual(annotation._longest_consecutive({4}), 1)
+        # 1,2,3 is a run of 3; 7,8 is a run of 2 -> 3 wins
+        self.assertEqual(annotation._longest_consecutive({1, 2, 3, 7, 8}), 3)
+        # scattered singletons never beat a run of 1
+        self.assertEqual(annotation._longest_consecutive({1, 5, 9}), 1)
+
+    def test_series_features_collapse_charge_states(self):
+        """Position k counts once however many charge states matched there."""
+        matched = pd.DataFrame(
+            {
+                # y: positions 1,2,3 (3 consecutive, 2 sees two charges) and 6
+                # b: positions 2 and 5 -> longest run 1
+                "ion_type": ["y", "y", "y", "y", "y", "b", "b"],
+                "no": [1, 2, 2, 3, 6, 2, 5],
+                "charge": [1, 1, 2, 1, 1, 1, 1],
+            }
+        )
+        feats = annotation._ion_series_features(matched, "PEPTIDEK")  # 8 residues -> 7 sites
+
+        self.assertEqual(set(feats.keys()), set(constants.SERIES_FEATURES))
+        self.assertEqual(feats["longest_y_series"], 3.0)
+        self.assertEqual(feats["longest_b_series"], 1.0)
+        self.assertAlmostEqual(feats["longest_series_frac"], 3.0 / 7.0)
+
+    def test_series_features_missing_columns_return_nan(self):
+        """Without the ion_type/no columns the features are NaN, not zero."""
+        feats = annotation._ion_series_features(pd.DataFrame({"intensity": [1.0]}), "PEPTIDEK")
+        for value in feats.values():
+            self.assertTrue(np.isnan(value))
+
+
+class TestReporterFeatures(unittest.TestCase):
+    """Unit tests for the TMT11 reporter-ion sc_features."""
+
+    def test_reporter_features_counts_channels(self):
+        """Channels inside the ppm window are counted; the most intense peak wins."""
+        rep = constants.TMT11_REPORTER_MZ
+        # three channels present (one with two peaks in-window), plus a b/y peak far above
+        peaks_mz = np.array([rep[0], rep[1], rep[1] + rep[1] * 5e-6, rep[2], 800.0])
+        peaks_int = np.array([100.0, 20.0, 50.0, 30.0, 300.0])
+
+        feats = annotation._reporter_features(peaks_mz, peaks_int, tolerance_ppm=20.0)
+
+        self.assertEqual(set(feats.keys()), set(constants.REPORTER_FEATURES))
+        self.assertEqual(feats["n_reporter_channels"], 3.0)
+        # channel intensities: 100 (126C), 50 (127N, max of 20/50), 30 (127C) = 180
+        self.assertAlmostEqual(feats["reporter_intensity_frac"], 180.0 / 500.0)
+        self.assertAlmostEqual(feats["reporter_max_frac"], 100.0 / 180.0)
+
+    def test_reporter_features_outside_window_not_counted(self):
+        """A peak beyond the ppm window does not count as a channel."""
+        rep = constants.TMT11_REPORTER_MZ
+        off = rep[0] + rep[0] * 50e-6  # 50 ppm away
+        feats = annotation._reporter_features(np.array([rep[0], off]), np.array([10.0, 99.0]), tolerance_ppm=20.0)
+        self.assertEqual(feats["n_reporter_channels"], 1.0)
+
+    def test_reporter_features_no_reporter_region_returns_nan(self):
+        """An empty reporter region is NaN, not '0 channels'."""
+        feats = annotation._reporter_features(np.array([500.0, 800.0]), np.array([10.0, 20.0]))
+        for value in feats.values():
+            self.assertTrue(np.isnan(value))
+
+        feats_empty = annotation._reporter_features(np.array([]), np.array([]))
         for value in feats_empty.values():
             self.assertTrue(np.isnan(value))

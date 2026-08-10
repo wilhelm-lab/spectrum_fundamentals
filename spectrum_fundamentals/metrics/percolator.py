@@ -308,7 +308,7 @@ class Percolator(Metric):
             self.metrics_val["KR"] = self.metadata["SEQUENCE"].apply(Percolator.count_arginines_and_lysines)
             self.metrics_val["sequence_length"] = self.metadata["SEQUENCE"].apply(lambda x: len(x))
             self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
-            # sc_features: per-PSM peak-matching quality metrics (ppm_error + peak-coverage).
+            # sc_features: per-PSM quality metrics (ppm_error + coverage + series + reporter).
             # Only added if available; canonical list lives in constants.SC_FEATURE_KEYS.
             # TODO: handle NaN values before passing to Percolator (see annotation.py).
             for feature in constants.SC_FEATURE_KEYS:
