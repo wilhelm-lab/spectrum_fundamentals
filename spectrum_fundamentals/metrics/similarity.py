@@ -37,6 +37,53 @@ def _noise_aware_sa_config() -> dict | None:
     }
 
 
+def _sa_threshold_config() -> float | None:
+    """
+    Read the predicted-peak intensity floor for a thresholded spectral angle from the environment.
+
+    Predicted intensities are base-peak normalized (max = 1), so the returned value is a fraction
+    of the base peak below which a predicted fragment is treated as being within the noise floor and
+    is **excluded entirely** from the spectral-angle computation (its position is dropped from both
+    the observed and the predicted vector before L2-normalization). This differs from the noise-aware
+    SA (:func:`SimilarityMetrics.spectral_angle_noise_aware`), which only discounts *missing* weak
+    predicted peaks but keeps matched ones.
+
+    Returns ``None`` unless ``SATHRESH_ENABLE`` is truthy, so the default behaviour of the package is
+    completely unchanged (no extra feature column, standard ``spectral_angle`` untouched). When
+    enabled, a ``spectral_angle_thresh`` feature is emitted alongside ``spectral_angle``.
+
+    Env vars: ``SATHRESH_ENABLE`` (0/1), ``SATHRESH_TAU`` (default 0.02).
+
+    :return: the predicted-intensity threshold, or ``None`` if disabled
+    """
+    if os.environ.get("SATHRESH_ENABLE", "0").strip().lower() not in ("1", "true", "yes", "on"):
+        return None
+    return float(os.environ.get("SATHRESH_TAU", "0.02"))
+
+
+def _sa_obs_threshold_config() -> float | None:
+    """Read the measured (observed) noise floor for a denoised spectral angle from the environment.
+
+    Unlike the predicted-peak threshold (``SATHRESH``, keyed on Prosit's predicted intensity), this
+    thresholds the OBSERVED intensity — the physically-motivated "noise floor" axis: a matched
+    fragment whose *measured* intensity is present but at/below ``SAOBS_TAU`` (a fraction of the base
+    observed peak, since matched intensities are base-peak normalized in annotation.py) is treated as
+    noise and dropped from both vectors. Genuinely missing peaks (intensity == ``constants.EPSILON``,
+    i.e. no measured peak at all) are left in and remain penalized, so this denoises without trivially
+    forgiving absent fragments.
+
+    Returns ``None`` unless ``SAOBS_ENABLE`` is truthy, so the default behaviour is unchanged. When
+    enabled, a ``spectral_angle_obsthresh`` feature is emitted alongside ``spectral_angle``.
+
+    Env vars: ``SAOBS_ENABLE`` (0/1), ``SAOBS_TAU`` (default 0.02).
+
+    :return: the observed-intensity noise floor, or ``None`` if disabled
+    """
+    if os.environ.get("SAOBS_ENABLE", "0").strip().lower() not in ("1", "true", "yes", "on"):
+        return None
+    return float(os.environ.get("SAOBS_TAU", "0.02"))
+
+
 def get_metric_func(metric: str):
     """
     Return a callable function for a given metric shortcut.
@@ -72,6 +119,8 @@ class SimilarityMetrics(Metric):
         predicted_intensities: scipy.sparse.csr_matrix | np.ndarray,
         charge: int = 0,
         masks: np.ndarray | dict[int, np.ndarray] | None = None,
+        predicted_threshold: float = constants.EPSILON,
+        observed_threshold: float = 0.0,
     ) -> np.ndarray:
         """
         Calculate spectral angle.
@@ -82,6 +131,14 @@ class SimilarityMetrics(Metric):
         :param predicted_intensities: predicted intensities, see observed_intensities for details, array of length 174
         :param charge: to filter by the peak charges, 0 means everything
         :param masks: masks of array for calculation
+        :param predicted_threshold: predicted-intensity floor (fraction of the base peak); predicted peaks at or \
+                                    below it are ignored entirely, i.e. dropped from both vectors before \
+                                    normalization. Defaults to ``constants.EPSILON`` (only true zeros are dropped), \
+                                    which reproduces the standard spectral angle exactly.
+        :param observed_threshold: measured (observed) noise floor (fraction of the base peak); a matched fragment \
+                                   whose observed intensity is present but at or below it is treated as noise and \
+                                   dropped from both vectors, while genuinely missing peaks (== ``constants.EPSILON``) \
+                                   stay in and remain penalized. Defaults to ``0.0`` (disabled).
         :raises ValueError: if charge is smaller than 1 or larger than 3
         :return: SA values
         """
@@ -107,15 +164,24 @@ class SimilarityMetrics(Metric):
             if isinstance(predicted_intensities, scipy.sparse.csr_matrix):
                 predicted_intensities = predicted_intensities.toarray()
 
-        predicted_non_zero_mask = predicted_intensities > constants.EPSILON
-        observed_masked = np.multiply(observed_intensities, predicted_non_zero_mask)
-        predicted_masked = np.multiply(predicted_intensities, predicted_non_zero_mask)
+        predicted_non_zero_mask = predicted_intensities > predicted_threshold
+        keep_mask = predicted_non_zero_mask
+        if observed_threshold > 0.0:
+            # measured noise floor: drop matched-but-tiny OBSERVED peaks (present but at/below the
+            # floor) as noise; genuinely missing peaks (intensity == EPSILON) are NOT > EPSILON, so
+            # they stay in and remain penalized -- this denoises without forgiving absent fragments.
+            observed_noise = (observed_intensities > constants.EPSILON) & (
+                observed_intensities <= observed_threshold
+            )
+            keep_mask = predicted_non_zero_mask & ~observed_noise
+        observed_masked = np.multiply(observed_intensities, keep_mask)
+        predicted_masked = np.multiply(predicted_intensities, keep_mask)
 
         observed_normalized = SimilarityMetrics.unit_normalization(observed_masked)
         predicted_normalized = SimilarityMetrics.unit_normalization(predicted_masked)
 
         observed_non_zero_mask = observed_intensities > constants.EPSILON
-        fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, predicted_non_zero_mask)
+        fragments_in_common = SimilarityMetrics.rowwise_dot_product(observed_non_zero_mask, keep_mask)
 
         dot_product = SimilarityMetrics.rowwise_dot_product(observed_normalized, predicted_normalized) * (
             fragments_in_common > 0
@@ -576,6 +642,16 @@ class SimilarityMetrics(Metric):
                 self.metrics_val["spectral_angle_no_b1"] = SimilarityMetrics.spectral_angle(
                     self.true_intensities, self.pred_intensities, 0, masks=b1_exclusion_mask
                 )
+                sa_threshold = _sa_threshold_config()
+                if sa_threshold is not None:
+                    self.metrics_val["spectral_angle_thresh"] = SimilarityMetrics.spectral_angle(
+                        self.true_intensities, self.pred_intensities, 0, predicted_threshold=sa_threshold
+                    )
+                sa_obs_threshold = _sa_obs_threshold_config()
+                if sa_obs_threshold is not None:
+                    self.metrics_val["spectral_angle_obsthresh"] = SimilarityMetrics.spectral_angle(
+                        self.true_intensities, self.pred_intensities, 0, observed_threshold=sa_obs_threshold
+                    )
                 self.metrics_val["pearson_corr"] = SimilarityMetrics.correlation(
                     self.true_intensities, self.pred_intensities, 0, "pearson"
                 )

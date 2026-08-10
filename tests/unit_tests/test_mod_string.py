@@ -165,6 +165,21 @@ class TestMaxQuantToInternal(unittest.TestCase):
         mods = {**c.MAXQUANT_VAR_MODS, **fixed_mods, **stat_mod}
         self.assertEqual(mod.maxquant_to_internal(["_ABCDMEFGH_"], mods=mods), ["ABC[UNIMOD:4]DM[UNIMOD:425]EFGH"])
 
+    def test_maxquant_to_internal_tmt_idempotent(self):
+        """Fixed TMT/Carb must not stack on residues that already carry them.
+
+        This is the FragPipe/MSFragger + TMT case: the reader writes TMT explicitly via custom_mods,
+        then process_and_filter re-applies the tmt tag's fixed mods. Applying the fixed mods to an
+        already-labelled sequence must be a no-op; a bare sequence must still get them exactly once.
+        Both must converge to the same internal sequence.
+        """
+        fixed_mods = {"C": "C[UNIMOD:4]", "^_": "_[UNIMOD:737]-", "K": "K[UNIMOD:737]"}
+        expected = ["[UNIMOD:737]-AGK[UNIMOD:737]SLC[UNIMOD:4]K[UNIMOD:737]R"]
+        already = "_[UNIMOD:737]-AGK[UNIMOD:737]SLC[UNIMOD:4]K[UNIMOD:737]R_"
+        bare = "_AGKSLCKR_"
+        self.assertEqual(mod.maxquant_to_internal([already], mods=fixed_mods), expected)
+        self.assertEqual(mod.maxquant_to_internal([bare], mods=fixed_mods), expected)
+
 
 class TestMSFraggerToInternal(unittest.TestCase):
     """Class to test MSFragger to internal."""

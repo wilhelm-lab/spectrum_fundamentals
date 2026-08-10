@@ -171,7 +171,8 @@ def maxquant_to_internal(sequences: np.ndarray | pd.Series | list[str], mods: di
         :param match: an re.Match object found by re.sub
         :return: substitution string for the given match
         """
-        key = match.string[match.start() : match.end()]
+        matched = match.string[match.start() : match.end()]
+        key = matched
         if "_" in key:  # If _ is in the match we need to differentiate n and c term
             if match.start() == 0:
                 key = f"^{key}"
@@ -181,6 +182,14 @@ def maxquant_to_internal(sequences: np.ndarray | pd.Series | list[str], mods: di
         value = mods[key]
         if key[0].isalpha() and not value[0].isalpha():
             value = f"{key[0]}{value}"
+        # Idempotent fixed mods: a fixed single-residue or terminal modification must not stack on a
+        # residue/terminus that already carries it. This happens when a search engine (e.g. MSFragger)
+        # writes a mod explicitly via custom_mods and it is then re-applied here from the tmt tag. If
+        # the text this mod would insert is already present right after the match, leave it unchanged.
+        if (len(matched) == 1 and matched.isalpha()) or matched == "_":
+            added = value[len(matched) :] if value.startswith(matched) else value
+            if added and match.string[match.end() :].startswith(added):
+                return matched
         return value
 
     return [regex.sub(lambda match: find_replacement(match), seq).replace("_", "") for seq in sequences]

@@ -17,6 +17,7 @@ from spectrum_fundamentals.annotation.matchers.global_ransac import (
     _resolve_residual_threshold,
     global_ransac_resolver,
 )
+from spectrum_fundamentals.annotation.matchers.highest import highest_resolver
 from spectrum_fundamentals.annotation.matchers.nearest import nearest_resolver
 
 
@@ -88,6 +89,52 @@ class TestNearestResolver(unittest.TestCase):
         self.assertEqual(dropped, 0)
 
 
+class TestHighestResolver(unittest.TestCase):
+    """The highest-intensity resolver."""
+
+    def test_equivalent_to_handle_multiple_matches(self):
+        """highest_resolver must reproduce handle_multiple_matches(sort_by='intensity') byte-for-byte."""
+        matched_peaks = [
+            {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 200, "theoretical_mass": 198, "intensity": 0.05},
+            {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 205, "theoretical_mass": 198, "intensity": 0.01},
+            {"ion_type": "y", "no": 3, "charge": 1, "exp_mass": 300, "theoretical_mass": 303, "intensity": 0.1},
+            {"ion_type": "y", "no": 3, "charge": 1, "exp_mass": 303, "theoretical_mass": 303, "intensity": 0.05},
+        ]
+        legacy_df, _ = annotation.handle_multiple_matches(matched_peaks, sort_by="intensity")
+        resolver_df, _ = highest_resolver(matched_peaks)
+        # Only compare the shared columns (ppm_error / mass_diff are resolver extras).
+        pd.testing.assert_frame_equal(legacy_df, resolver_df[legacy_df.columns])
+
+    def test_picks_tallest_not_closest(self):
+        """When the closest-m/z and the tallest peak differ, highest keeps the tallest."""
+        matched_peaks = [
+            # closest in m/z (mass_diff 0) but tiny
+            {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 198.0, "theoretical_mass": 198.0, "intensity": 0.02},
+            # farther in m/z but much taller -> highest_resolver must keep THIS one
+            {"ion_type": "b", "no": 2, "charge": 1, "exp_mass": 198.002, "theoretical_mass": 198.0, "intensity": 0.90},
+        ]
+        df, dropped = highest_resolver(matched_peaks)
+        self.assertEqual(len(df), 1)
+        self.assertEqual(dropped, 1)
+        self.assertAlmostEqual(float(df.iloc[0]["intensity"]), 0.90)
+        # nearest would instead pick the 0.02-intensity, mass_diff==0 peak
+        near_df, _ = nearest_resolver(matched_peaks)
+        self.assertAlmostEqual(float(near_df.iloc[0]["intensity"]), 0.02)
+
+    def test_ppm_error_present(self):
+        """highest_resolver emits ppm_error so the downstream Percolator features are unchanged."""
+        df, _ = highest_resolver(
+            [{"ion_type": "y", "no": 3, "charge": 1, "exp_mass": 303.003, "theoretical_mass": 303.0, "intensity": 0.4}]
+        )
+        self.assertIn("ppm_error", df.columns)
+
+    def test_empty_input(self):
+        """Empty candidate list returns an empty frame and zero dropped."""
+        df, dropped = highest_resolver([])
+        self.assertTrue(df.empty)
+        self.assertEqual(dropped, 0)
+
+
 class TestResolveMatchesDispatch(unittest.TestCase):
     """The registry dispatch function."""
 
@@ -103,6 +150,13 @@ class TestResolveMatchesDispatch(unittest.TestCase):
             "global_ransac", cands, None, None, "PEPTIDE", residual_threshold_ppm=5.0, random_state=0
         )
         direct, _ = global_ransac_resolver(cands, residual_threshold_ppm=5.0, random_state=0)
+        pd.testing.assert_frame_equal(via_registry.reset_index(drop=True), direct.reset_index(drop=True))
+
+    def test_dispatch_highest(self):
+        """The highest matcher is reachable through the registry."""
+        cands = _line_candidates()
+        via_registry, _ = resolve_matches("highest", cands, None, None, "PEPTIDE")
+        direct, _ = highest_resolver(cands)
         pd.testing.assert_frame_equal(via_registry.reset_index(drop=True), direct.reset_index(drop=True))
 
     def test_dispatch_dp_ladder(self):
