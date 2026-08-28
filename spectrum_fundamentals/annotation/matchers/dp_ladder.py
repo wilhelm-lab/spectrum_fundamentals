@@ -1,29 +1,16 @@
-"""Dynamic-programming matcher over the b/y ion ladder.
+"""Dynamic-programming matcher over the b/y ion ladder."""
 
-Aligns the candidate cloud from ``match_peaks`` onto the known theoretical
-fragment ladder of the candidate peptide. Processing one ion series at a fixed
-charge (e.g. singly-charged b ions) in increasing theoretical m/z, a
-shortest-path DP picks, per fragment slot, the observed peak that minimises an
-additive cost: an **emission** term ``(ppm / s)^2 - w_I * intensity`` (m/z
-error from theoretical, drift-sensitive), a **transition** term
-``w_L * (gap_ppm / s)^2`` penalising mismatch between the observed and
-theoretical gaps to the previous assigned peak (drift-robust, since a constant
-calibration offset cancels in the gap), and a flat **skip** penalty for
-leaving a slot unmatched. A hard monotonicity constraint keeps assigned m/z
-increasing along the ladder. Backtracking recovers the assignment.
-
-Unlike ``nearest`` (per-slot, closest m/z) and ``global_ransac`` (one global
-calibration line), this uses the sequential ladder structure, so it can reject
-in-window noise that breaks the gap pattern and bridge missing fragments. It
-optimises a geometric cost only -- it never sees Prosit's predicted
-intensities (it runs before the spectral angle is computed), which keeps it
-self-contained.
-
-Like ``global_ransac`` it degrades gracefully to ``nearest``: short ladders
-are matched candidate-by-candidate by the same DP, and an optional
-``min_match_fraction`` floor defers the spectrum when the DP would drop too
-many slots.
-"""
+# Per ion series at a fixed charge, a shortest-path DP walks the theoretical fragment ladder in
+# increasing m/z and picks, per slot, the observed peak minimising an additive cost: an emission term
+# (ppm / s)^2 - w_I * intensity, a transition term w_L * (gap_ppm / s)^2 penalising mismatch between
+# the observed and theoretical gap to the previous assignment (drift-robust -- a constant calibration
+# offset cancels in the gap), and a flat skip penalty. Monotonicity keeps assigned m/z increasing.
+#
+# Unlike `nearest` (per-slot closest m/z) and `global_ransac` (one global calibration line), this uses
+# the ladder's sequential structure, so it can reject in-window noise that breaks the gap pattern and
+# bridge missing fragments. The cost is purely geometric: it never sees Prosit's predicted intensities,
+# since it runs before the spectral angle is computed. Like `global_ransac` it degrades to `nearest`
+# on short ladders and when `min_match_fraction` is not met.
 
 import logging
 import numbers
@@ -75,46 +62,27 @@ def dp_ladder_resolver(
 ) -> tuple[pd.DataFrame, int]:
     """Resolve candidates by DP alignment to the b/y ion ladder.
 
-    :param candidates: rows from ``match_peaks``. May be ``None`` or empty.
-    :param peaks_masses: unused; part of the resolver contract.
-    :param peaks_intensity: unused; part of the resolver contract.
-    :param unmod_sequence: unused; part of the resolver contract.
-    :param ppm_scale: positive ppm scale ``s`` shared by the emission and
-        transition penalties. If ``None`` (default) it is derived from the
-        matching tolerance: ``mass_tolerance`` when that is in ppm, else
-        ``_DEFAULT_PPM_SCALE``. A peak ``s`` ppm off theoretical contributes
-        unit emission cost.
-    :param skip_penalty: positive flat cost ``lambda`` of leaving a fragment
-        unmatched. With the default scale, an in-window peak (<= tolerance ppm
-        off) that is also ladder-consistent always beats skipping, so clean
-        spectra are matched in full; only ladder-inconsistent in-window peaks
-        are dropped as noise.
-    :param ladder_weight: non-negative weight ``w_L`` on the gap-consistency
-        (transition) term. ``0`` reduces the DP to independent per-slot ppm
-        picking; larger values trust the ladder structure more and are more
-        robust to global mass drift.
-    :param intensity_weight: non-negative weight ``w_I`` rewarding more intense
-        (already-normalised, *observed*) peaks. ``0`` (default) keeps the cost
-        purely geometric. Never uses Prosit predictions.
-    :param unique_peak: if True (default), after the per-ladder DP enforce that
-        each observed peak is claimed by at most one fragment across all
-        ladders, resolving cross-series collisions greedily by ascending ppm
-        error. Monotonicity already guarantees uniqueness *within* a ladder.
-        If False, a peak may back two slots in different series.
-    :param min_match_fraction: in ``[0, 1]``. If the DP matches fewer than this
-        fraction of the candidate fragment slots, defer the whole spectrum to
-        ``nearest`` instead of returning a sparse match set. ``0`` (default)
-        disables the floor -- the skip penalty is the primary control.
-    :param mass_tolerance: matching tolerance used to derive ``ppm_scale`` when
-        it is not given explicitly. Forwarded by ``_annotate_linear_spectrum``.
-    :param unit_mass_tolerance: unit of ``mass_tolerance`` (``"ppm"`` or ``"da"``).
-    :raises ValueError: if any hyperparameter is out of range, or candidate
-        rows miss a required column.
-    :return: ``(matched_peaks_df, n_dropped)``. ``n_dropped`` counts input rows
-        not surviving into the output (skipped slots, losing candidates, greedy
-        uniqueness, or non-finite rows). The DataFrame carries the contract
-        columns plus a ``ppm_residual`` diagnostic; ``full_name`` is preserved
-        when present.
+    :param candidates: rows from ``match_peaks``; may be ``None`` or empty
+    :param peaks_masses: unused; part of the resolver contract
+    :param peaks_intensity: unused; part of the resolver contract
+    :param unmod_sequence: unused; part of the resolver contract
+    :param ppm_scale: ppm scale ``s`` of the emission and transition penalties; a peak ``s`` ppm off
+        theoretical costs 1. Defaults to ``mass_tolerance`` when that is in ppm, else 20 ppm.
+    :param skip_penalty: flat cost of leaving a fragment unmatched. At the default scale a
+        ladder-consistent in-window peak always beats skipping, so only inconsistent peaks are dropped.
+    :param ladder_weight: weight ``w_L`` of the gap-consistency term; ``0`` reduces the DP to per-slot
+        ppm picking, larger values are more robust to global mass drift
+    :param intensity_weight: weight ``w_I`` rewarding intense *observed* peaks; ``0`` keeps the cost
+        purely geometric
+    :param unique_peak: let each observed peak back at most one fragment across ladders, resolving
+        cross-series collisions by ascending ppm error (within a ladder monotonicity already does)
+    :param min_match_fraction: in ``[0, 1]``; below this share of matched slots the whole spectrum is
+        deferred to ``nearest``. ``0`` disables the floor.
+    :param mass_tolerance: tolerance ``ppm_scale`` is derived from when not given explicitly
+    :param unit_mass_tolerance: unit of ``mass_tolerance`` (``"ppm"`` or ``"da"``)
+    :raises ValueError: if a hyperparameter is out of range or a candidate row misses a column
+    :return: ``(matched_peaks_df, n_dropped)``, where ``n_dropped`` counts input rows that did not
+        survive. The frame carries the contract columns plus a ``ppm_residual`` diagnostic.
     """
     _validate_hyperparameters(skip_penalty, ladder_weight, intensity_weight, min_match_fraction)
     scale = _resolve_ppm_scale(ppm_scale, mass_tolerance, unit_mass_tolerance)

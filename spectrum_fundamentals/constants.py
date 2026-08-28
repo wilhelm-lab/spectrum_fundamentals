@@ -52,6 +52,9 @@ PEAK_COVERAGE_FEATURES = [
     "annotated_frac_avg20",
     "annotated_frac_all",
 ]
+# The "20" in annotated_frac_avg20: an unmatched peak competes once it reaches this fraction of the
+# mean matched-peak intensity. Named here so the threshold and the feature name cannot drift apart.
+PEAK_COVERAGE_AVG_FRACTION = 0.20
 
 # Fragment-ion series continuity. The count_*/fraction_* features say how MANY ions
 # matched; none of them say whether those ions were CONSECUTIVE. Six contiguous
@@ -63,6 +66,9 @@ PEAK_COVERAGE_FEATURES = [
 #       a linear model and cannot form this ratio from the parts, so it is not redundant
 #       with the raw counts + sequence_length.
 SERIES_FEATURES = ["longest_b_series", "longest_y_series", "longest_series_frac"]
+
+# Default half-width of the reporter match window when the run's tolerance is not in ppm.
+DEFAULT_REPORTER_TOLERANCE_PPM = 20.0
 
 # TMT11-plex reporter-ion m/z (singly charged, monoisotopic); TMT11 = TMT10 + 131C.
 # Only meaningful for TMT data -- the reporter features are NaN otherwise.

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 import scipy.sparse
 
 import spectrum_fundamentals.constants as constants
@@ -110,6 +111,107 @@ class TestLda:
             percolator.apply_lda_and_get_indices_below_fdr(initial_scoring_feature="Score", fdr_cutoff=0.4),
             np.array([1, 2, 5, 6, 7]),
         )
+
+    def test_apply_lda_rejects_nan_features(self):
+        """The LDA consumes EVERY metrics_val column and rejects NaN outright.
+
+        This is why sc_features must be NaN-filled with a constant fallback and not only with
+        the column median: features are computed per raw file, so a column can be entirely NaN
+        within one file (e.g. the TMT reporter features on a file whose PSMs carry no reporter
+        peaks), and then median() is itself NaN and fillna(median) silently does nothing.
+        Regression guard for a run that died ~30 min in with "Input X contains NaN".
+        """
+        percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="rescore")
+        percolator.metrics_val["Score"] = [0.0, 3.0, 2.0, 1.0, 4.0, 5.0, 6.0, 7.0]
+        percolator.metrics_val["all_nan_feature"] = [np.nan] * 8
+        percolator.target_decoy_labels = np.array([-1, 1, 1, -1, -1, 1, 1, 1])
+
+        with pytest.raises(ValueError, match="NaN"):
+            percolator.apply_lda_and_get_indices_below_fdr(initial_scoring_feature="Score", fdr_cutoff=0.4)
+
+    def test_median_fill_leaves_all_nan_column_nan(self):
+        """fillna(median) alone is not enough for an all-NaN column; the 0.0 fallback is."""
+        values = pd.Series([np.nan, np.nan, np.nan])
+        assert values.fillna(values.median()).isna().all()
+        assert not values.fillna(values.median()).fillna(0.0).isna().any()
+
+
+class TestScFeaturesFlag:
+    """The single-cell feature families are opt-in, and all_features must imply them."""
+
+    @staticmethod
+    def _metadata() -> pd.DataFrame:
+        """Minimal metadata carrying every sc_feature column add_common_features looks for."""
+        meta = pd.DataFrame(
+            {
+                "SEQUENCE": ["AAIGEATRL", "KPEPTIDER"],
+                "CALCULATED_MASS": [900.5, 1000.5],
+                "PRECURSOR_CHARGE": [2, 3],
+                "FRAGMENTATION": ["HCD", "HCD"],
+            }
+        )
+        for i, key in enumerate(constants.SC_FEATURE_KEYS):
+            meta[key] = [float(i), float(i) + 1.0]
+        return meta
+
+    def _columns_for(self, **flags) -> set:
+        percolator = perc.Percolator(metadata=self._metadata(), input_type="rescore", **flags)
+        percolator.add_common_features()
+        return set(percolator.metrics_val.columns)
+
+    def test_off_by_default(self):
+        """Without the flag, no sc_feature reaches the percolator feature matrix."""
+        columns = self._columns_for()
+        assert not columns & set(constants.SC_FEATURE_KEYS)
+
+    def test_enabled_by_sc_features_flag(self):
+        """sc_features_flag adds every sc_feature present in the metadata."""
+        columns = self._columns_for(sc_features_flag=True)
+        assert set(constants.SC_FEATURE_KEYS) <= columns
+
+    def test_implied_by_all_features_flag(self):
+        """all_features means all features -- it must not silently skip the sc_feature families."""
+        columns = self._columns_for(all_features_flag=True)
+        assert set(constants.SC_FEATURE_KEYS) <= columns
+
+    def test_additional_columns_all_does_not_bypass_the_gate(self):
+        """``add_feature_cols: "all"`` sweeps every non-base metadata column.
+
+        The sc_features live in the same frame, so without an explicit exclusion they would become
+        percolator features with the gate off -- and through a path with no NaN handling, so the
+        all-NaN reporter columns of a non-TMT run would reach the LDA and kill it.
+        """
+        meta = self._metadata()
+        for key in ("n_reporter_channels", "reporter_intensity_frac", "reporter_max_frac"):
+            meta[key] = [np.nan, np.nan]
+        meta["search_engine_score"] = [1.0, 2.0]
+
+        percolator = perc.Percolator(metadata=meta, input_type="rescore", additional_columns="all")
+        percolator.add_common_features()
+        percolator.add_additional_features()
+
+        assert not set(percolator.metrics_val.columns) & set(constants.SC_FEATURE_KEYS)
+        assert "search_engine_score" in percolator.metrics_val.columns  # genuine extras still pass
+
+    def test_additional_columns_all_still_yields_sc_features_when_enabled(self):
+        """With the flag on they arrive once, through add_common_features, with NaNs filled."""
+        meta = self._metadata()
+        meta["reporter_max_frac"] = [np.nan, np.nan]
+        percolator = perc.Percolator(
+            metadata=meta, input_type="rescore", additional_columns="all", sc_features_flag=True
+        )
+        percolator.add_common_features()
+        percolator.add_additional_features()
+
+        assert set(constants.SC_FEATURE_KEYS) <= set(percolator.metrics_val.columns)
+        assert not percolator.metrics_val[list(constants.SC_FEATURE_KEYS)].isna().to_numpy().any()
+
+    def test_absent_columns_are_skipped_not_invented(self):
+        """A metadata frame annotated without sc_features must not gain empty columns."""
+        meta = self._metadata().drop(columns=list(constants.SC_FEATURE_KEYS))
+        percolator = perc.Percolator(metadata=meta, input_type="rescore", sc_features_flag=True)
+        percolator.add_common_features()
+        assert not set(percolator.metrics_val.columns) & set(constants.SC_FEATURE_KEYS)
 
 
 class TestRetentionTimeAlignment(unittest.TestCase):

@@ -1,19 +1,10 @@
-"""Per-spectrum mass-calibration matcher.
+"""Per-spectrum mass-calibration matcher."""
 
-Fits a RANSAC line ``ppm_residual ~ a + b * theoretical_mass`` over the
-candidate cloud returned by ``match_peaks``, then for each fragment slot picks
-the inlier closest to the fitted line. Optionally enforces one-peak-per-slot
-uniqueness via greedy assignment on ascending deviation from the fit.
-
-Designed to correct systematic mass-calibration drift within a single MS2
-spectrum and to reject noise spikes that happen to fall inside the ppm window
-but don't lie on the global drift line.
-
-The matcher degrades gracefully to ``nearest`` whenever the fit can't be
-trusted: too few candidates, a non-converging RANSAC, no inliers, or a
-converged fit that still retains fewer than ``min_inlier_fraction`` of the
-fragment slots (a "bad" fit that would otherwise silently decimate matches).
-"""
+# Fits a RANSAC line ppm_residual ~ a + b * theoretical_mass over the candidate cloud, then picks per
+# fragment slot the inlier closest to that line. This corrects systematic calibration drift within a
+# single MS2 spectrum and rejects noise spikes that fall inside the ppm window but off the drift line.
+# It degrades to `nearest` whenever the fit cannot be trusted: too few candidates, a non-converging
+# RANSAC, no inliers, or a converged fit retaining fewer than `min_inlier_fraction` of the slots.
 
 import logging
 import numbers
@@ -60,37 +51,26 @@ def global_ransac_resolver(
 ) -> tuple[pd.DataFrame, int]:
     """Resolve candidates via RANSAC mass-calibration fit, then per-slot pick.
 
-    :param candidates: rows from ``match_peaks``. May be ``None`` or empty.
-    :param peaks_masses: unused; part of the resolver contract.
-    :param peaks_intensity: unused; part of the resolver contract.
-    :param unmod_sequence: unused; part of the resolver contract.
-    :param residual_threshold_ppm: positive ppm tolerance for inlier classification.
-        If ``None`` (default), it is derived from the matching tolerance:
-        ``_TOLERANCE_THRESHOLD_FRACTION * mass_tolerance`` when the tolerance is in
-        ppm, otherwise ``_DEFAULT_RESIDUAL_THRESHOLD_PPM``. Pass an explicit value to
-        override.
-    :param min_samples: minimum samples per RANSAC trial; must be ``>= 2``.
-    :param max_trials: maximum RANSAC iterations; must be ``>= 1``.
-    :param random_state: RANSAC seed; pass ``None`` for non-deterministic behaviour.
-    :param unique_peak: if True (default), enforce one observed peak per fragment
-        slot AND one fragment slot per observed peak via greedy assignment in
-        ascending deviation from the fit. If False, peaks may be reused across
-        slots (preserves the legacy linear-path behaviour).
-    :param min_inlier_fraction: in ``[0, 1]``. If the converged fit keeps inliers
-        spanning fewer than this fraction of the candidate fragment slots, defer to
-        ``nearest`` instead of returning a decimated match set. ``0`` disables the
-        check. Default ``0.5``.
-    :param mass_tolerance: matching tolerance used to derive ``residual_threshold_ppm``
-        when it is not given explicitly. Forwarded by ``_annotate_linear_spectrum``.
-    :param unit_mass_tolerance: unit of ``mass_tolerance`` (``"ppm"`` or ``"da"``).
-    :raises ValueError: if any hyperparameter is out of range, or candidate rows
-        miss any required column.
-    :return: ``(matched_peaks_df, n_dropped)``. ``n_dropped`` is the count of
-        input rows that did not survive into the output (rejected as outliers,
-        lost to greedy uniqueness, or dropped as non-finite). The DataFrame
-        carries the contract columns plus ``ppm_residual`` and
-        ``abs_dev_from_fit`` for downstream diagnostics; the multifrag
-        ``full_name`` column is preserved when present.
+    :param candidates: rows from ``match_peaks``; may be ``None`` or empty
+    :param peaks_masses: unused; part of the resolver contract
+    :param peaks_intensity: unused; part of the resolver contract
+    :param unmod_sequence: unused; part of the resolver contract
+    :param residual_threshold_ppm: inlier band in ppm; when ``None`` it is derived from the matching
+        tolerance -- ``_TOLERANCE_THRESHOLD_FRACTION`` of it when that is in ppm, else
+        ``_DEFAULT_RESIDUAL_THRESHOLD_PPM``
+    :param min_samples: samples per RANSAC trial (``>= 2``)
+    :param max_trials: maximum RANSAC iterations (``>= 1``)
+    :param random_state: RANSAC seed; ``None`` for non-deterministic behaviour
+    :param unique_peak: enforce one peak per slot AND one slot per peak by greedy assignment on
+        ascending deviation from the fit; ``False`` lets peaks be reused across slots
+    :param min_inlier_fraction: in ``[0, 1]``; if the converged fit keeps inliers spanning fewer than
+        this share of candidate slots, defer to ``nearest`` rather than return a decimated match set
+    :param mass_tolerance: tolerance ``residual_threshold_ppm`` is derived from when not given
+    :param unit_mass_tolerance: unit of ``mass_tolerance`` (``"ppm"`` or ``"da"``)
+    :raises ValueError: if a hyperparameter is out of range or a candidate row misses a column
+    :return: ``(matched_peaks_df, n_dropped)``, where ``n_dropped`` counts input rows that did not
+        survive. The frame carries the contract columns plus the ``ppm_residual`` and
+        ``abs_dev_from_fit`` diagnostics.
     """
     _validate_hyperparameters(min_samples, max_trials, min_inlier_fraction)
     residual_threshold = _resolve_residual_threshold(residual_threshold_ppm, mass_tolerance, unit_mass_tolerance)

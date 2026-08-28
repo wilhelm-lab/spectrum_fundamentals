@@ -1,28 +1,17 @@
-"""Calibrated DP matcher -- RANSAC drift fit + b/y ladder DP combined.
+"""Calibrated DP matcher -- RANSAC drift fit plus b/y ladder DP."""
 
-Fuses ``global_ransac`` and ``dp_ladder``: it first robustly fits a global
-mass-calibration line ``ppm_residual ~ a + b * theoretical_mass`` over the
-candidate cloud (RANSAC), then runs the ladder DP but measures each fragment's
-emission penalty as the deviation *from that fitted line* instead of from the
-raw theoretical position. De-drifting the emission removes the tension in plain
-``dp_ladder`` between absolute m/z closeness and ladder consistency, so a
-surviving peak must agree with both the global calibration and the local ladder
-spacing/monotonicity.
-
-The two parent matchers are exactly the two block-coordinate steps of one joint
-objective over (line parameters, peak assignment): fixing the assignment and
-solving the line is a regression (``global_ransac``'s fit); fixing the line and
-solving the assignment is the ladder DP (``dp_ladder``). With ``iterations > 1``
-the resolver alternates them EM/ICP-style -- re-fit the line on the
-DP-selected matches (now de-noised), then re-run the DP.
-
-Robust degradation: if the calibration line can't be trusted (too few
-candidates, a non-converging RANSAC, a non-finite fit, or one that explains too
-few fragment slots) the emission falls back to the raw residual -- i.e. plain
-``dp_ladder``. The ladder DP in turn falls back to ``nearest`` under the
-``min_match_fraction`` floor. Every numeric input is range-checked and
-non-finite rows/values are dropped or neutralised before the maths runs.
-"""
+# Fuses `global_ransac` and `dp_ladder`: first fit a global calibration line
+# ppm_residual ~ a + b * theoretical_mass by RANSAC, then run the ladder DP with each fragment's
+# emission measured as the deviation FROM THAT LINE rather than from the raw theoretical position.
+# De-drifting the emission removes plain `dp_ladder`'s tension between absolute m/z closeness and
+# ladder consistency, so a surviving peak must agree with both the global calibration and the local
+# spacing. The two parents are the block-coordinate steps of one joint objective over (line, assignment):
+# fix the assignment and the line is a regression; fix the line and the assignment is the DP. With
+# `iterations > 1` they alternate EM/ICP-style.
+#
+# Degradation is layered: an untrustworthy line (too few candidates, non-converged RANSAC, too few
+# explained slots) drops the emission back to the raw residual, i.e. plain `dp_ladder`, which in turn
+# falls back to `nearest` under `min_match_fraction`.
 
 import logging
 import numbers
@@ -73,46 +62,33 @@ def dp_calibrated_resolver(
 ) -> tuple[pd.DataFrame, int]:
     """Resolve candidates by a RANSAC-calibrated ladder DP.
 
-    :param candidates: rows from ``match_peaks``. May be ``None`` or empty.
-    :param peaks_masses: unused; part of the resolver contract.
-    :param peaks_intensity: unused; part of the resolver contract.
-    :param unmod_sequence: unused; part of the resolver contract.
-    :param ppm_scale: ppm scale ``s`` for the DP emission/transition penalties;
-        see ``dp_ladder``. Derived from the matching tolerance when ``None``.
-    :param skip_penalty: positive flat cost of leaving a fragment unmatched.
-    :param ladder_weight: non-negative weight on the gap-consistency term. Once
-        the emission is drift-corrected it no longer needs to fight global
-        drift, so it can be lowered relative to ``dp_ladder`` if desired.
-    :param intensity_weight: non-negative reward weight on observed (normalised)
-        intensity. ``0`` keeps the cost purely geometric. Never uses Prosit.
-    :param unique_peak: if True (default), enforce one fragment per observed peak
-        across ladders, resolving collisions by ascending deviation-from-line.
-    :param min_match_fraction: in ``[0, 1]``; if the DP matches fewer than this
-        fraction of fragment slots, defer the spectrum to ``nearest``. ``0``
-        (default) disables the floor.
-    :param residual_threshold_ppm: RANSAC inlier band (ppm) for the calibration
-        fit. Derived from the matching tolerance when ``None``.
-    :param min_samples: minimum samples per RANSAC trial; must be ``>= 2``. Also
-        the minimum candidate count below which no line is fitted.
-    :param max_trials: maximum RANSAC iterations; must be ``>= 1``.
-    :param random_state: RANSAC seed; ``None`` for non-deterministic behaviour.
-    :param min_inlier_fraction: in ``[0, 1]``. The calibration line is trusted
-        only if its inliers span at least this fraction of fragment slots;
-        otherwise the emission falls back to the raw residual (plain
-        ``dp_ladder``). ``0`` always trusts a finite fit.
-    :param iterations: number of EM/ICP-style passes (``>= 1``). After the
-        initial RANSAC fit, each extra pass re-fits the line (ordinary least
-        squares) on the current DP-selected matches and re-runs the DP, stopping
-        early once the assignment stabilises.
-    :param mass_tolerance: matching tolerance used to derive ``ppm_scale`` and
-        ``residual_threshold_ppm`` when those are not given. Forwarded by
-        ``_annotate_linear_spectrum``.
-    :param unit_mass_tolerance: unit of ``mass_tolerance`` (``"ppm"`` or ``"da"``).
-    :raises ValueError: if any hyperparameter is out of range, or candidate rows
-        miss a required column.
-    :return: ``(matched_peaks_df, n_dropped)``. The DataFrame carries the
-        contract columns plus ``ppm_residual`` (raw) and ``dev_from_line``
-        (drift-corrected) diagnostics; ``full_name`` is preserved when present.
+    :param candidates: rows from ``match_peaks``; may be ``None`` or empty
+    :param peaks_masses: unused; part of the resolver contract
+    :param peaks_intensity: unused; part of the resolver contract
+    :param unmod_sequence: unused; part of the resolver contract
+    :param ppm_scale: ppm scale of the DP emission/transition penalties (see ``dp_ladder``); derived
+        from the matching tolerance when ``None``
+    :param skip_penalty: flat cost of leaving a fragment unmatched
+    :param ladder_weight: weight of the gap-consistency term; a drift-corrected emission no longer has
+        to fight global drift, so this can be lower than in ``dp_ladder``
+    :param intensity_weight: reward weight on observed intensity; ``0`` keeps the cost geometric
+    :param unique_peak: let each observed peak back one fragment across ladders, resolving collisions
+        by ascending deviation from the line
+    :param min_match_fraction: in ``[0, 1]``; below this share of matched slots defer to ``nearest``
+    :param residual_threshold_ppm: RANSAC inlier band in ppm; derived from the tolerance when ``None``
+    :param min_samples: samples per RANSAC trial (``>= 2``), and the candidate count below which no
+        line is fitted
+    :param max_trials: maximum RANSAC iterations (``>= 1``)
+    :param random_state: RANSAC seed; ``None`` for non-deterministic behaviour
+    :param min_inlier_fraction: in ``[0, 1]``; the line is trusted only if its inliers span this share
+        of fragment slots, else the emission falls back to the raw residual. ``0`` always trusts a fit.
+    :param iterations: EM/ICP-style passes (``>= 1``); each extra pass re-fits the line by least
+        squares on the current matches and re-runs the DP, stopping once the assignment stabilises
+    :param mass_tolerance: tolerance ``ppm_scale`` and ``residual_threshold_ppm`` derive from
+    :param unit_mass_tolerance: unit of ``mass_tolerance`` (``"ppm"`` or ``"da"``)
+    :raises ValueError: if a hyperparameter is out of range or a candidate row misses a column
+    :return: ``(matched_peaks_df, n_dropped)``; the frame carries the contract columns plus the
+        ``ppm_residual`` (raw) and ``dev_from_line`` (drift-corrected) diagnostics
     """
     _validate_dp_hyperparameters(skip_penalty, ladder_weight, intensity_weight, min_match_fraction)
     _validate_fit_hyperparameters(min_samples, max_trials, min_inlier_fraction, iterations)

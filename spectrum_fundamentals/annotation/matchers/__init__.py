@@ -1,24 +1,15 @@
 """Peak match resolvers.
 
-A resolver collapses the candidate list returned by ``match_peaks`` (zero or
-more observed peaks per theoretical fragment, all already inside the ppm
-tolerance window) into one matched peak per fragment slot — i.e. one row per
-``(ion_type, no, charge)``.
+A resolver collapses the candidate list from ``match_peaks`` -- zero or more observed peaks per
+theoretical fragment, all already inside the ppm tolerance window -- into one matched peak per
+fragment slot, i.e. one row per ``(ion_type, no, charge)``::
 
-Resolver signature::
+    resolver(candidates, peaks_masses, peaks_intensity, unmod_sequence, **kwargs)
+        -> (matched_peaks_df, n_dropped)
 
-    resolver(
-        candidates: list[dict],
-        peaks_masses: np.ndarray,
-        peaks_intensity: np.ndarray,
-        unmod_sequence: str,
-        **kwargs,
-    ) -> tuple[pd.DataFrame, int]
-
-Returns ``(matched_peaks_df, n_dropped)``. The DataFrame must contain the
-columns consumed downstream by ``generate_annotation_matrix``:
-``ion_type, no, charge, exp_mass, theoretical_mass, intensity, ppm_error (optional)`` (plus
-``full_name`` when ``multifrag=True``).
+The frame must carry the columns ``generate_annotation_matrix`` consumes: ``ion_type, no, charge,
+exp_mass, theoretical_mass, intensity`` (plus ``ppm_error`` optionally, and ``full_name`` when
+``multifrag=True``).
 """
 
 from collections.abc import Callable

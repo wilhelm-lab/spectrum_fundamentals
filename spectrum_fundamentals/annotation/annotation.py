@@ -163,7 +163,7 @@ def _longest_consecutive(positions: set[int]) -> int:
         return 0
     best = run = 1
     ordered = sorted(positions)
-    for prev, cur in zip(ordered, ordered[1:]):
+    for prev, cur in zip(ordered, ordered[1:], strict=False):
         run = run + 1 if cur == prev + 1 else 1
         best = max(best, run)
     return best
@@ -190,7 +190,9 @@ def _ion_series_features(matched_peaks: pd.DataFrame, unmod_sequence: str) -> di
     # base ion type, so match on the prefix rather than on equality.
     longest = {}
     for ion in ("b", "y"):
-        positions = {int(n) for t, n in zip(ion_types, numbers) if isinstance(t, str) and t.startswith(ion)}
+        positions = {
+            int(n) for t, n in zip(ion_types, numbers, strict=True) if isinstance(t, str) and t.startswith(ion)
+        }
         longest[ion] = _longest_consecutive(positions)
 
     n_sites = max(len(unmod_sequence) - 1, 1)
@@ -204,25 +206,22 @@ def _ion_series_features(matched_peaks: pd.DataFrame, unmod_sequence: str) -> di
 def _reporter_features(
     peaks_mz: np.ndarray,
     peaks_intensity: np.ndarray,
-    tolerance_ppm: float = 20.0,
+    tolerance_ppm: float = constants.DEFAULT_REPORTER_TOLERANCE_PPM,
 ) -> dict[str, float]:
     """
     Compute TMT11 reporter-ion features (``constants.REPORTER_FEATURES``).
 
-    Each of the 11 reporter m/z is looked up in the observed peak list within
-    ``tolerance_ppm``; when several peaks fall inside the window the most intense one
-    wins. Channels are deliberately *not* deisotoped or purity-corrected -- these are
-    confidence features, not quantities.
-
-    Returns NaN for every feature when the spectrum carries no peaks in the reporter
-    region at all, which is how a non-TMT run (or a spectrum whose low-m/z range was
-    trimmed upstream) is signalled rather than silently reported as "0 channels".
+    Each of the 11 reporter m/z is looked up within ``tolerance_ppm``, the most intense peak in the
+    window winning. Every feature is NaN when the spectrum has no peaks in the reporter region at all.
 
     :param peaks_mz: m/z of all observed peaks, sorted ascending
     :param peaks_intensity: intensities of all observed peaks (same order as ``peaks_mz``)
     :param tolerance_ppm: half-width of the reporter match window in ppm
     :return: mapping of feature name to value
     """
+    # Channels are deliberately not deisotoped or purity-corrected: these are confidence features,
+    # not quantities. NaN (rather than "0 channels") is how a non-TMT run, or one whose low-m/z range
+    # was trimmed upstream, is signalled.
     peaks_mz = np.asarray(peaks_mz, dtype=float)
     peaks_intensity = np.asarray(peaks_intensity, dtype=float)
     n_total = min(len(peaks_mz), len(peaks_intensity))
@@ -231,7 +230,8 @@ def _reporter_features(
     reporters = np.asarray(constants.TMT11_REPORTER_MZ, dtype=float)
     # The reporter region spans the channels plus the match window; if the spectrum has
     # nothing there we cannot distinguish "no reporters" from "region not acquired".
-    lo, hi = reporters[0] * (1 - 2e-5), reporters[-1] * (1 + 2e-5)
+    margin = tolerance_ppm * 1e-6
+    lo, hi = reporters[0] * (1 - margin), reporters[-1] * (1 + margin)
     if n_total == 0 or not np.any((peaks_mz >= lo) & (peaks_mz <= hi)):
         return dict.fromkeys(constants.REPORTER_FEATURES, float("nan"))
 
@@ -241,7 +241,7 @@ def _reporter_features(
     starts = np.searchsorted(peaks_mz, reporters - half, side="left")
     stops = np.searchsorted(peaks_mz, reporters + half, side="right")
     channel_int = np.array(
-        [float(peaks_intensity[a:b].max()) if b > a else 0.0 for a, b in zip(starts, stops)],
+        [float(peaks_intensity[a:b].max()) if b > a else 0.0 for a, b in zip(starts, stops, strict=True)],
     )
 
     reporter_sum = float(channel_int.sum())
@@ -261,39 +261,23 @@ def _peak_coverage_features(
     """
     Compute the observed-peak coverage ``sc_features`` for a single PSM.
 
-    Two flavours of coverage are returned, both derived from the set of *distinct*
-    observed peaks that were matched to a fragment ion:
+    Peak-count coverage (``constants.PEAK_COVERAGE_FEATURES``) is
+    ``n_annotated / (n_annotated + n_competing)``, where a competing peak is an unmatched observed
+    peak passing a significance test: at least 20% of the mean matched intensity for
+    ``annotated_frac_avg20``, and no test at all for ``annotated_frac_all``. Intensity coverage
+    (``constants.INTENSITY_COVERAGE_FEATURES``) is the matched share of the total observed intensity.
 
-    **Peak-count coverage** (``constants.PEAK_COVERAGE_FEATURES``) — each of the form
-    ``n_annotated / (n_annotated + n_competing)``, where *n_competing* is the number
-    of observed peaks that were **not** matched but pass a significance test:
-
-    - ``annotated_frac_avg20``: unmatched intensity is at least 20% of the *mean*
-      matched-peak intensity.
-    - ``annotated_frac_all``: no significance test — the denominator is simply all
-      observed peaks (``n_annotated / n_total``).
-
-    **Intensity coverage** (``constants.INTENSITY_COVERAGE_FEATURES``):
-
-    - ``intensity_coverage``: summed intensity of the matched observed peaks divided
-      by the summed intensity of all observed peaks. Both numerator and denominator
-      use the same raw (un-normalised) observed intensities, so the ratio is a true
-      fraction in ``[0, 1]``. (Note: this deliberately does **not** use
-      ``matched_peaks["intensity"]``, which is max-normalised inside ``match_peaks``
-      and would also double-count a peak matched to several ions.)
-
-    Matched observed peaks are located by mapping each ``exp_mass`` back to its index
-    in ``peaks_mz``; this is exact because ``exp_mass`` is a verbatim copy of a
-    ``peaks_mz`` value and ``peaks_mz`` is sorted ascending (a precondition of
-    ``match_peaks``).
-
-    :param matched_exp_mass: m/z of the observed peaks that were matched
-        (the ``exp_mass`` column of the resolved matches)
+    :param matched_exp_mass: m/z of the matched observed peaks (``exp_mass`` of the resolved matches)
     :param peaks_mz: m/z of all observed peaks, sorted ascending
     :param peaks_intensity: intensities of all observed peaks (same order as ``peaks_mz``)
-    :return: mapping of feature name to a value in ``[0, 1]`` (or ``nan`` when there
-        are no observed peaks or no matches)
+    :return: mapping of feature name to a value in ``[0, 1]``; ``nan`` for every feature when there
+        are no observed peaks or no matches, and for ``intensity_coverage`` alone when the observed
+        peaks carry no intensity
     """
+    # Both intensity-coverage terms use the raw observed intensities rather than
+    # matched_peaks["intensity"], which match_peaks max-normalises and which double-counts a peak
+    # matched to several ions. Matched peaks are located by mapping exp_mass back to its index in
+    # peaks_mz -- exact, because exp_mass is a verbatim copy of a peaks_mz value and peaks_mz is sorted.
     peaks_mz = np.asarray(peaks_mz, dtype=float)
     peaks_intensity = np.asarray(peaks_intensity, dtype=float)
     matched_exp_mass = np.asarray(matched_exp_mass, dtype=float)
@@ -329,7 +313,7 @@ def _peak_coverage_features(
 
     return {
         "intensity_coverage": intensity_coverage,
-        "annotated_frac_avg20": _frac(int((unmatched_int >= 0.20 * avg_matched).sum())),
+        "annotated_frac_avg20": _frac(int((unmatched_int >= constants.PEAK_COVERAGE_AVG_FRACTION * avg_matched).sum())),
         "annotated_frac_all": n_matched / n_total,
     }
 
@@ -802,8 +786,8 @@ def _annotate_linear_spectrum(
             "std_ppm_error": float(matched_peaks["ppm_error"].std(ddof=0)),
         }
     else:
-        # NaN signals missing data, not a perfect match (0.0 would be misleading).
-        # TODO: handle NaN downstream in percolator.py before passing to Percolator.
+        # NaN signals missing data, not a perfect match (0.0 would be misleading). Percolator
+        # fills these before the LDA sees them (see Percolator.add_common_features).
         sc_features = {
             "mean_ppm_error": float("nan"),
             "max_ppm_error": float("nan"),
@@ -832,7 +816,11 @@ def _annotate_linear_spectrum(
             _reporter_features(
                 spectrum[index_columns["MZ"]],
                 spectrum[index_columns["INTENSITIES"]],
-                tolerance_ppm=mass_tolerance if unit_mass_tolerance == "ppm" and mass_tolerance else 20.0,
+                tolerance_ppm=(
+                    mass_tolerance
+                    if unit_mass_tolerance == "ppm" and mass_tolerance
+                    else constants.DEFAULT_REPORTER_TOLERANCE_PPM
+                ),
             )
         )
     else:

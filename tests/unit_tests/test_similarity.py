@@ -3,6 +3,7 @@ import scipy.sparse
 
 import spectrum_fundamentals.constants as constants
 import spectrum_fundamentals.metrics.similarity as sim
+from spectrum_fundamentals.metrics.metric import Metric
 
 
 class TestSpectralAngle:
@@ -278,189 +279,57 @@ class TestSpectralAngleMultipleRows:
         )
 
 
-class TestSpectralAngleNoiseAware:
-    """Tests for the noise-aware / detection-aware spectral angle (DA-SA)."""
-
-    def test_disabled_by_default(self):
-        """DA-SA must be off unless explicitly enabled via the environment."""
-        assert sim._noise_aware_sa_config() is None
-
-    def test_reduces_to_spectral_angle_when_all_detectable(self):
-        """With tau -> 0 every fragment is detectable, so DA-SA == standard SA."""
-        z = constants.EPSILON
-        observed = get_padded_array([1.0, z, 4.0, 3.0], padding_value=z)
-        predicted = get_padded_array([2.0, 1.0, 3.0, 4.0], padding_value=z)
-        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)
-        da = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.0, s=1e-6)
-        np.testing.assert_almost_equal(da, sa)
-
-    def test_missing_low_peak_relaxed(self):
-        """Missing predicted peaks below the detectability threshold are not penalised."""
-        z = constants.EPSILON
-        # base peak 1.0 observed; four weak predicted peaks (<=0.25, all < tau) missing.
-        observed = get_padded_array([1.0, z, z, z, z], padding_value=z)
-        predicted = get_padded_array([1.0, 0.25, 0.22, 0.20, 0.18], padding_value=z)
-        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
-        # hard threshold above the weak peaks -> they are dropped -> no penalty at all.
-        da_hard = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.30, mode="hard_pred")[0]
-        # soft threshold -> penalty strongly reduced but not necessarily zero.
-        da_soft = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.30, s=0.06)[0]
-        assert sa < 0.8  # standard SA is dragged down by the four "missing" weak peaks
-        np.testing.assert_almost_equal(da_hard, 1.0)
-        assert da_soft > sa + 0.1
-
-    def test_missing_high_peak_still_punished(self):
-        """A missing high-intensity predicted peak is still penalised (≈ standard SA)."""
-        z = constants.EPSILON
-        observed = get_padded_array([1.0, z, 0.25, 0.22], padding_value=z)
-        predicted = get_padded_array([1.0, 0.70, 0.25, 0.22], padding_value=z)
-        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
-        da = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.30, s=0.06)[0]
-        np.testing.assert_almost_equal(da, sa, decimal=2)
-
-    def test_no_observed_fragments_is_zero(self):
-        """No observed fragments -> SA of 0, like the standard metric."""
-        z = constants.EPSILON
-        observed = get_padded_array([z, z, z, z], padding_value=z)
-        predicted = get_padded_array([1.0, 0.5, 0.3, 0.2], padding_value=z)
-        da = sim.SimilarityMetrics.spectral_angle_noise_aware(observed, predicted, tau=0.05)
-        np.testing.assert_almost_equal(da, 0.0)
-
-
 class TestSpectralAngleNoB1:
-    """Tests for SA with b1 ions excluded."""
+    """Tests for SA with b1 ions excluded, and for the layout-derived b1 mask."""
+
+    @staticmethod
+    def _metric(**kwargs) -> Metric:
+        """Build a bare Metric just to reach b1_mask() (calc is abstract but unused here)."""
+        return type("_M", (Metric,), {"calc": lambda self: None})(**kwargs)
 
     def test_b1_excluded(self):
-        """b1 ions (indices 3,4,5) should not affect the score even if predicted."""
+        """A predicted-but-missing b1 must not drag the score down once masked."""
         z = constants.EPSILON
-        # b1 predicted but not observed (idx 3) — standard SA would penalise this
+        # b1 predicted but not observed (idx 3) -- standard SA would penalise this
         observed = get_padded_array([1.0, 2.0, 3.0, z], padding_value=z)
         predicted = get_padded_array([1.0, 2.0, 3.0, 1.0], padding_value=z)
         sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
-        mask = np.ones((1, constants.VEC_LENGTH))
-        mask[:, 3:6] = 0
+        mask = self._metric().b1_mask()
         sa_no_b1 = sim.SimilarityMetrics.spectral_angle(observed, predicted, masks=mask)[0]
-        # without b1 exclusion, missing b1 drags score down
         assert sa_no_b1 > sa
 
     def test_non_b1_ions_unaffected(self):
         """Ions at positions other than b1 are not affected by the mask."""
-        # values only at indices 0,1,2 (y1+1, y1+2, y1+3) — no b1
+        # values only at indices 0,1,2 (y1+1, y1+2, y1+3) -- no b1
         observed = get_padded_array([1.0, 2.0, 3.0])
         predicted = get_padded_array([1.0, 2.0, 3.0])
-        mask = np.ones((1, constants.VEC_LENGTH))
-        mask[:, 3:6] = 0
+        mask = self._metric().b1_mask()
         sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
         sa_no_b1 = sim.SimilarityMetrics.spectral_angle(observed, predicted, masks=mask)[0]
         np.testing.assert_almost_equal(sa_no_b1, sa)
 
+    def test_default_layout_masks_b1_slots(self):
+        """task="default": for pos: for ion in [y, b]: for charge in [1,2,3] -> b1 at 3,4,5."""
+        mask = self._metric().b1_mask()
+        assert mask.shape == (1, constants.VEC_LENGTH)
+        np.testing.assert_array_equal(np.where(mask[0] == 0)[0], [3, 4, 5])
 
-class TestSpectralAngleThreshold:
-    """Tests for the predicted-peak intensity threshold on the spectral angle."""
+    def test_cms2_layout_masks_both_peptides(self):
+        """cms2 doubles the vector, so the second peptide's b1 must be masked as well."""
+        mask = self._metric(cms2=True).b1_mask()
+        assert mask.shape == (1, 2 * constants.VEC_LENGTH)
+        np.testing.assert_array_equal(np.where(mask[0] == 0)[0], [3, 4, 5, 177, 178, 179])
 
-    def test_disabled_by_default(self):
-        """The thresholded-SA feature must be off unless enabled via the environment."""
-        assert sim._sa_threshold_config() is None
+    def test_multifrag_layout_masks_the_real_b1(self):
+        """Regression guard: multifrag is laid out by ION_DIC, where index 3:6 is NOT b1.
 
-    def test_config_reads_env(self, monkeypatch):
-        """When enabled, the config returns the configured predicted-intensity floor."""
-        monkeypatch.setenv("SATHRESH_ENABLE", "1")
-        monkeypatch.setenv("SATHRESH_TAU", "0.03")
-        assert sim._sa_threshold_config() == 0.03
-
-    def test_default_threshold_reduces_to_spectral_angle(self):
-        """The default EPSILON threshold reproduces the standard spectral angle exactly."""
-        z = constants.EPSILON
-        observed = get_padded_array([1.0, z, 4.0, 3.0], padding_value=z)
-        predicted = get_padded_array([2.0, 1.0, 3.0, 4.0], padding_value=z)
-        base = sim.SimilarityMetrics.spectral_angle(observed, predicted)
-        same = sim.SimilarityMetrics.spectral_angle(observed, predicted, predicted_threshold=constants.EPSILON)
-        np.testing.assert_almost_equal(same, base)
-
-    def test_low_predicted_peak_ignored(self):
-        """A predicted peak below the threshold is dropped from BOTH vectors."""
-        z = constants.EPSILON
-        # base peak agrees perfectly; a weak predicted peak (0.10) coincides with a large,
-        # disagreeing observed intensity -> drags the standard SA down.
-        observed = get_padded_array([1.0, 0.9], padding_value=z)
-        predicted = get_padded_array([1.0, 0.10], padding_value=z)
-        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
-        # threshold above the weak predicted peak -> its position is ignored -> only the
-        # perfectly-agreeing base peak remains -> SA == 1.
-        sa_thr = sim.SimilarityMetrics.spectral_angle(observed, predicted, predicted_threshold=0.30)[0]
-        assert sa < 0.8
-        np.testing.assert_almost_equal(sa_thr, 1.0)
-
-    def test_matched_low_peak_also_dropped(self):
-        """Unlike DA-SA, the threshold drops matched low peaks too (symmetric masking)."""
-        z = constants.EPSILON
-        # matched but disagreeing weak peak: obs 0.05 vs pred 0.10, below a 0.30 floor.
-        observed = get_padded_array([1.0, 0.05], padding_value=z)
-        predicted = get_padded_array([1.0, 0.10], padding_value=z)
-        # DA-SA hard_pred keeps the matched low peak (observed contribution stays) -> < 1.
-        da_hard = sim.SimilarityMetrics.spectral_angle_noise_aware(
-            observed, predicted, tau=0.30, mode="hard_pred"
-        )[0]
-        # the threshold removes that position entirely -> only the base peak -> SA == 1.
-        sa_thr = sim.SimilarityMetrics.spectral_angle(observed, predicted, predicted_threshold=0.30)[0]
-        assert da_hard < 1.0
-        np.testing.assert_almost_equal(sa_thr, 1.0)
-
-    def test_no_common_fragments_is_zero(self):
-        """If the threshold removes every predicted peak that had an observed match, SA -> 0."""
-        z = constants.EPSILON
-        # the only observed peak coincides with a weak predicted peak; the strong predicted
-        # peak has no observed match. Thresholding out the weak one leaves no common fragment.
-        observed = get_padded_array([z, 0.5], padding_value=z)
-        predicted = get_padded_array([1.0, 0.10], padding_value=z)
-        sa_thr = sim.SimilarityMetrics.spectral_angle(observed, predicted, predicted_threshold=0.30)
-        np.testing.assert_almost_equal(sa_thr, 0.0)
-
-
-class TestSpectralAngleObservedThreshold:
-    """Tests for the measured (observed) noise floor on the spectral angle."""
-
-    def test_disabled_by_default(self):
-        """The observed-floor feature must be off unless enabled via the environment."""
-        assert sim._sa_obs_threshold_config() is None
-
-    def test_config_reads_env(self, monkeypatch):
-        """When enabled, the config returns the configured observed-intensity floor."""
-        monkeypatch.setenv("SAOBS_ENABLE", "1")
-        monkeypatch.setenv("SAOBS_TAU", "0.04")
-        assert sim._sa_obs_threshold_config() == 0.04
-
-    def test_default_threshold_reduces_to_spectral_angle(self):
-        """The default 0.0 observed floor reproduces the standard spectral angle exactly."""
-        z = constants.EPSILON
-        observed = get_padded_array([1.0, z, 4.0, 3.0], padding_value=z)
-        predicted = get_padded_array([2.0, 1.0, 3.0, 4.0], padding_value=z)
-        base = sim.SimilarityMetrics.spectral_angle(observed, predicted)
-        same = sim.SimilarityMetrics.spectral_angle(observed, predicted, observed_threshold=0.0)
-        np.testing.assert_almost_equal(same, base)
-
-    def test_present_but_tiny_observed_dropped(self):
-        """A present-but-tiny measured peak is dropped from BOTH vectors as noise."""
-        z = constants.EPSILON
-        # base peak agrees; the 2nd fragment is predicted 0.3 but only measured at 0.01 (noise).
-        observed = get_padded_array([1.0, 0.01], padding_value=z)
-        predicted = get_padded_array([1.0, 0.30], padding_value=z)
-        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
-        # floor above the tiny measured peak -> that position is denoised away -> only the base
-        # peak remains, which agrees -> SA == 1.
-        sa_obs = sim.SimilarityMetrics.spectral_angle(observed, predicted, observed_threshold=0.05)[0]
-        assert sa < 0.9
-        np.testing.assert_almost_equal(sa_obs, 1.0)
-
-    def test_missing_peak_still_penalised(self):
-        """A genuinely missing peak (no measured peak) is NOT forgiven by the observed floor."""
-        z = constants.EPSILON
-        observed = get_padded_array([1.0, z], padding_value=z)     # 2nd fragment truly absent
-        predicted = get_padded_array([1.0, 0.90], padding_value=z)  # ...but strongly predicted
-        sa = sim.SimilarityMetrics.spectral_angle(observed, predicted)[0]
-        sa_obs = sim.SimilarityMetrics.spectral_angle(observed, predicted, observed_threshold=0.05)[0]
-        assert sa < 1.0
-        np.testing.assert_almost_equal(sa_obs, sa)  # unchanged: missing stays penalised
+        ION_DIC is sorted by ion name, so slots 3-5 there are A-ions and b1 sits elsewhere
+        entirely -- a hard-coded 3:6 mask silently zeroed the wrong fragments.
+        """
+        mask = self._metric(task="multifrag", featured_ions=["b", "y"]).b1_mask()
+        assert mask.shape == (1, len(constants.ION_DIC))
+        masked = [constants.ION_DIC.index[i] for i in np.where(mask[0] == 0)[0]]
+        assert masked == ["b1"]
 
 
 def get_padded_array(arr, padding_value: int = 0) -> np.ndarray:

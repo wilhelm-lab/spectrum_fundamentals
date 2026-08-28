@@ -1,7 +1,6 @@
 import enum
 import logging
 import math
-import os
 
 import numpy as np
 import pandas as pd
@@ -84,6 +83,7 @@ class Percolator(Metric):
         mz: np.ndarray | scipy.sparse.csr_matrix | None = None,
         *,
         all_features_flag: bool = False,
+        sc_features_flag: bool = False,
         regression_method: str = "lowess",
         fdr_cutoff: float = 0.01,
         additional_columns: str | list | None = None,
@@ -103,6 +103,7 @@ class Percolator(Metric):
             task=task,
             featured_ions=featured_ions,
             all_features_flag=all_features_flag,
+            sc_features_flag=sc_features_flag,
         )
 
         self.metadata = metadata
@@ -309,12 +310,23 @@ class Percolator(Metric):
             self.metrics_val["sequence_length"] = self.metadata["SEQUENCE"].apply(lambda x: len(x))
             self.metrics_val["Mass"] = self.metadata["CALCULATED_MASS"]  # this is the calculated mass used as a feature
             # sc_features: per-PSM quality metrics (ppm_error + coverage + series + reporter).
-            # Only added if available; canonical list lives in constants.SC_FEATURE_KEYS.
-            # TODO: handle NaN values before passing to Percolator (see annotation.py).
-            for feature in constants.SC_FEATURE_KEYS:
-                if feature in self.metadata.columns:
-                    self.metrics_val[feature] = self.metadata[feature]
-                    self.metrics_val[feature] = self.metrics_val[feature].fillna(self.metrics_val[feature].median())
+            # Opt-in via sc_features_flag (implied by all_features_flag), and only added if the
+            # annotation actually produced them; canonical list lives in constants.SC_FEATURE_KEYS.
+            # NaN handling matters here: apply_lda_and_get_indices_below_fdr() feeds the WHOLE
+            # metrics_val frame to LinearDiscriminantAnalysis, which rejects NaN outright, and
+            # features are computed per raw file. A column can therefore be entirely NaN within
+            # one file -- e.g. the TMT reporter features on a file whose PSMs carry no reporter
+            # peaks -- and then median() is itself NaN and fillna(median) is a silent no-op.
+            # Fall back to 0.0 so the LDA survives instead of the run dying several hours in.
+            # CAVEAT: the per-file tabs are concatenated before percolator/mokapot trains, so a
+            # column that was all-NaN in ONE file is not constant in the merged set -- it is 0.0
+            # there and real elsewhere, which the model can read as a file indicator. Preferable to
+            # a crash, but it is why these features should be enabled deliberately, not by default.
+            if self.sc_features_flag:
+                for feature in constants.SC_FEATURE_KEYS:
+                    if feature in self.metadata.columns:
+                        values = self.metadata[feature]
+                        self.metrics_val[feature] = values.fillna(values.median()).fillna(0.0)
 
         self.metrics_val["Charge1"] = (self.metadata["PRECURSOR_CHARGE"] == 1).astype(int)
         self.metrics_val["Charge2"] = (self.metadata["PRECURSOR_CHARGE"] == 2).astype(int)
@@ -335,7 +347,11 @@ class Percolator(Metric):
         if isinstance(self.additional_columns, list):
             feature_cols = self.additional_columns
         elif isinstance(self.additional_columns, str) and (self.additional_columns.lower() == "all"):
-            feature_cols = [x for x in self.metadata.columns if x.lower() not in set(self.BASE_COLUMNS)]
+            # sc_features are produced by the annotation, not supplied by the search engine, and they
+            # are opt-in via sc_features_flag. Excluding them here keeps "all" from re-adding them
+            # behind the gate's back, which would also bypass the NaN handling in add_common_features.
+            excluded = set(self.BASE_COLUMNS) | {key.lower() for key in constants.SC_FEATURE_KEYS}
+            feature_cols = [x for x in self.metadata.columns if x.lower() not in excluded]
             feature_cols = [x for x in feature_cols if not x.lower().startswith("unnamed")]  # remove Unnamed cols
 
         for col in feature_cols:
@@ -514,7 +530,10 @@ class Percolator(Metric):
                 self.mz,
                 xl=self.xl,
                 cms2=self.cms2,
+                task=self.task,
+                featured_ions=self.featured_ions,
                 all_features_flag=self.all_features_flag,
+                sc_features_flag=self.sc_features_flag,
             )
             similarity.calc()
 
@@ -594,18 +613,6 @@ class Percolator(Metric):
             self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
                 self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
             )
-
-        # Optional feature ablation (env-gated, default off): drop named feature columns from the
-        # percolator feature matrix, so a full Oktoberfest run genuinely excludes those features.
-        # e.g. OKT_DROP_FEATURES="RT pred_RT iRT abs_rt_diff". To remove the spectral angle, also
-        # drop "lda_scores" (it is an LDA combination computed over all features, incl. spectral_angle,
-        # so it would otherwise leak the SA signal back in). Columns absent from this PSM set are ignored.
-        drop_features = os.environ.get("OKT_DROP_FEATURES", "").split()
-        if drop_features:
-            present = [c for c in drop_features if c in self.metrics_val.columns]
-            if present:
-                logger.info(f"OKT_DROP_FEATURES: dropping percolator feature columns {present}")
-                self.metrics_val.drop(columns=present, inplace=True)
 
         self._reorder_columns_for_percolator()
 
