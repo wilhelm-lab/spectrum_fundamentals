@@ -412,7 +412,7 @@ def generate_annotation_matrix(  # noqa: C901
                 ((peak[no_col] - 1) * charge_const * len(ion_types)) + (peak[charge_col] - 1) + 3 * ion_type_index
             )
 
-            if peak_pos >= constants.VEC_LENGTH:
+            if peak_pos >= vec_length:
                 continue
 
         intensity[peak_pos] = peak[intensity_col]
