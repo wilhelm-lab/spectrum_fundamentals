@@ -1,0 +1,118 @@
+name: CI
+
+on:
+    push:
+        # release/* trigger is there just in case someone uses a release branch
+        # but we opt for a simpler approach to release from development and
+        #merge that tagged commit to main instead of creating a separate release branch and then deleting it.
+        branches: [main, development, "release/*"]
+    pull_request:
+        branches: ["*"]
+    # Allow triggering manually from the Actions tab without pushing a commit.
+    workflow_dispatch:
+
+jobs:
+    # ------------------------------------------------------------------
+    # Lint — ruff check + ruff format (runs once, ubuntu/py3.13 only)
+    # ------------------------------------------------------------------
+    lint:
+        name: lint
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: "3.13"
+                  cache: pip
+
+            - name: Install Poetry
+              run: pip install poetry
+
+            - name: Install dependencies
+              run: poetry install --with dev
+
+            - name: Lint
+              run: make lint
+
+    # ------------------------------------------------------------------
+    # Type-check — mypy (runs once, ubuntu/py3.13 only)
+    # ------------------------------------------------------------------
+    type-check:
+        name: type-check
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: "3.13"
+                  cache: pip
+
+            - name: Install Poetry
+              run: pip install poetry
+
+            - name: Install dependencies
+              run: poetry install --with dev
+
+            - name: Type check
+              run: make type-check
+
+    # ------------------------------------------------------------------
+    # Tests — full cross-platform matrix (3 OS × 4 Python versions)
+    # To add a new Python version: append it to matrix.python-version only.
+    # ------------------------------------------------------------------
+    test:
+        name: test / py${{ matrix.python-version }}
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                python-version: ["3.10", "3.12", "3.13"]
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: ${{ matrix.python-version }}
+                  cache: pip
+
+            - name: Install Poetry
+              run: pip install poetry
+
+            - name: Install dependencies
+              run: poetry install --with dev
+
+            - name: Run tests
+              run: poetry run pytest --cov=spectrum_fundamentals --cov-report=xml
+
+            - name: Upload coverage
+              if: matrix.python-version == '3.13'
+              uses: codecov/codecov-action@v5.5.2
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  files: coverage.xml
+                  fail_ci_if_error: false
+
+    # ------------------------------------------------------------------
+    # Build — verify the sdist/wheel is valid (ubuntu only, single job)
+    # ------------------------------------------------------------------
+    build:
+        name: build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: "3.13"
+                  cache: pip
+
+            - name: Install Poetry
+              run: pip install poetry
+
+            - name: Build package
+              run: poetry build --ansi
+
+            - name: Check package with twine
+              run: pip install twine && twine check dist/*

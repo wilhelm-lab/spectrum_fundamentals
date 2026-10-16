@@ -1,5 +1,4 @@
 import unittest
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -133,7 +132,10 @@ class TestRetentionTimeAlignment(unittest.TestCase):
     ):
         """Test get_aligned_predicted_retention_times for linear case."""
         fitting_idx = [0, 3, 5, 6, 9]
-        f = lambda x: x / 2 + 1
+
+        def f(x):
+            return x / 2 + 1
+
         n = 10
         dec = 12
         max_score = 1e-12
