@@ -22,6 +22,10 @@ from spectrum_fundamentals.mod_string import internal_without_mods_keep_loc
 
 logger = logging.getLogger(__name__)
 
+# fixed modifications and labels that do not make a PSM modified: carbamidomethyl, iTRAQ 4plex, SILAC heavy K and R,
+# iTRAQ 8plex, TMT and TMTpro
+STANDARD_UNIMOD_IDS = (4, 214, 259, 267, 730, 737, 2016)
+
 
 class TargetDecoyLabel(enum.IntEnum):
     """Target and decoy labels as used by Percolator."""
@@ -320,6 +324,39 @@ class Percolator(Metric):
         :return: number of arginines and lysines
         """
         return sequence.count("K") + sequence.count("R")
+
+    @staticmethod
+    def get_ptms(peptides: pd.Series, standard_unimod_ids: tuple[int, ...] = STANDARD_UNIMOD_IDS) -> pd.Series:
+        """
+        Get the PTMs of every peptide, without the standard modifications.
+
+        :param peptides: modified peptide sequences with UNIMOD annotations, e.g. "_.M[UNIMOD:35]PEPS[UNIMOD:21]K._"
+        :param standard_unimod_ids: UNIMOD ids of fixed modifications and labels that are not counted as PTMs
+        :return: the set of UNIMOD ids (as strings) of the PTMs of every peptide
+        """
+        standard = {str(unimod_id) for unimod_id in standard_unimod_ids}
+        return peptides.map(lambda peptide: set(re.findall(r"UNIMOD:(\d+)\]", peptide)) - standard)
+
+    @staticmethod
+    def get_ptm_indicators(
+        peptides: pd.Series, standard_unimod_ids: tuple[int, ...] = STANDARD_UNIMOD_IDS
+    ) -> pd.DataFrame:
+        """
+        Get a 0/1 feature for every PTM carried by any of the peptides.
+
+        Like the variable modification columns of MSFragger, the features let the FDR estimation learn how reliable the
+        identifications of each PTM are.
+
+        :param peptides: modified peptide sequences with UNIMOD annotations
+        :param standard_unimod_ids: UNIMOD ids of fixed modifications and labels that are not counted as PTMs
+        :return: one column ptm_UNIMOD_<id> per PTM, 1 if the peptide carries the PTM, else 0
+        """
+        ptms = Percolator.get_ptms(peptides, standard_unimod_ids)
+        unimod_ids = sorted(set().union(*ptms), key=int)
+        return pd.DataFrame(
+            {f"ptm_UNIMOD_{unimod_id}": ptms.map(lambda p, u=unimod_id: int(u in p)) for unimod_id in unimod_ids},
+            index=peptides.index,
+        )
 
     @staticmethod
     def calculate_mass_difference(metadata_subset: tuple[float, float]) -> float:

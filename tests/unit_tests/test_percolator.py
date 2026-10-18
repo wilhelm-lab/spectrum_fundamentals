@@ -321,6 +321,31 @@ class TestPercolator:
         """Test count_arginines_and_lysines."""
         np.testing.assert_equal(perc.Percolator.count_arginines_and_lysines("ARAAAAKAK"), 3)
 
+    def test_get_ptms(self):
+        """Test get_ptms counts oxidation as a PTM and ignores fixed modifications and labels."""
+        peptides = pd.Series(
+            [
+                "_.AC[UNIMOD:4]M[UNIMOD:35]K._",
+                "_.[UNIMOD:737]-AS[UNIMOD:21]K[UNIMOD:737]._",
+                "_.AC[UNIMOD:4]R[UNIMOD:267]._",
+                "_.AK[UNIMOD:34]S[UNIMOD:21]T[UNIMOD:21]K._",
+            ]
+        )
+        ptms = perc.Percolator.get_ptms(peptides)
+        assert ptms.tolist() == [{"35"}, {"21"}, set(), {"21", "34"}]
+
+    def test_get_ptm_indicators(self):
+        """Test get_ptm_indicators has one 0/1 column per PTM present, in UNIMOD id order."""
+        peptides = pd.Series(
+            ["_.AC[UNIMOD:4]M[UNIMOD:35]K._", "_.AK[UNIMOD:34]S[UNIMOD:21]T[UNIMOD:21]K._", "_.AC[UNIMOD:4]K._"],
+            index=[5, 7, 9],
+        )
+        indicators = perc.Percolator.get_ptm_indicators(peptides)
+        expected = pd.DataFrame(
+            {"ptm_UNIMOD_21": [0, 1, 0], "ptm_UNIMOD_34": [0, 1, 0], "ptm_UNIMOD_35": [1, 0, 0]}, index=[5, 7, 9]
+        )
+        pd.testing.assert_frame_equal(indicators, expected)
+
     def test_calculate_mass_difference(self):
         """Test calculate_mass_difference."""
         np.testing.assert_almost_equal(perc.Percolator.calculate_mass_difference((1000.0, 1001.2)), 1.2)
