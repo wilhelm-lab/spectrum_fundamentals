@@ -238,3 +238,49 @@ class TestNeutralLossFunctions(unittest.TestCase):
         score, mass = fragments._calculate_nl_score_mass("C2H4O2")
         self.assertEqual(score, 70)  # Starting score of 100 - 30
         self.assertEqual(mass, 60.02112934)
+
+
+class TestNeutralLosses(unittest.TestCase):
+    """Test the annotation of the phosphoric acid neutral loss."""
+
+    def test_phospho_loss_on_s_and_t_only_by_default(self):
+        """Phosphorylated S loses H3PO4, phosphorylated Y and A do not."""
+        for sequence, expected in (("PES[UNIMOD:21]K", True), ("PEY[UNIMOD:21]K", False), ("PEA[UNIMOD:21]K", False)):
+            nl_b, nl_y = fragments._get_neutral_losses(
+                sequence.replace("[UNIMOD:21]", ""), fragments._get_modifications(sequence)
+            )
+            has_loss = any("H3O4P" in losses for losses in list(nl_b.values()) + list(nl_y.values()))
+            self.assertEqual(has_loss, expected, sequence)
+
+    def test_phospho_loss_on_additional_residues(self):
+        """Phosphorylation on a decoy residue (A) loses H3PO4 like S if A is added to the loss residues."""
+        sequence = "PEA[UNIMOD:21]K"
+        nl_b, nl_y = fragments._get_neutral_losses("PEAK", fragments._get_modifications(sequence), "STA")
+        # b ions from b3 (index 2) and y ions from y2 (index 1) contain the phosphorylated A
+        self.assertEqual([i for i, losses in nl_b.items() if "H3O4P" in losses], [2])
+        self.assertEqual([i for i, losses in nl_y.items() if "H3O4P" in losses], [1, 2])
+
+
+class TestPlainNeutralLossCounts(unittest.TestCase):
+    """Test counting the neutral losses of decoys with and without the loss on the decoy site."""
+
+    def test_plain_counts(self):
+        """A phosphorylated A annotated like S expects losses, counted without A (plain) it does not."""
+        import numpy as np
+
+        from spectrum_fundamentals.annotation.annotation import _annotate_linear_spectrum
+
+        sequence = "PEA[UNIMOD:21]K"
+        # a spectrum with the theoretical b and y ions of the sequence
+        peaks = fragments.initialize_peaks(sequence, "FTMS", 2, 20, "ppm")[0]
+        mz = np.sort(np.array([peak["mass"] for peak in peaks]))
+        spectrum = np.array([sequence, "FTMS", 2, mz, np.ones(len(mz))], dtype=object)
+        index = {"MODIFIED_SEQUENCE": 0, "MASS_ANALYZER": 1, "PRECURSOR_CHARGE": 2, "MZ": 3, "INTENSITIES": 4}
+        result = _annotate_linear_spectrum(
+            spectrum, index, 20, "ppm", add_neutral_losses=True, phospho_loss_residues="STA", plain_loss_residues="ST"
+        )
+        expected_nl, plain_expected_nl = result[5], result[8]
+        self.assertGreater(expected_nl, 0)
+        self.assertEqual(plain_expected_nl, 0)
+        # without plain residues, the result has no plain counts
+        self.assertEqual(len(_annotate_linear_spectrum(spectrum, index, 20, "ppm", add_neutral_losses=True)), 7)

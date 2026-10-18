@@ -20,6 +20,23 @@ class TestFdrs:
             perc.Percolator.calculate_fdrs(sorted_labels), [0.3333333, 0.3333333, 0.66666667, 1.0]
         )
 
+    def test_get_site_determining_ion_masks(self):
+        """Test site determining ions between the phosphorylated and the closest alternative site."""
+        metadata = pd.DataFrame({"MODIFIED_SEQUENCE": ["PES[UNIMOD:21]KTK", "AS[UNIMOD:21]K", "PEPTIDEK"]})
+        percolator = perc.Percolator(metadata=metadata, input_type="rescore")
+        b_masks, y_masks = percolator.get_site_determining_ion_masks()
+
+        def fragments(mask, offset):
+            return sorted({i // 6 + 1 for i in np.nonzero(mask)[0] if i % 6 >= offset})
+
+        # S3 (phospho) and T5 (closest alternative): b3, b4 and y3 (= 6 - 3), y2 (= 6 - 4)
+        assert fragments(b_masks[0], 3) == [3, 4]
+        assert fragments(y_masks[0], 0) == [2, 3]
+        assert not np.any(b_masks[0] * percolator.ion_mask["y"])
+        # no alternative site, no phosphorylation: no site determining ions
+        for i in (1, 2):
+            assert not np.any(b_masks[i]) and not np.any(y_masks[i])
+
     def test_get_indices_below_fdr_none(self):
         """Test get_indices_below_fdr."""
         percolator = perc.Percolator(metadata=pd.DataFrame(), input_type="rescore")
@@ -192,6 +209,20 @@ class TestRetentionTimeAlignment(unittest.TestCase):
         x, y, correct_y = _create_noisy_logistic_data()
         for method in methods:
             self._get_aligned_predicted_retention_times_noisy_logistic_error(x, y, correct_y, method)
+
+    def test_unique_peptide_retention_times(self):
+        """Test the retention time anchors keep one point per peptide with the median retention times."""
+        psms = pd.DataFrame(
+            {
+                "MODIFIED_SEQUENCE": ["AAK", "AAK", "AAK", "CCK"],
+                "RETENTION_TIME": [10.0, 11.0, 30.0, 20.0],
+                "PREDICTED_IRT": [5.0, 5.0, 5.0, 8.0],
+            }
+        )
+        anchors = perc.Percolator.unique_peptide_retention_times(psms)
+        self.assertEqual(list(anchors.index), ["AAK", "CCK"])
+        np.testing.assert_array_equal(anchors["RETENTION_TIME"].to_numpy(), [11.0, 20.0])
+        np.testing.assert_array_equal(anchors["PREDICTED_IRT"].to_numpy(), [5.0, 8.0])
 
     def test_get_aligned_predicted_retention_times_linear_spline_wrong_method(self):
         """Negative test get_aligned_predicted_retention_times to check if it raises."""

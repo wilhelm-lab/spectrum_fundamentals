@@ -1,4 +1,5 @@
 import logging
+import re
 
 import numpy as np
 import pandas as pd
@@ -163,6 +164,8 @@ def annotate_spectra(
     p_window: float = 0.0,
     annotate_neutral_loss: bool = False,
     featured_ions: list[str] | None = None,
+    phospho_loss_residues: str = "ST",
+    plain_loss_residues: str | None = None,
 ) -> pd.DataFrame:
     """
     Annotate a set of spectra.
@@ -188,6 +191,10 @@ def annotate_spectra(
     :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
     :param annotate_neutral_loss: flag to indicate whether to annotate neutral losses or not
     :param featured_ions: list of featured ions to annotate
+    :param phospho_loss_residues: phosphorylated residues annotated with the loss of phosphoric acid
+    :param plain_loss_residues: if given, the neutral losses are also counted with these residues instead of
+        phospho_loss_residues (ANNOTATED_NL_COUNT_PLAIN, EXPECTED_NL_COUNT_PLAIN), e.g. "ST" if phospho_loss_residues
+        also contains decoy residues
     :return: a Pandas DataFrame containing the annotated spectra with meta data
     """
     raw_file_annotations = []
@@ -207,6 +214,8 @@ def annotate_spectra(
             custom_mods=custom_mods,
             annotate_neutral_losses=annotate_neutral_loss,
             featured_ions=featured_ions,
+            phospho_loss_residues=phospho_loss_residues,
+            plain_loss_residues=plain_loss_residues,
         )
         if not results:
             continue
@@ -214,7 +223,7 @@ def annotate_spectra(
     results_df = pd.DataFrame(raw_file_annotations)
 
     if "CROSSLINKER_TYPE" not in index_columns:
-        results_df.columns = [
+        columns = [
             "INTENSITIES",
             "MZ",
             "CALCULATED_MASS",
@@ -223,6 +232,9 @@ def annotate_spectra(
             "EXPECTED_NL_COUNT",
             "MOST_INTESE_PEAK",
         ]
+        if plain_loss_residues is not None:
+            columns += ["ANNOTATED_NL_COUNT_PLAIN", "EXPECTED_NL_COUNT_PLAIN"]
+        results_df.columns = columns
     else:
         results_df.columns = [
             "INTENSITIES_A",
@@ -440,6 +452,8 @@ def parallel_annotate(
     featured_ions: list[str] | None = None,
     p_window: float = 0.0,
     annotate_neutral_losses: bool = False,
+    phospho_loss_residues: str = "ST",
+    plain_loss_residues: str | None = None,
 ) -> (
     tuple[np.ndarray, np.ndarray, float, int, int, int]
     | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, int, int]
@@ -466,6 +480,8 @@ def parallel_annotate(
     :param featured_ions: list of ions to be annotated
     :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
     :param annotate_neutral_losses: flag to indicate whether to annotate neutral losses or not
+    :param phospho_loss_residues: phosphorylated residues annotated with the loss of phosphoric acid
+    :param plain_loss_residues: if given, the neutral losses are also counted with these residues
     :return: a tuple containing intensity values (np.ndarray), masses (np.ndarray), calculated mass (float),
              and any removed peaks (List[str])
     """
@@ -484,6 +500,8 @@ def parallel_annotate(
             custom_mods=custom_mods,
             add_neutral_losses=annotate_neutral_losses,
             featured_ions=featured_ions,
+            phospho_loss_residues=phospho_loss_residues,
+            plain_loss_residues=plain_loss_residues,
         )
 
     if (spectrum[index_columns["PEPTIDE_LENGTH_A"]] > 30) or (spectrum[index_columns["PEPTIDE_LENGTH_B"]] > 30):
@@ -504,6 +522,8 @@ def _annotate_linear_spectrum(
     multifrag: bool = False,
     p_window: float = 0.0,
     add_neutral_losses: bool = False,
+    phospho_loss_residues: str = "ST",
+    plain_loss_residues: str | None = None,
 ):
     """
     Annotate a linear peptide spectrum.
@@ -518,6 +538,9 @@ def _annotate_linear_spectrum(
     :param multifrag: flag to indicate whether to annotate multifrag or not
     :param featured_ions: list of ions to be annotated
     :param p_window: peak exclusion window for multifrag, dedicated to remove precursor peaks (da)
+    :param phospho_loss_residues: phosphorylated residues annotated with the loss of phosphoric acid
+    :param plain_loss_residues: if given, the number of annotated and expected neutral losses with these residues
+        instead of phospho_loss_residues are added to the result
     :return: Annotated spectrum
     """
     mod_seq_column = "MODIFIED_SEQUENCE"
@@ -546,6 +569,7 @@ def _annotate_linear_spectrum(
         p_window=p_window,
         custom_mods=custom_mods,
         add_neutral_losses=add_neutral_losses,
+        phospho_loss_residues=phospho_loss_residues,
     )
 
     matched_peaks, count_annotated_nl, max_annotated_intensity = match_peaks(
@@ -558,10 +582,41 @@ def _annotate_linear_spectrum(
         p_window_bounds=p_window_bounds,
     )
 
+    plain_counts = ()
+    if plain_loss_residues is not None:
+        plain_counts = (count_annotated_nl, expected_nl)
+        sequence = spectrum[index_columns[mod_seq_column]]
+        extra_residues = "".join(set(phospho_loss_residues) - set(plain_loss_residues))
+        if add_neutral_losses and extra_residues and re.search(rf"[{extra_residues}]\[UNIMOD:21\]", sequence):
+            plain_fragments, _, _, _, plain_expected_nl, _ = initialize_peaks(
+                sequence=sequence,
+                mass_analyzer=spectrum[index_columns["MASS_ANALYZER"]],
+                charge=spectrum[index_columns["PRECURSOR_CHARGE"]],
+                mass_tolerance=mass_tolerance,
+                unit_mass_tolerance=unit_mass_tolerance,
+                fragmentation_method=fragmentation_method,
+                featured_ions=featured_ions,
+                multifrag=multifrag,
+                p_window=p_window,
+                custom_mods=custom_mods,
+                add_neutral_losses=add_neutral_losses,
+                phospho_loss_residues=plain_loss_residues,
+            )
+            _, plain_annotated_nl, _ = match_peaks(
+                plain_fragments,
+                spectrum[index_columns["INTENSITIES"]],
+                spectrum[index_columns["MZ"]],
+                tmt_n_term,
+                unmod_sequence,
+                multifrag=multifrag,
+                p_window_bounds=p_window_bounds,
+            )
+            plain_counts = (plain_annotated_nl, plain_expected_nl)
+
     if len(matched_peaks) == 0:
         intensity = np.full(vec_length, 0.0)
         mass = np.full(vec_length, 0.0)
-        return intensity, mass, calc_mass, 0, 0, 0, np.nan
+        return (intensity, mass, calc_mass, 0, 0, 0, np.nan) + ((0, 0) if plain_counts else ())
 
     matched_peaks, removed_peaks = handle_multiple_matches(matched_peaks)
 
@@ -574,7 +629,15 @@ def _annotate_linear_spectrum(
         featured_ions=featured_ions,
     )
 
-    return intensities, mass, calc_mass, removed_peaks, count_annotated_nl, expected_nl, max_annotated_intensity
+    return (
+        intensities,
+        mass,
+        calc_mass,
+        removed_peaks,
+        count_annotated_nl,
+        expected_nl,
+        max_annotated_intensity,
+    ) + plain_counts
 
 
 def _annotate_crosslinked_spectrum(

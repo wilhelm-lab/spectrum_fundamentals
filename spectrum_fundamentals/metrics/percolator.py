@@ -3,6 +3,7 @@ import logging
 import math
 import os
 import pickle
+import re
 from pathlib import Path
 
 import numpy as np
@@ -117,6 +118,20 @@ class Percolator(Metric):
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
         self.additional_columns = additional_columns
+
+    @staticmethod
+    def unique_peptide_retention_times(psms: pd.DataFrame) -> pd.DataFrame:
+        """
+        Get one retention time anchor per peptide for the retention time alignment.
+
+        PSMs of the same peptide share the predicted retention time; many identical x values can make the spline fit
+        fail and weight frequently observed peptides more. Every peptide is represented by its median observed and
+        predicted retention time.
+
+        :param psms: target PSMs with MODIFIED_SEQUENCE, RETENTION_TIME and PREDICTED_IRT
+        :return: DataFrame with RETENTION_TIME and PREDICTED_IRT, one row per MODIFIED_SEQUENCE
+        """
+        return psms.groupby("MODIFIED_SEQUENCE", observed=True)[["RETENTION_TIME", "PREDICTED_IRT"]].median()
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -557,6 +572,42 @@ class Percolator(Metric):
 
         return b_ions_mask, y_ions_mask
 
+    def get_site_determining_ion_masks(self, possible_sites: str = "STY"):
+        """Get b and y ion masks of the site determining ions of phospho peptides.
+
+        Site determining ions distinguish a localization from the closest alternative: for every phosphorylated
+        residue, the b and y ions that contain either the phosphorylated residue or the closest unmodified residue
+        that could carry the phosphorylation, but not both. Peptides without phosphorylation or without an
+        alternative site get empty masks.
+
+        :param possible_sites: residues that can carry the phosphorylation
+        :return: b and y ions masks
+        """
+        # every fragment number (1-based) has 6 ions: y (charge 1-3), b (charge 1-3)
+        n_ions = len(self.ion_mask["b"])
+        max_fragment = n_ions // 6
+        b_ions_mask, y_ions_mask = [], []
+        sequences = internal_without_mods_keep_loc(self.metadata["MODIFIED_SEQUENCE"].values, "21")
+        for sequence in sequences:
+            residues = re.findall(r"([A-Z])((?:\[UNIMOD:21\])?)", sequence)
+            length = len(residues)
+            sites = [i + 1 for i, (_, mod) in enumerate(residues) if mod]
+            alternatives = [i + 1 for i, (aa, mod) in enumerate(residues) if aa in possible_sites and not mod]
+            b_mask, y_mask = np.zeros(n_ions), np.zeros(n_ions)
+            for site in sites:
+                if not alternatives:
+                    break
+                closest = min(alternatives, key=lambda alternative: (abs(alternative - site), alternative))  # noqa: B023
+                for fragment in range(min(site, closest), max(site, closest)):
+                    # b ion b_k and y ion y_(length - k) contain exactly one of the two residues
+                    if fragment <= max_fragment:
+                        b_mask[(fragment - 1) * 6 : fragment * 6] = 1
+                    if 1 <= length - fragment <= max_fragment:
+                        y_mask[(length - fragment - 1) * 6 : (length - fragment) * 6] = 1
+            b_ions_mask.append(self.ion_mask["b"] * b_mask)
+            y_ions_mask.append(self.ion_mask["y"] * y_mask)
+        return b_ions_mask, y_ions_mask
+
     def _deduplicate_intensities(self, mz, intensities):
         """Take highest intensity prediction for ions with same mz, return new array."""
         n, m = intensities.shape
@@ -618,6 +669,12 @@ class Percolator(Metric):
             if self.neutral_loss_flag:
                 b_ions_mask, y_ions_mask = self.get_first_b_and_y_modified_ion()
                 fragments_ratio.calc(b_mask_mod=np.array(b_ions_mask), y_mask_mod=np.array(y_ions_mask), suffix="_mod")
+                if self.task == "default" and not self.cms2:
+                    # site determining ions: the ions that distinguish a localization from the closest alternative
+                    b_ions_mask, y_ions_mask = self.get_site_determining_ion_masks()
+                    fragments_ratio.calc(
+                        b_mask_mod=np.array(b_ions_mask), y_mask_mod=np.array(y_ions_mask), suffix="_sdi"
+                    )
             similarity = sim.SimilarityMetrics(
                 self.pred_intensities,
                 self.true_intensities,
@@ -641,6 +698,14 @@ class Percolator(Metric):
                 self.metrics_val["NL_NOT_POSSIBLE"] = self.metrics_val.apply(
                     lambda x: 1 if x["EXPECTED_NL_COUNT"] == 0 else 0, axis=1
                 )
+                if "EXPECTED_NL_COUNT_PLAIN" in self.metadata.columns:
+                    # neutral loss features of plain decoys: without the neutral loss on the decoy site
+                    annotated = self.metadata["ANNOTATED_NL_COUNT_PLAIN"].to_numpy(dtype=float)
+                    expected = self.metadata["EXPECTED_NL_COUNT_PLAIN"].to_numpy(dtype=float)
+                    self.metrics_val["NL_FRACTION_PLAIN"] = np.where(
+                        expected > 0, annotated / np.maximum(expected, 1), 0
+                    )
+                    self.metrics_val["NL_NOT_POSSIBLE_PLAIN"] = (expected == 0).astype(int)
                 # columns_to_remove = []
                 # for col in self.metrics_val.columns:
                 #    if "vs_predicted" in col:
@@ -679,19 +744,21 @@ class Percolator(Metric):
                     ) & (~self.metadata["REVERSE"])
 
                 if lda_failed:
-                    sampled_idxs = Percolator.sample_balanced_over_bins(
-                        self.metadata[lda_filter][["RETENTION_TIME", "PREDICTED_IRT"]]
-                    )
+                    anchors = Percolator.unique_peptide_retention_times(self.metadata[lda_filter])
+                    sampled_idxs = Percolator.sample_balanced_over_bins(anchors)
                 else:
                     try:
-                        sampled_idxs = Percolator.sample_balanced_over_bins(
-                            self.metadata.iloc[idxs_below_lda_fdr, :][lda_filter][["RETENTION_TIME", "PREDICTED_IRT"]]
+                        anchors = Percolator.unique_peptide_retention_times(
+                            self.metadata.iloc[idxs_below_lda_fdr, :][lda_filter]
                         )
+                        sampled_idxs = Percolator.sample_balanced_over_bins(anchors)
                     except ValueError:
                         lda_failed = True
-                        sampled_idxs = self.metadata[lda_filter][["RETENTION_TIME", "PREDICTED_IRT"]].index
+                        anchors = Percolator.unique_peptide_retention_times(self.metadata[lda_filter])
+                        sampled_idxs = anchors.index
 
-                file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
+                # the fit uses one point per peptide; the aligned retention times are then predicted for all PSMs
+                file_sample = anchors.loc[sampled_idxs].sort_values("PREDICTED_IRT")
 
                 aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
                     file_sample["RETENTION_TIME"],
