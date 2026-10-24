@@ -173,8 +173,8 @@ def _get_neutral_losses(peptide_sequence, modifications, phospho_loss_residues: 
     sequence_length = len(peptide_sequence)
     keys = range(0, sequence_length - 1)
 
-    nl_b_ions = {key: [] for key in keys}
-    nl_y_ions = {key: [] for key in keys}
+    nl_b_ions: dict[int, list[str]] = {key: [] for key in keys}
+    nl_y_ions: dict[int, list[str]] = {key: [] for key in keys}
 
     for i in range(0, sequence_length):
         aa = peptide_sequence[i]

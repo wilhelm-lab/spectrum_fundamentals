@@ -582,7 +582,7 @@ def _annotate_linear_spectrum(
         p_window_bounds=p_window_bounds,
     )
 
-    plain_counts = ()
+    plain_counts: tuple[int, ...] = ()
     if plain_loss_residues is not None:
         plain_counts = (count_annotated_nl, expected_nl)
         sequence = spectrum[index_columns[mod_seq_column]]
