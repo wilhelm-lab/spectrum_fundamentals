@@ -28,6 +28,7 @@ class Metric:
         all_features_flag: bool = False,
         task: str = "default",
         featured_ions: list[str] | None = None,
+        most_intense_peaks: np.ndarray | None = None,
     ):
         """
         Initialize a Metric object.
@@ -40,6 +41,7 @@ class Metric:
         :param all_features_flag: if True, calculate all metrics
         :param task: define which workflows will be used
         :param featured_ions: list of ions will be used to generate features
+        :param most_intense_peaks: array with most intense peak per spectrum, used for normalization
         """
         self.pred_intensities = pred_intensities
         self.true_intensities = true_intensities
@@ -76,6 +78,7 @@ class Metric:
                 2: (constants.ION_DIC["charge"] == 2).to_numpy().astype(int),
                 3: (constants.ION_DIC["charge"] == 3).to_numpy().astype(int),
             }
+        self.most_intense_peaks = most_intense_peaks
 
     @abstractmethod
     def calc(self):

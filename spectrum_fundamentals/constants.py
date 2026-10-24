@@ -45,6 +45,7 @@ MAXQUANT_VAR_MODS = {
     "K(Lys8)": "K[UNIMOD:259]",
     "R(Arg10)": "R[UNIMOD:267]",
     "C(Carbamidomethyl (C))": "C[UNIMOD:4]",
+    "C": "C[UNIMOD:4]",
 }
 
 MAXQUANT_NC_TERM = {"^_": "", "_$": ""}
@@ -53,18 +54,138 @@ MAXQUANT_NC_TERM = {"^_": "", "_$": ""}
 # MsFragger constants #
 #######################
 
+MSFRAGGER_VAR_MODS_IO = {
+    "C\\[160\\]": "C[UNIMOD:4]",
+    "C\\[119\\]": "C[UNIMOD:35]",
+    "C\\[117\\]": "C[UNIMOD:34]",
+    "C\\[222\\]": "C[UNIMOD:312]",
+    "H\\[217\\]": "H[UNIMOD:21]",
+    "H\\[153\\]": "H[UNIMOD:35]",
+    "H\\[151\\]": "H[UNIMOD:34]",
+    "Q\\[129\\]": "Q[UNIMOD:7]",
+    "Q\\[142\\]": "Q[UNIMOD:34]",
+    "K\\[230\\]": "K[UNIMOD:737]",
+    "K\\[305\\]": "K[UNIMOD:2016]",
+    "K\\[214\\]": "K[UNIMOD:214]",
+    "K\\[144\\]": "K[UNIMOD:35]",
+    "K\\[142\\]": "K[UNIMOD:34]",
+    "K\\[156\\]": "K[UNIMOD:36]",
+    # "K\\[185\\]": "K[UNIMOD:4]",
+    "K\\[242\\]": "K[UNIMOD:121]",
+    "K\\[511\\]": "K[UNIMOD:535]",
+    "K\\[170\\]": "K[UNIMOD:1]",
+    "K\\[471\\]": "K[UNIMOD:1293]",
+    "K\\[458\\]": "K[UNIMOD:1990]",
+    "K\\[184\\]": "K[UNIMOD:58]",
+    "K\\[187\\]": "K[UNIMOD:5634]",  # Acetyl_label+monomethyl
+    "K\\[173\\]": "K[UNIMOD:56]",  # Heavy_Aceytl
+    "K\\[198\\]": "K[UNIMOD:1289]",
+    # "K\\[170.14\\]": "K[UNIMOD:37]",
+    "M\\[147\\]": "M[UNIMOD:35]",
+    "P\\[113\\]": "P[UNIMOD:35]",
+    "W\\[202\\]": "W[UNIMOD:35]",
+    "R\\[157\\]": "R[UNIMOD:7]",
+    "R\\[166\\]": "R[UNIMOD:267]",
+    "R\\[170\\]": "R[UNIMOD:34]",
+    "R\\[184\\]": "R[UNIMOD:36]",
+    "N\\[115\\]": "N[UNIMOD:7]",
+    "n\\[230\\]": "[UNIMOD:737]-",
+    "n\\[305\\]": "[UNIMOD:2016]-",
+    "n\\[214\\]": "[UNIMOD:214]-",
+    "n\\[43\\]": "[UNIMOD:1]-",
+    "S\\[167\\]": "S[UNIMOD:21]",
+    "S\\[166\\]": "S[UNIMOD:21]",
+    "T\\[181\\]": "T[UNIMOD:21]",
+    "Y\\[243\\]": "Y[UNIMOD:21]",
+    # custom combined-mod ids, not supported by Koina models; uncomment once they are
+    # "K\\[398\\]": "K[UNIMOD:12118]",
+    # "K\\[343\\]": "K[UNIMOD:129317]",
+    # "K\\[355\\]": "K[UNIMOD:19903]",
+    "K\\[185\\]": "K[UNIMOD:1263]",
+    "D\\[129\\]": "D[UNIMOD:34]",
+    "E\\[143\\]": "E[UNIMOD:34]",
+    "I\\[127\\]": "I[UNIMOD:34]",
+    "L\\[127\\]": "L[UNIMOD:34]",
+    "N\\[128\\]": "N[UNIMOD:34]",
+    "n\\[57\\]": "[UNIMOD:58]-",
+    "n\\[60\\]": "[UNIMOD:59]-",
+    "n\\[120\\]": "[UNIMOD:411]-",
+}
+
 MSFRAGGER_VAR_MODS = {
     "C[160]": "C[UNIMOD:4]",
-    "M[147]": "M[UNIMOD:35]",
+    "C[119]": "C[UNIMOD:35]",
+    "C[117]": "C[UNIMOD:34]",
+    "C[222]": "C[UNIMOD:312]",
+    "H[217]": "H[UNIMOD:21]",
+    "H[153]": "H[UNIMOD:35]",
+    "H[151]": "H[UNIMOD:34]",
+    "Q[129]": "Q[UNIMOD:7]",
+    "Q[142]": "Q[UNIMOD:34]",
     "K[230]": "K[UNIMOD:737]",
     "K[305]": "K[UNIMOD:2016]",
     "K[214]": "K[UNIMOD:214]",
+    "K[144]": "K[UNIMOD:35]",
+    "K[142]": "K[UNIMOD:34]",
+    "K[156]": "K[UNIMOD:36]",
+    # "K[185]": "K[UNIMOD:4]",
+    "K[242]": "K[UNIMOD:121]",
+    "K[511]": "K[UNIMOD:535]",
+    "K[170.10]": "K[UNIMOD:52]",
+    "K[471]": "K[UNIMOD:1293]",
+    "K[458]": "K[UNIMOD:1990]",
+    "K[184]": "K[UNIMOD:58]",
+    "K[187]": "K[UNIMOD:5634]",  # Acetyl_label+monomethyl
+    "K[173]": "K[UNIMOD:56]",  # Heavy_Aceytl
+    "K[198]": "K[UNIMOD:1289]",
+    "K[170.14]": "K[UNIMOD:37]",
+    "M[147]": "M[UNIMOD:35]",
+    "P[113]": "P[UNIMOD:35]",
+    "W[202]": "W[UNIMOD:35]",
     "R[157]": "R[UNIMOD:7]",
-    "Q[129]": "Q[UNIMOD:7]",
+    "R[166]": "R[UNIMOD:267]",
+    "R[170.11]": "R[UNIMOD:34]",
+    "R[184]": "R[UNIMOD:36]",
     "N[115]": "N[UNIMOD:7]",
     "n[230]": "[UNIMOD:737]-",
     "n[305]": "[UNIMOD:2016]-",
     "n[214]": "[UNIMOD:214]-",
+    "n[43]": "[UNIMOD:1]-",
+    "S[167]": "S[UNIMOD:21]",
+    "S[166]": "S[UNIMOD:21]",
+    "T[181]": "T[UNIMOD:21]",
+    "Y[243]": "Y[UNIMOD:21]",
+    # custom combined-mod ids, not supported by Koina models; uncomment once they are
+    # "K[398]": "K[UNIMOD:12118]",
+    # "K[343]": "K[UNIMOD:129317]",
+    # "K[355]": "K[UNIMOD:19903]",
+    "K[185]": "K[UNIMOD:1263]",
+    "D[129]": "D[UNIMOD:34]",
+    "E[143]": "E[UNIMOD:34]",
+    "I[127]": "I[UNIMOD:34]",
+    "L[127]": "L[UNIMOD:34]",
+    "N[128]": "N[UNIMOD:34]",
+    "n[57]": "[UNIMOD:58]-",
+    "n[60]": "[UNIMOD:59]-",
+    "n[120]": "[UNIMOD:411]-",
+}
+
+MOD_COMB = {
+    "35": ["M", "W", "H", "K", "P", "C"],
+    "34": ["C", "H", "N", "Q", "K", "R", "I", "L", "D", "E"],
+    "21": ["S", "T", "Y"],
+    "7": ["R", "Q", "N"],
+    "36": ["K", "R"],
+    "1263": ["K", "C"],
+    "121": ["K"],
+    "535": ["K"],
+    "1293": ["K"],
+    "312": ["C"],
+    "4": ["C", "K"],
+    "1": ["K", "n-term"],
+    "12118": ["K"],
+    "129317": ["K"],
+    "19903": ["K"],
 }
 
 #######################
@@ -156,6 +277,7 @@ MOD_MASSES = {
     "[UNIMOD:23]": -18.010565,  # Water Loss
     "[UNIMOD:24]": 71.037114,  # Propionamidation
     "[UNIMOD:354]": 44.985078,  # Nitrosylation
+    "[UNIMOD:27]": -18.010565,  # Glu to PyroGlu
     "[UNIMOD:28]": -17.026549,  # Glu to PyroGlu
     "[UNIMOD:280]": 28.0313,  # Ethylation
     "[UNIMOD:299]": 43.989829,  # Carboxylation
@@ -185,6 +307,19 @@ MOD_MASSES = {
     "[UNIMOD:64]": 100.016044,  # Succinylation
     "[UNIMOD:7]": 0.984016,  # Deamidation
     "[UNIMOD:747]": 86.000394,  # Malonylation
+    "[UNIMOD:535]": 383.228103,  # Addition of LRGG
+    "[UNIMOD:1293]": 343.149184,  # SUMOylation leaving GlnThrGlyGly
+    "[UNIMOD:1990]": 330.136176,  # Ubiquitin D (FAT10)
+    "[UNIMOD:312]": 119.004099,  # Cysteinylation
+    "[UNIMOD:56]": 45.029395,  # Heavy acetyl
+    "[UNIMOD:59]": 59.036279,  # Propionate labeling reagent heavy
+    "[UNIMOD:411]": 119.037114,  # phenyl isocyanate
+    "[UNIMOD:12118]": 270.144037,  # UBI+R
+    "[UNIMOD:129317]": 215.090606,  # Sumo-Q
+    "[UNIMOD:19903]": 227.126986,  # Acetyl_label+monomethyl
+    "[UNIMOD:5634]": 59.045045,
+    "[UNIMOD:1263]": 57.021464,
+    "[UNIMOD:52]": 42.021798,
 }
 
 
@@ -255,6 +390,8 @@ AA_Neutral_losses = {
     "T": ["H2O", "C2H4O"],
     "W": ["C8H7N", "C9H9N"],
     "V": ["C3H6"],
+    "H": [],
+    "P": [],
     "[]-": ["NH3"],
     "-[]": ["H2O"],
 }

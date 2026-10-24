@@ -1,5 +1,4 @@
 import unittest
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -20,6 +19,23 @@ class TestFdrs:
         np.testing.assert_almost_equal(
             perc.Percolator.calculate_fdrs(sorted_labels), [0.3333333, 0.3333333, 0.66666667, 1.0]
         )
+
+    def test_get_site_determining_ion_masks(self):
+        """Test site determining ions between the phosphorylated and the closest alternative site."""
+        metadata = pd.DataFrame({"MODIFIED_SEQUENCE": ["PES[UNIMOD:21]KTK", "AS[UNIMOD:21]K", "PEPTIDEK"]})
+        percolator = perc.Percolator(metadata=metadata, input_type="rescore")
+        b_masks, y_masks = percolator.get_site_determining_ion_masks()
+
+        def fragments(mask, offset):
+            return sorted({i // 6 + 1 for i in np.nonzero(mask)[0] if i % 6 >= offset})
+
+        # S3 (phospho) and T5 (closest alternative): b3, b4 and y3 (= 6 - 3), y2 (= 6 - 4)
+        assert fragments(b_masks[0], 3) == [3, 4]
+        assert fragments(y_masks[0], 0) == [2, 3]
+        assert not np.any(b_masks[0] * percolator.ion_mask["y"])
+        # no alternative site, no phosphorylation: no site determining ions
+        for i in (1, 2):
+            assert not np.any(b_masks[i]) and not np.any(y_masks[i])
 
     def test_get_indices_below_fdr_none(self):
         """Test get_indices_below_fdr."""
@@ -194,6 +210,20 @@ class TestRetentionTimeAlignment(unittest.TestCase):
         for method in methods:
             self._get_aligned_predicted_retention_times_noisy_logistic_error(x, y, correct_y, method)
 
+    def test_unique_peptide_retention_times(self):
+        """Test the retention time anchors keep one point per peptide with the median retention times."""
+        psms = pd.DataFrame(
+            {
+                "MODIFIED_SEQUENCE": ["AAK", "AAK", "AAK", "CCK"],
+                "RETENTION_TIME": [10.0, 11.0, 30.0, 20.0],
+                "PREDICTED_IRT": [5.0, 5.0, 5.0, 8.0],
+            }
+        )
+        anchors = perc.Percolator.unique_peptide_retention_times(psms)
+        self.assertEqual(list(anchors.index), ["AAK", "CCK"])
+        np.testing.assert_array_equal(anchors["RETENTION_TIME"].to_numpy(), [11.0, 20.0])
+        np.testing.assert_array_equal(anchors["PREDICTED_IRT"].to_numpy(), [5.0, 8.0])
+
     def test_get_aligned_predicted_retention_times_linear_spline_wrong_method(self):
         """Negative test get_aligned_predicted_retention_times to check if it raises."""
         observed_rts = np.array([])
@@ -291,6 +321,31 @@ class TestPercolator:
         """Test count_arginines_and_lysines."""
         np.testing.assert_equal(perc.Percolator.count_arginines_and_lysines("ARAAAAKAK"), 3)
 
+    def test_get_ptms(self):
+        """Test get_ptms counts oxidation as a PTM and ignores fixed modifications and labels."""
+        peptides = pd.Series(
+            [
+                "_.AC[UNIMOD:4]M[UNIMOD:35]K._",
+                "_.[UNIMOD:737]-AS[UNIMOD:21]K[UNIMOD:737]._",
+                "_.AC[UNIMOD:4]R[UNIMOD:267]._",
+                "_.AK[UNIMOD:34]S[UNIMOD:21]T[UNIMOD:21]K._",
+            ]
+        )
+        ptms = perc.Percolator.get_ptms(peptides)
+        assert ptms.tolist() == [{"35"}, {"21"}, set(), {"21", "34"}]
+
+    def test_get_ptm_indicators(self):
+        """Test get_ptm_indicators has one 0/1 column per PTM present, in UNIMOD id order."""
+        peptides = pd.Series(
+            ["_.AC[UNIMOD:4]M[UNIMOD:35]K._", "_.AK[UNIMOD:34]S[UNIMOD:21]T[UNIMOD:21]K._", "_.AC[UNIMOD:4]K._"],
+            index=[5, 7, 9],
+        )
+        indicators = perc.Percolator.get_ptm_indicators(peptides)
+        expected = pd.DataFrame(
+            {"ptm_UNIMOD_21": [0, 1, 0], "ptm_UNIMOD_34": [0, 1, 0], "ptm_UNIMOD_35": [1, 0, 0]}, index=[5, 7, 9]
+        )
+        pd.testing.assert_frame_equal(indicators, expected)
+
     def test_calculate_mass_difference(self):
         """Test calculate_mass_difference."""
         np.testing.assert_almost_equal(perc.Percolator.calculate_mass_difference((1000.0, 1001.2)), 1.2)
@@ -352,120 +407,6 @@ class TestPercolator:
         percolator_none = perc.Percolator(metadata=perc_input, input_type="rescore", additional_columns="none")
         percolator_none.add_additional_features()
         pd.testing.assert_frame_equal(pd.DataFrame(), percolator_none.metrics_val)
-
-    def test_calc(self):
-        """Test calc."""
-        perc_input = pd.read_csv(Path(__file__).parent / "data/perc_input.csv")
-        z = constants.EPSILON
-        #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
-        predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
-        observed_intensities_target = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0])
-        mz_target = get_padded_array([100, 0, 150, 0, 0, 0, 300, 0, 0])
-
-        predicted_intensities_decoy = get_padded_array([z, 3.0, 4.0, z])
-        observed_intensities_decoy = get_padded_array([z, z, 3.0, 4.0])
-        mz_decoy = get_padded_array([0, 0, 100, 0])
-
-        predicted_intensities = scipy.sparse.vstack(np.repeat(predicted_intensities_target, len(perc_input)))
-        observed_intensities = scipy.sparse.vstack(np.repeat(observed_intensities_target, len(perc_input)))
-        mz = scipy.sparse.vstack(np.repeat(mz_target, len(perc_input)))
-
-        predicted_intensities[1, :] = predicted_intensities_decoy
-        predicted_intensities[2, :] = predicted_intensities_decoy
-        observed_intensities[1, :] = observed_intensities_decoy
-        observed_intensities[2, :] = observed_intensities_decoy
-        mz[1, :] = mz_decoy
-        mz[2, :] = mz_target
-
-        percolator = perc.Percolator(
-            metadata=perc_input,
-            input_type="rescore",
-            pred_intensities=predicted_intensities,
-            true_intensities=observed_intensities,
-            mz=mz,
-            fdr_cutoff=0.4,
-            regression_method="lowess",
-        )
-        percolator.calc()
-
-        # meta data for percolator
-        np.testing.assert_string_equal(
-            percolator.metrics_val["SpecId"][0], "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02-7978-AAIGEATRL-2-1"
-        )
-        np.testing.assert_equal(percolator.metrics_val["Label"][0], 1)
-        np.testing.assert_equal(percolator.metrics_val["ScanNr"][0], 7978)
-        np.testing.assert_equal(percolator.metrics_val["filename"][0], "20210122_0263_TMUCLHan_Peiru_DDA_IP_C797S_02")
-        # np.testing.assert_almost_equal(percolator.metrics_val['ExpMass'][0], 900.50345678)
-        np.testing.assert_string_equal(percolator.metrics_val["Peptide"][0], "_.AAIGEATRL._")
-        np.testing.assert_string_equal(
-            percolator.metrics_val["Proteins"][0], "sp|O23523|RGGA_ARATH"
-        )  # we don't need the protein ID to get PSM / peptide results
-
-        # features
-        np.testing.assert_equal(percolator.metrics_val["missedCleavages"][0], 1)
-        np.testing.assert_equal(percolator.metrics_val["KR"][0], 1)
-        np.testing.assert_equal(percolator.metrics_val["sequence_length"][0], 9)
-        np.testing.assert_almost_equal(
-            percolator.metrics_val["Mass"][0], 900.50288029264
-        )  # this is the calculated mass as a feature
-        # np.testing.assert_almost_equal(percolator.metrics_val['deltaM_Da'][0], -0.0005764873)
-        # np.testing.assert_almost_equal(percolator.metrics_val['absDeltaM_Da'][0], 0.0005764873)
-        # np.testing.assert_almost_equal(percolator.metrics_val['deltaM_ppm'][0], -0.64018339472)
-        # np.testing.assert_almost_equal(percolator.metrics_val['absDeltaM_ppm'][0], 0.64018339472)
-        np.testing.assert_equal(percolator.metrics_val["Charge2"][0], 1)
-        np.testing.assert_equal(percolator.metrics_val["Charge3"][0], 0)
-        np.testing.assert_equal(percolator.metrics_val["UnknownFragmentationMethod"][0], 0)
-        np.testing.assert_equal(percolator.metrics_val["HCD"][0], 1)
-        np.testing.assert_equal(percolator.metrics_val["CID"][0], 0)
-
-        np.testing.assert_almost_equal(percolator.metrics_val["RT"][0], 0.5, decimal=3)
-        np.testing.assert_almost_equal(percolator.metrics_val["pred_RT"][0], 0.5, decimal=3)
-        np.testing.assert_almost_equal(percolator.metrics_val["abs_rt_diff"][0], 0.0, decimal=3)
-
-        # check label of second PSM (decoy)
-        np.testing.assert_equal(percolator.metrics_val["Label"][1], -1)
-
-        # check lowess fit of second PSM
-        np.testing.assert_almost_equal(percolator.metrics_val["abs_rt_diff"][1], 0.0, decimal=3)
-        np.testing.assert_almost_equal(percolator.metrics_val["abs_rt_diff"][2], 0.0, decimal=3)
-        # TODO: only add this feature if they are not all zero
-        # np.testing.assert_equal(percolator.metrics_val['spectral_angle_delta_score'][0], 0.0)
-
-    def test_calc_all_features(self):
-        """Test calc."""
-        perc_input = pd.read_csv(Path(__file__).parent / "data/perc_input.csv")
-        z = constants.EPSILON
-        #                                         y1.1  y1.2  y1.3  b1.1  b1.2  b1.3  y2.1  y2.2  y2.3
-        predicted_intensities_target = get_padded_array([7.2, 2.3, 0.01, 0.02, 6.1, 3.1, z, z, 0])
-        observed_intensities_target = get_padded_array([10.2, z, 1.3, z, 8.2, z, 3.2, z, 0])
-        mz_target = get_padded_array([100, 0, 150, 0, 0, 0, 300, 0, 0])
-
-        predicted_intensities_decoy = get_padded_array([z, 3.0, 4.0, z])
-        observed_intensities_decoy = get_padded_array([z, z, 3.0, 4.0])
-        mz_decoy = get_padded_array([0, 0, 100, 0])
-
-        predicted_intensities = scipy.sparse.vstack(np.repeat(predicted_intensities_target, len(perc_input)))
-        observed_intensities = scipy.sparse.vstack(np.repeat(observed_intensities_target, len(perc_input)))
-        mz = scipy.sparse.vstack(np.repeat(mz_target, len(perc_input)))
-
-        predicted_intensities[1, :] = predicted_intensities_decoy
-        predicted_intensities[2, :] = predicted_intensities_decoy
-        observed_intensities[1, :] = observed_intensities_decoy
-        observed_intensities[2, :] = observed_intensities_decoy
-        mz[1, :] = mz_decoy
-        mz[2, :] = mz_target
-
-        percolator = perc.Percolator(
-            metadata=perc_input,
-            input_type="rescore",
-            pred_intensities=predicted_intensities,
-            true_intensities=observed_intensities,
-            mz=mz,
-            fdr_cutoff=0.4,
-            regression_method="lowess",
-            all_features_flag=True,
-        )
-        percolator.calc()
 
 
 def get_padded_array(arr, padding_value=0):

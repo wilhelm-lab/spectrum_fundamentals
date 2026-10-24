@@ -1,6 +1,10 @@
 import enum
 import logging
 import math
+import os
+import pickle
+import re
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -14,8 +18,13 @@ from spectrum_fundamentals import constants
 from spectrum_fundamentals.metrics import fragments_ratio as fr
 from spectrum_fundamentals.metrics import similarity as sim
 from spectrum_fundamentals.metrics.metric import Metric
+from spectrum_fundamentals.mod_string import internal_without_mods_keep_loc
 
 logger = logging.getLogger(__name__)
+
+# fixed modifications and labels that do not make a PSM modified: carbamidomethyl, iTRAQ 4plex, SILAC heavy K and R,
+# iTRAQ 8plex, TMT and TMTpro
+STANDARD_UNIMOD_IDS = (4, 214, 259, 267, 730, 737, 2016)
 
 
 class TargetDecoyLabel(enum.IntEnum):
@@ -91,6 +100,7 @@ class Percolator(Metric):
         featured_ions: list[str] | None = None,
         cms2: bool = False,
         task: str = "default",
+        output_path: str | Path | None = None,
     ):
         """Initialize a Percolator obj."""
         super().__init__(
@@ -105,12 +115,27 @@ class Percolator(Metric):
         )
 
         self.metadata = metadata
+        self.output_path = output_path
         self.input_type = input_type
         self.regression_method = regression_method
         self.fdr_cutoff = fdr_cutoff
         self.neutral_loss_flag = neutral_loss_flag
         self.drop_miss_cleavage_flag = drop_miss_cleavage_flag
         self.additional_columns = additional_columns
+
+    @staticmethod
+    def unique_peptide_retention_times(psms: pd.DataFrame) -> pd.DataFrame:
+        """
+        Get one retention time anchor per peptide for the retention time alignment.
+
+        PSMs of the same peptide share the predicted retention time; many identical x values can make the spline fit
+        fail and weight frequently observed peptides more. Every peptide is represented by its median observed and
+        predicted retention time.
+
+        :param psms: target PSMs with MODIFIED_SEQUENCE, RETENTION_TIME and PREDICTED_IRT
+        :return: DataFrame with RETENTION_TIME and PREDICTED_IRT, one row per MODIFIED_SEQUENCE
+        """
+        return psms.groupby("MODIFIED_SEQUENCE", observed=True)[["RETENTION_TIME", "PREDICTED_IRT"]].median()
 
     @staticmethod
     def sample_balanced_over_bins(retention_time_df: pd.DataFrame, sample_size: int = 5000) -> pd.Index:
@@ -141,12 +166,13 @@ class Percolator(Metric):
         )
         return retention_time_df.index
 
-    @staticmethod
+    @staticmethod  # noqa S112, B036
     def get_aligned_predicted_retention_times(
         observed_retention_times_fdr_filtered: np.ndarray | pd.Series,
         predicted_retention_times_fdr_filtered: np.ndarray | pd.Series,
         predicted_retention_times_all: np.ndarray | pd.Series,
         curve_fitting_method: str = "lowess",
+        output_path: str | Path | None = None,
     ) -> np.ndarray:
         """
         Apply regression to find a mapping from predicted iRT values to experimental retention times.
@@ -169,9 +195,33 @@ class Percolator(Metric):
         fit_func = get_fitting_func(curve_fitting_method)
         discard_percentage = 0.1  # in percents, so 0.1 = 0.1% (not 10%!)
         median_abs_error = 1.0
+        total_discarded_percentage = 0.1
+        skip_alignment = False
+        # the alignment model is cached next to the features file, e.g. <raw>.rescore.tab -> <raw>_alignment_model.pkl
+        pickle_model_path = None
+        if output_path is not None:
+            output_name = Path(output_path).name
+            base_name = (
+                output_name[: -len(".rescore.tab")] if output_name.endswith(".rescore.tab") else Path(output_name).stem
+            )
+            pickle_model_path = Path(output_path).parent / f"{base_name}_alignment_model.pkl"
+        model_bundle = None
+        if pickle_model_path is not None and os.path.isfile(pickle_model_path):
+            with open(pickle_model_path, "rb") as f:
+                model_bundle = pickle.load(f)
+                params = model_bundle["spline_params"]
+            skip_alignment = True
 
-        while discard_percentage < 50.0 and median_abs_error > 0.02:
-            params = fit_func(predicted_rts, observed_rts)
+        while (
+            total_discarded_percentage < 40.0
+            and len(observed_rts) >= 5
+            and median_abs_error > 0.02
+            and not skip_alignment
+        ):
+            try:
+                params = fit_func(predicted_rts, observed_rts)
+            except ValueError:
+                continue
             aligned_rts_predicted = params[0]
 
             abs_errors = np.abs(aligned_rts_predicted - observed_rts)
@@ -186,12 +236,24 @@ class Percolator(Metric):
                 predicted_rts = predicted_rts[keep_idxs[0]]
 
                 discard_percentage *= 1.2
+                total_discarded_percentage += discard_percentage
+
+        if (len(observed_rts) < 3 or "params" not in locals()) and model_bundle is None:
+            return predicted_retention_times_all
 
         logger.debug(f"Observed RT anchor points:\n{observed_retention_times_fdr_filtered}")
         logger.debug(f"Predicted RT anchor points:\n{predicted_retention_times_fdr_filtered}")
 
         if curve_fitting_method == "spline":
-            aligned_rts_predicted = interpolate.BSpline(*params[1:])(predicted_retention_times_all)
+            if model_bundle is not None:
+                spline_params = model_bundle["spline_params"]
+            else:
+                spline_params = params[1:]  # (t, c, k)
+            model_bundle = {
+                "curve_fitting_method": "spline",
+                "spline_params": spline_params,
+            }
+            aligned_rts_predicted = interpolate.BSpline(*spline_params)(predicted_retention_times_all)
         elif curve_fitting_method == "lowess":
             lowess_model = lowess.Lowess()
             lowess_model.fit(predicted_rts, observed_rts, frac=frac, robust_iters=it)
@@ -200,6 +262,10 @@ class Percolator(Metric):
             aligned_rts_predicted = logistic(
                 predicted_retention_times_all, *opt.curve_fit(logistic, predicted_rts, observed_rts, method="lm")[0]
             )
+
+        if pickle_model_path is not None and model_bundle is not None:
+            with open(pickle_model_path, "wb") as f:
+                pickle.dump(model_bundle, f)
 
         return aligned_rts_predicted
 
@@ -258,6 +324,39 @@ class Percolator(Metric):
         :return: number of arginines and lysines
         """
         return sequence.count("K") + sequence.count("R")
+
+    @staticmethod
+    def get_ptms(peptides: pd.Series, standard_unimod_ids: tuple[int, ...] = STANDARD_UNIMOD_IDS) -> pd.Series:
+        """
+        Get the PTMs of every peptide, without the standard modifications.
+
+        :param peptides: modified peptide sequences with UNIMOD annotations, e.g. "_.M[UNIMOD:35]PEPS[UNIMOD:21]K._"
+        :param standard_unimod_ids: UNIMOD ids of fixed modifications and labels that are not counted as PTMs
+        :return: the set of UNIMOD ids (as strings) of the PTMs of every peptide
+        """
+        standard = {str(unimod_id) for unimod_id in standard_unimod_ids}
+        return peptides.map(lambda peptide: set(re.findall(r"UNIMOD:(\d+)\]", peptide)) - standard)
+
+    @staticmethod
+    def get_ptm_indicators(
+        peptides: pd.Series, standard_unimod_ids: tuple[int, ...] = STANDARD_UNIMOD_IDS
+    ) -> pd.DataFrame:
+        """
+        Get a 0/1 feature for every PTM carried by any of the peptides.
+
+        Like the variable modification columns of MSFragger, the features let the FDR estimation learn how reliable the
+        identifications of each PTM are.
+
+        :param peptides: modified peptide sequences with UNIMOD annotations
+        :param standard_unimod_ids: UNIMOD ids of fixed modifications and labels that are not counted as PTMs
+        :return: one column ptm_UNIMOD_<id> per PTM, 1 if the peptide carries the PTM, else 0
+        """
+        ptms = Percolator.get_ptms(peptides, standard_unimod_ids)
+        unimod_ids = sorted(set().union(*ptms), key=int)
+        return pd.DataFrame(
+            {f"ptm_UNIMOD_{unimod_id}": ptms.map(lambda p, u=unimod_id: int(u in p)) for unimod_id in unimod_ids},
+            index=peptides.index,
+        )
 
     @staticmethod
     def calculate_mass_difference(metadata_subset: tuple[float, float]) -> float:
@@ -366,7 +465,7 @@ class Percolator(Metric):
 
     def apply_lda_and_get_indices_below_fdr(
         self, initial_scoring_feature: str = "spectral_angle", fdr_cutoff: float = 0.01
-    ):
+    ):  # noqa: B036
         """
         Applies a linear discriminant analysis on the features calculated so far (before retention time alignment) \
         to estimate false discovery rates (FDRs).
@@ -462,6 +561,90 @@ class Percolator(Metric):
         new_columns = first_columns + sorted(mid_columns) + last_columns
         self.metrics_val = self.metrics_val[new_columns]
 
+    @staticmethod
+    def create_modified_ions_mask(starting_index):
+        """
+        Create modified ions mask starting from the given index.
+
+        :param starting_index: starting index
+        :return: modified ions mask
+        """
+        total_length = 174
+        array = np.zeros(total_length)
+        array[starting_index:] = 1
+        return array
+
+    def _find_phospho_positions(self):
+        all_positions = []
+        new_phoshpo_sequences = internal_without_mods_keep_loc(self.metadata["MODIFIED_SEQUENCE"].values, "21")
+        for peptide in new_phoshpo_sequences:
+            positions = []
+            index = 0
+            while "[UNIMOD:21]" in peptide:
+                index = peptide.find("[UNIMOD:21]", index)
+                if index == -1:
+                    break
+                positions.append(index - peptide[:index].count("[UNIMOD:21]") * len("[UNIMOD:21]"))
+                index += len("[UNIMOD:21]")
+            all_positions.append(positions)
+        return all_positions
+
+    def get_first_b_and_y_modified_ion(self):
+        """Get first b and y modified ion masks for phospho peptides.
+
+        :return: b and y ions masks
+        """
+        all_phospho_sites_positions = self._find_phospho_positions()
+        b_ions_mask = []
+        y_ions_mask = []
+        for position, length in zip(all_phospho_sites_positions, self.metrics_val["sequence_length"], strict=True):
+            if len(position) == 0:
+                b_ions_mask.append(self.ion_mask["b"])
+                y_ions_mask.append(self.ion_mask["y"])
+            else:
+                mod_b_ions_mask = Percolator.create_modified_ions_mask(position[0] * 6 - 3)
+                b_ions_mask.append(self.ion_mask["b"] * mod_b_ions_mask)
+                mod_y_ions_mask = Percolator.create_modified_ions_mask((length - position[-1]) * 6)
+                y_ions_mask.append(self.ion_mask["y"] * mod_y_ions_mask)
+
+        return b_ions_mask, y_ions_mask
+
+    def get_site_determining_ion_masks(self, possible_sites: str = "STY"):
+        """Get b and y ion masks of the site determining ions of phospho peptides.
+
+        Site determining ions distinguish a localization from the closest alternative: for every phosphorylated
+        residue, the b and y ions that contain either the phosphorylated residue or the closest unmodified residue
+        that could carry the phosphorylation, but not both. Peptides without phosphorylation or without an
+        alternative site get empty masks.
+
+        :param possible_sites: residues that can carry the phosphorylation
+        :return: b and y ions masks
+        """
+        # every fragment number (1-based) has 6 ions: y (charge 1-3), b (charge 1-3)
+        n_ions = len(self.ion_mask["b"])
+        max_fragment = n_ions // 6
+        b_ions_mask, y_ions_mask = [], []
+        sequences = internal_without_mods_keep_loc(self.metadata["MODIFIED_SEQUENCE"].values, "21")
+        for sequence in sequences:
+            residues = re.findall(r"([A-Z])((?:\[UNIMOD:21\])?)", sequence)
+            length = len(residues)
+            sites = [i + 1 for i, (_, mod) in enumerate(residues) if mod]
+            alternatives = [i + 1 for i, (aa, mod) in enumerate(residues) if aa in possible_sites and not mod]
+            b_mask, y_mask = np.zeros(n_ions), np.zeros(n_ions)
+            for site in sites:
+                if not alternatives:
+                    break
+                closest = min(alternatives, key=lambda alternative: (abs(alternative - site), alternative))  # noqa: B023
+                for fragment in range(min(site, closest), max(site, closest)):
+                    # b ion b_k and y ion y_(length - k) contain exactly one of the two residues
+                    if fragment <= max_fragment:
+                        b_mask[(fragment - 1) * 6 : fragment * 6] = 1
+                    if 1 <= length - fragment <= max_fragment:
+                        y_mask[(length - fragment - 1) * 6 : (length - fragment) * 6] = 1
+            b_ions_mask.append(self.ion_mask["b"] * b_mask)
+            y_ions_mask.append(self.ion_mask["y"] * y_mask)
+        return b_ions_mask, y_ions_mask
+
     def _deduplicate_intensities(self, mz, intensities):
         """Take highest intensity prediction for ions with same mz, return new array."""
         n, m = intensities.shape
@@ -491,9 +674,25 @@ class Percolator(Metric):
         self.target_decoy_labels = self.metadata["REVERSE"].apply(Percolator.get_target_decoy_label).to_numpy()
         np.random.seed(1)
         # add Prosit or Andromeda features
+        self.add_additional_features()
+        """aa_mod_combinations = []
+        for seq in self.metadata['MODIFIED_SEQUENCE']:
+            aa_mod_combinations.append(extract_aa_mod(seq))"""
+        # aa_mod_combinations = get_mod_comb(constants.MOD_COMB)
+        # for aa_mod in aa_mod_combinations:
+        #     self.metrics_val[aa_mod] = self.metadata["MODIFIED_SEQUENCE"].apply(
+        #         lambda x: x.count(aa_mod) if aa_mod in x else 0  # noqa: B023
+        #     )
+        # self.metadata['AA_MOD_COMBINATIONS'] = aa_mod_combinations
+        # all_combinations = set([item for sublist in self.metadata['AA_MOD_COMBINATIONS'] for item in sublist])
+
         if self.input_type == "rescore":
             # add additional features
-            self.add_additional_features()
+            # most intense annotated peak per spectrum, 1 if not annotated (e.g. annotated with older versions)
+            if "MOST_INTESE_PEAK" in self.metadata.columns:
+                self.metrics_val["MOST_INTESE_PEAK"] = self.metadata["MOST_INTESE_PEAK"].fillna(1)
+            else:
+                self.metrics_val["MOST_INTESE_PEAK"] = 1.0
             fragments_ratio = fr.FragmentsRatio(
                 self.pred_intensities,
                 self.true_intensities,
@@ -501,8 +700,18 @@ class Percolator(Metric):
                 cms2=self.cms2,
                 task=self.task,
                 featured_ions=self.featured_ions,
+                most_intense_peaks=self.metrics_val["MOST_INTESE_PEAK"].values,
             )
             fragments_ratio.calc()
+            if self.neutral_loss_flag:
+                b_ions_mask, y_ions_mask = self.get_first_b_and_y_modified_ion()
+                fragments_ratio.calc(b_mask_mod=np.array(b_ions_mask), y_mask_mod=np.array(y_ions_mask), suffix="_mod")
+                if self.task == "default" and not self.cms2:
+                    # site determining ions: the ions that distinguish a localization from the closest alternative
+                    b_ions_mask, y_ions_mask = self.get_site_determining_ion_masks()
+                    fragments_ratio.calc(
+                        b_mask_mod=np.array(b_ions_mask), y_mask_mod=np.array(y_ions_mask), suffix="_sdi"
+                    )
             similarity = sim.SimilarityMetrics(
                 self.pred_intensities,
                 self.true_intensities,
@@ -519,59 +728,138 @@ class Percolator(Metric):
             if self.neutral_loss_flag:
                 self.metrics_val["ANNOTATED_NL_COUNT"] = self.metadata["ANNOTATED_NL_COUNT"]
                 self.metrics_val["EXPECTED_NL_COUNT"] = self.metadata["EXPECTED_NL_COUNT"]
-                columns_to_remove = []
-                for col in self.metrics_val.columns:
-                    if "vs_predicted" in col:
-                        columns_to_remove.append(col)
-                self.metrics_val.drop(columns=columns_to_remove, inplace=True)
+                self.metrics_val["NL_FRACTION"] = self.metrics_val.apply(
+                    lambda x: x["ANNOTATED_NL_COUNT"] / x["EXPECTED_NL_COUNT"] if x["EXPECTED_NL_COUNT"] > 0 else 0,
+                    axis=1,
+                )
+                self.metrics_val["NL_NOT_POSSIBLE"] = self.metrics_val.apply(
+                    lambda x: 1 if x["EXPECTED_NL_COUNT"] == 0 else 0, axis=1
+                )
+                if "EXPECTED_NL_COUNT_PLAIN" in self.metadata.columns:
+                    # neutral loss features of plain decoys: without the neutral loss on the decoy site
+                    annotated = self.metadata["ANNOTATED_NL_COUNT_PLAIN"].to_numpy(dtype=float)
+                    expected = self.metadata["EXPECTED_NL_COUNT_PLAIN"].to_numpy(dtype=float)
+                    self.metrics_val["NL_FRACTION_PLAIN"] = np.where(
+                        expected > 0, annotated / np.maximum(expected, 1), 0
+                    )
+                    self.metrics_val["NL_NOT_POSSIBLE_PLAIN"] = (expected == 0).astype(int)
+                # columns_to_remove = []
+                # for col in self.metrics_val.columns:
+                #    if "vs_predicted" in col:
+                #        columns_to_remove.append(col)
+                # self.metrics_val.drop(columns=columns_to_remove, inplace=True)
             if self.drop_miss_cleavage_flag:
                 self.metrics_val.drop(columns=["missedCleavages", "KR"], inplace=True)
             if self.xl:
                 self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
             else:
                 lda_failed = False
-                idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+                try:
+                    idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=self.fdr_cutoff)
+                except ValueError:
+                    lda_failed = True
+                    pass
                 current_fdr = self.fdr_cutoff
-                while len(idxs_below_lda_fdr) <= 500:
+                while (
+                    not lda_failed
+                    and len(idxs_below_lda_fdr) <= 200
+                    and (len(idxs_below_lda_fdr) / len(self.target_decoy_labels)) < 0.5
+                ):
                     current_fdr += 0.01
                     idxs_below_lda_fdr = self.apply_lda_and_get_indices_below_fdr(fdr_cutoff=current_fdr)
                     if current_fdr >= 0.1:
                         lda_failed = True
                         break
-                if lda_failed:
-                    sampled_idxs = Percolator.sample_balanced_over_bins(
-                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]]
-                    )
-                else:
-                    sampled_idxs = Percolator.sample_balanced_over_bins(
-                        self.metadata[["RETENTION_TIME", "PREDICTED_IRT"]].iloc[idxs_below_lda_fdr, :]
-                    )
 
-                file_sample = self.metadata.iloc[sampled_idxs].sort_values("PREDICTED_IRT")
+                if len(self.metadata[self.metadata["PROTEINS"].str.contains("QC:")]) > 0:
+                    lda_filter = (
+                        self.metadata["MODIFIED_SEQUENCE"].str.match(r"^(?!.*UNIMOD(?!:737|:411|:4|:267|:35)).*$")
+                    ) & (self.metadata["PROTEINS"].str.contains("QC:") & (~self.metadata["REVERSE"]))
+                else:
+                    lda_filter = (
+                        self.metadata["MODIFIED_SEQUENCE"].str.match(r"^(?!.*UNIMOD(?!:737|:411|:4|:267|:35)).*$")
+                    ) & (~self.metadata["REVERSE"])
+
+                if lda_failed:
+                    anchors = Percolator.unique_peptide_retention_times(self.metadata[lda_filter])
+                    sampled_idxs = Percolator.sample_balanced_over_bins(anchors)
+                else:
+                    try:
+                        anchors = Percolator.unique_peptide_retention_times(
+                            self.metadata.iloc[idxs_below_lda_fdr, :][lda_filter]
+                        )
+                        sampled_idxs = Percolator.sample_balanced_over_bins(anchors)
+                    except ValueError:
+                        lda_failed = True
+                        anchors = Percolator.unique_peptide_retention_times(self.metadata[lda_filter])
+                        sampled_idxs = anchors.index
+
+                # the fit uses one point per peptide; the aligned retention times are then predicted for all PSMs
+                file_sample = anchors.loc[sampled_idxs].sort_values("PREDICTED_IRT")
+
                 aligned_predicted_rts = Percolator.get_aligned_predicted_retention_times(
                     file_sample["RETENTION_TIME"],
                     file_sample["PREDICTED_IRT"],
                     self.metadata["PREDICTED_IRT"],
                     self.regression_method,
+                    self.output_path,
                 )
 
-                self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
-                self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
-                self.metrics_val["iRT"] = aligned_predicted_rts
-                self.metrics_val["collision_energy_aligned"] = self.metadata["COLLISION_ENERGY"] / 100.0
+                # self.metrics_val["RT"] = self.metadata["RETENTION_TIME"]
+                # self.metrics_val["pred_RT"] = self.metadata["PREDICTED_IRT"]
+                # self.metrics_val["iRT"] = aligned_predicted_rts
                 self.metrics_val["abs_rt_diff"] = np.abs(self.metadata["RETENTION_TIME"] - aligned_predicted_rts)
+
+                # unmod_rescore_dir = new_rescore_dir.replace('localize_mod','score_unmod')
+
+                # the intensity features are relative to the most intense annotated peak of each candidate, which
+                # differs between the localization candidates of a spectrum. Convert them back to the measured
+                # intensities (log10), so they are comparable between candidates and spectra.
+                # The relative intensities of the modified ions are kept as additional features, since they separate
+                # candidates with adjacent sites better.
+                for feature in ["observed_intensity_mod", "sum_observed_and_predicted_mod"]:
+                    if feature in self.metrics_val.columns:
+                        self.metrics_val[f"{feature}_relative"] = self.metrics_val[feature]
+                for feature in [
+                    "observed_intensity",
+                    "sum_observed_and_predicted",
+                    "observed_intensity_mod",
+                    "sum_observed_and_predicted_mod",
+                ]:
+                    if feature not in self.metrics_val.columns:
+                        continue
+                    measured = self.metrics_val[feature] * self.metrics_val["MOST_INTESE_PEAK"]
+                    self.metrics_val[feature] = np.log10(measured.where(measured > 0, 1.0))
+
                 if lda_failed:
+                    self.metrics_val["lda_scores"] = 0
                     median_abs_error = np.median(self.metrics_val["abs_rt_diff"])
+                    delta_95_error = np.percentile(self.metrics_val["abs_rt_diff"], 95)
                 else:
-                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr])
+                    median_abs_error = np.median(self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr][lda_filter])
+                    delta_95_error = np.percentile(
+                        self.metrics_val["abs_rt_diff"].iloc[idxs_below_lda_fdr][lda_filter], 95
+                    )
+                self.metrics_val.drop("lda_scores", axis=1, inplace=True)
+
                 logger.info(
                     "Median absolute error predicted vs observed retention time on targets < 1% FDR: "
                     f"{median_abs_error}"
                 )
-
+                logger.info(
+                    "Delta 95 absolute error predicted vs observed retention time on targets < 1% FDR: "
+                    f"{delta_95_error}"
+                )
+                self.metrics_val["andromeda"] = self.metadata["SCORE"]
+            self.metrics_val.drop(columns=["MOST_INTESE_PEAK"], inplace=True)
         else:
-            self.add_additional_features()
             self.metrics_val["andromeda"] = self.metadata["SCORE"]
+
+        """for aa_comb in all_combinations:
+            aa_comb_values = self.metadata['AA_MOD_COMBINATIONS'].apply(
+                lambda x: x.count(aa_comb) if aa_comb in x else 0
+            )
+            self.metrics_val[aa_comb] = aa_comb_values"""
 
         if "Annotated_Ions_MSF" in self.metadata.columns:
             self.metrics_val["annotated_ions"] = self.metadata["Annotated_Ions_MSF"]
@@ -580,15 +868,18 @@ class Percolator(Metric):
             self.metrics_val["log10_evalue"] = self.metadata["EXPECT"].apply(lambda x: math.log10(x))
 
         self.add_percolator_metadata_columns()
+
         if self.input_type == "rescore":
             # TODO: only add this feature if they are not all zero
             # self.metrics_val['spectral_angle_delta_score'] = Percolator.get_delta_score(self.metrics_val[['ScanNr',
             # 'spectral_angle']], 'spectral_angle')
+            # self.metrics_val.drop(columns=['sum_observed_and_predicted','observed_intensity'],inplace=True)
             pass
         else:
             self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
                 self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
             )
+        self.metrics_val.drop("Mass", axis=1, inplace=True)
 
         self._reorder_columns_for_percolator()
 
