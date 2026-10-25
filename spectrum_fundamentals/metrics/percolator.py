@@ -879,7 +879,8 @@ class Percolator(Metric):
             self.metrics_val["andromeda_delta_score"] = Percolator.get_delta_score(
                 self.metrics_val[["ScanNr", "andromeda"]], "andromeda"
             )
-        self.metrics_val.drop("Mass", axis=1, inplace=True)
+        # the calculated mass is only a feature of linear peptides (add_common_features)
+        self.metrics_val.drop(columns="Mass", errors="ignore", inplace=True)
 
         self._reorder_columns_for_percolator()
 
