@@ -2,6 +2,7 @@ import functools
 import logging
 import re
 from operator import itemgetter
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -141,7 +142,8 @@ def handle_multiple_matches(
     """
     if sort_by == "mass_diff":
         matched_peaks = [
-            peak | {"mass_diff": abs(peak["exp_mass"] - peak["theoretical_mass"])} for peak in matched_peaks
+            peak | {"mass_diff": abs(cast(float, peak["exp_mass"]) - cast(float, peak["theoretical_mass"]))}
+            for peak in matched_peaks
         ]
 
         def sort_key(peak):

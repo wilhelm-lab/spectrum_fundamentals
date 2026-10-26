@@ -426,7 +426,7 @@ def fragment_arrays(
             for k, nl in enumerate(nl_ions[idx][number])
         ]
         if nl_rows:
-            nl_idx, nl_number, nl_k, nl_mass = (np.array(column) for column in zip(*nl_rows))
+            nl_idx, nl_number, nl_k, nl_mass = (np.array(column) for column in zip(*nl_rows, strict=True))
             charges = np.arange(1, max_charge + 1)
             ion_mz = (
                 (sum_array[nl_idx, nl_number] - nl_mass)[:, None] + charges * c.PARTICLE_MASSES["PROTON"]
