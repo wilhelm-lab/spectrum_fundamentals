@@ -58,6 +58,15 @@ class TestInitializePeaks(unittest.TestCase):
         self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_hcd_cid.json", "HCD")
         self._test_outputs(Path(__file__).parent / "data/fragments_meta_data_hcd_cid.json", "CID")
 
+    def test_initialize_peaks_case_insensitive(self):
+        """Test the fragmentation method is case-insensitive, e.g. ETciD as written in the Oktoberfest docs."""
+        self._test_outputs(
+            Path(__file__).parent / "data/fragments_meta_data_etcid.json",
+            "ETciD",
+            True,
+            ["a", "A", "b", "c", "C", "y", "x", "X", "z", "Z"],
+        )
+
     def test_initialize_peaks_ecd_etcid_eid_uvpd(self):
         """Test initialize_peaks for ECD/ETCID/EID/UVPD input."""
         self._test_outputs(
