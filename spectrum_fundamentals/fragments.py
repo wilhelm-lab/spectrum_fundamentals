@@ -1,3 +1,4 @@
+import functools
 import itertools
 import logging
 import re
@@ -258,60 +259,38 @@ def initialize_peaks(  # noqa: C901
         ion_df = c.ION_DIC
         ion_list = ion_df.index.to_list()
 
-    modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
-
     fragments_meta_data = []
-    n_term_mod = 1
-
-    if noncl_xl:
-        # the test only needs to be done because the unit tests use non_cl_xl peptides
-        # without a crosslinker modification. This cannot occur in nature!!!
-        # The unit tests need to be changed, then we can simply add to the existing
-        # modification mass at xl_pos -1.
-        modification_deltas[xl_pos - 1] = modification_deltas.get(xl_pos - 1, 0.0) + peptide_beta_mass
-
-    if modification_deltas:  # there were modifictions
-        sequence = internal_without_mods([sequence])[0]
-        n_term_delta = modification_deltas.pop(-2, 0.0)  # directly pop it to avoid readding it later
-        if n_term_delta != 0:
-            n_term_mod = 2
-            # add n_term mass to first aa for easy processing in the following calculation
-            modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
-
-    if add_neutral_losses:
-        nl_b_ions, nl_y_ions = _get_neutral_losses(sequence, modification_deltas, phospho_loss_residues)
-        nl_ions = [nl_y_ions, nl_b_ions]
-
+    (
+        sequence,
+        n_term_mod,
+        nl_ions,
+        sum_array,
+        ion_mzs,
+        min_mzs,
+        max_mzs,
+        max_charge,
+        peptide_mass,
+        window,
+    ) = _fragment_mzs(
+        sequence,
+        mass_analyzer,
+        charge,
+        mass_tolerance,
+        unit_mass_tolerance,
+        noncl_xl,
+        peptide_beta_mass,
+        xl_pos,
+        featured_ions,
+        p_window,
+        custom_mods,
+        add_neutral_losses,
+        phospho_loss_residues,
+    )
     expected_nl_count = 0
-    mass_arr = np.array([c.AA_MASSES[_] for _ in sequence])
-    for pos, mod_mass in modification_deltas.items():
-        mass_arr[pos] += mod_mass
-
-    forward_ions = np.array([ion in c.FORWARD_IONS for ion in featured_ions])
-    # n_forward_ions = sum(forward_ions)
-    n_fragments = len(sequence) - 1
-    sum_array = np.empty(shape=(len(featured_ions), n_fragments))
-    sum_array[~forward_ions] = np.cumsum(mass_arr[:0:-1])
-    sum_array[forward_ions] = np.cumsum(mass_arr[:-1])
-    peptide_mass = mass_arr.sum()
-    # Exclusion window
-    precursor_ion = 1.00727646688 + (peptide_mass + c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"]) / max_charge
-    window = [precursor_ion - p_window, precursor_ion + p_window]
-
-    # get offset for all needed ions
-    deltas = get_ion_delta(featured_ions)
-    sum_array[~forward_ions] = np.add(sum_array[~forward_ions], deltas[~forward_ions])
-    sum_array[forward_ions] = np.add(sum_array[forward_ions], deltas[forward_ions])  # , out=sum_array[forward_ions])
-
-    # calculate for m/z for charges 1, 2, 3
-    # shape of ion_mzs: (n_ions, n_fragments, max_charge)
-    charges = np.arange(1, max_charge + 1)
-    ion_mzs = (sum_array[..., np.newaxis] + charges * c.PARTICLE_MASSES["PROTON"]) / charges
-    min_mzs, max_mzs = get_min_max_mass(mass_analyzer, ion_mzs, mass_tolerance, unit_mass_tolerance)
 
     # write mz together with min and max value in output list with one dictionary for each ion
     for idx, ion_type in enumerate(featured_ions):
-        for number in range(n_fragments):
+        for number in range(len(sequence) - 1):
             for charge in range(max_charge):
                 f_score = fragment_scores[ion_type]
                 fragment = {
@@ -364,6 +343,222 @@ def initialize_peaks(  # noqa: C901
         expected_nl_count,
         window,
     )
+
+
+def fragment_arrays(
+    sequence: str,
+    mass_analyzer: str,
+    charge: int,
+    mass_tolerance: float | None = None,
+    unit_mass_tolerance: str | None = None,
+    featured_ions: list[str] | None = None,
+    multifrag: bool = False,
+    p_window: float = 1.2,
+    custom_mods: dict[str, float] | None = None,
+    add_neutral_losses: bool | None = False,
+    phospho_loss_residues: str = "ST",
+) -> tuple[dict[str, np.ndarray], int, str, float, int, list[float]]:
+    """
+    Generate theoretical peaks for a modified peptide sequence as arrays (linear peptides).
+
+    Same fragments, masses and order (sorted by m/z, ties in the order of generation) as :func:`initialize_peaks`,
+    without building one dictionary per fragment.
+
+    :param sequence: Modified peptide sequence
+    :param mass_analyzer: Type of mass analyzer used eg. FTMS, ITMS
+    :param charge: Precursor charge
+    :param mass_tolerance: mass tolerance to calculate min and max mass
+    :param unit_mass_tolerance: unit for the mass tolerance (da or ppm)
+    :param featured_ions: list of ions to be annotated
+    :param multifrag: only the ions of the multifrag ion dictionary (constants.ION_DIC)
+    :param p_window: peak exclusion window around the precursor (da)
+    :param custom_mods: mapping of custom UNIMOD string identifiers ('[UNIMOD:xyz]') to their mass
+    :param add_neutral_losses: Flag to indicate whether to annotate neutral losses or not
+    :param phospho_loss_residues: phosphorylated residues annotated with the loss of phosphoric acid
+    :return: fragments as arrays ("ion": index in featured_ions, "no", "charge", "mass", "min_mass", "max_mass",
+        "neutral_loss": True for neutral loss fragments, with multifrag "ion_row": row in constants.ION_DIC), flag to
+        indicate if there is a tmt on n-terminus, unmodified peptide sequence, calculated mass, number of expected nl
+        peaks, precursor exclusion window
+    """
+    if featured_ions is None:
+        featured_ions = ["y", "b"]
+    (
+        sequence,
+        n_term_mod,
+        nl_ions,
+        sum_array,
+        ion_mzs,
+        min_mzs,
+        max_mzs,
+        max_charge,
+        peptide_mass,
+        window,
+    ) = _fragment_mzs(
+        sequence,
+        mass_analyzer,
+        charge,
+        mass_tolerance,
+        unit_mass_tolerance,
+        False,
+        0.0,
+        -1,
+        featured_ions,
+        p_window,
+        custom_mods,
+        add_neutral_losses,
+        phospho_loss_residues,
+    )
+    n_ions, n_fragments = sum_array.shape
+    ion, no, z = np.indices((n_ions, n_fragments, max_charge)).reshape(3, -1)
+    parts = {
+        "ion": [ion],
+        "no": [no + 1],
+        "charge": [z + 1],
+        "mass": [ion_mzs.ravel()],
+        "min_mass": [min_mzs.ravel()],
+        "max_mass": [max_mzs.ravel()],
+        "neutral_loss": [np.zeros(len(ion), dtype=bool)],
+        "order": [np.arange(len(ion)) * 8],  # position in the generation order, neutral losses right after their ion
+    }
+    expected_nl_count = 0
+    if add_neutral_losses:
+        # one row per ion type, fragment and neutral loss, then all charges at once
+        nl_rows = [
+            (idx, number, k, c.Neutral_losses_Mass[nl])
+            for idx in range(n_ions)
+            for number in range(n_fragments)
+            for k, nl in enumerate(nl_ions[idx][number])
+        ]
+        if nl_rows:
+            nl_idx, nl_number, nl_k, nl_mass = (np.array(column) for column in zip(*nl_rows, strict=True))
+            charges = np.arange(1, max_charge + 1)
+            ion_mz = (
+                (sum_array[nl_idx, nl_number] - nl_mass)[:, None] + charges * c.PARTICLE_MASSES["PROTON"]
+            ) / charges
+            min_mz, max_mz = get_min_max_mass(mass_analyzer, ion_mz, mass_tolerance, unit_mass_tolerance)
+            base = (nl_idx * n_fragments + nl_number)[:, None] * max_charge + charges - 1
+            parts["ion"].append(np.repeat(nl_idx, max_charge))
+            parts["no"].append(np.repeat(nl_number + 1, max_charge))
+            parts["charge"].append(np.tile(charges, len(nl_rows)))
+            parts["mass"].append(ion_mz.ravel())
+            parts["min_mass"].append(min_mz.ravel())
+            parts["max_mass"].append(max_mz.ravel())
+            parts["neutral_loss"].append(np.ones(ion_mz.size, dtype=bool))
+            parts["order"].append((base * 8 + nl_k[:, None] + 1).ravel())
+    fragments = {key: np.concatenate(value) for key, value in parts.items()}
+    if multifrag:
+        # ions missing from the multifrag ion dictionary are left out, with their neutral losses
+        ion_rows = _ion_dic_rows(tuple(featured_ions), n_fragments, max_charge)
+        fragments["ion_row"] = ion_rows[fragments["order"] // 8]
+        fragments = {key: value[fragments["ion_row"] >= 0] for key, value in fragments.items()}
+    expected_nl_count = int(np.count_nonzero(fragments["neutral_loss"]))
+    order = np.lexsort((fragments.pop("order"), fragments["mass"]))
+    fragments = {key: value[order] for key, value in fragments.items()}
+
+    return (
+        fragments,
+        n_term_mod,
+        sequence,
+        (peptide_mass + c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"]),
+        expected_nl_count,
+        window,
+    )
+
+
+@functools.lru_cache(maxsize=256)
+def _ion_dic_rows(featured_ions: tuple[str, ...], n_fragments: int, max_charge: int) -> np.ndarray:
+    """
+    Rows in constants.ION_DIC (multifrag) of all ions in the generation order of fragment_arrays, -1 if missing.
+
+    :param featured_ions: ion types
+    :param n_fragments: number of fragments (sequence length - 1)
+    :param max_charge: highest fragment charge
+    :return: row per ion type, fragment number and charge (flattened), cached, callers must not change it
+    """
+    rows = {ion: i for i, ion in enumerate(c.ION_DIC.index)}
+    names = (
+        f"{ion_type}{number + 1}{'' if charge == 0 else f'^{charge + 1}'}"
+        for ion_type in featured_ions
+        for number in range(n_fragments)
+        for charge in range(max_charge)
+    )
+    ion_rows = np.array([rows.get(name, -1) for name in names])
+    ion_rows.flags.writeable = False
+    return ion_rows
+
+
+def _fragment_mzs(
+    sequence: str,
+    mass_analyzer: str,
+    charge: int,
+    mass_tolerance: float | None,
+    unit_mass_tolerance: str | None,
+    noncl_xl: bool,
+    peptide_beta_mass: float,
+    xl_pos: int,
+    featured_ions: list[str],
+    p_window: float,
+    custom_mods: dict[str, float] | None,
+    add_neutral_losses: bool | None,
+    phospho_loss_residues: str,
+):
+    """
+    Masses of all fragment ions without neutral losses, shared by initialize_peaks and fragment_arrays.
+
+    :return: unmodified sequence, n-term flag, neutral losses per ion type and fragment (or None), ion masses without
+        protons (ion types x fragments), m/z with min and max (ion types x fragments x charges), max fragment charge,
+        peptide mass, precursor exclusion window
+    """
+    max_charge = min(3, charge)
+    modification_deltas = _get_modifications(sequence, custom_mods=custom_mods)
+    n_term_mod = 1
+
+    if noncl_xl:
+        # the test only needs to be done because the unit tests use non_cl_xl peptides
+        # without a crosslinker modification. This cannot occur in nature!!!
+        # The unit tests need to be changed, then we can simply add to the existing
+        # modification mass at xl_pos -1.
+        modification_deltas[xl_pos - 1] = modification_deltas.get(xl_pos - 1, 0.0) + peptide_beta_mass
+
+    if modification_deltas:  # there were modifictions
+        sequence = internal_without_mods([sequence])[0]
+        n_term_delta = modification_deltas.pop(-2, 0.0)  # directly pop it to avoid readding it later
+        if n_term_delta != 0:
+            n_term_mod = 2
+            # add n_term mass to first aa for easy processing in the following calculation
+            modification_deltas[0] = modification_deltas.get(0, 0.0) + n_term_delta
+
+    nl_ions = None
+    if add_neutral_losses:
+        nl_b_ions, nl_y_ions = _get_neutral_losses(sequence, modification_deltas, phospho_loss_residues)
+        nl_ions = [nl_y_ions, nl_b_ions]
+
+    mass_arr = np.array([c.AA_MASSES[_] for _ in sequence])
+    for pos, mod_mass in modification_deltas.items():
+        mass_arr[pos] += mod_mass
+
+    forward_ions = np.array([ion in c.FORWARD_IONS for ion in featured_ions])
+    # n_forward_ions = sum(forward_ions)
+    n_fragments = len(sequence) - 1
+    sum_array = np.empty(shape=(len(featured_ions), n_fragments))
+    sum_array[~forward_ions] = np.cumsum(mass_arr[:0:-1])
+    sum_array[forward_ions] = np.cumsum(mass_arr[:-1])
+    peptide_mass = mass_arr.sum()
+    # Exclusion window
+    precursor_ion = 1.00727646688 + (peptide_mass + c.ATOM_MASSES["O"] + 2 * c.ATOM_MASSES["H"]) / max_charge
+    window = [precursor_ion - p_window, precursor_ion + p_window]
+
+    # get offset for all needed ions
+    deltas = get_ion_delta(featured_ions)
+    sum_array[~forward_ions] = np.add(sum_array[~forward_ions], deltas[~forward_ions])
+    sum_array[forward_ions] = np.add(sum_array[forward_ions], deltas[forward_ions])  # , out=sum_array[forward_ions])
+
+    # calculate for m/z for charges 1, 2, 3
+    # shape of ion_mzs: (n_ions, n_fragments, max_charge)
+    charges = np.arange(1, max_charge + 1)
+    ion_mzs = (sum_array[..., np.newaxis] + charges * c.PARTICLE_MASSES["PROTON"]) / charges
+    min_mzs, max_mzs = get_min_max_mass(mass_analyzer, ion_mzs, mass_tolerance, unit_mass_tolerance)
+    return sequence, n_term_mod, nl_ions, sum_array, ion_mzs, min_mzs, max_mzs, max_charge, peptide_mass, window
 
 
 def initialize_peaks_xl(
