@@ -251,6 +251,10 @@ def initialize_peaks(  # noqa: C901
         featured_ions = ["y", "b"]
     _xl_sanity_check(noncl_xl, peptide_beta_mass, xl_pos)
 
+    max_charge = min(3, charge)
+    # case-insensitive like retrieve_ion_types, e.g. "ETciD"
+    fragment_scores = c.FRAGMENT_SCORE[fragmentation_method.upper()]
+
     if multifrag:
         ion_df = c.ION_DIC
         ion_list = ion_df.index.to_list()
@@ -288,7 +292,7 @@ def initialize_peaks(  # noqa: C901
     for idx, ion_type in enumerate(featured_ions):
         for number in range(len(sequence) - 1):
             for charge in range(max_charge):
-                f_score = c.FRAGMENT_SCORE[fragmentation_method][ion_type]
+                f_score = fragment_scores[ion_type]
                 fragment = {
                     "ion_type": ion_type,  # ion type
                     "no": number + 1,  # no
