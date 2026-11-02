@@ -13,17 +13,17 @@ on:
 
 jobs:
     # ------------------------------------------------------------------
-    # Lint — ruff check + ruff format (runs once, ubuntu/py3.13 only)
+    # Lint — ruff check + ruff format (runs once, ubuntu/py3.14 only)
     # ------------------------------------------------------------------
     lint:
         name: lint
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
 
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
-                  python-version: "3.13"
+                  python-version: "3.14"
                   cache: pip
 
             - name: Install Poetry
@@ -36,17 +36,17 @@ jobs:
               run: make lint
 
     # ------------------------------------------------------------------
-    # Type-check — mypy (runs once, ubuntu/py3.13 only)
+    # Type-check — mypy (runs once, ubuntu/py3.14 only)
     # ------------------------------------------------------------------
     type-check:
         name: type-check
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
 
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
-                  python-version: "3.13"
+                  python-version: "3.14"
                   cache: pip
 
             - name: Install Poetry
@@ -59,7 +59,7 @@ jobs:
               run: make type-check
 
     # ------------------------------------------------------------------
-    # Tests — full cross-platform matrix (3 OS × 4 Python versions)
+    # Tests — Python version matrix (ubuntu only)
     # To add a new Python version: append it to matrix.python-version only.
     # ------------------------------------------------------------------
     test:
@@ -68,11 +68,11 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                python-version: ["3.10", "3.12", "3.13"]
+                python-version: ["3.11", "3.12", "3.13", "3.14"]
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
 
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                   python-version: ${{ matrix.python-version }}
                   cache: pip
@@ -87,8 +87,8 @@ jobs:
               run: poetry run pytest --cov=spectrum_fundamentals --cov-report=xml
 
             - name: Upload coverage
-              if: matrix.python-version == '3.13'
-              uses: codecov/codecov-action@v5.5.2
+              if: matrix.python-version == '3.14'
+              uses: codecov/codecov-action@v7.1.1
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: coverage.xml
@@ -101,11 +101,11 @@ jobs:
         name: build
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v6
+            - uses: actions/checkout@v7
 
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
-                  python-version: "3.13"
+                  python-version: "3.14"
                   cache: pip
 
             - name: Install Poetry
